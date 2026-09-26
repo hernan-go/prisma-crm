@@ -412,6 +412,10 @@ function PaymentForm({
               type="date"
               required
               value={data.date}
+              onInput={(e) => {
+                const date = e.currentTarget.value;
+                set((current) => ({ ...current, date }));
+              }}
               onChange={(e) => set({ ...data, date: e.target.value })}
             />
           </Field>
@@ -674,8 +678,13 @@ export function Advertising() {
   );
 }
 function AdvertisingForm({ value: v, close }: { value: any; close: () => void }) {
+  const { period, periods } = usePeriod();
+  const selectedPeriod = periods.find((p) => p.id === period);
+  const selectedMonth = selectedPeriod
+    ? `${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, '0')}`
+    : today().slice(0, 7);
   const [data, set] = useState({
-    date: v.date || today(),
+    date: v.date || (today().startsWith(selectedMonth) ? today() : `${selectedMonth}-01`),
     concept: v.concept || '',
     amount: v.amount || '',
     notes: v.notes || '',
@@ -706,13 +715,22 @@ function AdvertisingForm({ value: v, close }: { value: any; close: () => void })
             <input
               required={key !== 'notes'}
               type={key === 'date' ? 'date' : key === 'amount' ? 'number' : 'text'}
-              min="0"
-              step="0.01"
+              min={key === 'amount' ? '0' : undefined}
+              step={key === 'amount' ? '0.01' : undefined}
               value={(data as any)[key]}
+              onInput={
+                key === 'date'
+                  ? (e) => {
+                      const date = e.currentTarget.value;
+                      set((current) => ({ ...current, date }));
+                    }
+                  : undefined
+              }
               onChange={(e) => set({ ...data, [key]: e.target.value })}
             />
           </Field>
         ))}
+        <p className="muted">La inversión se mostrará en el período correspondiente a su fecha.</p>
         <ErrorBox error={error ? new Error(error) : m.error} />
         <div className="actions">
           <SaveButton pending={m.isPending} />

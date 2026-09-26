@@ -6,7 +6,8 @@ if (
   (!process.env.APP_URL?.startsWith('https://') || !process.env.DB_PASSWORD)
 )
   throw new Error('Configurá APP_URL HTTPS y DB_PASSWORD en producción.');
-const server = createApp().listen(Number(process.env.PORT || 3001), '0.0.0.0', () =>
+const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const server = createApp().listen(Number(process.env.PORT || 3001), host, () =>
   console.log('PRISMA CRM iniciado.'),
 );
 for (const event of ['SIGTERM', 'SIGINT'])

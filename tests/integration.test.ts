@@ -224,6 +224,22 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       .send({ ...a, active: true, days: [2, 3, 4, 5] });
     expect(r.status).toBe(200);
   });
+  it('repite migraciones y seed sin duplicar ni restaurar reglas editadas', async () => {
+    const before = await query('SELECT id FROM people ORDER BY id');
+    await migrate();
+    await seed();
+    await seed();
+    expect(await query('SELECT id FROM people ORDER BY id')).toEqual(before);
+    expect(
+      (
+        await query('SELECT day FROM activity_allowed_days WHERE activity_id=? ORDER BY day', [
+          activity,
+        ])
+      ).map((r) => r.day),
+    ).toEqual([2, 3, 4, 5]);
+    expect((await query('SELECT COUNT(*) count FROM activities'))[0].count).toBe(8);
+    expect((await query('SELECT COUNT(*) count FROM instructors'))[0].count).toBe(6);
+  });
   it('archiva preservando pagos y nuevo mes sin inscripciones', async () => {
     expect((await request(app).delete(`/api/people/${pid}`)).status).toBe(200);
     expect((await request(app).get(`/api/people/${pid}`)).body.payments.length).toBe(1);
