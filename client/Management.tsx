@@ -1,3 +1,5 @@
+import { PeriodAdmin } from './Periods';
+import { scheduleConflict, type Booking } from '../shared/schedule';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -145,7 +147,7 @@ export function PersonMonth({ person }: { person: any }) {
       )}
       <section className="panel">
         <div className="section-heading">
-          <h2>Cuenta del mes</h2>
+          <h2 className="finance-title">Cuenta del mes</h2>
           <button onClick={() => setDue(true)}>Editar importe a cobrar</button>
         </div>
         <div className="stats compact">
@@ -171,7 +173,7 @@ export function PersonMonth({ person }: { person: any }) {
           </div>
         </div>
         <div className="section-heading">
-          <h3>Pagos del período</h3>
+          <h3>Movimientos del período</h3>
           <button className="primary" onClick={() => setPayment({})}>
             Registrar pago
           </button>
@@ -214,6 +216,7 @@ function EnrollmentForm({
 }) {
   const { period } = usePeriod();
   const a = useData('activities', '/activities');
+  const all = useData('agenda', `/enrollments?period_id=${period}`, !!period);
   const [activity, setActivity] = useState(e.activity_id || 0);
   const [slots, setSlots] = useState<{ day: number; start: string; end: string }[]>(
     e.slots || [{ day: -1, start: '09:00', end: '10:00' }],
@@ -238,6 +241,31 @@ function EnrollmentForm({
           if (!valid.success) {
             setError(valid.error.issues.map((i) => i.message).join(' '));
             return;
+          }
+          const existing: Booking[] = (all.data || [])
+            .filter((x: any) => x.id !== e.id)
+            .flatMap((x: any) =>
+              x.slots.map((slot: any) => ({
+                ...slot,
+                ...x,
+                mode: a.data?.find((t: any) => t.id === x.activity_id)?.mode,
+              })),
+            );
+          for (const slot of slots) {
+            const next = {
+              ...slot,
+              person_id: person.id,
+              activity_id: activity,
+              instructor_id: selected?.instructor_id,
+              activity: selected?.name,
+              mode: selected?.mode,
+            };
+            const conflict = scheduleConflict(next, existing);
+            if (conflict) {
+              setError(conflict);
+              return;
+            }
+            existing.push(next);
           }
           setError('');
           m.mutate(data);
@@ -768,7 +796,8 @@ export function Configuration() {
             <div>
               <b>{x.name}</b>
               <small>
-                {x.instructor} · {x.active ? 'Activa' : 'Inactiva'}
+                {x.instructor} · {x.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'} ·{' '}
+                {x.active ? 'Activa' : 'Inactiva'}
               </small>
               <p>{x.days.map((d: number) => days[d]).join(' · ')}</p>
             </div>
@@ -811,6 +840,7 @@ export function Configuration() {
           </div>
         ))}
       </section>
+      <PeriodAdmin />
       {edit && (
         <ConfigForm
           kind={kind}
@@ -836,6 +866,7 @@ function ConfigForm({
   const [data, set] = useState({
     name: v.name || '',
     active: v.active === undefined ? true : !!v.active,
+    mode: v.mode || 'group',
     instructor_id: v.instructor_id || 0,
     days: v.days || ([] as number[]),
   });
@@ -887,6 +918,12 @@ function ConfigForm({
                     {t.name}
                   </option>
                 ))}
+              </select>
+            </Field>
+            <Field label="Modalidad">
+              <select value={data.mode} onChange={(e) => set({ ...data, mode: e.target.value })}>
+                <option value="group">Grupal</option>
+                <option value="individual">Individual · capacidad 1</option>
               </select>
             </Field>
             <p>Días permitidos</p>

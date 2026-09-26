@@ -248,4 +248,76 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       0,
     );
   });
+  it('protege agenda real, grupo, capacidad y concurrencia', async () => {
+    const pr = (await request(app).post('/api/periods').send({ year: 2027, month: 2 })).body.id;
+    const p1 = (
+      await request(app)
+        .post('/api/people')
+        .send({ nombre: 'Agenda', apellido: 'Ficticia Uno', telefono: '0000088001' })
+    ).body.id;
+    const p2 = (
+      await request(app)
+        .post('/api/people')
+        .send({ nombre: 'Agenda', apellido: 'Ficticia Dos', telefono: '0000088002' })
+    ).body.id;
+    const list = (await request(app).get('/api/activities')).body;
+    const yoga = list.find((a: any) => a.name === 'Yoga Terapéutico Integral').id;
+    const digital = list.find((a: any) => a.name === 'Inclusión Digital').id;
+    const info = list.find((a: any) => a.name === 'Informática').id;
+    const save = (person: number, act: number, start = '10:00', end = '11:00', day = 1) =>
+      request(app)
+        .post('/api/enrollments')
+        .send({ person_id: person, period_id: pr, activity_id: act, slots: [{ day, start, end }] });
+    expect((await save(p1, yoga)).status).toBe(201);
+    expect((await save(p2, yoga)).status).toBe(201);
+    expect((await save(p1, digital)).status).toBe(409);
+    expect((await save(p1, digital, '11:00', '12:00')).status).toBe(201);
+    expect((await save(p2, info, '11:30', '12:30')).status).toBe(409);
+    const concurrent = await Promise.all([
+      save(p1, info, '13:00', '14:00', 6),
+      save(p2, info, '13:00', '14:00', 6),
+    ]);
+    expect(concurrent.map((r) => r.status).sort()).toEqual([201, 409]);
+    const group = list.find((a: any) => a.id === yoga);
+    expect(
+      (
+        await request(app)
+          .put(`/api/activities/${yoga}`)
+          .send({ ...group, active: true, mode: 'individual' })
+      ).status,
+    ).toBe(409);
+    expect((await request(app).delete(`/api/periods/${pr}`)).status).toBe(409);
+    expect(
+      (await request(app).put(`/api/periods/${pr}`).send({ year: 2027, month: 3 })).status,
+    ).toBe(409);
+    expect(
+      (await request(app).patch(`/api/periods/${pr}/status`).send({ status: 'closed' })).status,
+    ).toBe(200);
+    expect((await save(p2, info, '15:00', '16:00', 6)).status).toBe(409);
+    expect(
+      (
+        await request(app)
+          .put('/api/accounts')
+          .send({ person_id: p1, period_id: pr, amount_due: '10' })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await request(app)
+          .post('/api/payments')
+          .send({ person_id: p1, period_id: pr, date: '2027-02-01', amount: '10', method: 'cash' })
+      ).status,
+    ).toBe(409);
+    expect(
+      (await request(app).patch(`/api/periods/${pr}/status`).send({ status: 'open' })).status,
+    ).toBe(200);
+  });
+  it('edita y elimina exclusivamente períodos vacíos', async () => {
+    const pr = (await request(app).post('/api/periods').send({ year: 2028, month: 1 })).body.id;
+    expect(
+      (await request(app).put(`/api/periods/${pr}`).send({ year: 2028, month: 2 })).status,
+    ).toBe(200);
+    expect((await request(app).delete(`/api/periods/${pr}`)).status).toBe(200);
+    expect((await request(app).get('/api/periods')).body.some((p: any) => p.id === pr)).toBe(false);
+  });
 });

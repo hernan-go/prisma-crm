@@ -15,8 +15,8 @@ export async function seed() {
       await execute('INSERT IGNORE INTO instructors(name) VALUES (?)', [teacher], db);
       const [i] = await query('SELECT id FROM instructors WHERE name=?', [teacher], db);
       const result = await execute(
-        'INSERT IGNORE INTO activities(name,instructor_id) VALUES (?,?)',
-        [name, i.id],
+        'INSERT IGNORE INTO activities(name,instructor_id,mode) VALUES (?,?,?)',
+        [name, i.id, name === 'Informática' ? 'individual' : 'group'],
         db,
       );
       if (result.affectedRows)

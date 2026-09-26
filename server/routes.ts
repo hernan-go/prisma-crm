@@ -1,3 +1,4 @@
+import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
@@ -73,6 +74,20 @@ api.post('/periods', async (req, res) => {
     id: (await execute('INSERT INTO periods(year,month) VALUES (?,?)', [p.year, p.month])).insertId,
   });
 });
+api.put('/periods/:id', async (req, res) =>
+  res.json(await periodEdit(id(req.params.id), req.body)),
+);
+api.delete('/periods/:id', async (req, res) => res.json(await periodEdit(id(req.params.id))));
+api.patch('/periods/:id/status', async (req, res) => {
+  const status = z.enum(['open', 'closed']).parse(req.body.status);
+  await peopleTransaction(async (db) => {
+    requireFound(
+      (await execute('UPDATE periods SET status=? WHERE id=?', [status, id(req.params.id)], db))
+        .affectedRows,
+    );
+  });
+  res.json({ ok: true });
+});
 api.get('/instructors', async (_req, res) =>
   res.json(await query('SELECT * FROM instructors ORDER BY name')),
 );
@@ -121,12 +136,9 @@ api.post('/enrollments', async (req, res) => res.status(201).json(await enrollme
 api.put('/enrollments/:id', async (req, res) =>
   res.json(await enrollmentSave(req.body, id(req.params.id))),
 );
-api.delete('/enrollments/:id', async (req, res) => {
-  requireFound(
-    (await execute('DELETE FROM enrollments WHERE id=?', [id(req.params.id)])).affectedRows,
-  );
-  res.json({ ok: true });
-});
+api.delete('/enrollments/:id', async (req, res) =>
+  res.json(await deleteMovement('enrollments', id(req.params.id))),
+);
 api.get('/accounts', async (req, res) =>
   res.json(
     await accounts(
@@ -139,10 +151,14 @@ api.put('/accounts', async (req, res) => {
   const p = z
     .object({ person_id: positiveId, period_id: positiveId, amount_due: money.nullable() })
     .parse(req.body);
-  await execute(
-    'INSERT INTO monthly_accounts(person_id,period_id,amount_due) VALUES (?,?,?) ON DUPLICATE KEY UPDATE amount_due=VALUES(amount_due)',
-    [p.person_id, p.period_id, p.amount_due],
-  );
+  await peopleTransaction(async (db) => {
+    await openPeriod(p.period_id, db);
+    await execute(
+      'INSERT INTO monthly_accounts(person_id,period_id,amount_due) VALUES (?,?,?) ON DUPLICATE KEY UPDATE amount_due=VALUES(amount_due)',
+      [p.person_id, p.period_id, p.amount_due],
+      db,
+    );
+  });
   res.json({ ok: true });
 });
 api.get('/payments', async (req, res) =>
@@ -156,12 +172,9 @@ api.post('/payments', async (req, res) => res.status(201).json(await paymentSave
 api.put('/payments/:id', async (req, res) =>
   res.json(await paymentSave(req.body, id(req.params.id))),
 );
-api.delete('/payments/:id', async (req, res) => {
-  requireFound(
-    (await execute('DELETE FROM payments WHERE id=?', [id(req.params.id)])).affectedRows,
-  );
-  res.json({ ok: true });
-});
+api.delete('/payments/:id', async (req, res) =>
+  res.json(await deleteMovement('payments', id(req.params.id))),
+);
 api.get('/dashboard', async (req, res) => {
   const period = id(req.query.period_id);
   const [enrollment] = await query(

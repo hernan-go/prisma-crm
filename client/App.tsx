@@ -1,3 +1,4 @@
+import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import {
   Triangle,
 } from 'lucide-react';
 import { api } from './api';
-import { Modal, Field, useSave, SaveButton, ErrorBox, Loading, Empty } from './components';
+import { ErrorBox, Loading, Empty } from './components';
 import { formatMoney } from '../shared/domain';
 import { People, PersonDetail } from './People';
 import { Monthly, Agenda, Payments, Advertising, Configuration } from './Management';
@@ -44,7 +45,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const q = useQuery({ queryKey: ['periods'], queryFn: () => api<any[]>('/periods') });
   useEffect(() => {
-    if (!period && q.data?.length) setPeriod(q.data[0].id);
+    if (q.data && !q.data.some((p) => p.id === period)) setPeriod(q.data[0]?.id || 0);
   }, [q.data, period]);
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
@@ -108,6 +109,7 @@ export default function App() {
                   {q.data?.map((p) => (
                     <option key={p.id} value={p.id}>
                       {periodName(p)}
+                      {p.status === 'closed' ? ' · Cerrado' : ''}
                     </option>
                   ))}
                 </select>
@@ -149,47 +151,6 @@ export default function App() {
       )}
       {create && <PeriodForm close={() => setCreate(false)} onCreated={setPeriod} />}
     </PeriodContext.Provider>
-  );
-}
-function PeriodForm({ close, onCreated }: { close: () => void; onCreated: (n: number) => void }) {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const m = useSave('/periods', 'POST', close);
-  return (
-    <Modal title="Crear nuevo período" close={close}>
-      <p>La base de personas se conserva. El período comienza sin inscripciones ni pagos.</p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          m.mutate({ year, month }, { onSuccess: (r) => onCreated(r.id) });
-        }}
-      >
-        <div className="form-grid">
-          <Field label="Año">
-            <input
-              type="number"
-              min="2020"
-              max="2100"
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Mes">
-            <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i} value={i + 1}>
-                  {periodName({ year, month: i + 1 })}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <ErrorBox error={m.error} />
-        <div className="actions">
-          <SaveButton pending={m.isPending} />
-        </div>
-      </form>
-    </Modal>
   );
 }
 function Dashboard() {

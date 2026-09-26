@@ -72,6 +72,7 @@ export const instructorSchema = z.object({
   active: z.boolean().default(true),
 });
 export const activitySchema = z.object({
+  mode: z.enum(['group', 'individual']).default('group'),
   name: z.string().trim().min(1).max(180),
   instructor_id: z.number().int().positive(),
   active: z.boolean().default(true),
