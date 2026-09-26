@@ -84,6 +84,7 @@ $data = Join-Path (Get-Location) 'tmp/mysql-data'
 | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | NODE_ENV                        | `development` local, `production` en hosting                                                           |
 | PORT                            | Puerto entregado por el proveedor; fallback 3001                                                       |
+| HOST                            | Opcional: por defecto `127.0.0.1` local y `0.0.0.0` en producción                                        |
 | APP_URL                         | Origen exacto, sin barra final; HTTPS en producción                                                    |
 | DB_HOST / DB_PORT               | Servidor y puerto MySQL provistos por SiteGround                                                       |
 | DB_NAME / DB_USER / DB_PASSWORD | Credenciales exclusivamente del servidor                                                               |
@@ -163,7 +164,9 @@ Los nombres exactos y el mecanismo de arranque pueden variar con el preset del p
 19. Confirmar nuevamente Protected URLs en el dominio definitivo y cualquier alias/temporal; comprobar tanto frontend como API sin credenciales.
 20. Ejecutar el smoke test de producción, revisar logs y hacer backup inicial. Confirmar que un push de prueba a la rama seleccionada dispare el autodespliegue y que los datos MySQL sobrevivan.
 
-**Pendiente externo:** crear/vincular el repositorio privado, configurar cuenta SiteGround, dominio, credenciales MySQL y protección; ejecutar smoke final sobre ese hosting. No se creó ni publicó un recurso externo desde esta sesión.
+**Respaldo GitHub:** repositorio privado [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. El checkpoint del cierre de QA se subió y verificó el 26/09/2026.
+
+**Pendiente externo:** configurar cuenta SiteGround, dominio, credenciales MySQL y protección; ejecutar smoke final sobre ese hosting. No se desplegó a SiteGround. El despliegue requiere revisión y autorización posterior.
 
 ## Backups y restauración
 
