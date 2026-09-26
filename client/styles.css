@@ -561,6 +561,10 @@ td small {
   }
 }
 dialog {
+  margin: auto;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #293232;
   border: 1px solid #63766d;
   border-radius: 14px;
@@ -575,6 +579,11 @@ dialog::backdrop {
   backdrop-filter: blur(3px);
 }
 .modal-head {
+  position: sticky;
+  top: -26px;
+  z-index: 2;
+  background: #293232;
+  padding: 12px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -587,6 +596,72 @@ dialog::backdrop {
 }
 dialog .actions {
   margin-top: 22px;
+}
+dialog form > .actions,
+dialog > .actions {
+  position: sticky;
+  bottom: -26px;
+  background: #293232;
+  padding: 14px 0;
+  z-index: 2;
+  border-top: 1px solid #475654;
+}
+.discard-confirm {
+  position: sticky;
+  top: 50px;
+  background: #492f34;
+  padding: 16px;
+  z-index: 4;
+  border-radius: 8px;
+}
+.status-active {
+  background: #293d37;
+  color: #a0d5c1;
+  border-radius: 20px;
+}
+.status-archived {
+  background: #482e33;
+  color: #dbacad;
+  border-color: #70464c;
+  border-radius: 20px;
+}
+.finance-title,
+.payment-review h3 {
+  color: #c8b58b;
+}
+.panel:has(.finance-title),
+.payment-review {
+  background: #302f28;
+  border-color: #57513d;
+}
+.payment-review {
+  padding: 20px;
+  margin-top: 24px;
+  border: 1px solid #57513d;
+  border-radius: 10px;
+}
+.review-summary {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: 0 4px 20px #0004;
+  padding: 14px;
+}
+.review-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.review-filters button {
+  font-size: 11px;
+  padding: 7px;
+}
+.review-filters .selected {
+  border-color: #78cbb2;
+}
+.import-review {
+  scroll-margin-top: 180px;
 }
 details {
   border-top: 1px solid #46534e;
@@ -923,4 +998,18 @@ summary .chip {
   .import-row {
     padding: 12px;
   }
+}
+
+.brand-logo {
+  width: 38px;
+  height: 76px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.login-logo {
+  width: 90px;
+  height: 177px;
+  object-fit: contain;
+  margin: 0 auto 24px;
+  display: block;
 }

@@ -24,14 +24,43 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
   const defaults = person ? { ...person, activo: !!person.activo } : {};
   const {
     register,
+    getValues,
     handleSubmit,
     formState: { errors },
   } = useForm<any>({ resolver: zodResolver(personSchema) as any, defaultValues: defaults });
+  const [matches, setMatches] = useState<any[]>([]);
+  const [matchError, setMatchError] = useState<unknown>();
+  const findMatches = async () => {
+    try {
+      setMatchError(undefined);
+      const p = getValues();
+      setMatches(
+        await api('/people/matches', 'POST', {
+          telefono: p.telefono || '',
+          dni: p.dni || '',
+          email: p.email || '',
+          exclude: person?.id || 0,
+        }),
+      );
+    } catch (e) {
+      setMatchError(e);
+    }
+  };
   const [allow, setAllow] = useState(false);
   const m = useSave(person ? `/people/${person.id}` : '/people', person ? 'PUT' : 'POST', close);
   const input = (key: string, label: string, type = 'text') => (
     <Field key={key} label={label} error={errors[key]?.message as string}>
-      <input type={type} {...register(key)} />
+      <input
+        type={type}
+        {...register(key, {
+          onBlur: () => {
+            if (['telefono', 'dni', 'email'].includes(key)) void findMatches();
+          },
+          onChange: () => {
+            setAllow(false);
+          },
+        })}
+      />
     </Field>
   );
   return (
@@ -46,6 +75,20 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
           {input('email', 'Email', 'email')}
           {input('direccion', 'Dirección')}
         </div>
+        <ErrorBox error={matchError} />
+        {matches.length > 0 && (
+          <div className="info">
+            <b>Posible duplicado</b>
+            {matches.map((p) => (
+              <p key={p.id}>
+                {p.public_id} {p.nombre} {p.apellido} · Coincidencia: {p.reason} ·{' '}
+                <Link target="_blank" to={`/personas/${p.id}`}>
+                  Ver persona
+                </Link>
+              </p>
+            ))}
+          </div>
+        )}
         <Field label="Observaciones">
           <textarea {...register('observaciones')} />
         </Field>
@@ -167,7 +210,11 @@ export function People() {
                       {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
                     </span>
                   </td>
-                  <td>{p.activo ? 'Activa' : 'Archivada'}</td>
+                  <td>
+                    <span className={`chip ${p.activo ? 'status-active' : 'status-archived'}`}>
+                      {p.activo ? 'Activa' : 'Archivada'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -236,7 +283,10 @@ export function PersonDetail() {
       <div className="page-heading">
         <div>
           <span className="eyebrow">
-            {p.public_id} · {p.activo ? 'ACTIVA' : 'ARCHIVADA'}
+            {p.public_id} ·{' '}
+            <span className={`chip ${p.activo ? 'status-active' : 'status-archived'}`}>
+              {p.activo ? 'Activa' : 'Archivada'}
+            </span>
           </span>
           <h1>
             {p.nombre} {p.apellido}

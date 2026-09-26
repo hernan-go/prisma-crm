@@ -1,3 +1,4 @@
+import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
@@ -12,7 +13,6 @@ import {
   Settings,
   PanelLeftClose,
   Plus,
-  Triangle,
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Loading, Empty } from './components';
@@ -65,7 +65,7 @@ export default function App() {
       <div className={`app ${collapsed ? 'collapsed' : ''}`}>
         <aside>
           <div className="brand">
-            <Triangle size={30} />
+            <img className="brand-logo" src="/branding/logo_prisma.svg" alt="PRISMA" />
             <div>
               <b>PRISMA</b>
               <small>Gestión del espacio</small>
@@ -130,6 +130,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/personas" element={<People />} />
               <Route path="/personas/:id" element={<PersonDetail />} />
+              <Route path="/importar-forms" element={<FormsImport />} />
               <Route path="/importar" element={<ImportPeople />} />
               <Route path="/gestion" element={<Monthly />} />
               <Route path="/agenda" element={<Agenda />} />

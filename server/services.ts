@@ -98,43 +98,45 @@ export async function enrollmentInDB(body: unknown, db: Connection, id?: number)
 }
 export async function paymentSave(body: unknown, id?: number) {
   const p = paymentSchema.parse(body);
-  return peopleTransaction(async (db) => {
-    await openPeriod(p.period_id, db);
-    if (id) {
-      const [old] = await query(
-        'SELECT m.period_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=?',
-        [id],
-        db,
-      );
-      requireFound(old);
-      await openPeriod(old.period_id, db);
-    }
+  return peopleTransaction((db) => paymentInDB(p, db, id));
+}
+export async function paymentInDB(body: unknown, db: Connection, id?: number) {
+  const p = paymentSchema.parse(body);
+  await openPeriod(p.period_id, db);
+  if (id) {
+    const [old] = await query(
+      'SELECT m.period_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=?',
+      [id],
+      db,
+    );
+    requireFound(old);
+    await openPeriod(old.period_id, db);
+  }
+  await execute(
+    'INSERT IGNORE INTO monthly_accounts(person_id,period_id) VALUES (?,?)',
+    [p.person_id, p.period_id],
+    db,
+  );
+  const [account] = await query(
+    'SELECT id FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
+    [p.person_id, p.period_id],
+    db,
+  );
+  if (id)
     await execute(
-      'INSERT IGNORE INTO monthly_accounts(person_id,period_id) VALUES (?,?)',
-      [p.person_id, p.period_id],
+      'UPDATE payments SET account_id=?,date=?,amount=?,method=?,notes=? WHERE id=?',
+      [account.id, p.date, p.amount, p.method, p.notes, id],
       db,
     );
-    const [account] = await query(
-      'SELECT id FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
-      [p.person_id, p.period_id],
-      db,
-    );
-    if (id)
+  else
+    id = (
       await execute(
-        'UPDATE payments SET account_id=?,date=?,amount=?,method=?,notes=? WHERE id=?',
-        [account.id, p.date, p.amount, p.method, p.notes, id],
+        'INSERT INTO payments(account_id,date,amount,method,notes) VALUES (?,?,?,?,?)',
+        [account.id, p.date, p.amount, p.method, p.notes],
         db,
-      );
-    else
-      id = (
-        await execute(
-          'INSERT INTO payments(account_id,date,amount,method,notes) VALUES (?,?,?,?,?)',
-          [account.id, p.date, p.amount, p.method, p.notes],
-          db,
-        )
-      ).insertId;
-    return { id };
-  });
+      )
+    ).insertId;
+  return { id };
 }
 export async function activitySave(body: unknown, id?: number) {
   const p = activitySchema.parse(body);

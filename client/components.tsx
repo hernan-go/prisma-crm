@@ -29,19 +29,52 @@ export function Modal({
   close: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [dirty, setDirty] = useState(false);
+  const [discard, setDiscard] = useState(false);
+  const titleId = useId();
+  const safeClose = () => (dirty ? setDiscard(true) : close());
   useEffect(() => {
     const d = ref.current!;
     d.showModal();
     return () => d.close();
   }, []);
   return (
-    <dialog ref={ref} onCancel={close} aria-labelledby="dialog-title">
+    <dialog
+      ref={ref}
+      onCancel={(e) => {
+        e.preventDefault();
+        safeClose();
+      }}
+      aria-labelledby={titleId}
+      onInputCapture={() => setDirty(true)}
+      onChangeCapture={() => setDirty(true)}
+      onClickCapture={(e) => {
+        const button = (e.target as HTMLElement).closest('button');
+        if (!button) return;
+        if (dirty && /^(Cancelar|Volver a revisar)$/.test(button.textContent?.trim() || '')) {
+          e.preventDefault();
+          e.stopPropagation();
+          setDiscard(true);
+        } else if (button.closest('form') && button.type === 'button') setDirty(true);
+      }}
+    >
       <div className="modal-head">
-        <h2 id="dialog-title">{title}</h2>
-        <button className="icon" aria-label="Cerrar" onClick={close}>
+        <h2 id={titleId}>{title}</h2>
+        <button className="icon" aria-label="Cerrar" onClick={safeClose}>
           <X size={20} />
         </button>
       </div>
+      {discard && (
+        <div className="discard-confirm" role="alert">
+          <p>Hay cambios sin guardar. ¿Querés descartarlos?</p>
+          <div className="actions">
+            <button onClick={() => setDiscard(false)}>Seguir editando</button>
+            <button className="danger" onClick={close}>
+              Descartar cambios
+            </button>
+          </div>
+        </div>
+      )}
       {children}
     </dialog>
   );

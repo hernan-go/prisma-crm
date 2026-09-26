@@ -34,3 +34,7 @@ createRoot(document.getElementById('root')!).render(
     </Boundary>
   </React.StrictMode>,
 );
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  void navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+}

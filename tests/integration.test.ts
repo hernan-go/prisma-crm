@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import ExcelJS from 'exceljs';
@@ -319,5 +320,72 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     ).toBe(200);
     expect((await request(app).delete(`/api/periods/${pr}`)).status).toBe(200);
     expect((await request(app).get('/api/periods')).body.some((p: any) => p.id === pr)).toBe(false);
+  });
+  it('Google Forms preview sin escritura, revisión, varias actividades y reintento seguro', async () => {
+    const pr = (await request(app).post('/api/periods').send({ year: 2027, month: 4 })).body.id;
+    const csv =
+      'Nombre Completo.;Número de Teléfono (con código de área);Elegí la opción que corresponde. TURNO MAÑANA;Elegí la opción que corresponde. TURNO TARDE;Pago\nForms Ficticia;0000055511;Yoga Terapéutico Integral Lunes 10 a 11 hs;Inclusión Digital Miércoles 10 a 12 hs;25000 T 23/4';
+    const before = (await query('SELECT COUNT(*) n FROM people'))[0].n;
+    const preview = await request(app)
+      .post('/api/forms-import/preview')
+      .field('period_id', String(pr))
+      .attach('file', Buffer.from(csv), 'forms.csv');
+    expect(preview.status).toBe(200);
+    expect((await query('SELECT COUNT(*) n FROM people'))[0].n).toBe(before);
+    const row = preview.body.rows[0];
+    expect(row.selections).toHaveLength(2);
+    const body = { period_id: pr, request_id: randomUUID(), confirmed: true, rows: [row] };
+    expect((await request(app).post('/api/forms-import/commit').send(body)).status).toBe(422);
+    row.reviewed = true;
+    row.payment.include = true;
+    expect((await request(app).post('/api/forms-import/commit').send(body)).status).toBe(422);
+    row.payment.approved = true;
+    const result = await request(app).post('/api/forms-import/commit').send(body);
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ created: 1, enrollments: 2, payments: 1 });
+    expect((await request(app).post('/api/forms-import/commit').send(body)).body).toEqual(
+      result.body,
+    );
+    expect((await request(app).get(`/api/payments?period_id=${pr}`)).body).toHaveLength(1);
+    const second = await request(app)
+      .post('/api/forms-import/preview')
+      .field('period_id', String(pr))
+      .attach('file', Buffer.from(csv), 'forms.csv');
+    expect(second.body.rows[0].matches).toHaveLength(1);
+    const old = second.body.rows[0];
+    old.action = 'keep';
+    old.reviewed = true;
+    old.payment.include = false;
+    expect(
+      (
+        await request(app)
+          .post('/api/forms-import/commit')
+          .send({ period_id: pr, request_id: randomUUID(), confirmed: true, rows: [old] })
+      ).body.kept,
+    ).toBe(1);
+    expect((await request(app).get(`/api/enrollments?period_id=${pr}`)).body).toHaveLength(2);
+  });
+  it('Forms mapeo manual alternativo y conflicto revierte persona y movimientos', async () => {
+    const pr = (await query('SELECT id FROM periods WHERE year=2027 AND month=4'))[0].id;
+    const csv =
+      'X;Y;Z\nOtra Ficticia;0000055522;Yoga Terapéutico Integral Lunes 10 a 11 hs, Inclusión Digital Lunes 10 a 12 hs';
+    const preview = await request(app)
+      .post('/api/forms-import/preview')
+      .field('period_id', String(pr))
+      .field('mapping', JSON.stringify({ full_name: 0, telefono: 1, morning: 2 }))
+      .attach('file', Buffer.from(csv), 'alternate.csv');
+    expect(preview.status).toBe(200);
+    const row = preview.body.rows[0];
+    row.reviewed = true;
+    expect(
+      (
+        await request(app)
+          .post('/api/forms-import/commit')
+          .send({ period_id: pr, request_id: randomUUID(), confirmed: true, rows: [row] })
+      ).status,
+    ).toBe(409);
+    expect(
+      await query('SELECT id FROM people WHERE phone_normalized=?', ['0000055522']),
+    ).toHaveLength(0);
   });
 });

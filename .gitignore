@@ -8,6 +8,10 @@ private/
 coverage/
 *.log
 *.png
+!public/branding/*.png
+*.csv
+*.sql
+!server/migrations/*.sql
 *.xlsx
 *.pdf
 *.sql.gz

@@ -1,3 +1,4 @@
+import { formsImport } from './forms-import.js';
 import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
 import multer from 'multer';
@@ -16,6 +17,7 @@ import { accounts, enrollmentList, paymentSelect, duplicates, savePerson } from 
 import { personSave, enrollmentSave, paymentSave, activitySave, positiveId } from './services.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use('/forms-import', formsImport);
 const id = (v: unknown) => positiveId.parse(v);
 api.get('/health', async (_req, res) => {
   await query('SELECT 1');
@@ -42,6 +44,25 @@ api.get('/people', async (req, res) => {
     args,
   );
   res.json({ rows, total: count.total, page });
+});
+api.post('/people/matches', async (req, res) => {
+  const p = z
+    .object({
+      telefono: z.string().max(60).default(''),
+      dni: z.string().max(30).default(''),
+      email: z.string().max(254).default(''),
+      exclude: z.number().int().nonnegative().default(0),
+    })
+    .parse(req.body);
+  const phone = normalizePhone(p.telefono);
+  const rows = await query(
+    "SELECT id,public_id,nombre,apellido,IF(phone_normalized=? AND ?<>'','mismo teléfono',IF(dni=? AND ?<>'','mismo DNI','mismo email')) reason FROM people WHERE id<>? AND ((?< >'' AND phone_normalized=?) OR (?<>'' AND dni=?) OR (?<>'' AND email=?)) LIMIT 20".replace(
+      '< >',
+      '<>',
+    ),
+    [phone, phone, p.dni, p.dni, p.exclude, phone, phone, p.dni, p.dni, p.email, p.email],
+  );
+  res.json(rows);
 });
 api.post('/people', async (req, res) => res.status(201).json(await personSave(req.body)));
 api.put('/people/:id', async (req, res) => res.json(await personSave(req.body, id(req.params.id))));

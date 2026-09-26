@@ -49,7 +49,7 @@ export function ImportPeople() {
           person: r.person,
           action: r.action,
           target_id: r.target_id,
-          reviewed: true,
+          reviewed: r.action === 'skip' || r.reviewed,
         })),
       }),
     onSuccess: (r) => {
@@ -75,6 +75,9 @@ export function ImportPeople() {
         <div>
           <span className="eyebrow">IMPORTACIÓN ASISTIDA</span>
           <h1>Importar personas</h1>
+          <Link className="button primary" to="/importar-forms">
+            Importar inscripciones desde Google Forms PRISMA
+          </Link>
           <p>
             Seleccioná, revisá las columnas y confirmá cada registro. El archivo original se
             conserva.
@@ -177,8 +180,8 @@ export function ImportPeople() {
               La separación sugerida usa la última palabra como apellido. Revisá nombres y apellidos
               compuestos. Ninguna fila se confirma automáticamente.
             </p>
-            {rows.slice(page * 20, (page + 1) * 20).map((r, offset) => {
-              const index = page * 20 + offset;
+            {rows.slice(page, page + 1).map((r, offset) => {
+              const index = page + offset;
               const valid = personSchema.safeParse(r.person);
               return (
                 <article className="import-row" key={r.line}>
@@ -270,8 +273,10 @@ export function ImportPeople() {
               <button disabled={!page} onClick={() => setPage(page - 1)}>
                 Anterior
               </button>
-              <span>Página {page + 1}</span>
-              <button disabled={(page + 1) * 20 >= rows.length} onClick={() => setPage(page + 1)}>
+              <span>
+                Respuesta {page + 1} de {rows.length}
+              </span>
+              <button disabled={page + 1 >= rows.length} onClick={() => setPage(page + 1)}>
                 Siguiente
               </button>
             </div>
