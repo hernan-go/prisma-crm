@@ -106,13 +106,19 @@ export function PersonMonth({ person }: { person: any }) {
   const [enroll, setEnroll] = useState<any>();
   const [payment, setPayment] = useState<any>();
   const [due, setDue] = useState(false);
+  const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const account = a.data?.[0];
   const rows = payments.data?.filter((p: any) => p.person_id === person.id) || [];
   return (
     <>
+      {closed && (
+        <p className="info">
+          Período cerrado: consulta histórica. Para modificarlo, reabrilo desde Configuración.
+        </p>
+      )}
       <div className="section-heading">
         <h2>{periodName(periods.find((p) => p.id === period))}</h2>
-        {!!person.activo && (
+        {!!person.activo && !closed && (
           <button className="primary" onClick={() => setEnroll({})}>
             <Plus size={17} /> Agregar actividad
           </button>
@@ -135,8 +141,14 @@ export function PersonMonth({ person }: { person: any }) {
               </div>
             ))}
             <div className="actions">
-              <button onClick={() => setEnroll(e)}>Editar horarios</button>
-              <DeleteButton path={`/enrollments/${e.id}`} label="Cancelar inscripción" />
+              <button disabled={closed} onClick={() => setEnroll(e)}>
+                Editar horarios
+              </button>
+              <DeleteButton
+                disabled={closed}
+                path={`/enrollments/${e.id}`}
+                label="Cancelar inscripción"
+              />
             </div>
           </article>
         ))}
@@ -148,7 +160,9 @@ export function PersonMonth({ person }: { person: any }) {
       <section className="panel">
         <div className="section-heading">
           <h2 className="finance-title">Cuenta del mes</h2>
-          <button onClick={() => setDue(true)}>Editar importe a cobrar</button>
+          <button disabled={closed} onClick={() => setDue(true)}>
+            Editar importe a cobrar
+          </button>
         </div>
         <div className="stats compact">
           <div>
@@ -174,7 +188,7 @@ export function PersonMonth({ person }: { person: any }) {
         </div>
         <div className="section-heading">
           <h3>Movimientos del período</h3>
-          <button className="primary" onClick={() => setPayment({})}>
+          <button className="primary" disabled={closed} onClick={() => setPayment({})}>
             Registrar pago
           </button>
         </div>
@@ -188,8 +202,10 @@ export function PersonMonth({ person }: { person: any }) {
               {p.notes && <small>{p.notes}</small>}
             </div>
             <div className="actions">
-              <button onClick={() => setPayment(p)}>Editar</button>
-              <DeleteButton path={`/payments/${p.id}`} />
+              <button disabled={closed} onClick={() => setPayment(p)}>
+                Editar
+              </button>
+              <DeleteButton disabled={closed} path={`/payments/${p.id}`} />
             </div>
           </div>
         ))}
@@ -647,7 +663,7 @@ export function Payments() {
               >
                 Editar
               </button>
-              <DeleteButton path={`/payments/${p.id}`} />
+              <DeleteButton disabled={closed} path={`/payments/${p.id}`} />
             </div>
           </div>
         ))}

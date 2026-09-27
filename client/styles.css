@@ -1013,3 +1013,36 @@ summary .chip {
   margin: 0 auto 24px;
   display: block;
 }
+
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.login-card {
+  width: min(420px, 100%);
+  text-align: center;
+}
+.login-card .field {
+  text-align: left;
+}
+.login-card button {
+  width: 100%;
+}
+@media (max-width: 700px) {
+  .period-control {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .review-summary {
+    position: static;
+  }
+  .modal-head {
+    top: -20px;
+  }
+  dialog form > .actions,
+  dialog > .actions {
+    bottom: -20px;
+  }
+}

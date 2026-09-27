@@ -1,3 +1,4 @@
+import { AuthGate } from './Auth';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -28,7 +29,9 @@ createRoot(document.getElementById('root')!).render(
     <Boundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <App />
+          <AuthGate>
+            <App />
+          </AuthGate>
         </BrowserRouter>
       </QueryClientProvider>
     </Boundary>

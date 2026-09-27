@@ -21,6 +21,7 @@ export function ImportPeople() {
   const [preview, setPreview] = useState<any>();
   const [rows, setRows] = useState<any[]>([]);
   const [page, setPage] = useState(0);
+  const [filter, setFilter] = useState('all');
   const [mapping, setMapping] = useState<Record<string, number>>({});
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState<any>();
@@ -62,6 +63,23 @@ export function ImportPeople() {
   });
   const update = (index: number, patch: any) =>
     setRows(rows.map((r, i) => (i === index ? { ...r, ...patch, reviewed: false } : r)));
+  const filters: Record<string, string> = {
+    all: 'Todas',
+    pending: 'Pendientes',
+    reviewed: 'Revisadas',
+    errors: 'Errores',
+    duplicates: 'Duplicados',
+    skip: 'Omitidas',
+  };
+  const matchesFilter = (r: any, key: string) =>
+    key === 'all' ||
+    (key === 'pending' && r.action !== 'skip' && !r.reviewed) ||
+    (key === 'reviewed' && r.reviewed && r.action !== 'skip') ||
+    (key === 'errors' && !personSchema.safeParse(r.person).success) ||
+    (key === 'duplicates' && (r.matches.length || r.duplicate_lines?.length)) ||
+    (key === 'skip' && r.action === 'skip');
+  const visible = rows.map((r, i) => ({ r, index: i })).filter(({ r }) => matchesFilter(r, filter));
+  const currentPage = Math.min(page, Math.max(0, visible.length - 1));
   const selected = rows.filter((r) => r.action !== 'skip');
   const ready =
     selected.length > 0 &&
@@ -165,6 +183,32 @@ export function ImportPeople() {
               Aplicar columnas y volver a validar
             </button>
           </section>
+          <section className="panel review-summary">
+            <b>
+              {selected.filter((r) => r.reviewed).length} de {selected.length} seleccionadas
+              revisadas
+            </b>
+            <div className="review-filters">
+              {Object.entries(filters).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setFilter(key);
+                    setPage(0);
+                  }}
+                >
+                  {label} ({rows.filter((r) => matchesFilter(r, key)).length})
+                </button>
+              ))}
+            </div>
+            <button
+              className="primary"
+              disabled={!ready || load.isPending}
+              onClick={() => setConfirm(true)}
+            >
+              Confirmar importación
+            </button>
+          </section>
           <section className="panel">
             <div className="section-heading">
               <h2>2. Revisar registros</h2>
@@ -180,8 +224,7 @@ export function ImportPeople() {
               La separación sugerida usa la última palabra como apellido. Revisá nombres y apellidos
               compuestos. Ninguna fila se confirma automáticamente.
             </p>
-            {rows.slice(page, page + 1).map((r, offset) => {
-              const index = page + offset;
+            {visible.slice(currentPage, currentPage + 1).map(({ r, index }) => {
               const valid = personSchema.safeParse(r.person);
               return (
                 <article className="import-row" key={r.line}>
@@ -270,13 +313,16 @@ export function ImportPeople() {
               );
             })}
             <div className="pagination">
-              <button disabled={!page} onClick={() => setPage(page - 1)}>
+              <button disabled={!currentPage} onClick={() => setPage(currentPage - 1)}>
                 Anterior
               </button>
               <span>
                 Respuesta {page + 1} de {rows.length}
               </span>
-              <button disabled={page + 1 >= rows.length} onClick={() => setPage(page + 1)}>
+              <button
+                disabled={currentPage + 1 >= visible.length}
+                onClick={() => setPage(currentPage + 1)}
+              >
                 Siguiente
               </button>
             </div>

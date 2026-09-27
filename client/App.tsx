@@ -1,3 +1,4 @@
+import { Logout } from './Auth';
 import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
@@ -45,8 +46,8 @@ export default function App() {
   const [toast, setToast] = useState('');
   const q = useQuery({ queryKey: ['periods'], queryFn: () => api<any[]>('/periods') });
   useEffect(() => {
-    if (q.data && !q.data.some((p) => p.id === period)) setPeriod(q.data[0]?.id || 0);
-  }, [q.data, period]);
+    if (!q.isFetching && q.data && !q.data.some((p) => p.id === period)) setPeriod(q.data[0]?.id || 0);
+  }, [q.data, q.isFetching, period]);
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
     const listener = (e: Event) => {
@@ -96,6 +97,7 @@ export default function App() {
               PRISMA <span>/</span> Administración
             </div>
             <div className="period-control">
+              <Logout />
               <label>
                 Período
                 <select

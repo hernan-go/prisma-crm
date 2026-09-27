@@ -15,6 +15,8 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
     body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
   });
   const data = await r.json();
+  if (r.status === 401 && !path.startsWith('/auth/'))
+    window.dispatchEvent(new Event('session-expired'));
   if (!r.ok)
     throw new ApiError(
       data.message || 'No se pudo completar la operación.',

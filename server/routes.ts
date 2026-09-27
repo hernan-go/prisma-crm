@@ -1,3 +1,4 @@
+import { advertisingSave, advertisingDelete } from './advertising.js';
 import { formsImport } from './forms-import.js';
 import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
@@ -6,7 +7,6 @@ import { z } from 'zod';
 import {
   periodSchema,
   instructorSchema,
-  advertisingSchema,
   money,
   personSchema,
   normalizePhone,
@@ -56,7 +56,7 @@ api.post('/people/matches', async (req, res) => {
     .parse(req.body);
   const phone = normalizePhone(p.telefono);
   const rows = await query(
-    "SELECT id,public_id,nombre,apellido,IF(phone_normalized=? AND ?<>'','mismo teléfono',IF(dni=? AND ?<>'','mismo DNI','mismo email')) reason FROM people WHERE id<>? AND ((?< >'' AND phone_normalized=?) OR (?<>'' AND dni=?) OR (?<>'' AND email=?)) LIMIT 20".replace(
+    "SELECT id,public_id,nombre,apellido,IF(phone_normalized=? AND ?<>'','mismo teléfono',IF(dni=? AND ?<>'','mismo DNI','mismo email')) reason FROM people WHERE id<>? AND ((?<>'' AND phone_normalized=?) OR (?<>'' AND dni=?) OR (?<>'' AND email=?)) LIMIT 20".replace(
       '< >',
       '<>',
     ),
@@ -229,36 +229,13 @@ api.get('/advertising', async (req, res) => {
     ),
   );
 });
-api.post('/advertising', async (req, res) => {
-  const p = advertisingSchema.parse(req.body);
-  res.status(201).json({
-    id: (
-      await execute(
-        'INSERT INTO advertising_investments(date,concept,amount,notes) VALUES (?,?,?,?)',
-        [p.date, p.concept, p.amount, p.notes],
-      )
-    ).insertId,
-  });
-});
-api.put('/advertising/:id', async (req, res) => {
-  const p = advertisingSchema.parse(req.body);
-  requireFound(
-    (
-      await execute(
-        'UPDATE advertising_investments SET date=?,concept=?,amount=?,notes=? WHERE id=?',
-        [p.date, p.concept, p.amount, p.notes, id(req.params.id)],
-      )
-    ).affectedRows,
-  );
-  res.json({ ok: true });
-});
-api.delete('/advertising/:id', async (req, res) => {
-  requireFound(
-    (await execute('DELETE FROM advertising_investments WHERE id=?', [id(req.params.id)]))
-      .affectedRows,
-  );
-  res.json({ ok: true });
-});
+api.post('/advertising', async (req, res) => res.status(201).json(await advertisingSave(req.body)));
+api.put('/advertising/:id', async (req, res) =>
+  res.json(await advertisingSave(req.body, id(req.params.id))),
+);
+api.delete('/advertising/:id', async (req, res) =>
+  res.json(await advertisingDelete(id(req.params.id))),
+);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },

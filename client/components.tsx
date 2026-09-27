@@ -158,11 +158,13 @@ export function SaveButton({ pending }: { pending: boolean }) {
 export function DeleteButton({
   path,
   label = 'Eliminar',
+  disabled = false,
   onDone,
 }: {
   path: string;
   label?: string;
   onDone?: () => void;
+  disabled?: boolean;
 }) {
   const [ask, set] = useState(false);
   const m = useSave(path, 'DELETE', () => {
@@ -171,7 +173,7 @@ export function DeleteButton({
   });
   return (
     <>
-      <button className="danger subtle" onClick={() => set(true)}>
+      <button disabled={disabled} className="danger subtle" onClick={() => set(true)}>
         {label}
       </button>
       {ask && (

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from './api';
 import { Field, ErrorBox, Modal } from './components';
 import { usePeriod, periodName } from './App';
 import { formFields, formRowSchema } from '../shared/forms';
 import { days, times, wallet } from '../shared/domain';
+import { scheduleConflict, type Booking } from '../shared/schedule';
 export function FormsImport() {
   const { period, periods } = usePeriod();
   const [file, setFile] = useState<File>();
@@ -19,7 +20,58 @@ export function FormsImport() {
   const [requestId, setRequestId] = useState('');
   const [loadedPeriod, setLoadedPeriod] = useState(0);
   const qc = useQueryClient();
-  const valid = (r: any) => formRowSchema.safeParse({ ...r, reviewed: true }).success;
+  const agenda = useQuery({
+    queryKey: ['forms-agenda', loadedPeriod],
+    queryFn: () => api(`/enrollments?period_id=${loadedPeriod}`),
+    enabled: !!loadedPeriod,
+  });
+  const scheduleError = (row: any) => {
+    const currentIndex = rows.indexOf(row);
+    const personId = row.action === 'create' ? -(currentIndex + 1) : row.target_id;
+    const existing: Booking[] = (agenda.data || []).flatMap((e: any) =>
+      e.slots.map((s: any) => ({
+        ...e,
+        ...s,
+        mode: preview?.activities.find((a: any) => a.id === e.activity_id)?.mode || 'group',
+      })),
+    );
+    for (let i = 0; i < rows.length; i++) {
+      const other = rows[i];
+      if (other === row || other.action === 'skip') continue;
+      for (const s of other.selections.filter((s: any) => s.include)) {
+        const a = preview?.activities.find((a: any) => a.id === s.activity_id);
+        if (a)
+          existing.push({
+            ...s,
+            person_id: other.action === 'create' ? -(i + 1) : other.target_id,
+            activity: a.name,
+            mode: a.mode,
+          });
+      }
+    }
+    for (const s of row.selections.filter((s: any) => s.include)) {
+      const a = preview?.activities.find((a: any) => a.id === s.activity_id);
+      if (!a || a.instructor_id !== s.instructor_id || !a.days.includes(s.day))
+        return 'Revisá actividad, docente y día permitido.';
+      const next = { ...s, person_id: personId, activity: a.name, mode: a.mode };
+      const same = (b: Booking) =>
+        row.action !== 'create' &&
+        b.person_id === personId &&
+        b.activity_id === s.activity_id &&
+        b.day === s.day &&
+        b.start === s.start &&
+        b.end === s.end;
+      const conflict = scheduleConflict(
+        next,
+        existing.filter((b) => !same(b)),
+      );
+      if (conflict) return conflict;
+      existing.push(next);
+    }
+    return '';
+  };
+  const valid = (r: any) =>
+    formRowSchema.safeParse({ ...r, reviewed: true }).success && !scheduleError(r);
   const load = useMutation({
     mutationFn: (remap: boolean) => {
       const f = new FormData();
@@ -84,7 +136,12 @@ export function FormsImport() {
   const current = visible[Math.min(index, Math.max(0, visible.length - 1))];
   const selected = rows.filter((r) => r.action !== 'skip');
   const ready =
-    selected.length > 0 && selected.every((r) => r.reviewed && valid(r)) && loadedPeriod === period;
+    selected.length > 0 &&
+    selected.every((r) => r.reviewed && valid(r)) &&
+    loadedPeriod === period &&
+    !load.isPending &&
+    !agenda.isPending &&
+    !agenda.error;
   const periodLabel = periodName(periods.find((p) => p.id === loadedPeriod));
   return (
     <>
@@ -500,6 +557,11 @@ export function FormsImport() {
                     <div className="error-box">
                       {validation.error.issues.map((e) => e.message).join(' ')}
                     </div>
+                  )}
+                  {r.action !== 'skip' && (
+                    <ErrorBox
+                      error={scheduleError(r) ? new Error(scheduleError(r)) : agenda.error}
+                    />
                   )}
                   <label className="check">
                     <input

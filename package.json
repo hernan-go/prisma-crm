@@ -16,7 +16,9 @@
     "db:migrate": "tsx server/migrate.ts",
     "db:seed": "tsx server/seed.ts",
     "import:preview": "tsx scripts/import-preview.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "auth:configure": "tsx scripts/configure-auth.ts",
+    "qa:cleanup": "tsx scripts/qa-cleanup.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

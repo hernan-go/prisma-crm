@@ -6,7 +6,8 @@ import { ZodError } from 'zod';
 import { resolve } from 'node:path';
 import { api } from './routes.js';
 import { AppError } from './errors.js';
-export function createApp() {
+import { authentication, type AuthOptions } from './auth.js';
+export function createApp(authOptions: AuthOptions = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
@@ -23,14 +24,9 @@ export function createApp() {
       message: { message: 'Demasiadas solicitudes. Esperá un minuto.' },
     }),
   );
-  // Central authorization boundary: replace/extend here when adding native authentication.
+  // Origin checks apply to login and all administrative writes.
   app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
-    if (
-      process.env.NODE_ENV === 'production' &&
-      process.env.EXTERNAL_PROTECTION_CONFIRMED !== 'true'
-    )
-      return res.status(503).json({ message: 'Falta confirmar la protección externa de acceso.' });
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       const origin = req.get('origin');
       if (origin && origin !== (process.env.APP_URL || 'http://localhost:5173'))
@@ -40,6 +36,9 @@ export function createApp() {
     }
     next();
   });
+  const auth = authentication(authOptions);
+  app.use('/api/auth', auth.router);
+  app.use('/api', auth.guard);
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ message: 'Ruta no encontrada.' }));
   app.use(express.static(resolve('dist/client')));
