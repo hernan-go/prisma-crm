@@ -1,6 +1,6 @@
 import { emitKeypressEvents } from 'node:readline';
 import { randomBytes } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { hashPassword } from '../server/auth.js';
 import { pool } from '../server/db.js';
 async function hidden(label: string) {
@@ -49,9 +49,18 @@ try {
     ADMIN_PASSWORD_HASH: await hashPassword(password),
     SESSION_SECRET: randomBytes(48).toString('hex'),
   };
-  if (process.argv.includes('--print')) {
-    console.log('Copiá estas variables al panel privado del hosting, nunca a Git:');
-    for (const [k, v] of Object.entries(values)) console.log(`${k}=${v}`);
+  if (process.argv.includes('--export')) {
+    await mkdir('private', { recursive: true });
+    await writeFile(
+      'private/auth.env',
+      Object.entries(values)
+        .map(([k, v]) => `${k}=${v}`)
+        .join('\n') + '\n',
+      { mode: 0o600, flag: 'wx' },
+    );
+    console.log(
+      'Variables guardadas en private/auth.env. Copialas al panel privado del hosting. No se imprimieron secretos.',
+    );
   } else {
     let env = await readFile('.env', 'utf8').catch(() => '');
     for (const [k, v] of Object.entries(values))

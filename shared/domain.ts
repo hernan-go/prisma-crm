@@ -10,6 +10,7 @@ export const normalizePhone = (s: string) =>
     .replace(/\D/g, '')
     .replace(/^549(?=\d{10}$)/, '')
     .replace(/^54(?=\d{10}$)/, '');
+export const normalizeDni = (s: string) => s.replace(/[^0-9a-z]/gi, '').toUpperCase();
 export const money = z
   .string()
   .regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ingresá un importe positivo con hasta dos decimales.');

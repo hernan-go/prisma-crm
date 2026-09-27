@@ -5,6 +5,7 @@ import {
   enrollmentSchema,
   paymentSchema,
   normalizePhone,
+  normalizeDni,
   times,
   wallet,
   balance,
@@ -21,6 +22,15 @@ import {
 import ExcelJS from 'exceljs';
 const person = { nombre: 'Persona', apellido: 'Prueba', telefono: '3411234567' };
 describe('Personas y teléfonos', () => {
+  it('normaliza DNI para comparar sin alterar el texto visible', () => {
+    expect(normalizeDni('12.345.678')).toBe('12345678');
+    expect(
+      strongMatch(
+        personSchema.parse({ ...person, dni: '12.345.678' }),
+        personSchema.parse({ ...person, telefono: '0000011111', dni: '12345678' }),
+      ),
+    ).toBe(true);
+  });
   it('exige nombre, apellido y teléfono', () => {
     for (const key of Object.keys(person))
       expect(personSchema.safeParse({ ...person, [key]: '' }).success).toBe(false);

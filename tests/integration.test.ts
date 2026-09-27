@@ -369,15 +369,13 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
         .send({ date: '2029-01-02', concept: 'QA cierre', amount: '20' })
     ).body.id;
     const pay = (
-      await agent
-        .post('/api/payments')
-        .send({
-          person_id: person,
-          period_id: pr,
-          date: '2029-01-02',
-          amount: '10',
-          method: 'cash',
-        })
+      await agent.post('/api/payments').send({
+        person_id: person,
+        period_id: pr,
+        date: '2029-01-02',
+        amount: '10',
+        method: 'cash',
+      })
     ).body.id;
     await agent.patch(`/api/periods/${pr}/status`).send({ status: 'closed' });
     expect((await agent.delete(`/api/payments/${pay}`)).status).toBe(409);
@@ -418,5 +416,16 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     fresh.candidates.find((c) => c.table === 'people' && c.id === id)!.reviewed = true;
     expect((await applyCleanup(fresh, 'prisma_test')).deleted).toBe(1);
     expect((await query('SELECT COUNT(*) n FROM activities'))[0].n).toBe(before);
+  });
+  it('DNI normalizado funciona en búsqueda, aviso y validación final', async () => {
+    const p = { nombre: 'DNI', apellido: 'Ficticio', telefono: '0000037766', dni: '12.345.678' };
+    expect((await agent.post('/api/people').send(p)).status).toBe(201);
+    expect((await agent.get('/api/people?q=12345678')).body.total).toBe(1);
+    const matches = await agent.post('/api/people/matches').send({ dni: '12345678' });
+    expect(matches.body[0].reason).toBe('mismo DNI');
+    expect(
+      (await agent.post('/api/people').send({ ...p, telefono: '0000037765', dni: '12345678' }))
+        .status,
+    ).toBe(409);
   });
 });

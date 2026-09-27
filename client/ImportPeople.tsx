@@ -317,7 +317,7 @@ export function ImportPeople() {
                 Anterior
               </button>
               <span>
-                Respuesta {page + 1} de {rows.length}
+                Respuesta {currentPage + 1} de {visible.length}
               </span>
               <button
                 disabled={currentPage + 1 >= visible.length}

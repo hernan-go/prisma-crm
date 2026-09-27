@@ -37,6 +37,12 @@ it('interpreta actividad y rango explícitos sin inventar duraciones', () => {
   );
   expect(parseOption('Actividad desconocida Lunes 10 a 11 hs', activities).activity_id).toBe(0);
 });
+it('reconoce el alias explícito Programa acompañamiento cognitivo', () => {
+  const result = parseOption('Programa acompañamiento cognitivo Jueves 10:30 a 12 hs', [
+    { id: 3, name: 'Acompañamiento Cognitivo', instructor_id: 3, days: [2, 4] },
+  ]);
+  expect(result).toMatchObject({ activity_id: 3, day: 4, start: '10:30', end: '12:00' });
+});
 it('sugiere pagos con aprobación desactivada y deja fechas faltantes pendientes', () => {
   expect(parseFormPayment('35000 E 24/9', 2026)).toMatchObject({
     amount: '35000',
@@ -69,4 +75,59 @@ it('exige revisión y aprobación del pago; las opciones ambiguas bloquean', () 
       selections: [parseOption('sin reconocer', activities)],
     }).success,
   ).toBe(false);
+});
+
+it.each([
+  ['Yoga Terapéutico Integral Lunes 10 a 11 hs', 'Yoga Terapéutico Integral', 1, '10:00', '11:00'],
+  [
+    'Movimiento y cuidado corporal Viernes 10 a 11 hs',
+    'Movimiento y Cuidado Corporal',
+    5,
+    '10:00',
+    '11:00',
+  ],
+  [
+    'Yoga Terapéutico Integral Miércoles 17 a 18 hs',
+    'Yoga Terapéutico Integral',
+    3,
+    '17:00',
+    '18:00',
+  ],
+  [
+    'Gimnasia y fortalecimiento corporal Viernes 13:30 hs',
+    'Gimnasia y Fortalecimiento Corporal',
+    5,
+    '13:30',
+    '14:30',
+  ],
+  [
+    'Movimiento y cuidado corporal Lunes 17 a 18 hs',
+    'Movimiento y Cuidado Corporal',
+    1,
+    '17:00',
+    '18:00',
+  ],
+  ['Inclusión digital Lunes 14 a 16 hs', 'Inclusión Digital', 1, '14:00', '16:00'],
+  ['Inclusión digital Miércoles 10 a 12 hs', 'Inclusión Digital', 3, '10:00', '12:00'],
+  [
+    'Taller de la memoria y estimulación cognitiva Jueves 15 a 17 hs',
+    'Taller de la Memoria y Estimulación Cognitiva',
+    4,
+    '15:00',
+    '17:00',
+  ],
+  [
+    'Taller de la memoria y estimulación cognitiva Miércoles 16 a 18 hs',
+    'Taller de la Memoria y Estimulación Cognitiva',
+    3,
+    '16:00',
+    '18:00',
+  ],
+] as const)('mapea opción conocida: %s', (original, name, day, start, end) => {
+  expect(parseOption(original, [{ id: 1, name, instructor_id: 1, days: [day] }])).toMatchObject({
+    activity_id: 1,
+    day,
+    start,
+    end,
+  });
 });

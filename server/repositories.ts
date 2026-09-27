@@ -1,9 +1,16 @@
 import { execute, query, type Connection } from './db.js';
-import { normalizePhone, type PersonInput } from '../shared/domain.js';
+import { normalizePhone, normalizeDni, type PersonInput } from '../shared/domain.js';
 export async function duplicates(p: PersonInput, db?: Connection, exclude = 0) {
   return query(
-    "SELECT id,public_id,nombre,apellido FROM people WHERE id<>? AND (phone_normalized=? OR (?<>'' AND dni=?) OR (?<>'' AND email=?))",
-    [exclude, normalizePhone(p.telefono), p.dni, p.dni, p.email, p.email],
+    "SELECT id,public_id,nombre,apellido FROM people WHERE id<>? AND (phone_normalized=? OR (?<>'' AND UPPER(REGEXP_REPLACE(dni,'[^0-9A-Za-z]',''))=?) OR (?<>'' AND email=?))",
+    [
+      exclude,
+      normalizePhone(p.telefono),
+      normalizeDni(p.dni),
+      normalizeDni(p.dni),
+      p.email,
+      p.email,
+    ],
     db,
   );
 }

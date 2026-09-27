@@ -591,7 +591,8 @@ export function Agenda() {
   );
 }
 export function Payments() {
-  const { period } = usePeriod();
+  const { period, periods } = usePeriod();
+  const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const q = useData('accounts', `/accounts?period_id=${period}`, !!period);
   const payments = useData('payments', `/payments?period_id=${period}`, !!period);
   const [pick, setPick] = useState(false);
@@ -600,7 +601,7 @@ export function Payments() {
   return (
     <>
       <Heading title="Pagos" sub="Cuentas mensuales, movimientos y carteras.">
-        <button className="primary" disabled={!period} onClick={() => setPick(true)}>
+        <button className="primary" disabled={!period || closed} onClick={() => setPick(true)}>
           <Plus size={17} /> Registrar pago
         </button>
       </Heading>
@@ -656,6 +657,7 @@ export function Payments() {
             </div>
             <div className="actions">
               <button
+                disabled={closed}
                 onClick={() => {
                   setPerson({ id: p.person_id, nombre: p.nombre, apellido: p.apellido });
                   setEdit(p);

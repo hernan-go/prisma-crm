@@ -10,6 +10,7 @@ import {
   money,
   personSchema,
   normalizePhone,
+  normalizeDni,
 } from '../shared/domain.js';
 import { query, execute, pool, peopleTransaction } from './db.js';
 import { AppError, requireFound } from './errors.js';
@@ -36,8 +37,9 @@ api.get('/people', async (req, res) => {
   const active = req.query.archived === 'true' ? '' : 'AND activo=1';
   const like = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
   const phone = normalizePhone(search);
-  const where = `(CONCAT(nombre,' ',apellido) LIKE ? OR public_id LIKE ? OR telefono LIKE ? OR (?<>'' AND phone_normalized LIKE ?) OR dni LIKE ? OR email LIKE ?) ${active}`;
-  const args = [like, like, like, phone, `%${phone}%`, like, like];
+  const dni = normalizeDni(search);
+  const where = `(CONCAT(nombre,' ',apellido) LIKE ? OR public_id LIKE ? OR telefono LIKE ? OR (?<>'' AND phone_normalized LIKE ?) OR dni LIKE ? OR (?<>'' AND UPPER(REGEXP_REPLACE(dni,'[^0-9A-Za-z]','')) LIKE ?) OR email LIKE ?) ${active}`;
+  const args = [like, like, like, phone, `%${phone}%`, like, dni, `%${dni}%`, like];
   const [count] = await query(`SELECT COUNT(*) total FROM people WHERE ${where}`, args);
   const rows = await query(
     `SELECT * FROM people WHERE ${where} ORDER BY apellido,nombre LIMIT 40 OFFSET ${Math.min((page - 1) * 40, 1000000)}`,
@@ -55,12 +57,10 @@ api.post('/people/matches', async (req, res) => {
     })
     .parse(req.body);
   const phone = normalizePhone(p.telefono);
+  const dni = normalizeDni(p.dni);
   const rows = await query(
-    "SELECT id,public_id,nombre,apellido,IF(phone_normalized=? AND ?<>'','mismo teléfono',IF(dni=? AND ?<>'','mismo DNI','mismo email')) reason FROM people WHERE id<>? AND ((?<>'' AND phone_normalized=?) OR (?<>'' AND dni=?) OR (?<>'' AND email=?)) LIMIT 20".replace(
-      '< >',
-      '<>',
-    ),
-    [phone, phone, p.dni, p.dni, p.exclude, phone, phone, p.dni, p.dni, p.email, p.email],
+    "SELECT id,public_id,nombre,apellido,IF(phone_normalized=? AND ?<>'','mismo teléfono',IF(UPPER(REGEXP_REPLACE(dni,'[^0-9A-Za-z]',''))=? AND ?<>'','mismo DNI','mismo email')) reason FROM people WHERE id<>? AND ((?<>'' AND phone_normalized=?) OR (?<>'' AND UPPER(REGEXP_REPLACE(dni,'[^0-9A-Za-z]',''))=?) OR (?<>'' AND email=?)) LIMIT 20",
+    [phone, phone, dni, dni, p.exclude, phone, phone, dni, dni, p.email, p.email],
   );
   res.json(rows);
 });

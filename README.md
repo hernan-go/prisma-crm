@@ -6,13 +6,15 @@ Administración interna de personas, inscripciones mensuales, talleres, pagos e 
 
 Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; publicidad; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
 
-No incluye login propio, acceso de docentes, Inglés, pago a talleristas, inversiones generales ni copia automática de inscripciones. **La protección externa debe cubrir todo el sitio y `/api`.** No publicar datos personales hasta verificarlo. La API de producción permanece bloqueada mientras `EXTERNAL_PROTECTION_CONFIRMED` no sea `true`.
+Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. No incluye registro, roles, acceso de docentes, Inglés, pago a talleristas, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
+
+Guía de cierre y operación: [docs/V1.md](docs/V1.md). Resultados verificables: [docs/QA.md](docs/QA.md).
 
 ## Estructura y decisiones
 
 ```text
 client/              React, Router, Query, formularios, diseño responsive oscuro
-server/app.ts        Seguridad y errores centralizados; punto de futura autenticación
+server/app.ts        Seguridad, autenticación y errores centralizados
 server/routes.ts     Rutas/controladores REST y validación de peticiones
 server/services.ts   Operaciones transaccionales de negocio
 server/repositories.ts Consultas reutilizables y persistencia de personas
@@ -61,6 +63,7 @@ Los nombres/permisos en SiteGround deben crearse desde su panel. No ejecutar est
 ```sh
 npm run db:migrate
 npm run db:seed
+npm run auth:configure
 npm run dev
 ```
 
@@ -90,7 +93,8 @@ $data = Join-Path (Get-Location) 'tmp/mysql-data'
 | DB_NAME / DB_USER / DB_PASSWORD | Credenciales exclusivamente del servidor                                                               |
 | DB_SSL                          | `true` si MySQL exige TLS con certificado verificable; no desactivar verificación para sortear errores |
 | TRUST_PROXY                     | Número de proxies confiables; por defecto 0, confirmar topología con el proveedor antes de cambiar     |
-| EXTERNAL_PROTECTION_CONFIRMED   | `true` solo tras probar Protected URLs en página y API                                                 |
+| ADMIN_PASSWORD_HASH             | Hash scrypt generado por `npm run auth:configure`; nunca contraseña plaintext                          |
+| SESSION_SECRET                  | Secreto aleatorio de al menos 64 caracteres; generado por el mismo comando                             |
 
 No prefijar secretos con `VITE_`, no copiarlos al frontend ni subir `.env` a Git. Variables de build no deben contener datos personales. Las credenciales del servicio MySQL de CI son ficticias, efímeras y sin acceso a producción.
 
@@ -110,6 +114,8 @@ npm start
 $env:RUN_DB_TESTS='true'
 $env:DB_NAME='prisma_test'
 npm test
+Remove-Item Env:RUN_DB_TESTS
+Remove-Item Env:DB_NAME
 ```
 
 En Linux/macOS: `RUN_DB_TESTS=true DB_NAME=prisma_test npm test`. **La suite borra las tablas de prisma_test. Nunca apuntarla a datos reales.** El nombre se valida antes de borrar. Ver [docs/QA.md](docs/QA.md) para evidencias y checklist de producción.
@@ -137,36 +143,28 @@ Proceso definitivo:
 
 No se migran pagos históricos desde las casillas TRANS/EFECTIVO: no permiten reconstruir fechas ni importes por medio con suficiente certeza. Tampoco se infieren inscripciones desde fórmulas/vistas del libro. Cargar esos movimientos solo después de una conciliación humana. Los importes publicitarios originales con coma/punto y notas sobre crédito requieren revisión antes de cargarlos; el CRM conserva únicamente fecha, concepto, importe y notas, sin inventar contabilidad de créditos.
 
-## Despliegue en SiteGround GrowBig
+## Preparación de despliegue en SiteGround GrowBig
 
-Verificado el 25/09/2026 con documentación oficial: GrowBig admite proyectos Node.js, despliegue desde GitHub, gestión MySQL y Protected URLs. Fuentes: [disponibilidad](https://www.siteground.com/es/kb/node-js), [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto y seguridad](https://es.siteground.com/kb/gestionar-proyecto-node-js).
+**No se desplegó ni se accedió al panel.** La documentación oficial consultada el 26/09/2026 confirma hasta 5 proyectos Node.js en GrowBig y gestión de MySQL, SSL y variables: [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto](https://es.siteground.com/kb/gestionar-proyecto-node-js).
 
-Los nombres exactos y el mecanismo de arranque pueden variar con el preset del panel. La documentación consultada confirma opciones de build, versión Node, rama, salida y variables, pero no un campo universal de start command. Esta app necesita **un proceso Node persistente** que ejecute `npm start`; no desplegar `dist/client` como sitio estático aislado.
+Parámetros preparados:
 
-1. Crear un repositorio **privado** en GitHub. Revisar `git status` y confirmar que no se incluyen `private`, `tmp`, `.env`, Excel, PDF o dumps.
-2. Agregar el remote privado y hacer push de la rama de despliegue. La rama local puede ser `codex/prisma-crm`; al integrar usar `main` o la rama elegida explícitamente en el panel.
-3. Abrir SiteGround Client Area → Websites → Node.js Projects → New Project.
-4. Elegir Import Git Repository, vincular GitHub y autorizar **solo** el repositorio privado del CRM.
-5. Seleccionar repositorio y rama. La integración de SiteGround recompila automáticamente los pushes a esa rama; la CI de GitHub prueba el código por separado. Para impedir despliegues de cambios sin validar, proteger la rama y exigir checks antes de merge.
-6. En Site Tools → Node.js → Deployment Options, escoger el preset adecuado para Node/Express, Node 24 (o 22.12+), npm y raíz del repositorio.
-7. Build del proyecto: `npm ci --include=dev && npm run build`. Si SiteGround ya instala dependencias, asegurarse de que incluya las de desarrollo durante build y usar `npm run build` como comando de build.
-8. Arranque requerido: `npm start` (equivale a `node dist/server/index.js`). Buscar el mecanismo de startup del preset o confirmarlo con soporte si la UI no lo expone. El servidor escucha `0.0.0.0` y respeta `PORT`.
-9. Artefactos necesarios: `dist/server`, `dist/shared`, `dist/client`, `server/migrations`, `package.json`, lockfile y dependencias runtime. Si el panel exige Output directory, confirmar cómo ese preset empaqueta el proceso Node: no asumir que solo `dist/client` basta. La app debe arrancar con cwd en la raíz del proyecto.
-10. Crear MySQL en Site Tools → Website → MySQL, crear usuario, asignarlo a la base y tomar host/puerto indicados por el panel. Dar permisos de esquema para migrar; el runtime solo necesita SELECT/INSERT/UPDATE/DELETE. Puede usarse un usuario separado para migraciones.
-11. Configurar variables en Site Tools. Usar inicialmente el origen HTTPS del dominio temporal en APP_URL, `NODE_ENV=production` y `EXTERNAL_PROTECTION_CONFIRMED=false`.
-12. Ejecutar `npm run db:migrate` y `npm run db:seed` desde la consola/SSH si está habilitada. Como alternativa con artefactos compilados: `node dist/server/migrate.js` y `node dist/server/seed.js`. Si no hay consola en ese plan/interfaz, pedir al soporte el mecanismo de comando puntual. No habilitar un endpoint público para migrar ni ejecutar migraciones automáticamente en cada start.
-13. Activar Security → Protected URLs sobre la raíz completa del dominio temporal. Crear accesos externos para Jesica y Hernán. Usar HTTPS y verificar en una sesión sin credenciales que `/`, `/personas` y `/api/people` exigen protección. Verificar también que no exista otro dominio/URL directo del proyecto que evite la protección.
-14. Solo después de esa comprobación establecer `EXTERNAL_PROTECTION_CONFIRMED=true` y reiniciar/redeploy según la UI. Abrir el sitio protegido y verificar `/api/health`, actividades y períodos.
-15. Antes de datos reales, realizar el smoke test con una persona ficticia en una base de staging. La base productiva empieza sin personas ni períodos.
-16. En el dominio temporal protegido, realizar la primera importación revisada desde Personas → Importar. Guardar backup antes y después.
-17. Asignar `crm.prisma.com.ar` desde las acciones del proyecto, según el flujo de cambio de dominio. Configurar DNS conforme a los valores provistos por SiteGround, sin adivinarlos.
-18. Instalar/verificar SSL y Forzar HTTPS en Security. Cambiar APP_URL a `https://crm.prisma.com.ar`.
-19. Confirmar nuevamente Protected URLs en el dominio definitivo y cualquier alias/temporal; comprobar tanto frontend como API sin credenciales.
-20. Ejecutar el smoke test de producción, revisar logs y hacer backup inicial. Confirmar que un push de prueba a la rama seleccionada dispare el autodespliegue y que los datos MySQL sobrevivan.
+- Node **24 LTS**, npm, raíz del repositorio como directorio de trabajo.
+- Instalación: `npm ci --include=dev`.
+- Build: `npm run build`.
+- Arranque persistente requerido: `npm start` (`node dist/server/index.js`).
+- Puerto: `PORT` provisto por el hosting; fallback 3001. Host de producción: `0.0.0.0`.
+- Mantener `dist/server`, `dist/shared`, `dist/client`, `server/migrations`, package.json, lockfile y dependencias runtime. No publicar únicamente `dist/client` como sitio estático.
+- Crear MySQL UTF-8 y usuario exclusivo desde Site Tools; cargar DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD. Configurar DB_SSL según el servidor, sin desactivar validación TLS.
+- Configurar NODE_ENV=production, APP_URL con el origen HTTPS exacto, ADMIN_PASSWORD_HASH y SESSION_SECRET. TRUST_PROXY debe reflejar la cantidad real de proxies confiables.
+- Generar secretos localmente con `npm run auth:configure -- --export`; copiar **solo hash y secreto** desde `private/auth.env` al panel privado. No copiar `.env` de desarrollo ni la base QA.
+- Migrar con `node dist/server/migrate.js`, luego `node dist/server/seed.js` (o scripts npm si están las herramientas de desarrollo). La seed no carga personas.
 
-**Respaldo GitHub:** repositorio privado [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. El checkpoint del cierre de QA se subió y verificó el 26/09/2026.
+**Limitación pendiente de verificación en la cuenta:** el preset debe ejecutar Express como proceso persistente. La documentación enumera build/output/framework, pero no un campo universal de startup. Confirmar el mecanismo para `npm start`, empaquetado, consola/SSH para migraciones y topología proxy antes de publicar. Si el panel no lo permite, consultar soporte; no cambiar a PHP ni reescribir la app.
 
-**Pendiente externo:** configurar cuenta SiteGround, dominio, credenciales MySQL y protección; ejecutar smoke final sobre ese hosting. No se desplegó a SiteGround. El despliegue requiere revisión y autorización posterior.
+El login propio protege `/api`, incluidas importaciones, salud y configuración. Protected URLs puede añadirse como segunda barrera, sin reemplazar la autenticación de la aplicación. Probar HTTPS, cookie Secure, rechazo de API sin sesión, logout y backups en hosting antes de datos reales.
+
+Repositorio privado: [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. SiteGround puede desplegar automáticamente pushes a una rama vinculada: no vincular ni habilitar ese flujo antes de la autorización de Hernán.
 
 ## Backups y restauración
 
@@ -180,7 +178,8 @@ mysqldump --single-transaction --routines --triggers --no-tablespaces -h HOST -u
 
 ## Troubleshooting
 
-- **503 protección:** verificar Protected URLs y la variable de confirmación; no usarla para reemplazar la protección externa.
+- **503 acceso no configurado:** generar ADMIN_PASSWORD_HASH y SESSION_SECRET, configurar el entorno y reiniciar el servidor.
+- **401 sesión:** ingresar nuevamente; las sesiones vencen a las 8 horas. Cambiar hash o secreto invalida sesiones anteriores.
 - **500 / error DB:** revisar host, permisos, base creada y migraciones. Logs muestran códigos de error, sin datos personales, consultas ni secretos.
 - **403 al guardar:** APP_URL debe coincidir exactamente con el origen de navegador, incluido puerto local. Reiniciar después de cambiar variables.
 - **Sitio en blanco / assets 404:** construir primero, ejecutar desde raíz y conservar `dist/client`. No servir una carpeta de build distinta.

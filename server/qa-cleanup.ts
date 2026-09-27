@@ -9,6 +9,9 @@ const personNames = [
   'Marta Ficticia',
   'Prueba Marta Ficticia',
   'Juan Test',
+  'Importada CSV Ficticia',
+  'Importada XLSX Ficticia',
+  'Marta Ficticia Prueba',
 ];
 const names: Record<string, string[]> = {
   people: personNames,

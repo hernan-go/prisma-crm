@@ -73,7 +73,11 @@ export function parseOption(original: string, activities: FormActivity[]) {
   const day = days.findIndex((d) => new RegExp(`\\b${normalizeLabel(d)}\\b`).test(text));
   if (day < 0) return result;
   const dayName = normalizeLabel(days[day]);
-  const before = text.slice(0, text.indexOf(dayName)).trim();
+  const rawName = text.slice(0, text.indexOf(dayName)).trim();
+  const aliases: Record<string, string> = {
+    'programa acompanamiento cognitivo': 'acompanamiento cognitivo',
+  };
+  const before = aliases[rawName] || rawName;
   const activity = activities.find(
     (a) => normalizeLabel(a.name) === before && a.active !== false && a.active !== 0,
   );
