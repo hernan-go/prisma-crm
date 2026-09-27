@@ -1,20 +1,43 @@
+# Cierre del modelo mensual — 27/09/2026
+
+Continuación sobre los cambios existentes, sin reiniciar arquitectura. HEAD permanece en b3b3d60e9f7d06b69ce4b69c3d58ff89af1cff2a. Sin commit, push, GitHub ni acceso a producción.
+
+| Comprobación final                             | Resultado                                             |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| npm run lint                                   | Exit 0; sin errores ni advertencias                   |
+| npm run typecheck                              | Exit 0; sin errores                                   |
+| RUN_DB_TESTS=true DB_NAME=prisma_test npm test | 6 archivos; 92 tests aprobados, 0 fallidos, 0 skipped |
+| npm run build                                  | Exit 0; frontend Vite y backend TypeScript compilados |
+
+Última suite completa: 17:11:18 hora local, duración 4,44 s. MySQL real 8.4.8 en puerto 3307. 18 casos adicionales sobre los 74 anteriores. Pruebas ejecutadas fuera del sandbox por restricción de lectura de esbuild en Windows. Build conserva dos avisos no bloqueantes de anotaciones de comentarios en Zod; no se alteraron dependencias. Auditoría de dependencias no repetida en esta ronda; los resultados V1 de más abajo son históricos.
+
+Verificaciones nuevas: ofertas independientes entre meses; horarios compartidos; cero, dos y tres facilitadores; campos opcionales; capacidad individual; conflictos con cualquiera de varios facilitadores; historial tras renombrar/archivar; eliminación segura; deshabilitar y reactivar ofertas; conservar horarios deshabilitados ya inscritos; filtros Agenda; nombres históricos en Dashboard; Forms con resolución única, ausencia y ambigüedad; rollback del lote con pagos. Migración 004→005 preserva filas de personas, períodos, inscripciones, cuentas, pagos, sesiones y demás tablas no afectadas. Caso sintético financiero: 50.000 a cobrar, dos pagos de 25.000, saldo cero.
+
+La suite ampliada inicialmente alcanzó el rate limit de una instancia. Se separaron los ciclos de aplicación de los escenarios; autenticación y límites reales siguen habilitados y no se modificaron.
+
+Navegador sobre build local y prisma_test: login, cambio de período, Configuración mensual, modal de facilitador con todos sus campos, horario con selección múltiple opcional, días restringidos, opciones 09:00–20:00/30 minutos y error fin ≤ inicio. Agenda muestra un bloque con tres facilitadores y dos asistentes; filtro por tercer facilitador + lunes + 10:00 devuelve ese bloque. Filtros usan nombres históricos del período. Gestión mensual muestra correctamente actividad grupal e individual con sus facilitadores. No se guardaron altas adicionales en navegador ni se importaron archivos reales. Los flujos de importación/CRUD y rollback se verificaron en tests HTTP/MySQL.
+
+Evidencia visual local ignorada por Git: tmp/qa-agenda-modelo.png. La migración se probó únicamente en prisma_test; la base operativa y producción no se migraron. Modelo y procedimiento de aplicación en [MODELO-PERIODOS.md](MODELO-PERIODOS.md).
+
+---
+
 # Verificación de cierre V1 — 27/09/2026
 
 Se preservaron los checkpoints 418005a y d632d1c. El checkpoint 4866f08 resguarda autenticación y trabajo posterior; no se reemplazó la arquitectura ni se descartaron cambios.
 
 ## Resultados técnicos
 
-| Comprobación | Resultado |
-| --- | --- |
-| `npm run lint` | Correcto |
-| `npm run typecheck` | Correcto |
+| Comprobación                                     | Resultado                                            |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| `npm run lint`                                   | Correcto                                             |
+| `npm run typecheck`                              | Correcto                                             |
 | `RUN_DB_TESTS=true DB_NAME=prisma_test npm test` | 6 archivos, 74 tests: 74 passed, 0 failed, 0 skipped |
-| `npm run build` | Correcto: frontend Vite y backend TypeScript |
-| `npm audit` | 0 vulnerabilidades |
+| `npm run build`                                  | Correcto: frontend Vite y backend TypeScript         |
+| `npm audit`                                      | 0 vulnerabilidades                                   |
 
 MySQL real 8.4.8 en 127.0.0.1:3307; base descartable prisma_test. Las pruebas de integración estuvieron habilitadas, no omitidas. Incluyen migraciones/seeds repetibles, duplicados normalizados, pagos/carteras/saldos, conflictos de persona/docente/capacidad, grupo compartido, períodos cerrados, importación atómica/reintentos y limpieza QA con huellas. Autenticación cubre acceso correcto/incorrecto, expiración, token inválido, logout revocable, rate limiting y atributos de cookie.
 
-Dos advertencias de Rollup por comentarios @__PURE__ dentro de Zod son no bloqueantes. No se cambiaron dependencias para silenciar comentarios de terceros.
+Dos advertencias de Rollup por comentarios @**PURE** dentro de Zod son no bloqueantes. No se cambiaron dependencias para silenciar comentarios de terceros.
 
 ## Correcciones del cierre
 

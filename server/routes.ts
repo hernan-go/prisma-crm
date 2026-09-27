@@ -1,3 +1,4 @@
+import { offerings, instructorSave, deleteCatalog } from './offerings.js';
 import { advertisingSave, advertisingDelete } from './advertising.js';
 import { formsImport } from './forms-import.js';
 import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
@@ -6,7 +7,6 @@ import multer from 'multer';
 import { z } from 'zod';
 import {
   periodSchema,
-  instructorSchema,
   money,
   personSchema,
   normalizePhone,
@@ -19,6 +19,7 @@ import { personSave, enrollmentSave, paymentSave, activitySave, positiveId } fro
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
 api.use('/forms-import', formsImport);
+api.use(offerings);
 const id = (v: unknown) => positiveId.parse(v);
 api.get('/health', async (_req, res) => {
   await query('SELECT 1');
@@ -112,30 +113,18 @@ api.patch('/periods/:id/status', async (req, res) => {
 api.get('/instructors', async (_req, res) =>
   res.json(await query('SELECT * FROM instructors ORDER BY name')),
 );
-api.post('/instructors', async (req, res) => {
-  const p = instructorSchema.parse(req.body);
-  res.status(201).json({
-    id: (await execute('INSERT INTO instructors(name,active) VALUES (?,?)', [p.name, p.active]))
-      .insertId,
-  });
-});
-api.put('/instructors/:id', async (req, res) => {
-  const p = instructorSchema.parse(req.body);
-  requireFound(
-    (
-      await execute('UPDATE instructors SET name=?,active=? WHERE id=?', [
-        p.name,
-        p.active,
-        id(req.params.id),
-      ])
-    ).affectedRows,
-  );
-  res.json({ ok: true });
-});
+api.post('/instructors', async (req, res) => res.status(201).json(await instructorSave(req.body)));
+api.put('/instructors/:id', async (req, res) =>
+  res.json(await instructorSave(req.body, id(req.params.id))),
+);
+api.delete('/instructors/:id', async (req, res) =>
+  res.json(await deleteCatalog('instructors', id(req.params.id))),
+);
+api.delete('/activities/:id', async (req, res) =>
+  res.json(await deleteCatalog('activities', id(req.params.id))),
+);
 api.get('/activities', async (_req, res) => {
-  const rows = await query(
-    'SELECT a.*,i.name instructor FROM activities a JOIN instructors i ON i.id=a.instructor_id ORDER BY a.name',
-  );
+  const rows = await query('SELECT id,name,mode,active,ever_used FROM activities ORDER BY name');
   const days = await query('SELECT * FROM activity_allowed_days');
   res.json(
     rows.map((a) => ({ ...a, days: days.filter((d) => d.activity_id === a.id).map((d) => d.day) })),
@@ -215,7 +204,7 @@ api.get('/dashboard', async (req, res) => {
     [period],
   );
   const activities = await query(
-    'SELECT a.name,COUNT(DISTINCT e.person_id) count FROM activities a LEFT JOIN enrollments e ON e.activity_id=a.id AND e.period_id=? GROUP BY a.id ORDER BY count DESC,a.name',
+    'SELECT o.name,COUNT(DISTINCT e.person_id) count FROM period_activities o LEFT JOIN enrollments e ON e.activity_id=o.activity_id AND e.period_id=o.period_id WHERE o.period_id=? GROUP BY o.id ORDER BY count DESC,o.name',
     [period],
   );
   res.json({ ...enrollment, ...totals, ...paid, ...pending, activities });

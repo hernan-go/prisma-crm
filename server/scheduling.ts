@@ -1,7 +1,8 @@
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { periodSchema } from '../shared/domain.js';
-import { scheduleConflict, type Booking } from '../shared/schedule.js';
+import { type Booking } from '../shared/schedule.js';
+import { scheduleList } from './offerings.js';
 
 export async function openPeriod(period: number, db: Connection) {
   const [p] = await query('SELECT * FROM periods WHERE id=? FOR UPDATE', [period], db);
@@ -11,21 +12,25 @@ export async function openPeriod(period: number, db: Connection) {
   return p;
 }
 export async function bookings(period: number, db: Connection, exclude = 0) {
-  return query<Booking>(
-    `SELECT e.id,e.person_id,e.activity_id,a.instructor_id,a.name activity,a.mode,s.day,s.start,s.end
-    FROM enrollments e JOIN activities a ON a.id=e.activity_id JOIN enrollment_slots s ON s.enrollment_id=e.id
-    WHERE e.period_id=? AND e.id<>?`,
+  const schedules = await scheduleList(period, db);
+  const rows = await query<{ id: number; person_id: number; schedule_id: number }>(
+    'SELECT e.id,e.person_id,s.schedule_id FROM enrollments e JOIN enrollment_slots s ON s.enrollment_id=e.id WHERE e.period_id=? AND e.id<>?',
     [period, exclude],
     db,
   );
+  return rows.map((r) => {
+    const s = schedules.find((s) => s.id === r.schedule_id)!;
+    return { ...s, ...r, instructor_ids: s.instructors.map((i: any) => i.id) } as Booking;
+  });
 }
 export async function periodHasData(period: number, db: Connection) {
   const [r] = await query(
     `SELECT
+    (SELECT COUNT(*) FROM period_activities WHERE period_id=?) +
     (SELECT COUNT(*) FROM enrollments WHERE period_id=?) +
     (SELECT COUNT(*) FROM monthly_accounts WHERE period_id=?) +
     (SELECT COUNT(*) FROM advertising_investments a JOIN periods p ON YEAR(a.date)=p.year AND MONTH(a.date)=p.month WHERE p.id=?) total`,
-    [period, period, period],
+    [period, period, period, period],
     db,
   );
   return Number(r.total) > 0;
@@ -41,31 +46,6 @@ export async function periodEdit(period: number, body?: unknown) {
     } else await execute('DELETE FROM periods WHERE id=?', [period], db);
     return { ok: true };
   });
-}
-export async function validateActivityChange(
-  id: number,
-  instructor: number,
-  mode: string,
-  db: Connection,
-) {
-  const periods = await query(
-    'SELECT DISTINCT period_id FROM enrollments WHERE activity_id=?',
-    [id],
-    db,
-  );
-  for (const p of periods) {
-    const list = (await bookings(p.period_id, db)).map((b) =>
-      b.activity_id === id ? { ...b, instructor_id: instructor, mode } : b,
-    );
-    for (let i = 0; i < list.length; i++) {
-      if (list[i].activity_id !== id) continue;
-      const conflict = scheduleConflict(
-        list[i],
-        list.filter((_, j) => j !== i),
-      );
-      if (conflict) throw new AppError(409, `La configuración generaría un conflicto: ${conflict}`);
-    }
-  }
 }
 export async function deleteMovement(kind: 'payments' | 'enrollments', id: number) {
   return peopleTransaction(async (db) => {

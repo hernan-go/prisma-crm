@@ -1,9 +1,8 @@
-import { PeriodAdmin } from './Periods';
-import { scheduleConflict, type Booking } from '../shared/schedule';
+export { Configuration } from './Configuration';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, LockKeyhole } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { api } from './api';
 import {
   Field,
@@ -21,12 +20,11 @@ import {
   days,
   times,
   formatMoney,
+  formatDate,
   wallet,
   enrollmentSchema,
   paymentSchema,
   advertisingSchema,
-  activitySchema,
-  instructorSchema,
 } from '../shared/domain';
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -130,13 +128,14 @@ export function PersonMonth({ person }: { person: any }) {
           <article className="panel enrollment" key={e.id}>
             <div className="section-heading">
               <h3>{e.activity}</h3>
-              <span className="chip">{e.instructor}</span>
+              <span className="chip">{e.mode === 'individual' ? 'Individual' : 'Grupal'}</span>
             </div>
             {e.slots.map((s: any) => (
               <div className="slot" key={s.id}>
                 <b>{days[s.day]}</b>
                 <span>
-                  {s.start} → {s.end}
+                  {s.start} → {s.end} ·{' '}
+                  {s.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores'}
                 </span>
               </div>
             ))}
@@ -197,7 +196,7 @@ export function PersonMonth({ person }: { person: any }) {
             <div>
               <b>{formatMoney(p.amount)}</b>
               <small>
-                {p.date} · Cartera {wallet(p.method)}
+                {formatDate(p.date)} · Cartera {wallet(p.method)}
               </small>
               {p.notes && <small>{p.notes}</small>}
             </div>
@@ -231,147 +230,81 @@ function EnrollmentForm({
   close: () => void;
 }) {
   const { period } = usePeriod();
-  const a = useData('activities', '/activities');
-  const all = useData('agenda', `/enrollments?period_id=${period}`, !!period);
+  const offers = useData('offerings', `/offerings?period_id=${period}`, !!period);
   const [activity, setActivity] = useState(e.activity_id || 0);
-  const [slots, setSlots] = useState<{ day: number; start: string; end: string }[]>(
-    e.slots || [{ day: -1, start: '09:00', end: '10:00' }],
-  );
+  const [selected, setSelected] = useState<number[]>(e.slots?.map((s: any) => s.schedule_id) || []);
+  const m = useSave(`/enrollments${e.id ? '/' + e.id : ''}`, e.id ? 'PUT' : 'POST', close);
   const [error, setError] = useState('');
-  const m = useSave(e.id ? `/enrollments/${e.id}` : '/enrollments', e.id ? 'PUT' : 'POST', close);
-  const selected = a.data?.find((x: any) => x.id === activity);
-  const update = (i: number, key: string, value: any) =>
-    setSlots(slots.map((s, n) => (n === i ? { ...s, [key]: value } : s)));
+  const offer = offers.data?.find((o: any) => o.activity_id === activity);
   return (
-    <Modal title={e.id ? 'Editar inscripción' : 'Agregar actividad'} close={close}>
+    <Modal title={e.id ? 'Editar horarios' : 'Agregar actividad'} close={close}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          const data = {
+          const r = enrollmentSchema.safeParse({
             person_id: person.id,
             period_id: period,
             activity_id: activity,
-            slots: slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
-          };
-          const valid = enrollmentSchema.safeParse(data);
-          if (!valid.success) {
-            setError(valid.error.issues.map((i) => i.message).join(' '));
+            schedule_ids: selected,
+          });
+          if (!r.success) {
+            setError(r.error.issues.map((i) => i.message).join(' '));
             return;
           }
-          const existing: Booking[] = (all.data || [])
-            .filter((x: any) => x.id !== e.id)
-            .flatMap((x: any) =>
-              x.slots.map((slot: any) => ({
-                ...slot,
-                ...x,
-                mode: a.data?.find((t: any) => t.id === x.activity_id)?.mode,
-              })),
-            );
-          for (const slot of slots) {
-            const next = {
-              ...slot,
-              person_id: person.id,
-              activity_id: activity,
-              instructor_id: selected?.instructor_id,
-              activity: selected?.name,
-              mode: selected?.mode,
-            };
-            const conflict = scheduleConflict(next, existing);
-            if (conflict) {
-              setError(conflict);
-              return;
-            }
-            existing.push(next);
-          }
           setError('');
-          m.mutate(data);
+          m.mutate(r.data);
         }}
       >
-        <Field label="Actividad">
+        <Field label="Actividad del período">
           <select
             value={activity}
-            onChange={(event) => {
-              setActivity(Number(event.target.value));
-              setSlots(slots.map((s) => ({ ...s, day: -1 })));
+            onChange={(ev) => {
+              setActivity(Number(ev.target.value));
+              setSelected([]);
             }}
-            required
           >
-            <option value={0}>Elegir actividad</option>
-            {a.data
-              ?.filter((x: any) => x.active || x.id === activity)
-              .map((x: any) => (
-                <option key={x.id} value={x.id}>
-                  {x.name}
+            <option value={0}>Seleccionar</option>
+            {offers.data
+              ?.filter(
+                (o: any) => (o.active && o.catalog_active) || o.activity_id === e.activity_id,
+              )
+              .map((o: any) => (
+                <option key={o.id} value={o.activity_id}>
+                  {o.name}
+                  {!o.active ? ' · No ofrecida' : ''}
                 </option>
               ))}
           </select>
         </Field>
-        <p>
-          Docente: <b>{selected?.instructor || 'Seleccioná una actividad'}</b>
-        </p>
-        {slots.map((s, i) => (
-          <section className="slot-editor" key={i}>
-            <div className="section-heading">
-              <h3>Horario {i + 1}</h3>
-              {slots.length > 1 && (
-                <button
-                  type="button"
-                  className="danger subtle"
-                  onClick={() => setSlots(slots.filter((_, n) => n !== i))}
-                >
-                  Quitar
-                </button>
-              )}
-            </div>
-            <div className="day-buttons">
-              {days.map((day, n) => {
-                const allowed = selected?.days.includes(n);
-                return (
-                  <button
-                    key={day}
-                    title={allowed ? day : `${day}: no permitido`}
-                    type="button"
-                    disabled={!allowed}
-                    className={`${s.day === n ? 'selected' : ''} ${!allowed ? 'blocked' : ''}`}
-                    onClick={() => update(i, 'day', n)}
-                  >
-                    {!allowed && <LockKeyhole size={12} />}
-                    {day.slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="form-grid">
-              <Field label="Hora inicio">
-                <select
-                  value={s.start}
-                  onChange={(event) => update(i, 'start', event.target.value)}
-                >
-                  {times.map((t) => (
-                    <option key={t}>{t}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Hora fin">
-                <select value={s.end} onChange={(event) => update(i, 'end', event.target.value)}>
-                  {times.map((t) => (
-                    <option disabled={t <= s.start} key={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-          </section>
-        ))}
-        <button
-          type="button"
-          onClick={() => setSlots([...slots, { day: -1, start: '09:00', end: '10:00' }])}
-        >
-          + Agregar otro día / horario
-        </button>
-        <ErrorBox error={error ? new Error(error) : m.error || a.error} />
+        {offer?.schedules
+          .filter((h: any) => h.active || selected.includes(h.id))
+          .map((h: any) => (
+            <label className="check" key={h.id}>
+              <input
+                type="checkbox"
+                checked={selected.includes(h.id)}
+                onChange={(ev) =>
+                  setSelected(
+                    ev.target.checked ? [...selected, h.id] : selected.filter((id) => id !== h.id),
+                  )
+                }
+              />
+              {days[h.day]} {h.start}–{h.end} ·{' '}
+              {h.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores'}
+              {!h.active ? ' · Deshabilitado' : ''}
+            </label>
+          ))}
+        {!offer?.schedules.length && (
+          <p>
+            Configurá primero los horarios en{' '}
+            <Link to="/configuracion">Actividades del período</Link>.
+          </p>
+        )}
+        <ErrorBox error={error ? new Error(error) : m.error || offers.error} />
         <div className="actions">
+          <button type="button" onClick={close}>
+            Cancelar
+          </button>
           <SaveButton pending={m.isPending} />
         </div>
       </form>
@@ -495,37 +428,42 @@ function PaymentForm({
 }
 export function Agenda() {
   const { period } = usePeriod();
-  const q = useData('agenda', `/enrollments?period_id=${period}`, !!period);
-  const activities = useData('activities', '/activities');
-  const teachers = useData('instructors', '/instructors');
+  const q = useData('agenda', `/agenda?period_id=${period}`, !!period);
+  const activities = new Map<number, string>();
+  const teachers = new Map<number, string>();
+  for (const h of q.data || []) {
+    activities.set(h.activity_id, h.activity);
+    for (const i of h.instructors) teachers.set(i.id, i.name);
+  }
   const [teacher, setTeacher] = useState('');
   const [activity, setActivity] = useState('');
   const [day, setDay] = useState('');
   const [time, setTime] = useState('');
   const groups = new Map<string, any>();
-  for (const e of q.data || [])
-    for (const s of e.slots) {
-      if (
-        (teacher && String(e.instructor_id) !== teacher) ||
-        (activity && String(e.activity_id) !== activity) ||
-        (day && String(s.day) !== day) ||
-        (time && s.start !== time)
-      )
-        continue;
-      const key = `${e.activity_id}-${s.day}-${s.start}-${s.end}`;
-      if (!groups.has(key)) groups.set(key, { ...e, slot: s, people: [] });
-      groups.get(key).people.push(e);
-    }
+  for (const h of q.data || []) {
+    if (
+      (teacher && !h.instructors.some((i: any) => String(i.id) === teacher)) ||
+      (activity && String(h.activity_id) !== activity) ||
+      (day && String(h.day) !== day) ||
+      (time && h.start !== time)
+    )
+      continue;
+    groups.set(String(h.id), {
+      ...h,
+      slot: h,
+      instructor: h.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores',
+    });
+  }
   return (
     <>
       <Heading title="Agenda / Talleres" sub="Horarios y asistentes del período seleccionado." />
       <div className="filters">
-        <Field label="Docente">
+        <Field label="Facilitador">
           <select value={teacher} onChange={(e) => setTeacher(e.target.value)}>
             <option value="">Todos</option>
-            {teachers.data?.map((i: any) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
+            {[...teachers].map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
               </option>
             ))}
           </select>
@@ -533,9 +471,9 @@ export function Agenda() {
         <Field label="Actividad">
           <select value={activity} onChange={(e) => setActivity(e.target.value)}>
             <option value="">Todas</option>
-            {activities.data?.map((i: any) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
+            {[...activities].map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
               </option>
             ))}
           </select>
@@ -559,7 +497,7 @@ export function Agenda() {
           </select>
         </Field>
       </div>
-      <ErrorBox error={q.error || activities.error || teachers.error} />
+      <ErrorBox error={q.error} />
       <div className="enroll-grid">
         {[...groups.entries()]
           .sort(
@@ -576,7 +514,7 @@ export function Agenda() {
                 {g.instructor} · {g.people.length} asistentes
               </p>
               {g.people.map((p: any) => (
-                <Link className="attendee" key={p.id} to={`/personas/${p.person_id}`}>
+                <Link className="attendee" key={p.person_id} to={`/personas/${p.person_id}`}>
                   <span>
                     {p.nombre} {p.apellido}
                   </span>
@@ -651,7 +589,7 @@ export function Payments() {
                 {p.nombre} {p.apellido} · {formatMoney(p.amount)}
               </b>
               <small>
-                {p.date} · Cartera {wallet(p.method)}
+                {formatDate(p.date)} · Cartera {wallet(p.method)}
               </small>
               <small>{p.notes}</small>
             </div>
@@ -708,7 +646,7 @@ export function Advertising() {
               <b>
                 {a.concept} · {formatMoney(a.amount)}
               </b>
-              <small>{a.date}</small>
+              <small>{formatDate(a.date)}</small>
               <p>{a.notes}</p>
             </div>
             <div className="actions">
@@ -777,199 +715,6 @@ function AdvertisingForm({ value: v, close }: { value: any; close: () => void })
           </Field>
         ))}
         <p className="muted">La inversión se mostrará en el período correspondiente a su fecha.</p>
-        <ErrorBox error={error ? new Error(error) : m.error} />
-        <div className="actions">
-          <SaveButton pending={m.isPending} />
-        </div>
-      </form>
-    </Modal>
-  );
-}
-export function Configuration() {
-  const a = useData('activities', '/activities');
-  const i = useData('instructors', '/instructors');
-  const [edit, setEdit] = useState<any>();
-  const [kind, setKind] = useState('');
-  return (
-    <>
-      <Heading
-        title="Configuración"
-        sub="Docentes, actividades y reglas de días. Los docentes no son usuarios."
-      />
-      <ErrorBox error={a.error || i.error} />
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Actividades</h2>
-          <button
-            onClick={() => {
-              setKind('activities');
-              setEdit({});
-            }}
-          >
-            + Nueva actividad
-          </button>
-        </div>
-        {a.data?.map((x: any) => (
-          <div className="payment-row" key={x.id}>
-            <div>
-              <b>{x.name}</b>
-              <small>
-                {x.instructor} · {x.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'} ·{' '}
-                {x.active ? 'Activa' : 'Inactiva'}
-              </small>
-              <p>{x.days.map((d: number) => days[d]).join(' · ')}</p>
-            </div>
-            <button
-              onClick={() => {
-                setKind('activities');
-                setEdit(x);
-              }}
-            >
-              Editar
-            </button>
-          </div>
-        ))}
-      </section>
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Docentes</h2>
-          <button
-            onClick={() => {
-              setKind('instructors');
-              setEdit({});
-            }}
-          >
-            + Nuevo docente
-          </button>
-        </div>
-        {i.data?.map((x: any) => (
-          <div className="payment-row" key={x.id}>
-            <span>
-              {x.name} <small>{x.active ? 'Activo' : 'Inactivo'}</small>
-            </span>
-            <button
-              onClick={() => {
-                setKind('instructors');
-                setEdit(x);
-              }}
-            >
-              Editar
-            </button>
-          </div>
-        ))}
-      </section>
-      <PeriodAdmin />
-      {edit && (
-        <ConfigForm
-          kind={kind}
-          value={edit}
-          teachers={i.data || []}
-          close={() => setEdit(undefined)}
-        />
-      )}
-    </>
-  );
-}
-function ConfigForm({
-  kind,
-  value: v,
-  teachers,
-  close,
-}: {
-  kind: string;
-  value: any;
-  teachers: any[];
-  close: () => void;
-}) {
-  const [data, set] = useState({
-    name: v.name || '',
-    active: v.active === undefined ? true : !!v.active,
-    mode: v.mode || 'group',
-    instructor_id: v.instructor_id || 0,
-    days: v.days || ([] as number[]),
-  });
-  const [error, setError] = useState('');
-  const m = useSave(`/${kind}${v.id ? '/' + v.id : ''}`, v.id ? 'PUT' : 'POST', close);
-  return (
-    <Modal
-      title={kind === 'activities' ? 'Configurar actividad' : 'Configurar docente'}
-      close={close}
-    >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const schema = kind === 'activities' ? activitySchema : instructorSchema;
-          const r = schema.safeParse(data);
-          if (!r.success) {
-            setError('Revisá el nombre, docente y al menos un día permitido.');
-            return;
-          }
-          setError('');
-          m.mutate(r.data);
-        }}
-      >
-        <Field label="Nombre">
-          <input
-            required
-            value={data.name}
-            onChange={(e) => set({ ...data, name: e.target.value })}
-          />
-        </Field>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={data.active}
-            onChange={(e) => set({ ...data, active: e.target.checked })}
-          />{' '}
-          Activo
-        </label>
-        {kind === 'activities' && (
-          <>
-            <Field label="Docente">
-              <select
-                value={data.instructor_id}
-                onChange={(e) => set({ ...data, instructor_id: Number(e.target.value) })}
-              >
-                <option value={0}>Seleccionar</option>
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Modalidad">
-              <select value={data.mode} onChange={(e) => set({ ...data, mode: e.target.value })}>
-                <option value="group">Grupal</option>
-                <option value="individual">Individual · capacidad 1</option>
-              </select>
-            </Field>
-            <p>Días permitidos</p>
-            <div className="day-buttons">
-              {days.map((d, n) => (
-                <button
-                  type="button"
-                  key={d}
-                  className={data.days.includes(n) ? 'selected' : ''}
-                  onClick={() =>
-                    set({
-                      ...data,
-                      days: data.days.includes(n)
-                        ? data.days.filter((x: number) => x !== n)
-                        : [...data.days, n],
-                    })
-                  }
-                >
-                  {d.slice(0, 3)}
-                </button>
-              ))}
-            </div>
-            <p className="info">
-              Las inscripciones existentes se conservan. Las reglas nuevas se aplican al crear o
-              editar horarios.
-            </p>
-          </>
-        )}
         <ErrorBox error={error ? new Error(error) : m.error} />
         <div className="actions">
           <SaveButton pending={m.isPending} />

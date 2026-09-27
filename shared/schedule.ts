@@ -4,7 +4,8 @@ export type Booking = Slot & {
   id?: number;
   person_id: number;
   activity_id: number;
-  instructor_id: number;
+  instructor_ids: number[];
+  schedule_id: number;
   activity: string;
   mode: string;
 };
@@ -14,13 +15,13 @@ export function scheduleConflict(next: Booking, existing: Booking[]) {
     if (!overlaps(next, old)) continue;
     const label = `${old.activity} · ${days[old.day]} ${old.start}–${old.end}.`;
     if (next.person_id === old.person_id) return `Este horario se superpone con ${label}`;
-    if (next.instructor_id === old.instructor_id) {
-      if (next.activity_id !== old.activity_id) return `El docente ya dicta ${label}`;
+    if (next.schedule_id === old.schedule_id) {
       if (next.mode === 'individual' || old.mode === 'individual')
         return `La actividad individual ya está reservada: ${label}`;
-      if (next.start !== old.start || next.end !== old.end)
-        return `El taller grupal debe compartir el horario completo: ${label}`;
+      continue;
     }
+    if (next.instructor_ids.some((id) => old.instructor_ids.includes(id)))
+      return `Un facilitador ya está asignado a ${label}`;
   }
   return '';
 }

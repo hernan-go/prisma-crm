@@ -47,6 +47,11 @@ async function snapshot(table: Table, id: number, db: Connection) {
     );
   }
   if (table === 'activities') {
+    related.offerings = await query(
+      'SELECT * FROM period_activities WHERE activity_id=? ORDER BY id',
+      [id],
+      db,
+    );
     related.days = await query(
       'SELECT * FROM activity_allowed_days WHERE activity_id=? ORDER BY day',
       [id],
@@ -58,12 +63,18 @@ async function snapshot(table: Table, id: number, db: Connection) {
       db,
     );
   }
-  if (table === 'instructors')
+  if (table === 'instructors') {
+    related.schedules = await query(
+      'SELECT * FROM schedule_instructors WHERE instructor_id=? ORDER BY schedule_id',
+      [id],
+      db,
+    );
     related.activities = await query(
       'SELECT * FROM activities WHERE instructor_id=? ORDER BY id',
       [id],
       db,
     );
+  }
   return { record: rows[0], related };
 }
 const fingerprint = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
@@ -121,6 +132,11 @@ export async function applyCleanup(input: unknown, database: string) {
     const chosen = plan.candidates.filter((c) => c.reviewed);
     for (const c of chosen) {
       const data = await snapshot(c.table, c.id, db);
+      if ((c.table === 'activities' || c.table === 'instructors') && data.record.ever_used)
+        throw new AppError(
+          409,
+          'La configuración tiene uso histórico. Desactivala; la limpieza QA no la elimina.',
+        );
       if (fingerprint(data) !== c.fingerprint)
         throw new AppError(409, 'Los datos cambiaron desde la revisión. Regenerá el plan.');
       const label =

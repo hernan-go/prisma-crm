@@ -51,7 +51,7 @@ export function formsMapping(headers: string[]) {
 export type FormActivity = {
   id: number;
   name: string;
-  instructor_id: number;
+  instructor_id?: number;
   days: number[];
   active?: number | boolean;
 };
@@ -64,7 +64,8 @@ export function parseOption(original: string, activities: FormActivity[]) {
   const result = {
     original,
     activity_id: 0,
-    instructor_id: 0,
+    schedule_id: 0,
+    instructor_ids: [] as number[],
     day: -1,
     start: '',
     end: '',
@@ -107,7 +108,7 @@ export function parseOption(original: string, activities: FormActivity[]) {
   return {
     ...result,
     activity_id: activity.id,
-    instructor_id: activity.instructor_id,
+
     day,
     start,
     end,
@@ -131,14 +132,15 @@ export const formSelectionSchema = z
     original: z.string().max(2000).default(''),
     include: z.boolean(),
     activity_id: z.number().int(),
-    instructor_id: z.number().int(),
+    schedule_id: z.number().int(),
+    instructor_ids: z.array(z.number().int()).default([]),
     day: z.number().int(),
     start: z.string(),
     end: z.string(),
   })
   .superRefine((s, ctx) => {
     if (!s.include) return;
-    if (s.activity_id < 1 || s.instructor_id < 1 || !slotSchema.safeParse(s).success)
+    if (s.activity_id < 1 || s.schedule_id < 1 || !slotSchema.safeParse(s).success)
       ctx.addIssue({
         code: 'custom',
         message: 'Horario/opción no configurada. Resolvé o excluí explícitamente la opción.',
@@ -184,3 +186,23 @@ export const formRowSchema = z
     if ((r.action === 'keep' || r.action === 'update') && !r.target_id)
       ctx.addIssue({ code: 'custom', message: 'Seleccioná la persona existente.' });
   });
+
+// Parsing identifies the text only. Assignment comes exclusively from this period's persisted schedules.
+export function resolveFormSelection(selection: ReturnType<typeof parseOption>, schedules: any[]) {
+  const matches = schedules.filter(
+    (s) =>
+      s.activity_id === selection.activity_id &&
+      s.day === selection.day &&
+      s.start === selection.start &&
+      s.end === selection.end &&
+      s.active &&
+      s.offered &&
+      s.catalog_active,
+  );
+  return {
+    ...selection,
+    schedule_id: matches.length === 1 ? matches[0].id : 0,
+    instructor_ids: matches.length === 1 ? matches[0].instructors.map((i: any) => i.id) : [],
+    resolution: matches.length === 1 ? 'resolved' : matches.length ? 'ambiguous' : 'missing',
+  };
+}

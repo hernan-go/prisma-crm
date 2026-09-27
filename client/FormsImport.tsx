@@ -5,7 +5,7 @@ import { api } from './api';
 import { Field, ErrorBox, Modal } from './components';
 import { usePeriod, periodName } from './App';
 import { formFields, formRowSchema } from '../shared/forms';
-import { days, times, wallet } from '../shared/domain';
+import { days, wallet } from '../shared/domain';
 import { scheduleConflict, type Booking } from '../shared/schedule';
 export function FormsImport() {
   const { period, periods } = usePeriod();
@@ -32,7 +32,8 @@ export function FormsImport() {
       e.slots.map((s: any) => ({
         ...e,
         ...s,
-        mode: preview?.activities.find((a: any) => a.id === e.activity_id)?.mode || 'group',
+        instructor_ids: s.instructors.map((i: any) => i.id),
+        mode: e.mode,
       })),
     );
     for (let i = 0; i < rows.length; i++) {
@@ -51,12 +52,13 @@ export function FormsImport() {
     }
     for (const s of row.selections.filter((s: any) => s.include)) {
       const a = preview?.activities.find((a: any) => a.id === s.activity_id);
-      if (!a || a.instructor_id !== s.instructor_id || !a.days.includes(s.day))
-        return 'Revisá actividad, docente y día permitido.';
+      if (!a || !s.schedule_id || !a.days.includes(s.day))
+        return 'Seleccioná un horario configurado de la oferta del período.';
       const next = { ...s, person_id: personId, activity: a.name, mode: a.mode };
       const same = (b: Booking) =>
         row.action !== 'create' &&
         b.person_id === personId &&
+        b.schedule_id === s.schedule_id &&
         b.activity_id === s.activity_id &&
         b.day === s.day &&
         b.start === s.start &&
@@ -351,7 +353,6 @@ export function FormsImport() {
                           j === n ? { ...x, ...v } : x,
                         ),
                       });
-                    const act = preview.activities.find((a: any) => a.id === s.activity_id);
                     return (
                       <section className="slot-editor" key={n}>
                         <p>Original: {s.original || 'Agregada manualmente'}</p>
@@ -365,87 +366,44 @@ export function FormsImport() {
                         </label>
                         {s.include && (
                           <>
-                            <div className="form-grid">
-                              <Field label="Docente">
-                                <select
-                                  value={s.instructor_id}
-                                  onChange={(e) =>
-                                    patch({
-                                      instructor_id: Number(e.target.value),
-                                      activity_id: 0,
-                                      day: -1,
-                                    })
-                                  }
-                                >
-                                  <option value={0}>Seleccionar</option>
-                                  {Array.from(
-                                    new Map(
-                                      preview.activities.map((a: any) => [
-                                        a.instructor_id,
-                                        a.instructor,
-                                      ]),
-                                    ).entries(),
-                                  ).map(([id, name]: any) => (
-                                    <option value={id} key={id}>
-                                      {name}
+                            <Field label="Horario del período">
+                              <select
+                                value={s.schedule_id || 0}
+                                onChange={(e) => {
+                                  const h = preview.schedules.find(
+                                    (x: any) => x.id === Number(e.target.value),
+                                  );
+                                  patch(
+                                    h
+                                      ? {
+                                          schedule_id: h.id,
+                                          activity_id: h.activity_id,
+                                          day: h.day,
+                                          start: h.start,
+                                          end: h.end,
+                                          instructor_ids: h.instructors.map((i: any) => i.id),
+                                        }
+                                      : { schedule_id: 0 },
+                                  );
+                                }}
+                              >
+                                <option value={0}>Pendiente: elegir configuración existente</option>
+                                {preview.schedules
+                                  .filter((h: any) => h.active && h.offered && h.catalog_active)
+                                  .map((h: any) => (
+                                    <option key={h.id} value={h.id}>
+                                      {h.activity} · {days[h.day]} {h.start}–{h.end} ·{' '}
+                                      {h.instructors.map((i: any) => i.name).join(' + ') ||
+                                        'Sin facilitadores'}
                                     </option>
                                   ))}
-                                </select>
-                              </Field>
-                              <Field label="Actividad">
-                                <select
-                                  value={s.activity_id}
-                                  onChange={(e) => {
-                                    const a = preview.activities.find(
-                                      (x: any) => x.id === Number(e.target.value),
-                                    );
-                                    patch({
-                                      activity_id: a?.id || 0,
-                                      instructor_id: a?.instructor_id || 0,
-                                      day: -1,
-                                    });
-                                  }}
-                                >
-                                  <option value={0}>Horario/opción no configurada</option>
-                                  {preview.activities
-                                    .filter(
-                                      (a: any) =>
-                                        !s.instructor_id || a.instructor_id === s.instructor_id,
-                                    )
-                                    .map((a: any) => (
-                                      <option key={a.id} value={a.id}>
-                                        {a.name}
-                                      </option>
-                                    ))}
-                                </select>
-                              </Field>
-                              <Field label="Día">
-                                <select
-                                  value={s.day}
-                                  onChange={(e) => patch({ day: Number(e.target.value) })}
-                                >
-                                  <option value={-1}>Seleccionar</option>
-                                  {days.map((d, k) => (
-                                    <option key={d} value={k} disabled={!act?.days.includes(k)}>
-                                      {d}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                              {(['start', 'end'] as const).map((k) => (
-                                <Field key={k} label={k === 'start' ? 'Hora inicio' : 'Hora fin'}>
-                                  <select
-                                    value={s[k]}
-                                    onChange={(e) => patch({ [k]: e.target.value })}
-                                  >
-                                    <option value="">Seleccionar</option>
-                                    {times.map((t) => (
-                                      <option key={t}>{t}</option>
-                                    ))}
-                                  </select>
-                                </Field>
-                              ))}
-                            </div>
+                              </select>
+                            </Field>
+                            <p className="muted">
+                              Si falta el horario, configurarlo manualmente en Actividades del
+                              período y volver a leer el archivo. El importador nunca crea
+                              facilitadores ni horarios.
+                            </p>
                           </>
                         )}
                       </section>
@@ -460,7 +418,8 @@ export function FormsImport() {
                             original: '',
                             include: true,
                             activity_id: 0,
-                            instructor_id: 0,
+                            schedule_id: 0,
+                            instructor_ids: [],
                             day: -1,
                             start: '',
                             end: '',

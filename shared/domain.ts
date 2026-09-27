@@ -49,17 +49,30 @@ export const slotSchema = z
     message: 'La hora final debe ser posterior al inicio.',
     path: ['end'],
   });
-export const enrollmentSchema = z
-  .object({
-    person_id: z.number().int().positive(),
-    period_id: z.number().int().positive(),
-    activity_id: z.number().int().positive(),
-    slots: z.array(slotSchema).min(1).max(30),
-  })
-  .refine(
-    (v) => new Set(v.slots.map((s) => `${s.day}-${s.start}-${s.end}`)).size === v.slots.length,
-    'Hay horarios repetidos.',
-  );
+export const enrollmentSchema = z.object({
+  person_id: z.number().int().positive(),
+  period_id: z.number().int().positive(),
+  activity_id: z.number().int().positive(),
+  schedule_ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(30)
+    .refine((v) => new Set(v).size === v.length, 'Hay horarios repetidos.'),
+});
+export const offeringSchema = z.object({
+  period_id: z.number().int().positive(),
+  activity_id: z.number().int().positive(),
+  mode: z.enum(['group', 'individual']),
+  active: z.boolean().default(true),
+  days: z.array(z.number().int().min(0).max(6)).refine((v) => new Set(v).size === v.length),
+});
+export const scheduleSchema = slotSchema.safeExtend({
+  offering_id: z.number().int().positive(),
+  instructor_ids: z.array(z.number().int().positive()).refine((v) => new Set(v).size === v.length),
+  active: z.boolean().default(true),
+});
+export const facilitatorName = (i: { name: string; surname?: string }) =>
+  [i.name, i.surname].filter(Boolean).join(' ');
 export const paymentSchema = z.object({
   person_id: z.number().int().positive(),
   period_id: z.number().int().positive(),
@@ -70,16 +83,20 @@ export const paymentSchema = z.object({
 });
 export const instructorSchema = z.object({
   name: z.string().trim().min(1).max(100),
+  surname: z.string().trim().max(100).default(''),
+  dni: z.string().trim().max(30).default(''),
+  phone: z.string().trim().max(60).default(''),
+  email: z.union([z.literal(''), z.email('Email inválido.')]).default(''),
+  address: text,
   active: z.boolean().default(true),
 });
 export const activitySchema = z.object({
   mode: z.enum(['group', 'individual']).default('group'),
   name: z.string().trim().min(1).max(180),
-  instructor_id: z.number().int().positive(),
   active: z.boolean().default(true),
   days: z
     .array(z.number().int().min(0).max(6))
-    .min(1)
+    .default([0, 1, 2, 3, 4, 5, 6])
     .refine((v) => new Set(v).size === v.length),
 });
 export const advertisingSchema = z.object({
@@ -105,3 +122,10 @@ export const formatMoney = (value: string | number | null) =>
 export function validateDays(slots: { day: number }[], allowed: number[]) {
   return slots.every((s) => allowed.includes(s.day));
 }
+export const formatDate = (value: string | null | undefined) => {
+  if (!value) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return value;
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+};

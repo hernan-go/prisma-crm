@@ -1,3 +1,4 @@
+import { scheduleList } from './offerings.js';
 import { execute, query, type Connection } from './db.js';
 import { normalizePhone, normalizeDni, type PersonInput } from '../shared/domain.js';
 export async function duplicates(p: PersonInput, db?: Connection, exclude = 0) {
@@ -56,7 +57,7 @@ export async function enrollmentList(periodId?: number, personId?: number) {
     values.push(personId);
   }
   const rows = await query(
-    `SELECT e.*,a.name activity,i.name instructor,i.id instructor_id,p.nombre,p.apellido,p.public_id,pr.year,pr.month FROM enrollments e JOIN activities a ON a.id=e.activity_id JOIN instructors i ON i.id=a.instructor_id JOIN people p ON p.id=e.person_id JOIN periods pr ON pr.id=e.period_id ${clauses.length ? 'WHERE ' + clauses.join(' AND ') : ''} ORDER BY p.apellido,a.name`,
+    `SELECT e.*,o.name activity,o.mode,p.nombre,p.apellido,p.public_id,pr.year,pr.month FROM enrollments e JOIN period_activities o ON o.activity_id=e.activity_id AND o.period_id=e.period_id JOIN people p ON p.id=e.person_id JOIN periods pr ON pr.id=e.period_id ${clauses.length ? 'WHERE ' + clauses.join(' AND ') : ''} ORDER BY p.apellido,o.name`,
     values,
   );
   if (!rows.length) return [];
@@ -64,5 +65,16 @@ export async function enrollmentList(periodId?: number, personId?: number) {
     `SELECT * FROM enrollment_slots WHERE enrollment_id IN (${rows.map(() => '?')}) ORDER BY day,start`,
     rows.map((r) => r.id),
   );
-  return rows.map((r) => ({ ...r, slots: slots.filter((s) => s.enrollment_id === r.id) }));
+  const schedules = (
+    await Promise.all([...new Set(rows.map((r) => r.period_id))].map((p) => scheduleList(p)))
+  ).flat();
+  return rows.map((r) => ({
+    ...r,
+    slots: slots
+      .filter((s) => s.enrollment_id === r.id)
+      .map((s) => ({
+        ...s,
+        instructors: schedules.find((t) => t.id === s.schedule_id)?.instructors || [],
+      })),
+  }));
 }

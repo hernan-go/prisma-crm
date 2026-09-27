@@ -1,13 +1,8 @@
-import { openPeriod, bookings, validateActivityChange } from './scheduling.js';
+import { openPeriod, bookings } from './scheduling.js';
 import { scheduleConflict, type Booking } from '../shared/schedule.js';
 import { z } from 'zod';
-import {
-  activitySchema,
-  enrollmentSchema,
-  personSchema,
-  paymentSchema,
-  validateDays,
-} from '../shared/domain.js';
+import { scheduleList } from './offerings.js';
+import { activitySchema, enrollmentSchema, personSchema, paymentSchema } from '../shared/domain.js';
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { duplicates, savePerson } from './repositories.js';
 import { AppError, requireFound } from './errors.js';
@@ -31,36 +26,55 @@ export async function enrollmentSave(body: unknown, id?: number) {
 }
 export async function enrollmentInDB(body: unknown, db: Connection, id?: number) {
   const p = enrollmentSchema.parse(body);
+  let retained: number[] = [];
   if (id) {
-    const [old] = await query('SELECT period_id FROM enrollments WHERE id=? FOR UPDATE', [id], db);
+    const [old] = await query('SELECT * FROM enrollments WHERE id=? FOR UPDATE', [id], db);
     requireFound(old);
     await openPeriod(old.period_id, db);
+    if (
+      old.period_id === p.period_id &&
+      old.person_id === p.person_id &&
+      old.activity_id === p.activity_id
+    )
+      retained = (
+        await query('SELECT schedule_id FROM enrollment_slots WHERE enrollment_id=?', [id], db)
+      ).map((s) => s.schedule_id);
   }
   requireFound(
     (await query('SELECT id FROM people WHERE id=? AND activo=1', [p.person_id], db))[0],
   );
   await openPeriod(p.period_id, db);
-  const [activity] = await query(
-    'SELECT a.* FROM activities a JOIN instructors i ON i.id=a.instructor_id WHERE a.id=? AND a.active=1 AND i.active=1 FOR UPDATE',
-    [p.activity_id],
+  const [offering] = await query(
+    'SELECT o.*,a.active catalog_active FROM period_activities o JOIN activities a ON a.id=o.activity_id WHERE o.period_id=? AND o.activity_id=? FOR UPDATE',
+    [p.period_id, p.activity_id],
     db,
   );
-  requireFound(activity);
-  const allowed = (
-    await query('SELECT day FROM activity_allowed_days WHERE activity_id=?', [p.activity_id], db)
-  ).map((r) => r.day);
-  if (!validateDays(p.slots, allowed))
-    throw new AppError(422, 'Hay un día no permitido para esta actividad.');
+  if (
+    !offering ||
+    ((!offering.active || !offering.catalog_active) &&
+      p.schedule_ids.some((sid) => !retained.includes(sid)))
+  )
+    throw new AppError(409, 'La actividad no se ofrece en este período.');
+  const schedules = await scheduleList(p.period_id, db);
+  const selected = p.schedule_ids.map((sid) => {
+    const s = schedules.find(
+      (s) => s.id === sid && s.offering_id === offering.id && (s.active || retained.includes(sid)),
+    );
+    if (!s)
+      throw new AppError(422, 'Seleccioná un horario habilitado de esta actividad y período.');
+    return s;
+  });
   const existing = await bookings(p.period_id, db, id);
   const proposed: Booking[] = [];
-  for (const slot of p.slots) {
+  for (const slot of selected) {
     const next = {
       ...slot,
+      schedule_id: slot.id,
       person_id: p.person_id,
       activity_id: p.activity_id,
-      instructor_id: activity.instructor_id,
-      activity: activity.name,
-      mode: activity.mode,
+      activity: offering.name,
+      mode: offering.mode,
+      instructor_ids: slot.instructors.map((i: any) => i.id),
     };
     const conflict = scheduleConflict(next, [...existing, ...proposed]);
     if (conflict) throw new AppError(409, conflict);
@@ -83,12 +97,15 @@ export async function enrollmentInDB(body: unknown, db: Connection, id?: number)
       )
     ).insertId;
   }
-  for (const s of p.slots)
+  for (const s of selected)
     await execute(
-      'INSERT INTO enrollment_slots(enrollment_id,day,start,end) VALUES (?,?,?,?)',
-      [eid, s.day, s.start, s.end],
+      'INSERT INTO enrollment_slots(enrollment_id,day,start,end,schedule_id) VALUES (?,?,?,?,?)',
+      [eid, s.day, s.start, s.end, s.id],
       db,
     );
+  await execute('UPDATE period_activities SET ever_used=1 WHERE id=?', [offering.id], db);
+  for (const s of selected)
+    await execute('UPDATE activity_schedules SET ever_used=1 WHERE id=?', [s.id], db);
   await execute(
     'INSERT IGNORE INTO monthly_accounts(person_id,period_id) VALUES (?,?)',
     [p.person_id, p.period_id],
@@ -143,18 +160,17 @@ export async function activitySave(body: unknown, id?: number) {
   return peopleTransaction(async (db) => {
     if (id) {
       requireFound((await query('SELECT id FROM activities WHERE id=? FOR UPDATE', [id], db))[0]);
-      await validateActivityChange(id, p.instructor_id, p.mode, db);
       await execute(
-        'UPDATE activities SET name=?,instructor_id=?,active=?,mode=? WHERE id=?',
-        [p.name, p.instructor_id, p.active, p.mode, id],
+        'UPDATE activities SET name=?,active=?,mode=? WHERE id=?',
+        [p.name, p.active, p.mode, id],
         db,
       );
       await execute('DELETE FROM activity_allowed_days WHERE activity_id=?', [id], db);
     } else
       id = (
         await execute(
-          'INSERT INTO activities(name,instructor_id,active,mode) VALUES (?,?,?,?)',
-          [p.name, p.instructor_id, p.active, p.mode],
+          'INSERT INTO activities(name,active,mode) VALUES (?,?,?)',
+          [p.name, p.active, p.mode],
           db,
         )
       ).insertId;

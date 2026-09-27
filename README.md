@@ -8,6 +8,8 @@ Implementa personas con archivo lógico y contacto de emergencia; períodos vac�
 
 Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. No incluye registro, roles, acceso de docentes, Inglés, pago a talleristas, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
 
+Modelo vigente y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
+
 Guía de cierre y operación: [docs/V1.md](docs/V1.md). Resultados verificables: [docs/QA.md](docs/QA.md).
 
 ## Estructura y decisiones
@@ -31,8 +33,8 @@ docs/                Análisis de fuentes, modelo y verificación
 - React, TypeScript estricto, Vite, React Router, TanStack Query, React Hook Form, Zod, Tailwind CSS y Lucide React.
 - Express 5, TypeScript y mysql2 con consultas parametrizadas. Se eligió mysql2 directo para evitar una capa adicional; las consultas no interpolan datos del usuario.
 - Dinero: `DECIMAL(12,2)`, strings decimales en API y Decimal.js para operaciones en JavaScript. No se usa FLOAT. Los totales del dashboard se agregan por cuenta para evitar multiplicación por joins de horarios.
-- Una inscripción por persona/período/actividad con N slots. Para agregar otro día de una actividad existente, editar sus horarios.
-- Los docentes son configuración. La asignación de docente de una actividad es actual: cambiarla también cambia el nombre mostrado en vistas históricas. Si se requiere conservar asignaciones históricas exactas, crear una actividad nueva en lugar de reasignar la existente.
+- Catálogo global → oferta independiente por período → horarios compartidos → inscripciones. Una inscripción por persona/período/actividad selecciona N horarios existentes; no crea horarios implícitamente.
+- Facilitadores administrativos separados de personas, con nombre obligatorio y demás datos opcionales. Cada horario admite 0..N facilitadores. Oferta y asignaciones guardan nombres históricos; un horario utilizado conserva día, horas y facilitadores. Para cambios se crea otro horario y puede deshabilitarse el anterior.
 - Días no permitidos bloqueados en cliente y servidor. Reglas modificadas no borran inscripciones anteriores; se validan al crear o editar.
 - Fechas operativas `DATE` y cadenas `YYYY-MM-DD`; horarios semanales `HH:mm`, sin conversiones UTC. Creación de movimientos usa fecha actual en America/Argentina/Cordoba.
 - IDs `P-0001` asignados a partir de la clave autoincremental. Los IDs del Excel no reemplazan los IDs nuevos.
@@ -69,7 +71,7 @@ npm run dev
 
 Abrir `http://localhost:5173`. Vite redirige `/api` al puerto 3001. Para desarrollo usar `APP_URL=http://localhost:5173`. Para revisar el build con `npm start`, usar `APP_URL=http://localhost:3001`.
 
-Las migraciones aplicadas quedan en `schema_migrations`. El runner usa un bloqueo exclusivo. MySQL realiza commit implícito de DDL: no asumir rollback completo de una migración de esquema. La inicial es reejecutable con `IF NOT EXISTS`; respaldar antes de futuras migraciones y no editar migraciones ya aplicadas. La seed solo crea configuración faltante y no reinicia los días modificados por administración. Nunca carga personas reales.
+Las migraciones aplicadas quedan en `schema_migrations`. El runner usa un bloqueo exclusivo. MySQL realiza commit implícito de DDL: no asumir rollback completo de una migración de esquema. La inicial es reejecutable con `IF NOT EXISTS`; respaldar antes de futuras migraciones y no editar migraciones ya aplicadas. La seed actual no inserta ni modifica configuración operativa. En instalaciones nuevas, cargar manualmente catálogo, facilitadores, períodos, ofertas y horarios desde Configuración. No carga personas ni asignaciones predefinidas.
 
 En este equipo se preparó una instancia **local de desarrollo** MySQL 8.4.8 en `tmp/mysql/`, con puerto 3307 y bases `prisma_dev`/`prisma_test`. No es un servicio de Windows y no se despliega. `.env` contiene la credencial local generada; `private/local-mysql-admin.json` es solo para administrar esa instancia. Ambos están excluidos de Git. Para volver a iniciarla desde PowerShell:
 
@@ -79,7 +81,7 @@ $data = Join-Path (Get-Location) 'tmp/mysql-data'
 & "$base/bin/mysqld.exe" --no-defaults "--basedir=$base" "--datadir=$data" --port=3307 --bind-address=127.0.0.1 --mysqlx=OFF --console
 ```
 
-`scripts/setup-local-db.ts` es una utilidad de arranque único para esa instancia recién inicializada, no un instalador ni un paso de producción. La demo local contiene únicamente personas de prueba claramente identificadas.
+`scripts/setup-local-db.ts` es una utilidad de arranque único para esa instancia recién inicializada, no un instalador ni un paso de producción. Las pruebas generan fixtures exclusivamente en la base descartable prisma_test; no copiar esa base al entorno operativo.
 
 ## Variables de entorno
 
@@ -87,7 +89,7 @@ $data = Join-Path (Get-Location) 'tmp/mysql-data'
 | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | NODE_ENV                        | `development` local, `production` en hosting                                                           |
 | PORT                            | Puerto entregado por el proveedor; fallback 3001                                                       |
-| HOST                            | Opcional: por defecto `127.0.0.1` local y `0.0.0.0` en producción                                        |
+| HOST                            | Opcional: por defecto `127.0.0.1` local y `0.0.0.0` en producción                                      |
 | APP_URL                         | Origen exacto, sin barra final; HTTPS en producción                                                    |
 | DB_HOST / DB_PORT               | Servidor y puerto MySQL provistos por SiteGround                                                       |
 | DB_NAME / DB_USER / DB_PASSWORD | Credenciales exclusivamente del servidor                                                               |
@@ -184,7 +186,7 @@ mysqldump --single-transaction --routines --triggers --no-tablespaces -h HOST -u
 - **403 al guardar:** APP_URL debe coincidir exactamente con el origen de navegador, incluido puerto local. Reiniciar después de cambiar variables.
 - **Sitio en blanco / assets 404:** construir primero, ejecutar desde raíz y conservar `dist/client`. No servir una carpeta de build distinta.
 - **Duplicado al inscribir:** la persona ya tiene esa actividad ese mes; abrir Editar horarios para agregar slots.
-- **Reglas de día:** editar Configuración; no cambiar componentes. Verificar que tanto actividad como docente estén activos.
+- **Reglas de día:** editar Configuración; no cambiar componentes. Verificar oferta y horarios del período. Los facilitadores inactivos conservan sus asignaciones históricas pero no admiten nuevas asignaciones.
 - **Importación rechazada:** revisar fila de encabezados, campos obligatorios, teléfono con al menos seis dígitos, tamaño y duplicados. No se aceptan ZIP64 ni libros con más de 40 MB descomprimidos; exportar solo la hoja de personas si el libro es grande.
 - **Windows / esbuild / tsx con Access denied:** ejecutar el comando autorizado en una terminal normal fuera del sandbox de la herramienta, no cambiar permisos del sistema de forma global.
 - **Cerrar entorno local:** detener Node con Ctrl+C. Apagar la instancia MySQL propia con `mysqladmin` usando las credenciales locales guardadas. No detener otras instalaciones.

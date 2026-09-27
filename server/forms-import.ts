@@ -1,9 +1,16 @@
+import { offeringList, scheduleList } from './offerings.js';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
 import { readImport, mapRow, strongMatch } from './importer.js';
-import { formsMapping, parseOption, parseFormPayment, formRowSchema } from '../shared/forms.js';
+import {
+  formsMapping,
+  parseOption,
+  parseFormPayment,
+  formRowSchema,
+  resolveFormSelection,
+} from '../shared/forms.js';
 import { personSchema } from '../shared/domain.js';
 import { query, execute, peopleTransaction, pool } from './db.js';
 import { duplicates, savePerson } from './repositories.js';
@@ -25,17 +32,9 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
   const mapping = req.body.mapping
     ? z.record(z.string(), z.number().int().min(-1).max(99)).parse(JSON.parse(req.body.mapping))
     : formsMapping(result.headers);
-  const activities = await query(
-    'SELECT a.*,i.name instructor FROM activities a JOIN instructors i ON i.id=a.instructor_id WHERE a.active=1 AND i.active=1',
-  );
-  const allowed = await query('SELECT * FROM activity_allowed_days');
-  const list = activities.map((a) => ({
-    ...a,
-    id: a.id,
-    name: a.name,
-    instructor_id: a.instructor_id,
-    days: allowed.filter((d) => d.activity_id === a.id).map((d) => d.day),
-  }));
+  const offers = (await offeringList(periodId)).filter((o) => o.active && o.catalog_active);
+  const list = offers.map((o) => ({ ...o, id: o.activity_id }));
+  const schedules = await scheduleList(periodId);
   const rows: any[] = [];
   for (const source of result.rows) {
     const mapped = mapRow(source.values, mapping);
@@ -53,9 +52,10 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
     const options = [get('morning'), get('afternoon')]
       .flatMap((s) => s.split(/\s*[,;\n]\s*/))
       .filter(Boolean);
-    const selections = options.map((s) => parseOption(s, list));
+    const selections = options.map((s) => resolveFormSelection(parseOption(s, list), schedules));
     // A general hours answer is never silently interpreted as an enrollment.
-    if (!options.length && get('hours')) selections.push(parseOption(get('hours'), list));
+    if (!options.length && get('hours'))
+      selections.push(resolveFormSelection(parseOption(get('hours'), list), schedules));
     rows.push({
       ...source,
       ...mapped,
@@ -69,7 +69,7 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
       context: { timestamp: get('timestamp'), hours: get('hours'), reminder: get('reminder') },
     });
   }
-  res.json({ ...result, rows, mapping, activities: list });
+  res.json({ ...result, rows, mapping, activities: list, schedules });
 });
 formsImport.post('/commit', async (req, res) => {
   const body = z
@@ -141,22 +141,31 @@ formsImport.post('/commit', async (req, res) => {
       }
       const grouped = new Map<number, any[]>();
       for (const selection of row.selections.filter((s) => s.include)) {
-        const [activity] = await query(
-          'SELECT instructor_id FROM activities WHERE id=?',
-          [selection.activity_id],
-          db,
+        const schedules = await scheduleList(body.period_id, db);
+        const selected = schedules.find(
+          (s) =>
+            s.id === selection.schedule_id &&
+            s.activity_id === selection.activity_id &&
+            s.day === selection.day &&
+            s.start === selection.start &&
+            s.end === selection.end,
         );
-        if (!activity || activity.instructor_id !== selection.instructor_id)
+        if (
+          !selected ||
+          JSON.stringify(
+            selected.instructors.map((i: any) => i.id).sort((a: number, b: number) => a - b),
+          ) !== JSON.stringify([...selection.instructor_ids].sort((a, b) => a - b))
+        )
           throw new AppError(
             409,
-            'El docente debe corresponder a la actividad configurada. Volvé a revisar.',
+            'La configuración del horario cambió o no corresponde. Volvé a revisar.',
           );
         grouped.set(selection.activity_id, [
           ...(grouped.get(selection.activity_id) || []),
-          { day: selection.day, start: selection.start, end: selection.end },
+          selection.schedule_id,
         ]);
       }
-      for (const [activity_id, slots] of grouped) {
+      for (const [activity_id, scheduleIds] of grouped) {
         const [old] = await query(
           'SELECT id FROM enrollments WHERE person_id=? AND period_id=? AND activity_id=?',
           [pid, body.period_id, activity_id],
@@ -164,17 +173,18 @@ formsImport.post('/commit', async (req, res) => {
         );
         const previous = old
           ? await query(
-              'SELECT day,start,end FROM enrollment_slots WHERE enrollment_id=?',
+              'SELECT schedule_id FROM enrollment_slots WHERE enrollment_id=?',
               [old.id],
               db,
             )
           : [];
-        const unique = [...previous, ...slots].filter(
-          (s, i, a) =>
-            a.findIndex((x) => x.day === s.day && x.start === s.start && x.end === s.end) === i,
-        );
         await enrollmentInDB(
-          { person_id: pid, period_id: body.period_id, activity_id, slots: unique },
+          {
+            person_id: pid,
+            period_id: body.period_id,
+            activity_id,
+            schedule_ids: [...new Set([...previous.map((s) => s.schedule_id), ...scheduleIds])],
+          },
           db,
           old?.id,
         );

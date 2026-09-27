@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pool } from './db.js';
-export async function migrate() {
+export async function migrate(through?: string) {
   const c = await pool.getConnection();
   try {
     const [lock] = await c.query("SELECT GET_LOCK('prisma_migrate',30) acquired");
@@ -10,7 +10,7 @@ export async function migrate() {
       'CREATE TABLE IF NOT EXISTS schema_migrations (name VARCHAR(200) PRIMARY KEY, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)',
     );
     for (const name of (await readdir(resolve('server/migrations')))
-      .filter((x) => x.endsWith('.sql'))
+      .filter((x) => x.endsWith('.sql') && (!through || x <= through))
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;

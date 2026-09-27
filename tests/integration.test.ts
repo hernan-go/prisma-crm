@@ -1,3 +1,5 @@
+import { monthlyModelTests } from './monthly-model-cases.js';
+import { legacyFixture, resetTestSchema, prepareSchedules } from './model-fixtures.js';
 import { cleanupPlan, applyCleanup } from '../server/qa-cleanup.js';
 import { testCredentials } from './auth-helper.js';
 import { randomUUID } from 'node:crypto';
@@ -12,13 +14,61 @@ const enabled = process.env.RUN_DB_TESTS === 'true';
 const credentials = await testCredentials();
 const app = createApp(credentials);
 const agent = request.agent(app);
+async function enroll(body: any, eid?: number) {
+  const result = await prepareSchedules(agent, body.period_id, body.activity_id, body.slots);
+  if (result.error) return result.error;
+  return eid
+    ? agent.put(`/api/enrollments/${eid}`).send({ ...body, schedule_ids: result.ids })
+    : agent.post('/api/enrollments').send({ ...body, schedule_ids: result.ids });
+}
 describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   let pid: number, period: number, activity: number, enrollment: number, payment: number;
   const person = { nombre: 'Persona Ficticia', apellido: 'Prueba QA', telefono: '0000001234' };
   beforeAll(async () => {
     if (process.env.DB_NAME !== 'prisma_test')
       throw new Error('Las pruebas requieren DB_NAME=prisma_test.');
+    await resetTestSchema();
+    await migrate('004.sql');
+    await legacyFixture();
+    expect(
+      (await agent.post('/api/auth/login').send({ password: credentials.password })).status,
+    ).toBe(200);
+    const preservedTables = [
+      'people',
+      'periods',
+      'enrollments',
+      'payments',
+      'monthly_accounts',
+      'admin_sessions',
+      'import_receipts',
+      'advertising_investments',
+    ];
+    const snapshots = await Promise.all(
+      preservedTables.map((table) => query(`SELECT * FROM ${table}`)),
+    );
+    const pre = await query('SELECT * FROM payments');
+    const accountsBefore = await query('SELECT * FROM monthly_accounts');
     await migrate();
+    for (const [index, table] of preservedTables.entries())
+      expect(await query(`SELECT * FROM ${table}`)).toEqual(snapshots[index]);
+    expect((await agent.get('/api/auth/session')).body.authenticated).toBe(true);
+    const migratedAccounts = (await agent.get('/api/accounts?period_id=1')).body;
+    expect(migratedAccounts[0]).toMatchObject({
+      amount_due: '50000.00',
+      paid: '50000.00',
+      balance: '0.00',
+    });
+    expect(await query('SELECT * FROM payments')).toEqual(pre);
+    expect(await query('SELECT * FROM monthly_accounts')).toEqual(accountsBefore);
+    const migrated = await query(
+      'SELECT si.display_name,s.start,s.end,s.day FROM schedule_instructors si JOIN activity_schedules s ON s.id=si.schedule_id',
+    );
+    expect(migrated).toContainEqual({
+      display_name: 'Facilitador migración',
+      day: 1,
+      start: '11:00',
+      end: '12:30',
+    });
     expect(
       (await agent.post('/api/auth/login').send({ password: credentials.password })).status,
     ).toBe(200);
@@ -27,6 +77,10 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       'monthly_accounts',
       'enrollment_slots',
       'enrollments',
+      'schedule_instructors',
+      'activity_schedules',
+      'period_activity_days',
+      'period_activities',
       'activity_allowed_days',
       'activities',
       'instructors',
@@ -35,7 +89,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       'advertising_investments',
     ])
       await execute(`DELETE FROM ${table}`);
-    await seed();
+    await legacyFixture(false);
   }, 30000);
   afterAll(() => pool.end());
   it('crea persona, valida duplicado y edita contacto', async () => {
@@ -59,14 +113,14 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   it('inscribe dos actividades y múltiples slots, bloquea día inválido', async () => {
     const list = (await agent.get('/api/activities')).body;
     activity = list.find((a: any) => a.name.startsWith('Taller de la Memoria')).id;
-    let r = await agent.post('/api/enrollments').send({
+    let r = await enroll({
       person_id: pid,
       period_id: period,
       activity_id: activity,
       slots: [{ day: 1, start: '10:00', end: '12:00' }],
     });
     expect(r.status).toBe(422);
-    r = await agent.post('/api/enrollments').send({
+    r = await enroll({
       person_id: pid,
       period_id: period,
       activity_id: activity,
@@ -77,7 +131,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     });
     expect(r.status).toBe(201);
     enrollment = r.body.id;
-    r = await agent.post('/api/enrollments').send({
+    r = await enroll({
       person_id: pid,
       period_id: period,
       activity_id: list.find((a: any) => a.name.startsWith('Yoga')).id,
@@ -137,12 +191,15 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   it('edita horarios y preserva persona al cancelar inscripción', async () => {
     expect(
       (
-        await agent.put(`/api/enrollments/${enrollment}`).send({
-          person_id: pid,
-          period_id: period,
-          activity_id: activity,
-          slots: [{ day: 3, start: '19:00', end: '20:00' }],
-        })
+        await enroll(
+          {
+            person_id: pid,
+            period_id: period,
+            activity_id: activity,
+            slots: [{ day: 3, start: '19:00', end: '20:00' }],
+          },
+          enrollment,
+        )
       ).status,
     ).toBe(200);
     expect((await agent.delete(`/api/enrollments/${enrollment}`)).status).toBe(200);
@@ -243,9 +300,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     const digital = list.find((a: any) => a.name === 'Inclusión Digital').id;
     const info = list.find((a: any) => a.name === 'Informática').id;
     const save = (person: number, act: number, start = '10:00', end = '11:00', day = 1) =>
-      agent
-        .post('/api/enrollments')
-        .send({ person_id: person, period_id: pr, activity_id: act, slots: [{ day, start, end }] });
+      enroll({ person_id: person, period_id: pr, activity_id: act, slots: [{ day, start, end }] });
     expect((await save(p1, yoga)).status).toBe(201);
     expect((await save(p2, yoga)).status).toBe(201);
     expect((await save(p1, digital)).status).toBe(409);
@@ -256,11 +311,13 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       save(p2, info, '13:00', '14:00', 6),
     ]);
     expect(concurrent.map((r) => r.status).sort()).toEqual([201, 409]);
-    const group = list.find((a: any) => a.id === yoga);
+    const group = (await agent.get(`/api/offerings?period_id=${pr}`)).body.find(
+      (a: any) => a.activity_id === yoga,
+    );
     expect(
       (
         await agent
-          .put(`/api/activities/${yoga}`)
+          .put(`/api/offerings/${group.id}`)
           .send({ ...group, active: true, mode: 'individual' })
       ).status,
     ).toBe(409);
@@ -293,6 +350,13 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   });
   it('Google Forms preview sin escritura, revisión, varias actividades y reintento seguro', async () => {
     const pr = (await agent.post('/api/periods').send({ year: 2027, month: 4 })).body.id;
+    await prepareSchedules(agent, pr, 'Yoga Terapéutico Integral', [
+      { day: 1, start: '10:00', end: '11:00' },
+    ]);
+    await prepareSchedules(agent, pr, 'Inclusión Digital', [
+      { day: 3, start: '10:00', end: '12:00' },
+      { day: 1, start: '10:00', end: '12:00' },
+    ]);
     const csv =
       'Nombre Completo.;Número de Teléfono (con código de área);Elegí la opción que corresponde. TURNO MAÑANA;Elegí la opción que corresponde. TURNO TARDE;Pago\nForms Ficticia;0000055511;Yoga Terapéutico Integral Lunes 10 a 11 hs;Inclusión Digital Miércoles 10 a 12 hs;25000 T 23/4';
     const before = (await query('SELECT COUNT(*) n FROM people'))[0].n;
@@ -428,4 +492,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
         .status,
     ).toBe(409);
   });
+  // Separate application lifetime keeps each scenario suite below the real rate limit.
+  // Production limits remain enabled and unchanged.
+  monthlyModelTests(request.agent(createApp(credentials)), credentials.password);
 });

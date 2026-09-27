@@ -17,7 +17,7 @@ import {
   SaveButton,
   DeleteButton,
 } from './components';
-import { personSchema, formatMoney, sumMoney, days, wallet } from '../shared/domain';
+import { personSchema, formatMoney, formatDate, sumMoney, days, wallet } from '../shared/domain';
 import { usePeriod, periodName } from './App';
 import { PersonMonth } from './Management';
 export function PersonForm({ person, close }: { person?: any; close: () => void }) {
@@ -340,7 +340,14 @@ export function PersonDetail() {
             <b>
               {periodName(e)} · {e.activity}
             </b>
-            <p>{e.slots.map((s: any) => `${days[s.day]} ${s.start}–${s.end}`).join(' · ')}</p>
+            <p>
+              {e.slots
+                .map(
+                  (s: any) =>
+                    `${days[s.day]} ${s.start}–${s.end} · ${s.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores'}`,
+                )
+                .join(' · ')}
+            </p>
           </article>
         ))}
       </details>
@@ -354,7 +361,7 @@ export function PersonDetail() {
         ))}
         {p.payments.map((x: any) => (
           <p key={x.id}>
-            {x.date} · {periodName(x)} · {formatMoney(x.amount)} · Cartera {wallet(x.method)}
+            {formatDate(x.date)} · {periodName(x)} · {formatMoney(x.amount)} · Cartera {wallet(x.method)}
           </p>
         ))}
       </details>

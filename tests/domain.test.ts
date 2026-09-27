@@ -67,10 +67,7 @@ describe('Horarios y días', () => {
         person_id: 1,
         period_id: 1,
         activity_id: 1,
-        slots: [
-          { day: 1, start: '09:00', end: '10:00' },
-          { day: 1, start: '09:00', end: '10:00' },
-        ],
+        schedule_ids: [1, 1],
       }).success,
     ).toBe(false));
 });
