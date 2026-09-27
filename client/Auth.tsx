@@ -38,7 +38,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return (
     <main className="login-page">
       <section className="panel login-card">
-        <img className="login-logo" src="/branding/logo_prisma.svg" alt="PRISMA" />
+        <div className="brand login-brand">
+          <img className="brand-logo" src="/branding/logo_prisma.svg" alt="PRISMA" />
+          <div>
+            <b>PRISMA</b>
+            <small>Gestión del espacio</small>
+          </div>
+        </div>
         <h1>Acceso administrativo</h1>
         <p>PRISMA CRM</p>
         <form
