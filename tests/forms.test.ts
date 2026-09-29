@@ -1,9 +1,59 @@
 import { it, expect } from 'vitest';
-import { formsMapping, parseOption, parseFormPayment, formRowSchema } from '../shared/forms.js';
+import {
+  formFields,
+  formsMapping,
+  formsSourceColumns,
+  parseOption,
+  parseFormPayment,
+  formRowSchema,
+} from '../shared/forms.js';
 const activities = [
   { id: 1, name: 'Yoga Terapéutico Integral', instructor_id: 1, days: [1, 3] },
   { id: 2, name: 'Gimnasia y Fortalecimiento Corporal', instructor_id: 2, days: [5] },
 ];
+it('oculta columnas retiradas en selects Forms conservando los diez campos e índices CSV', () => {
+  const headers = [
+    'Marca temporal',
+    'Nombre de usuario',
+    'Nombre completo',
+    'Nuestros horarios',
+    'Nombre',
+    'Apellido',
+    'DNI',
+    'Recordatorios para participar en las actividades de PRISMA',
+    'Teléfono',
+    'Dirección',
+    'Observaciones',
+    'Pago',
+    'Turno mañana',
+    'Turno tarde',
+    'Recordatorio',
+  ];
+  const original = [...headers];
+  expect(formsSourceColumns(headers)).toEqual(
+    [1, 2, 4, 5, 6, 8, 9, 10, 12, 13].map((index) => ({ header: headers[index], index })),
+  );
+  expect(headers).toEqual(original);
+  expect(formsMapping(headers).email).toBe(1);
+});
+it('filtra fuentes Forms con normalización explícita, sin excluir otras columnas', () => {
+  expect(
+    formsSourceColumns([
+      '  MARCA   TEMPORAL. ',
+      '¿Nuestros horarios?',
+      'Recordatório',
+      ' RECORDATORIOS PARA PARTICIPAR EN LAS ACTIVIDADES DE PRISMA. ',
+      'PAGO',
+      'Email',
+      'Observaciones sobre pago',
+      '',
+    ]),
+  ).toEqual([
+    { header: 'Email', index: 5 },
+    { header: 'Observaciones sobre pago', index: 6 },
+    { header: '', index: 7 },
+  ]);
+});
 it('reconoce encabezados reales Google Forms con puntuación y acentos', () => {
   const m = formsMapping([
     'Marca temporal',
@@ -15,14 +65,57 @@ it('reconoce encabezados reales Google Forms con puntuación y acentos', () => {
     'Pago',
   ]);
   expect(m).toMatchObject({
-    timestamp: 0,
     email: 1,
     full_name: 2,
     dni: 3,
     telefono: 4,
     morning: 5,
-    payment: 6,
   });
+});
+it.each([
+  'Nombre de usuario',
+  'Dirección de correo electrónico',
+  'Email',
+  'Correo electrónico',
+  '  NOMBRE   DE USUARIO.  ',
+])('reconoce el alias explícito de email: %s', (header) => {
+  const mapping = formsMapping([
+    'Marca temporal',
+    header,
+    'Nombre Completo.',
+    'D.N.I',
+    'Número de Teléfono (con código de área)',
+    'Dirección',
+  ]);
+  expect(mapping).toMatchObject({ email: 1, full_name: 2, dni: 3, telefono: 4, direccion: 5 });
+});
+it('no usa coincidencias difusas para email', () => {
+  expect(formsMapping(['Nombre de usuario alternativo', 'Correo', 'Nombre']).email).toBe(-1);
+});
+it('Forms solo expone los diez campos operativos de correspondencia', () => {
+  const fields = [
+    'email',
+    'full_name',
+    'nombre',
+    'apellido',
+    'dni',
+    'telefono',
+    'direccion',
+    'observaciones',
+    'morning',
+    'afternoon',
+  ];
+  expect(Object.keys(formFields)).toEqual(fields);
+  const mapping = formsMapping([
+    'Marca temporal',
+    'Nuestros horarios',
+    'Recordatorio',
+    'Pago',
+    'Turno mañana',
+    'Turno tarde',
+  ]);
+  expect(Object.keys(mapping)).toEqual(fields);
+  expect(mapping).toMatchObject({ morning: 4, afternoon: 5 });
 });
 it('interpreta actividad y rango explícitos sin inventar duraciones', () => {
   expect(parseOption('Yoga Terapéutico Integral Lunes 10 a 11 hs', activities)).toMatchObject({

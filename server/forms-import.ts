@@ -6,8 +6,8 @@ import { createHash } from 'node:crypto';
 import { readImport, mapRow, strongMatch } from './importer.js';
 import {
   formsMapping,
+  formFields,
   parseOption,
-  parseFormPayment,
   formRowSchema,
   resolveFormSelection,
 } from '../shared/forms.js';
@@ -29,9 +29,13 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
   if (!period || period.status !== 'open')
     throw new AppError(409, 'Seleccioná un período abierto.');
   const result = await readImport(req.file.buffer, req.file.originalname, undefined, 1);
-  const mapping = req.body.mapping
+  const requestedMapping = req.body.mapping
     ? z.record(z.string(), z.number().int().min(-1).max(99)).parse(JSON.parse(req.body.mapping))
     : formsMapping(result.headers);
+  // Ignore removed/unknown fields even when an older client submits a manual mapping.
+  const mapping = Object.fromEntries(
+    Object.keys(formFields).map((key) => [key, requestedMapping[key] ?? -1]),
+  );
   const offers = (await offeringList(periodId)).filter((o) => o.active && o.catalog_active);
   const list = offers.map((o) => ({ ...o, id: o.activity_id }));
   const schedules = await scheduleList(periodId);
@@ -53,9 +57,6 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
       .flatMap((s) => s.split(/\s*[,;\n]\s*/))
       .filter(Boolean);
     const selections = options.map((s) => resolveFormSelection(parseOption(s, list), schedules));
-    // A general hours answer is never silently interpreted as an enrollment.
-    if (!options.length && get('hours'))
-      selections.push(resolveFormSelection(parseOption(get('hours'), list), schedules));
     rows.push({
       ...source,
       ...mapped,
@@ -65,8 +66,8 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
       target_id: matches[0]?.id,
       reviewed: false,
       selections,
-      payment: parseFormPayment(get('payment'), period.year),
-      context: { timestamp: get('timestamp'), hours: get('hours'), reminder: get('reminder') },
+      // Preserve the existing review contract without deriving financial data from the CSV.
+      payment: { original: '', amount: '', method: '', date: '', include: false, approved: false },
     });
   }
   res.json({ ...result, rows, mapping, activities: list, schedules });

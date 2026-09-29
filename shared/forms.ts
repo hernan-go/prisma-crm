@@ -8,8 +8,20 @@ export const normalizeLabel = (s: string) =>
     .replace(/[.¿?]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+// Forms-only source options: retain original CSV indexes for manual mapping.
+export function formsSourceColumns(headers: string[]) {
+  const excluded = new Set([
+    'marca temporal',
+    'nuestros horarios',
+    'recordatorio',
+    'recordatorios para participar en las actividades de prisma',
+    'pago',
+  ]);
+  return headers
+    .map((header, index) => ({ header, index }))
+    .filter(({ header }) => !excluded.has(normalizeLabel(header)));
+}
 export const formFields: Record<string, string> = {
-  timestamp: 'Marca temporal',
   email: 'Email',
   full_name: 'Nombre completo',
   nombre: 'Nombre',
@@ -18,16 +30,12 @@ export const formFields: Record<string, string> = {
   telefono: 'Teléfono',
   direccion: 'Dirección',
   observaciones: 'Observaciones',
-  hours: 'Nuestros horarios',
   morning: 'Turno mañana',
   afternoon: 'Turno tarde',
-  reminder: 'Recordatorio',
-  payment: 'Pago',
 };
 export function formsMapping(headers: string[]) {
   const aliases: Record<string, string[]> = {
-    timestamp: ['marca temporal'],
-    email: ['direccion de correo electronico', 'email', 'correo electronico'],
+    email: ['nombre de usuario', 'direccion de correo electronico', 'email', 'correo electronico'],
     full_name: ['nombre completo', 'nombre y apellido'],
     nombre: ['nombre'],
     apellido: ['apellido'],
@@ -35,11 +43,8 @@ export function formsMapping(headers: string[]) {
     telefono: ['numero de telefono (con codigo de area)', 'telefono'],
     direccion: ['direccion'],
     observaciones: ['observaciones'],
-    hours: ['nuestros horarios'],
     morning: ['elegi la opcion que corresponde turno manana', 'turno manana'],
     afternoon: ['elegi la opcion que corresponde turno tarde', 'turno tarde'],
-    reminder: ['recordatorio'],
-    payment: ['pago'],
   };
   return Object.fromEntries(
     Object.entries(aliases).map(([k, names]) => [

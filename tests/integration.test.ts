@@ -1,4 +1,5 @@
 import { monthlyModelTests } from './monthly-model-cases.js';
+import { formsImportTests } from './forms-import-cases.js';
 import { legacyFixture, resetTestSchema, prepareSchedules } from './model-fixtures.js';
 import { cleanupPlan, applyCleanup } from '../server/qa-cleanup.js';
 import { testCredentials } from './auth-helper.js';
@@ -371,6 +372,16 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     const body = { period_id: pr, request_id: randomUUID(), confirmed: true, rows: [row] };
     expect((await agent.post('/api/forms-import/commit').send(body)).status).toBe(422);
     row.reviewed = true;
+    // CSV no longer supplies payments. Exercise the unchanged manual review contract explicitly.
+    expect(row.payment).toEqual({
+      original: '',
+      amount: '',
+      method: '',
+      date: '',
+      include: false,
+      approved: false,
+    });
+    Object.assign(row.payment, { amount: '25000', method: 'transfer', date: '2027-04-23' });
     row.payment.include = true;
     expect((await agent.post('/api/forms-import/commit').send(body)).status).toBe(422);
     row.payment.approved = true;
@@ -495,4 +506,5 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   // Separate application lifetime keeps each scenario suite below the real rate limit.
   // Production limits remain enabled and unchanged.
   monthlyModelTests(request.agent(createApp(credentials)), credentials.password);
+  formsImportTests(request.agent(createApp(credentials)), credentials.password);
 });

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { api } from './api';
 import { Field, ErrorBox, Modal } from './components';
 import { usePeriod, periodName } from './App';
-import { formFields, formRowSchema } from '../shared/forms';
+import { formFields, formRowSchema, formsSourceColumns } from '../shared/forms';
 import { days, wallet } from '../shared/domain';
 import { scheduleConflict, type Booking } from '../shared/schedule';
 export function FormsImport() {
@@ -199,9 +199,9 @@ export function FormsImport() {
                     onChange={(e) => setMapping({ ...mapping, [k]: Number(e.target.value) })}
                   >
                     <option value={-1}>No usar</option>
-                    {preview.headers.map((h: string, i: number) => (
-                      <option key={i} value={i}>
-                        {h || `Columna ${i + 1}`}
+                    {formsSourceColumns(preview.headers).map(({ header, index }) => (
+                      <option key={index} value={index}>
+                        {header || `Columna ${index + 1}`}
                       </option>
                     ))}
                   </select>
@@ -262,9 +262,6 @@ export function FormsImport() {
                       {r.action === 'skip' ? 'Omitida' : r.reviewed ? 'Revisada' : 'Pendiente'}
                     </span>
                   </div>
-                  <p>
-                    {r.context.timestamp} · {r.context.hours} · {r.context.reminder}
-                  </p>
                   {r.review && (
                     <p className="warning">
                       Separación de nombre y apellido sugerida automáticamente. Revisá nombres y
