@@ -566,7 +566,7 @@ export function Payments() {
                 <td>{formatMoney(a.amount_due)}</td>
                 <td>{formatMoney(a.paid)}</td>
                 <td>
-                  <span className={Number(a.balance) > 0 ? 'warning' : ''}>
+                  <span className={Number(a.balance) > 0 ? 'debt-chip' : ''}>
                     {a.balance === null
                       ? 'No definido'
                       : Number(a.balance) < 0

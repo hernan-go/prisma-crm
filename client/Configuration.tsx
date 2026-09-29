@@ -31,6 +31,7 @@ export function Configuration() {
         <div className="section-heading">
           <h2>Actividades del período · {periodName(periods.find((p) => p.id === period))}</h2>
           <button
+            className="primary"
             disabled={!period || closed}
             onClick={() => setEdit({ kind: 'offerings', value: { period_id: period, days: [] } })}
           >
@@ -79,6 +80,7 @@ export function Configuration() {
               </div>
             ))}
             <button
+              className="info-action add-schedule"
               disabled={closed || !o.active || !o.catalog_active}
               onClick={() =>
                 setEdit({

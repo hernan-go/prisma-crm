@@ -354,6 +354,29 @@ p.info,
 .warning {
   color: #e5c185;
 }
+.debt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid #7b464e;
+  border-radius: 999px;
+  background: #492f34;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-action {
+  background: #293f4b;
+  border-color: #405b6a;
+  color: #a7d7ed;
+}
+.info-action:hover {
+  background: #293f4b;
+  border-color: #a7d7ed;
+}
+.add-schedule {
+  margin-top: 8px;
+}
 .error {
   color: #ffb3b6;
 }
@@ -843,6 +866,58 @@ summary .chip {
   border-radius: 10px;
   box-shadow: 0 5px 40px #0005;
   z-index: 100;
+}
+/* Reading sizes grow on desktop; mobile keeps its existing scale and spacing. */
+@media (min-width: 701px) {
+  :root {
+    font-size: 16px;
+  }
+  h1 {
+    font-size: 32px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+  h3 {
+    font-size: 17px;
+  }
+  small,
+  .breadcrumb,
+  .period-control label,
+  .stat > span,
+  .activity-count > div:first-child,
+  .balance-panel a,
+  .field > span,
+  .field > label,
+  .check,
+  td,
+  .back,
+  .slot,
+  .payment-row p {
+    font-size: 14px;
+  }
+  nav a,
+  .wallet b,
+  summary,
+  .payment-row b,
+  .attendee {
+    font-size: 15px;
+  }
+  .sidebar-foot,
+  .brand small,
+  .wallet small,
+  th,
+  .day-buttons button,
+  .review-filters button,
+  footer {
+    font-size: 13px;
+  }
+  .eyebrow,
+  .stat small,
+  .chip,
+  td small {
+    font-size: 12px;
+  }
 }
 @media (min-width: 1500px) {
   main {
