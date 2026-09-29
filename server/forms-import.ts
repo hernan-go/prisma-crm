@@ -66,8 +66,9 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
       target_id: matches[0]?.id,
       reviewed: false,
       selections,
-      // Preserve the existing review contract without deriving financial data from the CSV.
-      payment: { original: '', amount: '', method: '', date: '', include: false, approved: false },
+      // Financial values are entered manually during review, never read from the CSV.
+      amount_due: '',
+      payment: { amount: '', method: '', date: '', include: false },
     });
   }
   res.json({ ...result, rows, mapping, activities: list, schedules });
@@ -191,6 +192,14 @@ formsImport.post('/commit', async (req, res) => {
         );
         enrollments++;
       }
+      // Empty means leave an existing amount untouched; explicit zero is a real update.
+      if (row.amount_due !== '') {
+        await execute(
+          'INSERT INTO monthly_accounts(person_id,period_id,amount_due) VALUES (?,?,?) ON DUPLICATE KEY UPDATE amount_due=VALUES(amount_due)',
+          [pid, body.period_id, row.amount_due],
+          db,
+        );
+      }
       if (row.payment.include) {
         const p = row.payment;
         const [duplicate] = await query(
@@ -203,10 +212,7 @@ formsImport.post('/commit', async (req, res) => {
             409,
             'Ya hay un pago con igual persona, período, fecha, monto y medio. Revisalo y excluí el pago de la importación si corresponde.',
           );
-        await paymentInDB(
-          { ...p, person_id: pid, period_id: body.period_id, notes: p.original },
-          db,
-        );
+        await paymentInDB({ ...p, person_id: pid, period_id: body.period_id }, db);
         payments++;
       }
     }

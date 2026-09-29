@@ -4,7 +4,6 @@ import {
   formsMapping,
   formsSourceColumns,
   parseOption,
-  parseFormPayment,
   formRowSchema,
 } from '../shared/forms.js';
 const activities = [
@@ -136,24 +135,14 @@ it('reconoce el alias explícito Programa acompañamiento cognitivo', () => {
   ]);
   expect(result).toMatchObject({ activity_id: 3, day: 4, start: '10:30', end: '12:00' });
 });
-it('sugiere pagos con aprobación desactivada y deja fechas faltantes pendientes', () => {
-  expect(parseFormPayment('35000 E 24/9', 2026)).toMatchObject({
-    amount: '35000',
-    method: 'cash',
-    date: '2026-09-24',
-    include: false,
-    approved: false,
-  });
-  expect(parseFormPayment('10000 T', 2026).date).toBe('');
-  expect(parseFormPayment('pago tal vez 2000', 2026).amount).toBe('');
-});
-it('exige revisión y aprobación del pago; las opciones ambiguas bloquean', () => {
+it('exige revisión individual y datos del pago incluido; las opciones ambiguas bloquean', () => {
   const row = {
     person: { nombre: 'Forms', apellido: 'Ficticia', telefono: '0000055533' },
     action: 'create',
     reviewed: false,
     selections: [],
-    payment: parseFormPayment('10000 T 23/9', 2026),
+    amount_due: '',
+    payment: { amount: '', method: '', date: '', include: false },
   };
   expect(formRowSchema.safeParse(row).success).toBe(false);
   expect(formRowSchema.safeParse({ ...row, reviewed: true }).success).toBe(true);
@@ -168,6 +157,55 @@ it('exige revisión y aprobación del pago; las opciones ambiguas bloquean', () 
       selections: [parseOption('sin reconocer', activities)],
     }).success,
   ).toBe(false);
+});
+it.each(['', '0', '35000', '35000.50'])('acepta A cobrar manual %j sin pago', (amount_due) => {
+  expect(
+    formRowSchema.safeParse({
+      person: { nombre: 'Cuenta', apellido: 'Sintética', telefono: '0000055533' },
+      action: 'create',
+      reviewed: true,
+      selections: [],
+      amount_due,
+      payment: { include: false, amount: 'residual', method: 'otro', date: 'inválida' },
+    }).success,
+  ).toBe(true);
+});
+it.each(['-1', '1.001', 'NaN', '1e3', '10000000000', 'texto'])(
+  'rechaza A cobrar inválido %j',
+  (amount_due) => {
+    expect(
+      formRowSchema.safeParse({
+        person: { nombre: 'Cuenta', apellido: 'Sintética', telefono: '0000055533' },
+        action: 'create',
+        reviewed: true,
+        selections: [],
+        amount_due,
+        payment: { include: false, amount: '', method: '', date: '' },
+      }).success,
+    ).toBe(false);
+  },
+);
+it.each([
+  [{ amount: '20000', method: 'transfer', date: '2032-01-15' }, true],
+  [{ amount: '35000', method: 'cash', date: '2032-01-15' }, true],
+  [{ amount: '', method: 'transfer', date: '2032-01-15' }, false],
+  [{ amount: '0', method: 'cash', date: '2032-01-15' }, false],
+  [{ amount: '-1', method: 'cash', date: '2032-01-15' }, false],
+  [{ amount: '1.001', method: 'cash', date: '2032-01-15' }, false],
+  [{ amount: '20000', method: 'otro', date: '2032-01-15' }, false],
+  [{ amount: '20000', method: 'transfer', date: '' }, false],
+  [{ amount: '20000', method: 'transfer', date: '2032-02-30' }, false],
+])('valida pago inicial manual %j sin segundo check', (payment, valid) => {
+  expect(
+    formRowSchema.safeParse({
+      person: { nombre: 'Cuenta', apellido: 'Sintética', telefono: '0000055533' },
+      action: 'create',
+      reviewed: true,
+      selections: [],
+      amount_due: '35000',
+      payment: { ...payment, include: true },
+    }).success,
+  ).toBe(valid);
 });
 
 it.each([

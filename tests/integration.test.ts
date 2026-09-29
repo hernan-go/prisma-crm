@@ -1,5 +1,6 @@
 import { monthlyModelTests } from './monthly-model-cases.js';
 import { formsImportTests } from './forms-import-cases.js';
+import { formsFinanceTests } from './forms-finance-cases.js';
 import { legacyFixture, resetTestSchema, prepareSchedules } from './model-fixtures.js';
 import { cleanupPlan, applyCleanup } from '../server/qa-cleanup.js';
 import { testCredentials } from './auth-helper.js';
@@ -372,19 +373,16 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     const body = { period_id: pr, request_id: randomUUID(), confirmed: true, rows: [row] };
     expect((await agent.post('/api/forms-import/commit').send(body)).status).toBe(422);
     row.reviewed = true;
-    // CSV no longer supplies payments. Exercise the unchanged manual review contract explicitly.
+    // Financial inputs are manual; including a payment requires complete values, not a second check.
     expect(row.payment).toEqual({
-      original: '',
       amount: '',
       method: '',
       date: '',
       include: false,
-      approved: false,
     });
-    Object.assign(row.payment, { amount: '25000', method: 'transfer', date: '2027-04-23' });
     row.payment.include = true;
     expect((await agent.post('/api/forms-import/commit').send(body)).status).toBe(422);
-    row.payment.approved = true;
+    Object.assign(row.payment, { amount: '25000', method: 'transfer', date: '2027-04-23' });
     const result = await agent.post('/api/forms-import/commit').send(body);
     expect(result.status).toBe(200);
     expect(result.body).toMatchObject({ created: 1, enrollments: 2, payments: 1 });
@@ -507,4 +505,5 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   // Production limits remain enabled and unchanged.
   monthlyModelTests(request.agent(createApp(credentials)), credentials.password);
   formsImportTests(request.agent(createApp(credentials)), credentials.password);
+  formsFinanceTests(request.agent(createApp(credentials)), credentials.password);
 });

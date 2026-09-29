@@ -7,12 +7,10 @@ export function formsImportTests(agent: any, password: string) {
   describe('Forms: email y correspondencia simplificada', () => {
     let period: number;
     const neutralPayment = {
-      original: '',
       amount: '',
       method: '',
       date: '',
       include: false,
-      approved: false,
     };
     const headers =
       'Marca temporal;Nombre de usuario;Nombre Completo.;D.N.I;Número de Teléfono (con código de área);Dirección;Nuestros horarios;Recordatorio;Pago;Turno mañana;Turno tarde';
@@ -44,6 +42,7 @@ export function formsImportTests(agent: any, password: string) {
       expect(row.valid).toBe(true);
       expect(row.selections).toEqual([]);
       expect(row.payment).toEqual(neutralPayment);
+      expect(row.amount_due).toBe('');
       expect(row).not.toHaveProperty('context');
       for (const key of ['timestamp', 'hours', 'reminder', 'payment']) {
         expect(result.mapping).not.toHaveProperty(key);

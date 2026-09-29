@@ -384,9 +384,7 @@ export function monthlyModelTests(agent: any, password: string) {
           },
         ],
         payment: {
-          original: '',
           include: true,
-          approved: true,
           method: 'cash',
           date: '2030-10-01',
           amount: '25',

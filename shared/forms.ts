@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { days, personSchema, slotSchema, paymentSchema } from './domain.js';
+import { days, personSchema, slotSchema, paymentSchema, money } from './domain.js';
 export const normalizeLabel = (s: string) =>
   s
     .normalize('NFD')
@@ -119,19 +119,6 @@ export function parseOption(original: string, activities: FormActivity[]) {
     end,
   };
 }
-export function parseFormPayment(original: string, year: number) {
-  const m = original
-    .trim()
-    .match(/^(\d{1,10}(?:[.,]\d{1,2})?)\s+([TE])(?:\s+(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?)?$/i);
-  return {
-    original,
-    amount: m ? m[1].replace(',', '.') : '',
-    method: m ? (m[2].toUpperCase() === 'T' ? 'transfer' : 'cash') : '',
-    date: m?.[3] ? `${m[5] || year}-${m[4].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '',
-    include: false,
-    approved: false,
-  };
-}
 export const formSelectionSchema = z
   .object({
     original: z.string().max(2000).default(''),
@@ -153,21 +140,21 @@ export const formSelectionSchema = z
   });
 export const formPaymentSchema = z
   .object({
-    original: z.string().max(2000).default(''),
     amount: z.string(),
     method: z.string(),
     date: z.string(),
     include: z.boolean(),
-    approved: z.boolean(),
   })
   .superRefine((p, ctx) => {
+    // Validate numeric syntax before the shared schema evaluates Decimal (blank is not a number).
     if (
       p.include &&
-      (!p.approved || !paymentSchema.safeParse({ ...p, person_id: 1, period_id: 1 }).success)
+      (!money.safeParse(p.amount).success ||
+        !paymentSchema.safeParse({ ...p, person_id: 1, period_id: 1 }).success)
     )
       ctx.addIssue({
         code: 'custom',
-        message: 'Revisá monto, medio y fecha y aprobá explícitamente el pago.',
+        message: 'El pago inicial requiere un monto mayor a cero, medio y fecha válidos.',
       });
   });
 export const formRowSchema = z
@@ -177,6 +164,7 @@ export const formRowSchema = z
     target_id: z.number().int().positive().optional(),
     reviewed: z.boolean(),
     selections: z.array(formSelectionSchema).max(30),
+    amount_due: z.union([z.literal(''), money]).default(''),
     payment: formPaymentSchema,
   })
   .superRefine((r, ctx) => {

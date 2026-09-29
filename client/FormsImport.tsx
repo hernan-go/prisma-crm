@@ -151,7 +151,10 @@ export function FormsImport() {
         ← Importador genérico XLSX / CSV
       </Link>
       <h1>Importar inscripciones desde Google Forms PRISMA</h1>
-      <p>Preferí CSV. Revisá cada persona, su inscripción y cualquier pago antes de confirmar.</p>
+      <p>
+        Preferí CSV. Revisá cada persona, sus inscripciones y la cuenta del período antes de
+        confirmar.
+      </p>
       <section className="panel">
         <Field label="CSV de respuestas (hasta 5 MB)">
           <input
@@ -428,19 +431,31 @@ export function FormsImport() {
                     Agregar actividad / día
                   </button>
                   <section className="payment-review">
-                    <h3>Pago detectado</h3>
-                    <p>Texto original: {r.payment.original || 'Sin pago informado'}</p>
+                    <h3>Cuenta del mes</h3>
+                    <Field label="A cobrar (ARS)">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={r.amount_due}
+                        onChange={(e) => update(i, { amount_due: e.target.value })}
+                      />
+                    </Field>
+                    <p>
+                      Dejá vacío si todavía no está definido. Si ya existe un importe, se conserva.
+                      0 significa que no se cobra este mes.
+                    </p>
                     <label className="check">
                       <input
                         type="checkbox"
                         checked={r.payment.include}
                         onChange={(e) =>
                           update(i, {
-                            payment: { ...r.payment, include: e.target.checked, approved: false },
+                            payment: { ...r.payment, include: e.target.checked },
                           })
                         }
                       />
-                      Incluir este pago
+                      Incluir pago inicial
                     </label>
                     {r.payment.include && (
                       <>
@@ -450,21 +465,21 @@ export function FormsImport() {
                               key={k}
                               label={
                                 {
-                                  amount: 'Monto (ARS)',
-                                  method: 'Medio',
-                                  date: 'Fecha (revisar año sugerido)',
+                                  amount: 'Pagado (ARS)',
+                                  method: 'Medio de pago',
+                                  date: 'Fecha',
                                 }[k]
                               }
                             >
                               {k === 'method' ? (
                                 <select
+                                  required
                                   value={r.payment.method}
                                   onChange={(e) =>
                                     update(i, {
                                       payment: {
                                         ...r.payment,
                                         method: e.target.value,
-                                        approved: false,
                                       },
                                     })
                                   }
@@ -475,7 +490,9 @@ export function FormsImport() {
                                 </select>
                               ) : (
                                 <input
+                                  required
                                   type={k === 'date' ? 'date' : 'number'}
+                                  min={k === 'amount' ? '0.01' : undefined}
                                   step={k === 'amount' ? '0.01' : undefined}
                                   value={r.payment[k]}
                                   onChange={(e) =>
@@ -483,7 +500,6 @@ export function FormsImport() {
                                       payment: {
                                         ...r.payment,
                                         [k]: e.target.value,
-                                        approved: false,
                                       },
                                     })
                                   }
@@ -493,19 +509,9 @@ export function FormsImport() {
                           ))}
                         </div>
                         <p>
-                          Cartera:{' '}
+                          Cartera asignada automáticamente:{' '}
                           {r.payment.method ? wallet(r.payment.method) : 'Seleccioná el medio'}
                         </p>
-                        <label className="check">
-                          <input
-                            type="checkbox"
-                            checked={r.payment.approved}
-                            onChange={(e) =>
-                              update(i, { payment: { ...r.payment, approved: e.target.checked } })
-                            }
-                          />
-                          Apruebo expresamente monto, medio y fecha de este pago.
-                        </label>
                       </>
                     )}
                   </section>
@@ -530,7 +536,8 @@ export function FormsImport() {
                         )
                       }
                     />
-                    Revisé la persona, inscripciones, exclusiones y pago de esta respuesta.
+                    Revisé la persona, inscripciones, exclusiones y cuenta del mes de esta
+                    respuesta.
                   </label>
                   <div className="pagination">
                     <button disabled={!index} onClick={() => setIndex(index - 1)}>
@@ -558,8 +565,8 @@ export function FormsImport() {
         <Modal title="Confirmar lote revisado" close={() => setConfirm(false)}>
           <p>
             Destino: {periodLabel}. {selected.length} personas seleccionadas. Se guardarán solo las
-            inscripciones incluidas y pagos expresamente aprobados. Ante cualquier conflicto, se
-            revierte todo el lote.
+            inscripciones incluidas, importes a cobrar definidos y pagos iniciales seleccionados.
+            Ante cualquier conflicto, se revierte todo el lote.
           </p>
           <ErrorBox error={commit.error} />
           <div className="actions">
