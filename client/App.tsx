@@ -1,4 +1,5 @@
 import { Logout } from './Auth';
+import { FacilitatorPayments } from './FacilitatorPayments';
 import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
@@ -36,6 +37,7 @@ const nav = [
   ['/gestion', 'Gestión mensual', CalendarRange],
   ['/agenda', 'Agenda / Talleres', CalendarDays],
   ['/pagos', 'Pagos', Wallet],
+  ['/pago-facilitadores', 'Pago facilitadores', Wallet],
   ['/publicidad', 'Inversión publicidad', Megaphone],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
@@ -137,6 +139,7 @@ export default function App() {
               <Route path="/gestion" element={<Monthly />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/pagos" element={<Payments />} />
+              <Route path="/pago-facilitadores" element={<FacilitatorPayments />} />
               <Route path="/publicidad" element={<Advertising />} />
               <Route path="/configuracion" element={<Configuration />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />

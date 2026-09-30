@@ -1,3 +1,4 @@
+import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
 import { advertisingSave, advertisingDelete } from './advertising.js';
 import { formsImport } from './forms-import.js';
@@ -18,6 +19,7 @@ import { accounts, enrollmentList, paymentSelect, duplicates, savePerson } from 
 import { personSave, enrollmentSave, paymentSave, activitySave, positiveId } from './services.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use(facilitators);
 api.use('/forms-import', formsImport);
 api.use(offerings);
 const id = (v: unknown) => positiveId.parse(v);

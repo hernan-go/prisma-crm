@@ -1130,3 +1130,119 @@ summary .chip {
     bottom: -20px;
   }
 }
+/* Accounts reuse the monthly account and payment components. */
+.facilitator-block {
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.facilitator-block > .facilitator-name {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 23px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  padding: 3px 8px;
+  border: 1px solid #405b6a;
+  border-radius: 5px;
+  color: #a7d7ed;
+  background: #293f4b;
+  overflow-wrap: anywhere;
+}
+.facilitator-account .facilitator-activity-name {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 5px;
+  color: #202526;
+  background: #e6eaea;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.facilitator-account {
+  border-top: 1px solid #475152;
+  padding: 8px 0;
+}
+.facilitator-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding-top: 6px;
+  overflow-wrap: anywhere;
+}
+.facilitator-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.facilitator-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+  margin-bottom: 6px;
+}
+.facilitator-metric {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 7px 10px;
+  background: #2a3333;
+  border: 1px solid #414c49;
+  border-radius: 11px;
+}
+.facilitator-metric > span {
+  font-size: 15px;
+  font-weight: 600;
+}
+.facilitator-metric > strong {
+  font-size: 24px;
+  font-weight: 550;
+  line-height: 1.2;
+  color: #c8b58b;
+  overflow-wrap: anywhere;
+}
+.facilitator-account .section-heading {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+}
+.facilitator-account > .section-heading:first-child {
+  margin-top: 0;
+}
+.facilitator-account > p {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.facilitator-account .payment-row {
+  padding: 8px 0;
+  gap: 8px;
+}
+.facilitator-account .payment-row > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.facilitator-account .payment-row small {
+  margin-top: 3px;
+}
+@media (max-width: 700px) {
+  .facilitator-block {
+    padding: 14px;
+  }
+  .facilitator-block > .facilitator-name {
+    font-size: 21px;
+  }
+  .facilitator-metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .facilitator-metric > span {
+    font-size: 13px;
+  }
+  .facilitator-metric > strong {
+    font-size: 19px;
+  }
+}

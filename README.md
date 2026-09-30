@@ -6,9 +6,11 @@ Administración interna de personas, inscripciones mensuales, talleres, pagos e 
 
 Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; publicidad; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
 
-Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. No incluye registro, roles, acceso de docentes, Inglés, pago a talleristas, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
+Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro, roles, acceso de docentes, Inglés, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
 
 Modelo vigente y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
+
+Pago a facilitadores y migración 006: [docs/PAGO-FACILITADORES.md](docs/PAGO-FACILITADORES.md).
 
 Guía de cierre y operación: [docs/V1.md](docs/V1.md). Resultados verificables: [docs/QA.md](docs/QA.md).
 

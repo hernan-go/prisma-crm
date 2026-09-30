@@ -8,6 +8,8 @@ export async function resetTestSchema() {
   )
     throw new Error('Only prisma_test');
   for (const t of [
+    'facilitator_payments',
+    'facilitator_accounts',
     'enrollment_slots',
     'payments',
     'monthly_accounts',
