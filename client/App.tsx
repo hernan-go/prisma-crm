@@ -9,9 +9,10 @@ import {
   LayoutDashboard,
   Users,
   CalendarDays,
-  CalendarRange,
+  Database,
   Wallet,
-  Megaphone,
+  Coins,
+  Receipt,
   Settings,
   PanelLeftClose,
   Plus,
@@ -33,12 +34,12 @@ export const periodName = (p: any) =>
     : '';
 const nav = [
   ['/', 'Dashboard', LayoutDashboard],
-  ['/personas', 'Personas', Users],
-  ['/gestion', 'Gestión mensual', CalendarRange],
-  ['/agenda', 'Agenda / Talleres', CalendarDays],
-  ['/pagos', 'Pagos', Wallet],
-  ['/pago-facilitadores', 'Pago facilitadores', Wallet],
-  ['/publicidad', 'Inversión publicidad', Megaphone],
+  ['/personas', 'BBDD Personas', Database],
+  ['/gestion', 'Inscriptos Período', Users],
+  ['/agenda', 'Agenda Período', CalendarDays],
+  ['/pagos', 'Cobros Período', Wallet],
+  ['/pago-facilitadores', 'Pago facilitadores', Coins],
+  ['/publicidad', 'Gastos Período', Receipt],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
 export default function App() {
