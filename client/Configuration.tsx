@@ -43,7 +43,7 @@ export function Configuration() {
           <article className="slot-editor" key={o.id}>
             <div className="section-heading">
               <div>
-                <h3>{o.name}</h3>
+                <h3 className="config-activity-name">{o.name}</h3>
                 <small>
                   {o.active ? 'Ofrecida' : 'No ofrecida'} ·{' '}
                   {o.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'}
@@ -145,7 +145,7 @@ export function Configuration() {
         {teachers.data?.map((i: any) => (
           <div className="payment-row" key={i.id}>
             <div>
-              <b>{facilitatorName(i)}</b>
+              <b className="config-facilitator-name">{facilitatorName(i)}</b>
               <small>
                 {i.active ? 'Activo' : 'Inactivo'}
                 {i.ever_used ? ' · Con historial' : ''}

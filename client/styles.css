@@ -1131,6 +1131,27 @@ summary .chip {
   }
 }
 /* Accounts reuse the monthly account and payment components. */
+.config-activity-name,
+.config-facilitator-name {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.config-activity-name {
+  color: #202526;
+  background: #e6eaea;
+  font-size: 14px;
+}
+.payment-row .config-facilitator-name {
+  border: 1px solid #405b6a;
+  color: #a7d7ed;
+  background: #293f4b;
+  font-size: 16px;
+}
 .facilitator-block {
   padding: 16px;
   margin-bottom: 12px;
