@@ -1,3 +1,9 @@
+import {
+  expenseTests,
+  expenseMigrationFixture,
+  verifyExpenseMigration,
+  verifyExpenseMigrationPreflight,
+} from './expenses-cases.js';
 import { monthlyModelTests } from './monthly-model-cases.js';
 import { facilitatorTests } from './facilitator-cases.js';
 import { formsImportTests } from './forms-import-cases.js';
@@ -33,6 +39,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     await resetTestSchema();
     await migrate('004.sql');
     await legacyFixture();
+    await expenseMigrationFixture();
     expect(
       (await agent.post('/api/auth/login').send({ password: credentials.password })).status,
     ).toBe(200);
@@ -51,9 +58,16 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     );
     const pre = await query('SELECT * FROM payments');
     const accountsBefore = await query('SELECT * FROM monthly_accounts');
+    await migrate('006.sql');
+    await verifyExpenseMigrationPreflight();
+    // Only the explicit fixture creation may add a period; migration may not.
+    snapshots[preservedTables.indexOf('periods')] = await query('SELECT * FROM periods');
     await migrate();
-    for (const [index, table] of preservedTables.entries())
-      expect(await query(`SELECT * FROM ${table}`)).toEqual(snapshots[index]);
+    for (const [index, table] of preservedTables.entries()) {
+      const rows = await query(`SELECT * FROM ${table}`);
+      expect(rows).toEqual(snapshots[index]);
+    }
+    await verifyExpenseMigration();
     expect((await agent.get('/api/auth/session')).body.authenticated).toBe(true);
     const migratedAccounts = (await agent.get('/api/accounts?period_id=1')).body;
     expect(migratedAccounts[0]).toMatchObject({
@@ -76,6 +90,8 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       (await agent.post('/api/auth/login').send({ password: credentials.password })).status,
     ).toBe(200);
     for (const table of [
+      'period_expenses',
+      'period_expense_categories',
       'payments',
       'monthly_accounts',
       'enrollment_slots',
@@ -243,23 +259,19 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     ]);
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
   });
-  it('publicidad CRUD separada de cobranzas y configuración editable', async () => {
-    let r = await agent
-      .post('/api/advertising')
-      .send({ date: '2026-10-02', concept: 'Campaña ficticia', amount: '15000', notes: 'Prueba' });
-    expect(r.status).toBe(201);
-    const ad = r.body.id;
+  it('retira API antigua de publicidad y conserva configuración editable', async () => {
+    expect((await agent.get(`/api/advertising?period_id=${period}`)).status).toBe(410);
     expect(
       (
         await agent
-          .put(`/api/advertising/${ad}`)
-          .send({ date: '2026-10-02', concept: 'Actualizada', amount: '16000' })
+          .post('/api/advertising')
+          .send({ date: '2026-10-02', concept: 'Vieja', amount: '10' })
       ).status,
-    ).toBe(200);
-    expect((await agent.get(`/api/advertising?period_id=${period}`)).body).toHaveLength(1);
-    expect((await agent.delete(`/api/advertising/${ad}`)).status).toBe(200);
+    ).toBe(410);
+    expect((await agent.put('/api/advertising/1').send({ concept: 'Vieja' })).status).toBe(410);
+    expect((await agent.delete('/api/advertising/1')).status).toBe(410);
     const [a] = await query('SELECT * FROM activities WHERE id=?', [activity]);
-    r = await agent
+    const r = await agent
       .put(`/api/activities/${activity}`)
       .send({ ...a, active: true, days: [2, 3, 4, 5] });
     expect(r.status).toBe(200);
@@ -430,17 +442,12 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       await query('SELECT id FROM people WHERE phone_normalized=?', ['0000055522']),
     ).toHaveLength(0);
   });
-  it('cierre bloquea publicidad y eliminación de movimientos', async () => {
+  it('cierre bloquea eliminación de movimientos de cobro', async () => {
     const pr = (await agent.post('/api/periods').send({ year: 2029, month: 1 })).body.id;
     const person = (
       await agent
         .post('/api/people')
         .send({ nombre: 'Cierre', apellido: 'Ficticia', telefono: '0000030099' })
-    ).body.id;
-    const ad = (
-      await agent
-        .post('/api/advertising')
-        .send({ date: '2029-01-02', concept: 'QA cierre', amount: '20' })
     ).body.id;
     const pay = (
       await agent.post('/api/payments').send({
@@ -453,21 +460,6 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     ).body.id;
     await agent.patch(`/api/periods/${pr}/status`).send({ status: 'closed' });
     expect((await agent.delete(`/api/payments/${pay}`)).status).toBe(409);
-    expect((await agent.delete(`/api/advertising/${ad}`)).status).toBe(409);
-    expect(
-      (
-        await agent
-          .post('/api/advertising')
-          .send({ date: '2029-01-03', concept: 'QA bloqueada', amount: '10' })
-      ).status,
-    ).toBe(409);
-    expect(
-      (
-        await agent
-          .put(`/api/advertising/${ad}`)
-          .send({ date: '2029-02-02', concept: 'QA mover', amount: '20' })
-      ).status,
-    ).toBe(409);
   });
   it('plan QA no elimina sin aprobación y protege cambios posteriores y estructura', async () => {
     const id = (
@@ -504,6 +496,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   });
   // Separate application lifetime keeps each scenario suite below the real rate limit.
   // Production limits remain enabled and unchanged.
+  expenseTests(request.agent(createApp(credentials)), credentials.password);
   monthlyModelTests(request.agent(createApp(credentials)), credentials.password);
   formsImportTests(request.agent(createApp(credentials)), credentials.password);
   formsFinanceTests(request.agent(createApp(credentials)), credentials.password);

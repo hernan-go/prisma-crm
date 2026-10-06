@@ -24,7 +24,6 @@ import {
   wallet,
   enrollmentSchema,
   paymentSchema,
-  advertisingSchema,
 } from '../shared/domain';
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -622,104 +621,5 @@ export function Payments() {
       )}
       {edit && <PaymentForm person={person} payment={edit} close={() => setEdit(undefined)} />}
     </>
-  );
-}
-export function Advertising() {
-  const { period } = usePeriod();
-  const q = useData('advertising', `/advertising?period_id=${period}`, !!period);
-  const [edit, setEdit] = useState<any>();
-  return (
-    <>
-      <Heading
-        title="Gastos Período"
-        sub="Inversiones del período, separadas de los pagos de alumnos."
-      >
-        <button className="primary" onClick={() => setEdit({})}>
-          <Plus size={17} /> Nueva inversión
-        </button>
-      </Heading>
-      <ErrorBox error={q.error} />
-      <section className="panel">
-        {q.data?.map((a: any) => (
-          <div className="payment-row" key={a.id}>
-            <div>
-              <b>
-                {a.concept} · {formatMoney(a.amount)}
-              </b>
-              <small>{formatDate(a.date)}</small>
-              <p>{a.notes}</p>
-            </div>
-            <div className="actions">
-              <button onClick={() => setEdit(a)}>Editar</button>
-              <DeleteButton path={`/advertising/${a.id}`} />
-            </div>
-          </div>
-        ))}
-        {!q.data?.length && <Empty>Sin inversiones publicitarias en este período.</Empty>}
-      </section>
-      {edit && <AdvertisingForm value={edit} close={() => setEdit(undefined)} />}
-    </>
-  );
-}
-function AdvertisingForm({ value: v, close }: { value: any; close: () => void }) {
-  const { period, periods } = usePeriod();
-  const selectedPeriod = periods.find((p) => p.id === period);
-  const selectedMonth = selectedPeriod
-    ? `${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, '0')}`
-    : today().slice(0, 7);
-  const [data, set] = useState({
-    date: v.date || (today().startsWith(selectedMonth) ? today() : `${selectedMonth}-01`),
-    concept: v.concept || '',
-    amount: v.amount || '',
-    notes: v.notes || '',
-  });
-  const [error, setError] = useState('');
-  const m = useSave(v.id ? `/advertising/${v.id}` : '/advertising', v.id ? 'PUT' : 'POST', close);
-  return (
-    <Modal title="Inversión publicitaria" close={close}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const valid = advertisingSchema.safeParse(data);
-          if (!valid.success) {
-            setError(valid.error.issues.map((i) => i.message).join(' '));
-            return;
-          }
-          setError('');
-          m.mutate(data);
-        }}
-      >
-        {Object.entries({
-          date: 'Fecha',
-          concept: 'Concepto',
-          amount: 'Importe (ARS)',
-          notes: 'Notas',
-        }).map(([key, label]) => (
-          <Field label={label} key={key}>
-            <input
-              required={key !== 'notes'}
-              type={key === 'date' ? 'date' : key === 'amount' ? 'number' : 'text'}
-              min={key === 'amount' ? '0' : undefined}
-              step={key === 'amount' ? '0.01' : undefined}
-              value={(data as any)[key]}
-              onInput={
-                key === 'date'
-                  ? (e) => {
-                      const date = e.currentTarget.value;
-                      set((current) => ({ ...current, date }));
-                    }
-                  : undefined
-              }
-              onChange={(e) => set({ ...data, [key]: e.target.value })}
-            />
-          </Field>
-        ))}
-        <p className="muted">La inversión se mostrará en el período correspondiente a su fecha.</p>
-        <ErrorBox error={error ? new Error(error) : m.error} />
-        <div className="actions">
-          <SaveButton pending={m.isPending} />
-        </div>
-      </form>
-    </Modal>
   );
 }

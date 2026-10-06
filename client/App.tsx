@@ -22,7 +22,8 @@ import { api } from './api';
 import { ErrorBox, Loading, Empty } from './components';
 import { formatMoney } from '../shared/domain';
 import { People, PersonDetail } from './People';
-import { Monthly, Agenda, Payments, Advertising, Configuration } from './Management';
+import { Monthly, Agenda, Payments, Configuration } from './Management';
+import { Expenses } from './Expenses';
 import { ImportPeople } from './ImportPeople';
 import { Statistics } from './Statistics';
 export const PeriodContext = createContext<{ period: number; periods: any[] }>({
@@ -144,7 +145,7 @@ export default function App() {
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/pagos" element={<Payments />} />
               <Route path="/pago-facilitadores" element={<FacilitatorPayments />} />
-              <Route path="/publicidad" element={<Advertising />} />
+              <Route path="/publicidad" element={<Expenses />} />
               <Route path="/estadisticas" element={<Statistics />} />
               <Route path="/configuracion" element={<Configuration />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />

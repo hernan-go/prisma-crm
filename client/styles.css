@@ -828,6 +828,18 @@ summary .chip {
   font-size: 12px;
   margin: 7px 0 0;
 }
+.expense-category h2,
+.expense-description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.expense-new {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.expense-description p {
+  white-space: pre-wrap;
+}
 .filters {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr;

@@ -29,7 +29,7 @@ export async function periodHasData(period: number, db: Connection) {
     (SELECT COUNT(*) FROM period_activities WHERE period_id=?) +
     (SELECT COUNT(*) FROM enrollments WHERE period_id=?) +
     (SELECT COUNT(*) FROM monthly_accounts WHERE period_id=?) +
-    (SELECT COUNT(*) FROM advertising_investments a JOIN periods p ON YEAR(a.date)=p.year AND MONTH(a.date)=p.month WHERE p.id=?) total`,
+    (SELECT COUNT(*) FROM period_expense_categories WHERE period_id=?) total`,
     [period, period, period, period],
     db,
   );

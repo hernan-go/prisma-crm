@@ -1,6 +1,6 @@
 import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
-import { advertisingSave, advertisingDelete } from './advertising.js';
+import { expenses } from './expenses.js';
 import { formsImport } from './forms-import.js';
 import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
@@ -22,6 +22,7 @@ export const api = Router();
 api.use(facilitators);
 api.use('/forms-import', formsImport);
 api.use(offerings);
+api.use(expenses);
 const id = (v: unknown) => positiveId.parse(v);
 api.get('/health', async (_req, res) => {
   await query('SELECT 1');
@@ -211,22 +212,11 @@ api.get('/dashboard', async (req, res) => {
   );
   res.json({ ...enrollment, ...totals, ...paid, ...pending, activities });
 });
-api.get('/advertising', async (req, res) => {
-  const period = id(req.query.period_id);
-  res.json(
-    await query(
-      'SELECT a.* FROM advertising_investments a JOIN periods p ON YEAR(a.date)=p.year AND MONTH(a.date)=p.month WHERE p.id=? ORDER BY a.date DESC',
-      [period],
-    ),
-  );
+api.all(['/advertising', '/advertising/:id'], (_req, res) => {
+  res
+    .status(410)
+    .json({ message: 'La inversión publicitaria ahora se administra desde Gastos Período.' });
 });
-api.post('/advertising', async (req, res) => res.status(201).json(await advertisingSave(req.body)));
-api.put('/advertising/:id', async (req, res) =>
-  res.json(await advertisingSave(req.body, id(req.params.id))),
-);
-api.delete('/advertising/:id', async (req, res) =>
-  res.json(await advertisingDelete(id(req.params.id))),
-);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
