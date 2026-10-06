@@ -38,7 +38,7 @@ export function FacilitatorPayments() {
       <div className="page-heading">
         <div>
           <span className="eyebrow">ADMINISTRACIÓN</span>
-          <h1>Pago a facilitadores</h1>
+          <h1>Pago Facilitadores</h1>
           <p>Importes manuales y movimientos por actividad del período seleccionado.</p>
         </div>
       </div>

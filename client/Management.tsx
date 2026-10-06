@@ -62,7 +62,7 @@ export function Monthly() {
   return (
     <>
       <Heading
-        title="Gestión mensual"
+        title="Inscriptos Período"
         sub="Buscá una persona y organizá sus actividades del mes."
       />
       {!period ? (
@@ -456,7 +456,7 @@ export function Agenda() {
   }
   return (
     <>
-      <Heading title="Agenda / Talleres" sub="Horarios y asistentes del período seleccionado." />
+      <Heading title="Agenda Período" sub="Horarios y asistentes del período seleccionado." />
       <div className="filters">
         <Field label="Facilitador">
           <select value={teacher} onChange={(e) => setTeacher(e.target.value)}>
@@ -538,7 +538,7 @@ export function Payments() {
   const [edit, setEdit] = useState<any>();
   return (
     <>
-      <Heading title="Pagos" sub="Cuentas mensuales, movimientos y carteras.">
+      <Heading title="Cobros Período" sub="Cuentas mensuales, movimientos y carteras.">
         <button className="primary" disabled={!period || closed} onClick={() => setPick(true)}>
           <Plus size={17} /> Registrar pago
         </button>
@@ -631,7 +631,7 @@ export function Advertising() {
   return (
     <>
       <Heading
-        title="Inversión publicidad"
+        title="Gastos Período"
         sub="Inversiones del período, separadas de los pagos de alumnos."
       >
         <button className="primary" onClick={() => setEdit({})}>

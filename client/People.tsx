@@ -147,7 +147,7 @@ export function People() {
       <div className="page-heading">
         <div>
           <span className="eyebrow">BASE MAESTRA</span>
-          <h1>Personas</h1>
+          <h1>BBDD Personas</h1>
           <p>Un registro por persona, toda su historia en un lugar.</p>
         </div>
         <div className="actions">

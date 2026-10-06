@@ -16,6 +16,7 @@ import {
   Settings,
   PanelLeftClose,
   Plus,
+  BarChart3,
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Loading, Empty } from './components';
@@ -23,6 +24,7 @@ import { formatMoney } from '../shared/domain';
 import { People, PersonDetail } from './People';
 import { Monthly, Agenda, Payments, Advertising, Configuration } from './Management';
 import { ImportPeople } from './ImportPeople';
+import { Statistics } from './Statistics';
 export const PeriodContext = createContext<{ period: number; periods: any[] }>({
   period: 0,
   periods: [],
@@ -38,8 +40,9 @@ const nav = [
   ['/gestion', 'Inscriptos Período', Users],
   ['/agenda', 'Agenda Período', CalendarDays],
   ['/pagos', 'Cobros Período', Wallet],
-  ['/pago-facilitadores', 'Pago facilitadores', Coins],
+  ['/pago-facilitadores', 'Pago Facilitadores', Coins],
   ['/publicidad', 'Gastos Período', Receipt],
+  ['/estadisticas', 'Estadísticas', BarChart3],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
 export default function App() {
@@ -142,6 +145,7 @@ export default function App() {
               <Route path="/pagos" element={<Payments />} />
               <Route path="/pago-facilitadores" element={<FacilitatorPayments />} />
               <Route path="/publicidad" element={<Advertising />} />
+              <Route path="/estadisticas" element={<Statistics />} />
               <Route path="/configuracion" element={<Configuration />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />
             </Routes>
