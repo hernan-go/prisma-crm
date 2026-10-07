@@ -9,7 +9,16 @@
 - `Gastos Período` implementado con categorías personalizables y movimientos.
 - Migración `007.sql` aplicada en producción.
 
-- Clonación de configuración al crear período: implementada y validada localmente, con revisión manual aprobada; sin migración, commit ni deploy todavía. Documento de cierre: `docs/iterations/2026-10-clone-period-config.md`.
+- Clonación de configuración al crear período: validada y aprobada manualmente, incorporada a Git en `a073783`. Documento de cierre histórico: `docs/iterations/2026-10-clone-period-config.md`.
+
+## Corrección validada — Inscriptos Período; integración y deploy pendientes
+
+- Prioridad anterior a receptor/medio: pertenencia explícita mediante `period_memberships`.
+- Implementada, testeada y validada manualmente en `prisma_dev`; `fix/period-enrollees-membership` todavía sin commit ni integración a `main`.
+- `008.sql` aplicada en `prisma_test` y `prisma_dev`; todavía NO aplicada en producción. Producción/main continúa en `66e944a`.
+- Antes del deploy productivo: backup y preflight obligatorios de la DB de producción, aplicación/verificación manual de `008.sql` y autorización explícita de integración/deploy.
+- Períodos nuevos/clonados sin personas. Alta sin actividades/cuentas automáticas. Baja bloqueada ante inscripciones o cuentas.
+- Documento: `docs/iterations/2026-10-period-enrollees-membership.md`.
 
 ## Prioridad 1 — Reestructurar Cobros Período: receptor ≠ medio
 
@@ -20,7 +29,7 @@ Separar:
 
 Permitir las cuatro combinaciones.
 
-Si requiere esquema, usar `008.sql` o superior según el orden real de implementación.
+Si requiere esquema, usar `009.sql` o superior: `008.sql` queda dedicada a membresías.
 
 ## Prioridad 2 — Ingresos de Informática separados
 
