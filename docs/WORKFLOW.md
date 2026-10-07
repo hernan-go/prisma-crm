@@ -59,15 +59,25 @@ Orden preferido:
 1. inspección;
 2. plan breve;
 3. implementación;
-4. tests focalizados;
-5. validaciones completas;
-6. revisión de diff;
-7. prueba manual local;
-8. commit local si está autorizado.
+4. formatting al terminar todas las ediciones;
+5. tests focalizados;
+6. validaciones completas;
+7. revisión de diff;
+8. prueba manual local;
+9. commit local si está autorizado.
 
 No expandir alcance durante la ejecución.
 
 ## 5. Validaciones normales
+
+### Formatting
+
+Después de terminar todas las ediciones de una iteración y antes de las validaciones:
+
+- Ejecutar Prettier una sola vez sobre todos los archivos nuevos/modificados compatibles con Prettier.
+- Limitar el formatting a esos archivos; no formatear todo el repositorio.
+- No ejecutar Prettier repetidamente después de cada edición individual.
+- Después ejecutar la secuencia estándar de typecheck, lint, tests, build y `git diff --check`:
 
 ```powershell
 npm run typecheck
@@ -113,11 +123,16 @@ Demo:
 .\private\run-demo.ps1
 ```
 
-URL habitual:
+URLs de desarrollo local:
 
-`http://localhost:5173/`
+- Frontend/UI: `http://localhost:5173`.
+- Backend/API: `http://127.0.0.1:3001`.
 
-Si `5173` está ocupado, verificar antes de asumir otro puerto.
+Para login y validación visual del frontend usar `localhost`.
+
+Evitar `http://127.0.0.1:5173` para el frontend porque puede provocar rechazo por Origin/CORS.
+
+Si Vite utiliza otro puerto porque `5173` está ocupado, usar `localhost` con el puerto informado por Vite.
 
 ## 8. Cambios de DB
 
