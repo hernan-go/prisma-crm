@@ -25,8 +25,8 @@ export function PeriodForm({
   return (
     <Modal title={value ? 'Editar período vacío' : 'Crear nuevo período'} close={close}>
       <p>
-        Solo los períodos sin configuración, inscripciones, cuentas ni categorías de gastos pueden
-        editarse o eliminarse.
+        Solo los períodos sin configuración, personas incorporadas, inscripciones, cuentas ni
+        categorías de gastos pueden editarse o eliminarse.
       </p>
       <form
         onSubmit={(e) => {
@@ -100,7 +100,7 @@ export function PeriodForm({
             </label>
             <p>
               {source
-                ? `Fuente prevista: ${periodName(source)}. Se copiarán ofertas, días, horarios y facilitadores, conservando sus estados. No se copiarán inscripciones, cuentas, pagos ni gastos.`
+                ? `Fuente prevista: ${periodName(source)}. Se copiarán ofertas, días, horarios y facilitadores, conservando sus estados. No se copiarán personas incorporadas, inscripciones, cuentas, pagos ni gastos.`
                 : 'No existe un período anterior disponible para copiar configuración.'}
             </p>
           </fieldset>

@@ -11,6 +11,12 @@ import { query, execute, pool, peopleTransaction } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { accounts, enrollmentList, paymentSelect, duplicates, savePerson } from './repositories.js';
 import { personSave, enrollmentSave, paymentSave, activitySave, positiveId } from './services.js';
+import {
+  membershipAdd,
+  membershipList,
+  membershipRemove,
+  requireMembership,
+} from './memberships.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
 api.use(facilitators);
@@ -84,6 +90,21 @@ api.get('/people/:id', async (req, res) => {
   );
   res.json({ ...p, history, payments, accounts: monthly });
 });
+api.get('/periods/:periodId/memberships', async (req, res) =>
+  res.json(
+    await membershipList(
+      id(req.params.periodId),
+      req.query.person_id ? id(req.query.person_id) : undefined,
+    ),
+  ),
+);
+api.post('/periods/:periodId/memberships', async (req, res) => {
+  const p = z.object({ person_id: positiveId }).strict().parse(req.body);
+  res.status(201).json(await membershipAdd(p.person_id, id(req.params.periodId)));
+});
+api.delete('/periods/:periodId/memberships/:id', async (req, res) =>
+  res.json(await membershipRemove(id(req.params.id), id(req.params.periodId))),
+);
 api.get('/periods', async (_req, res) =>
   res.json(await query('SELECT * FROM periods ORDER BY year DESC,month DESC')),
 );
@@ -141,7 +162,7 @@ api.put('/enrollments/:id', async (req, res) =>
   res.json(await enrollmentSave(req.body, id(req.params.id))),
 );
 api.delete('/enrollments/:id', async (req, res) =>
-  res.json(await deleteMovement('enrollments', id(req.params.id))),
+  res.json(await deleteMovement('enrollments', id(req.params.id), id(req.query.period_id))),
 );
 api.get('/accounts', async (req, res) =>
   res.json(
@@ -157,6 +178,7 @@ api.put('/accounts', async (req, res) => {
     .parse(req.body);
   await peopleTransaction(async (db) => {
     await openPeriod(p.period_id, db);
+    await requireMembership(p.person_id, p.period_id, db);
     await execute(
       'INSERT INTO monthly_accounts(person_id,period_id,amount_due) VALUES (?,?,?) ON DUPLICATE KEY UPDATE amount_due=VALUES(amount_due)',
       [p.person_id, p.period_id, p.amount_due],
@@ -177,13 +199,13 @@ api.put('/payments/:id', async (req, res) =>
   res.json(await paymentSave(req.body, id(req.params.id))),
 );
 api.delete('/payments/:id', async (req, res) =>
-  res.json(await deleteMovement('payments', id(req.params.id))),
+  res.json(await deleteMovement('payments', id(req.params.id), id(req.query.period_id))),
 );
 api.get('/dashboard', async (req, res) => {
   const period = id(req.query.period_id);
   const [enrollment] = await query(
-    'SELECT COUNT(*) enrollments,COUNT(DISTINCT person_id) people FROM enrollments WHERE period_id=?',
-    [period],
+    'SELECT (SELECT COUNT(*) FROM enrollments WHERE period_id=?) enrollments,(SELECT COUNT(*) FROM period_memberships WHERE period_id=?) people',
+    [period, period],
   );
   const [totals] = await query(
     'SELECT COALESCE(SUM(amount_due),0) due,SUM(amount_due IS NULL) undefined_accounts FROM monthly_accounts WHERE period_id=?',

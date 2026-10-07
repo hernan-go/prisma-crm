@@ -16,6 +16,7 @@ export async function resetTestSchema() {
     'payments',
     'monthly_accounts',
     'enrollments',
+    'period_memberships',
     'schedule_instructors',
     'activity_schedules',
     'period_activity_days',
@@ -135,4 +136,10 @@ export async function prepareSchedules(
     ids.push(h.id);
   }
   return { ids };
+}
+export async function incorporateTestPerson(agent: any, person: number, period: number) {
+  const current = await agent.get(`/api/periods/${period}/memberships?person_id=${person}`);
+  if (current.status === 200 && current.body.length) return;
+  const result = await agent.post(`/api/periods/${period}/memberships`).send({ person_id: person });
+  if (result.status !== 201) throw new Error(result.body.message);
 }

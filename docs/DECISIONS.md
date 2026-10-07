@@ -8,7 +8,7 @@ Este documento registra decisiones que no deben rediscutirse en cada iteración 
 
 ## D002 — Migraciones aplicadas son inmutables
 
-No editar ni re-ejecutar migraciones ya aplicadas sobre instalaciones existentes. Actualmente `001.sql` a `007.sql` están aplicadas. Próxima migración: `008.sql`.
+No editar migraciones ya aplicadas. Actualmente `001.sql` a `007.sql` están documentadas como aplicadas en producción. `008.sql` implementa membresías y fue probada exclusivamente en `prisma_test`; próxima numeración para nuevas iteraciones: `009.sql`. Reintentar una migración pendiente de registro requiere pasos explícitamente seguros ante el DDL parcial de MySQL.
 
 ## D003 — Dinero
 
@@ -42,7 +42,7 @@ La migración histórica solo opera sobre períodos existentes. Si encuentra un 
 
 ## D010 — Clonación de períodos
 
-La clonación futura copia configuración operativa, no movimientos ni personas.
+La clonación implementada copia configuración operativa, no movimientos, personas ni membresías.
 
 Copiar:
 
@@ -82,3 +82,15 @@ Las clases particulares de Informática son ingresos exclusivos de Hernán y deb
 ## D013 — Estadísticas
 
 La ruta y pantalla existen, pero su contenido funcional todavía no fue definido. No agregar métricas arbitrarias sin una iteración de diseño explícita.
+
+## D014 — Pertenencia explícita a períodos
+
+La existencia de una persona en BBDD no implica pertenencia a ningún período. La pertenencia persona ↔ período es explícita e independiente de las actividades. `period_memberships` es su fuente canónica.
+
+- Agregar al período crea únicamente membresía, sin cuentas, importe a cobrar, inscripciones ni pagos.
+- Una persona puede pertenecer sin actividades; cancelar la última actividad no elimina su membresía.
+- Quitar requiere ausencia de `enrollments` y `monthly_accounts`. Cualquier cuenta, incluso vacía o con importe cero, bloquea la baja con `409`. No se eliminan otras relaciones ni la persona global.
+- Períodos cerrados conservan lectura histórica y bloquean altas/bajas de membresías.
+- Personas archivadas no pueden incorporarse; sus membresías existentes siguen visibles.
+- Crear/clonar períodos deja cero membresías. Importar personas al catálogo global no incorpora a ningún período; confirmar la importación específica de inscripciones sí incorpora explícitamente a las filas no omitidas, dentro de su transacción.
+- El backend valida pertenencia y período antes de escribir; FK compuestas desde inscripciones/cuentas refuerzan integridad sin cascadas destructivas.

@@ -67,6 +67,7 @@ export function formsFinanceTests(agent: any, password: string) {
     const snapshot = async () => {
       const tables = [
         'people',
+        'period_memberships',
         'enrollments',
         'enrollment_slots',
         'monthly_accounts',
@@ -237,7 +238,7 @@ export function formsFinanceTests(agent: any, password: string) {
         payments: 0,
       });
       // A receipt for the processed request is expected; all operational tables stay unchanged.
-      expect((await snapshot()).slice(0, 5)).toEqual(before.slice(0, 5));
+      expect((await snapshot()).slice(0, -1)).toEqual(before.slice(0, -1));
     });
     it('duplicado de pago revierte también el nuevo importe y filas anteriores', async () => {
       const r = row('35000', pay('20000'));

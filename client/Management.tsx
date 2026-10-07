@@ -56,18 +56,41 @@ function Heading({
   );
 }
 export function Monthly() {
-  const { period } = usePeriod();
+  const { period, periods } = usePeriod();
+  return (
+    <MonthlyPeriod
+      key={period}
+      period={period}
+      closed={periods.find((p) => p.id === period)?.status === 'closed'}
+    />
+  );
+}
+function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?: boolean }) {
   const [person, setPerson] = useState<any>();
+  const [adding, setAdding] = useState(false);
+  const members = useData('memberships', `/periods/${period}/memberships`, !!period);
+  const add = useSave(`/periods/${period}/memberships`, 'POST', () => setAdding(false));
   return (
     <>
       <Heading
         title="Inscriptos Período"
-        sub="Buscá una persona y organizá sus actividades del mes."
-      />
+        sub="Personas incorporadas explícitamente al período seleccionado."
+      >
+        <button className="primary" disabled={!period || closed} onClick={() => setAdding(true)}>
+          <Plus size={17} /> Agregar persona
+        </button>
+      </Heading>
       {!period ? (
         <Empty>Creá o seleccioná un período.</Empty>
       ) : (
         <>
+          <ErrorBox error={members.error} />
+          {members.isPending && <Loading />}
+          {closed && (
+            <p className="info">
+              Período cerrado: consulta histórica. Reabrilo para agregar o quitar personas.
+            </p>
+          )}
           {person ? (
             <div className="selected-person">
               <div>
@@ -78,20 +101,124 @@ export function Monthly() {
                   {person.public_id} · {person.telefono}
                 </small>
               </div>
-              <button onClick={() => setPerson(undefined)}>Cambiar persona</button>
+              <button onClick={() => setPerson(undefined)}>Volver a personas del período</button>
             </div>
           ) : (
             <section className="panel">
-              <PersonPicker onSelect={setPerson} />
+              <h2>Personas inscriptas</h2>
+              {members.data?.map((p: any) => (
+                <div className="payment-row" key={p.membership_id}>
+                  <div>
+                    <Link to={`/personas/${p.id}`}>
+                      {p.nombre} {p.apellido}
+                    </Link>
+                    <small>
+                      {p.activities || 'Sin actividades asignadas'}
+                      {!p.activo && ' · Archivada'}
+                    </small>
+                  </div>
+                  <div className="actions">
+                    <button onClick={() => setPerson(p)}>Gestionar</button>
+                    <RemoveMembership person={p} period={period} disabled={closed} />
+                  </div>
+                </div>
+              ))}
+              {members.data?.length === 0 && (
+                <Empty>No hay personas inscriptas en este período.</Empty>
+              )}
             </section>
           )}
           {person && <PersonMonth person={person} />}
+          {adding && (
+            <Modal title="Buscar en BBDD" close={() => setAdding(false)}>
+              <PersonPicker
+                excluded={members.data?.map((p: any) => p.id) || []}
+                actionLabel="Agregar al período"
+                onSelect={(p) => {
+                  if (!add.isPending) add.mutate({ person_id: p.id });
+                }}
+              />
+              <ErrorBox error={add.error} />
+              {add.isPending && <Loading />}
+            </Modal>
+          )}
         </>
       )}
     </>
   );
 }
 export function PersonMonth({ person }: { person: any }) {
+  const { period } = usePeriod();
+  const membership = useData(
+    'memberships',
+    `/periods/${period}/memberships?person_id=${person.id}`,
+    !!period,
+  );
+  const add = useSave(`/periods/${period}/memberships`, 'POST', () => {});
+  const { periods } = usePeriod();
+  if (membership.isPending) return <Loading />;
+  if (membership.error) return <ErrorBox error={membership.error} />;
+  if (!membership.data?.length)
+    return (
+      <section className="panel">
+        <p>Esta persona no está incorporada al período seleccionado.</p>
+        <button
+          disabled={
+            !person.activo ||
+            periods.find((p) => p.id === period)?.status === 'closed' ||
+            add.isPending
+          }
+          onClick={() => add.mutate({ person_id: person.id })}
+        >
+          Agregar al período
+        </button>
+        <ErrorBox error={add.error} />
+      </section>
+    );
+  return <PersonMonthMember key={`${period}-${person.id}`} person={person} />;
+}
+function RemoveMembership({
+  person,
+  period,
+  disabled,
+}: {
+  person: any;
+  period: number;
+  disabled?: boolean;
+}) {
+  const [ask, setAsk] = useState(false);
+  const remove = useSave(`/periods/${period}/memberships/${person.membership_id}`, 'DELETE', () =>
+    setAsk(false),
+  );
+  return (
+    <>
+      <button disabled={disabled} className="danger subtle" onClick={() => setAsk(true)}>
+        Quitar del período
+      </button>
+      {ask && (
+        <Modal title="Quitar del período" close={() => setAsk(false)}>
+          <p>
+            Se quitará únicamente la pertenencia de {person.nombre} {person.apellido} a este
+            período. La persona seguirá en BBDD. Si tiene inscripciones o una cuenta mensual, la
+            operación se bloqueará.
+          </p>
+          <ErrorBox error={remove.error} />
+          <div className="actions">
+            <button onClick={() => setAsk(false)}>Cancelar</button>
+            <button
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate(undefined)}
+            >
+              Quitar del período
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+function PersonMonthMember({ person }: { person: any }) {
   const { period, periods } = usePeriod();
   const q = useData(
     'enrollments',
@@ -144,7 +271,7 @@ export function PersonMonth({ person }: { person: any }) {
               </button>
               <DeleteButton
                 disabled={closed}
-                path={`/enrollments/${e.id}`}
+                path={`/enrollments/${e.id}?period_id=${period}`}
                 label="Cancelar inscripción"
               />
             </div>
@@ -203,7 +330,7 @@ export function PersonMonth({ person }: { person: any }) {
               <button disabled={closed} onClick={() => setPayment(p)}>
                 Editar
               </button>
-              <DeleteButton disabled={closed} path={`/payments/${p.id}`} />
+              <DeleteButton disabled={closed} path={`/payments/${p.id}?period_id=${period}`} />
             </div>
           </div>
         ))}
@@ -528,6 +655,10 @@ export function Agenda() {
   );
 }
 export function Payments() {
+  const { period } = usePeriod();
+  return <PaymentsPeriod key={period} />;
+}
+function PaymentsPeriod() {
   const { period, periods } = usePeriod();
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const q = useData('accounts', `/accounts?period_id=${period}`, !!period);
@@ -602,7 +733,7 @@ export function Payments() {
               >
                 Editar
               </button>
-              <DeleteButton disabled={closed} path={`/payments/${p.id}`} />
+              <DeleteButton disabled={closed} path={`/payments/${p.id}?period_id=${period}`} />
             </div>
           </div>
         ))}
@@ -610,7 +741,8 @@ export function Payments() {
       </section>
       {pick && (
         <Modal title="Seleccionar persona" close={() => setPick(false)}>
-          <PersonPicker
+          <PaymentMemberPicker
+            key={period}
             onSelect={(p) => {
               setPerson(p);
               setPick(false);
@@ -620,6 +752,25 @@ export function Payments() {
         </Modal>
       )}
       {edit && <PaymentForm person={person} payment={edit} close={() => setEdit(undefined)} />}
+    </>
+  );
+}
+function PaymentMemberPicker({ onSelect }: { onSelect: (p: any) => void }) {
+  const { period } = usePeriod();
+  const q = useData('memberships', `/periods/${period}/memberships`, !!period);
+  return (
+    <>
+      <p>Personas incorporadas al período. Para incorporar otra, usá Inscriptos Período.</p>
+      <ErrorBox error={q.error} />
+      {q.isPending && <Loading />}
+      <div className="pick-list">
+        {q.data?.map((p: any) => (
+          <button key={p.membership_id} onClick={() => onSelect(p)}>
+            {p.apellido}, {p.nombre}
+          </button>
+        ))}
+      </div>
+      {q.data?.length === 0 && <Empty>No hay personas inscriptas en este período.</Empty>}
     </>
   );
 }

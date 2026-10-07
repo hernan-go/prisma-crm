@@ -25,6 +25,11 @@ async function snapshot(table: Table, id: number, db: Connection) {
   if (!rows.length) throw new AppError(409, 'Un candidato ya no existe. Regenerá el plan.');
   const related: Record<string, unknown> = {};
   if (table === 'people') {
+    related.memberships = await query(
+      'SELECT * FROM period_memberships WHERE person_id=? ORDER BY id',
+      [id],
+      db,
+    );
     related.enrollments = await query(
       'SELECT * FROM enrollments WHERE person_id=? ORDER BY id',
       [id],
@@ -132,6 +137,11 @@ export async function applyCleanup(input: unknown, database: string) {
     const chosen = plan.candidates.filter((c) => c.reviewed);
     for (const c of chosen) {
       const data = await snapshot(c.table, c.id, db);
+      if (c.table === 'people' && (data.related.memberships as unknown[]).length)
+        throw new AppError(
+          409,
+          'La persona tiene pertenencia a períodos. La limpieza QA no elimina membresías ni su historial.',
+        );
       if ((c.table === 'activities' || c.table === 'instructors') && data.record.ever_used)
         throw new AppError(
           409,

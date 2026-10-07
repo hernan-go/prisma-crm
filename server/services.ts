@@ -6,6 +6,7 @@ import { activitySchema, enrollmentSchema, personSchema, paymentSchema } from '.
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { duplicates, savePerson } from './repositories.js';
 import { AppError, requireFound } from './errors.js';
+import { requireMembership } from './memberships.js';
 export async function personSave(body: unknown, id?: number) {
   const p = personSchema.parse(body);
   return peopleTransaction(async (db) => {
@@ -30,6 +31,8 @@ export async function enrollmentInDB(body: unknown, db: Connection, id?: number)
   if (id) {
     const [old] = await query('SELECT * FROM enrollments WHERE id=? FOR UPDATE', [id], db);
     requireFound(old);
+    if (old.period_id !== p.period_id || old.person_id !== p.person_id)
+      throw new AppError(409, 'La inscripción no corresponde a esta persona y período.');
     await openPeriod(old.period_id, db);
     if (
       old.period_id === p.period_id &&
@@ -44,6 +47,7 @@ export async function enrollmentInDB(body: unknown, db: Connection, id?: number)
     (await query('SELECT id FROM people WHERE id=? AND activo=1', [p.person_id], db))[0],
   );
   await openPeriod(p.period_id, db);
+  await requireMembership(p.person_id, p.period_id, db);
   const [offering] = await query(
     'SELECT o.*,a.active catalog_active FROM period_activities o JOIN activities a ON a.id=o.activity_id WHERE o.period_id=? AND o.activity_id=? FOR UPDATE',
     [p.period_id, p.activity_id],
@@ -120,13 +124,16 @@ export async function paymentSave(body: unknown, id?: number) {
 export async function paymentInDB(body: unknown, db: Connection, id?: number) {
   const p = paymentSchema.parse(body);
   await openPeriod(p.period_id, db);
+  await requireMembership(p.person_id, p.period_id, db);
   if (id) {
     const [old] = await query(
-      'SELECT m.period_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=?',
+      'SELECT m.period_id,m.person_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=? FOR UPDATE',
       [id],
       db,
     );
     requireFound(old);
+    if (old.period_id !== p.period_id || old.person_id !== p.person_id)
+      throw new AppError(409, 'El pago no corresponde a esta persona y período.');
     await openPeriod(old.period_id, db);
   }
   await execute(

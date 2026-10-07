@@ -9,7 +9,13 @@ import { clonePeriodTests } from './clone-period-cases.js';
 import { facilitatorTests } from './facilitator-cases.js';
 import { formsImportTests } from './forms-import-cases.js';
 import { formsFinanceTests } from './forms-finance-cases.js';
-import { legacyFixture, resetTestSchema, prepareSchedules } from './model-fixtures.js';
+import {
+  legacyFixture,
+  resetTestSchema,
+  prepareSchedules,
+  incorporateTestPerson,
+} from './model-fixtures.js';
+import { membershipTests, verifyMembershipMigration } from './membership-cases.js';
 import { cleanupPlan, applyCleanup } from '../server/qa-cleanup.js';
 import { testCredentials } from './auth-helper.js';
 import { randomUUID } from 'node:crypto';
@@ -27,6 +33,7 @@ const agent = request.agent(app);
 async function enroll(body: any, eid?: number) {
   const result = await prepareSchedules(agent, body.period_id, body.activity_id, body.slots);
   if (result.error) return result.error;
+  await incorporateTestPerson(agent, body.person_id, body.period_id);
   return eid
     ? agent.put(`/api/enrollments/${eid}`).send({ ...body, schedule_ids: result.ids })
     : agent.post('/api/enrollments').send({ ...body, schedule_ids: result.ids });
@@ -78,6 +85,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     });
     expect(await query('SELECT * FROM payments')).toEqual(pre);
     expect(await query('SELECT * FROM monthly_accounts')).toEqual(accountsBefore);
+    await verifyMembershipMigration();
     const migrated = await query(
       'SELECT si.display_name,s.start,s.end,s.day FROM schedule_instructors si JOIN activity_schedules s ON s.id=si.schedule_id',
     );
@@ -97,6 +105,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       'monthly_accounts',
       'enrollment_slots',
       'enrollments',
+      'period_memberships',
       'schedule_instructors',
       'activity_schedules',
       'period_activity_days',
@@ -205,7 +214,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     expect((await agent.get(`/api/accounts?period_id=${period}`)).body[0].balance).toBe(
       '-10000.00',
     );
-    expect((await agent.delete(`/api/payments/${payment}`)).status).toBe(200);
+    expect((await agent.delete(`/api/payments/${payment}?period_id=${period}`)).status).toBe(200);
     expect((await agent.get(`/api/accounts?period_id=${period}`)).body[0].balance).toBe('40000.00');
   });
   it('edita horarios y preserva persona al cancelar inscripción', async () => {
@@ -222,7 +231,9 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
         )
       ).status,
     ).toBe(200);
-    expect((await agent.delete(`/api/enrollments/${enrollment}`)).status).toBe(200);
+    expect((await agent.delete(`/api/enrollments/${enrollment}?period_id=${period}`)).status).toBe(
+      200,
+    );
     expect((await agent.get(`/api/people/${pid}`)).status).toBe(200);
   });
   it('importa XLSX y rechaza duplicados en la misma transacción sin cambios parciales', async () => {
@@ -450,6 +461,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
         .post('/api/people')
         .send({ nombre: 'Cierre', apellido: 'Ficticia', telefono: '0000030099' })
     ).body.id;
+    await incorporateTestPerson(agent, person, pr);
     const pay = (
       await agent.post('/api/payments').send({
         person_id: person,
@@ -460,7 +472,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       })
     ).body.id;
     await agent.patch(`/api/periods/${pr}/status`).send({ status: 'closed' });
-    expect((await agent.delete(`/api/payments/${pay}`)).status).toBe(409);
+    expect((await agent.delete(`/api/payments/${pay}?period_id=${pr}`)).status).toBe(409);
   });
   it('plan QA no elimina sin aprobación y protege cambios posteriores y estructura', async () => {
     const id = (
@@ -479,6 +491,16 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       id,
     ]);
     await expect(applyCleanup(plan, 'prisma_test')).rejects.toThrow('cambiaron');
+    const qaPeriod = (await agent.post('/api/periods').send({ year: 2029, month: 2 })).body.id;
+    const qaMember = (
+      await agent.post(`/api/periods/${qaPeriod}/memberships`).send({ person_id: id })
+    ).body.id;
+    const protectedPlan = await cleanupPlan();
+    protectedPlan.candidates.find((c) => c.table === 'people' && c.id === id)!.reviewed = true;
+    await expect(applyCleanup(protectedPlan, 'prisma_test')).rejects.toThrow('pertenencia');
+    expect((await agent.delete(`/api/periods/${qaPeriod}/memberships/${qaMember}`)).status).toBe(
+      200,
+    );
     const fresh = await cleanupPlan();
     fresh.candidates.find((c) => c.table === 'people' && c.id === id)!.reviewed = true;
     expect((await applyCleanup(fresh, 'prisma_test')).deleted).toBe(1);
@@ -503,4 +525,5 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   formsFinanceTests(request.agent(createApp(credentials)), credentials.password);
   facilitatorTests(request.agent(createApp(credentials)), credentials.password);
   clonePeriodTests(request.agent(createApp(credentials)), credentials.password);
+  membershipTests(request.agent(createApp(credentials)), credentials.password);
 });

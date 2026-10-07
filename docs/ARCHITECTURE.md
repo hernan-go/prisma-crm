@@ -49,6 +49,26 @@ Semántica:
 
 `activities.instructor_id` es legado.
 
+### Personas y pertenencia al período
+
+`people` es el catálogo global. `period_memberships` representa pertenencia explícita, incluso sin actividades:
+
+```text
+people + periods → period_memberships
+                      ↓
+              enrollments / monthly_accounts
+                      ↓
+              enrollment_slots / payments
+```
+
+`enrollments` y `monthly_accounts` referencian directamente el par `(person_id, period_id)` de membresías mediante FK compuestas restrictivas. La membresía tiene PK propia, `UNIQUE(person_id, period_id)`, fecha de incorporación e índice por período. No genera entidades operativas al crearse.
+
+API: `GET/POST /periods/:periodId/memberships`, `DELETE /periods/:periodId/memberships/:id`. GET admite `person_id` y devuelve personas archivadas históricas. POST recibe exclusivamente `person_id`. DELETE valida el ID dentro del período y bloquea ante cualquier inscripción o cuenta.
+
+Altas/bajas y operaciones financieras usan la transacción/bloqueo existente `peopleTransaction`, el bloqueo de período abierto y comprobación autoritativa de membresía. Cancelar inscripciones no elimina pertenencia. Bajas de inscripciones/pagos requieren `period_id` explícito; ediciones no trasladan operaciones entre personas/períodos.
+
+`008.sql` crea la tabla y hace backfill exclusivamente desde la unión de pares en inscripciones/cuentas antes de agregar FK. Es reintentable mediante `CREATE TABLE IF NOT EXISTS`, inserción de pares ausentes y consulta a `information_schema` antes de cada FK. No se asume rollback de DDL. Aplicar manualmente la migración completa antes de desplegar código que utiliza membresías.
+
 ## Períodos
 
 Estados actuales:

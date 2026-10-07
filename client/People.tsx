@@ -236,7 +236,15 @@ export function People() {
     </>
   );
 }
-export function PersonPicker({ onSelect }: { onSelect: (p: any) => void }) {
+export function PersonPicker({
+  onSelect,
+  excluded = [],
+  actionLabel = 'Seleccionar →',
+}: {
+  onSelect: (p: any) => void;
+  excluded?: number[];
+  actionLabel?: string;
+}) {
   const [search, setSearch] = useState('');
   const term = useDebounce(search);
   const q = useQuery({
@@ -249,14 +257,14 @@ export function PersonPicker({ onSelect }: { onSelect: (p: any) => void }) {
       <ErrorBox error={q.error} />
       <div className="pick-list">
         {q.data?.rows.map((p: any) => (
-          <button key={p.id} onClick={() => onSelect(p)}>
+          <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
             <span>
               {p.apellido}, {p.nombre}
               <small>
                 {p.public_id} · {p.telefono}
               </small>
             </span>
-            <span>Seleccionar →</span>
+            <span>{excluded.includes(p.id) ? 'Ya incorporada' : actionLabel}</span>
           </button>
         ))}
         {q.isPending && <Loading />}
@@ -361,7 +369,8 @@ export function PersonDetail() {
         ))}
         {p.payments.map((x: any) => (
           <p key={x.id}>
-            {formatDate(x.date)} · {periodName(x)} · {formatMoney(x.amount)} · Cartera {wallet(x.method)}
+            {formatDate(x.date)} · {periodName(x)} · {formatMoney(x.amount)} · Cartera{' '}
+            {wallet(x.method)}
           </p>
         ))}
       </details>

@@ -1,12 +1,17 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { execute, query } from '../server/db.js';
 import * as database from '../server/db.js';
+import { incorporateTestPerson } from './model-fixtures.js';
 
 // Registered in the existing integration suite: no concurrent schema reset.
 export function clonePeriodTests(agent: any, password: string) {
   describe('Crear período vacío o clonar configuración', () => {
     let source: number, activity: number, teacher: number, offering: number, schedule: number;
     const post = async (path: string, body: unknown) => {
+      if (path === '/enrollments') {
+        const p = body as { person_id: number; period_id: number };
+        await incorporateTestPerson(agent, p.person_id, p.period_id);
+      }
       const response = await agent.post(`/api${path}`).send(body);
       expect(response.status, response.body.message).toBe(201);
       return response.body.id as number;
@@ -24,6 +29,7 @@ export function clonePeriodTests(agent: any, password: string) {
         'activity_schedules',
         'schedule_instructors',
         'enrollments',
+        'period_memberships',
         'enrollment_slots',
         'monthly_accounts',
         'payments',
@@ -210,6 +216,7 @@ export function clonePeriodTests(agent: any, password: string) {
       const after = await snapshot();
       for (const table of [
         'people',
+        'period_memberships',
         'activities',
         'instructors',
         'enrollments',
@@ -232,6 +239,7 @@ export function clonePeriodTests(agent: any, password: string) {
         for (const row of before[table]) expect(after[table]).toContainEqual(row);
       expect(await config(source)).toEqual(original);
       expect((await agent.get(`/api/enrollments?period_id=${destination}`)).body).toEqual([]);
+      expect((await agent.get(`/api/periods/${destination}/memberships`)).body).toEqual([]);
       expect((await agent.get(`/api/accounts?period_id=${destination}`)).body).toEqual([]);
       expect((await agent.get(`/api/periods/${destination}/expense-categories`)).body).toEqual([]);
       const facilitatorRows = (
@@ -251,15 +259,13 @@ export function clonePeriodTests(agent: any, password: string) {
       const s = o.schedules.find((s: any) => s.day === 1);
       expect(
         (
-          await agent
-            .put(`/api/schedules/${s.id}`)
-            .send({
-              offering_id: o.id,
-              day: 1,
-              start: '09:00',
-              end: '10:00',
-              instructor_ids: [teacher],
-            })
+          await agent.put(`/api/schedules/${s.id}`).send({
+            offering_id: o.id,
+            day: 1,
+            start: '09:00',
+            end: '10:00',
+            instructor_ids: [teacher],
+          })
         ).status,
       ).toBe(200);
       expect(await config(source)).toEqual(original);

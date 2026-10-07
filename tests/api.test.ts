@@ -35,6 +35,16 @@ describe('API: validación y límites', () => {
     expect((await agent.get('/api/people/1%20OR%201=1')).status).toBe(422));
   it('responde JSON en rutas API inexistentes', async () =>
     expect((await agent.get('/api/missing')).status).toBe(404));
+  it('rechaza alta de membresía inválida o con entidades operativas adjuntas antes de consultar DB', async () => {
+    for (const body of [{}, { person_id: 0 }, { person_id: 1, amount_due: '100' }])
+      expect((await agent.post('/api/periods/1/memberships').send(body)).status).toBe(422);
+    expect((await agent.get('/api/periods/invalid/memberships')).status).toBe(422);
+    expect((await agent.delete('/api/periods/1/memberships/invalid')).status).toBe(422);
+  });
+  it('exige período seleccionado para cancelar inscripciones o pagos', async () => {
+    for (const kind of ['enrollments', 'payments'])
+      expect((await agent.delete(`/api/${kind}/1`)).status).toBe(422);
+  });
   it('requiere revisión explícita al importar', async () =>
     expect(
       (

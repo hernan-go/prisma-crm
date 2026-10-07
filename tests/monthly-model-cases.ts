@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { query } from '../server/db.js';
 import { randomUUID } from 'node:crypto';
+import { incorporateTestPerson } from './model-fixtures.js';
 // Registered inside the existing DB suite: same isolated database and lifecycle, no parallel resets.
 export function monthlyModelTests(agent: any, password: string) {
   describe('Oferta mensual y facilitadores normalizados', () => {
@@ -34,12 +35,17 @@ export function monthlyModelTests(agent: any, password: string) {
       start = '10:00',
       end = '11:00',
     ) => post('/schedules', { offering_id, instructor_ids, day, start, end });
-    const enroll = (
+    const enroll = async (
       person_id: number,
       activity_id: number,
       schedule_ids: number[],
       period_id = sep,
-    ) => agent.post('/api/enrollments').send({ person_id, activity_id, schedule_ids, period_id });
+    ) => {
+      await incorporateTestPerson(agent, person_id, period_id);
+      return agent
+        .post('/api/enrollments')
+        .send({ person_id, activity_id, schedule_ids, period_id });
+    };
     it('crea facilitador solo con nombre, sin inventar opcionales', async () => {
       sep = await post('/periods', { year: 2030, month: 9 });
       oct = await post('/periods', { year: 2030, month: 10 });

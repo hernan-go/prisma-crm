@@ -16,6 +16,7 @@ import { query, execute, peopleTransaction, pool } from './db.js';
 import { duplicates, savePerson } from './repositories.js';
 import { openPeriod } from './scheduling.js';
 import { enrollmentInDB, paymentInDB } from './services.js';
+import { membershipInDB } from './memberships.js';
 import { AppError } from './errors.js';
 export const formsImport = Router();
 const upload = multer({
@@ -141,6 +142,7 @@ formsImport.post('/commit', async (req, res) => {
           updated++;
         } else kept++;
       }
+      await membershipInDB(pid, body.period_id, db, true);
       const grouped = new Map<number, any[]>();
       for (const selection of row.selections.filter((s) => s.include)) {
         const schedules = await scheduleList(body.period_id, db);

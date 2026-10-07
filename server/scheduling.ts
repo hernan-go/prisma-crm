@@ -90,8 +90,9 @@ export async function periodHasData(period: number, db: Connection) {
     (SELECT COUNT(*) FROM period_activities WHERE period_id=?) +
     (SELECT COUNT(*) FROM enrollments WHERE period_id=?) +
     (SELECT COUNT(*) FROM monthly_accounts WHERE period_id=?) +
+    (SELECT COUNT(*) FROM period_memberships WHERE period_id=?) +
     (SELECT COUNT(*) FROM period_expense_categories WHERE period_id=?) total`,
-    [period, period, period, period],
+    [period, period, period, period, period],
     db,
   );
   return Number(r.total) > 0;
@@ -108,7 +109,7 @@ export async function periodEdit(period: number, body?: unknown) {
     return { ok: true };
   });
 }
-export async function deleteMovement(kind: 'payments' | 'enrollments', id: number) {
+export async function deleteMovement(kind: 'payments' | 'enrollments', id: number, period: number) {
   return peopleTransaction(async (db) => {
     const [r] = await query(
       kind === 'payments'
@@ -118,6 +119,8 @@ export async function deleteMovement(kind: 'payments' | 'enrollments', id: numbe
       db,
     );
     requireFound(r);
+    if (r.period_id !== period)
+      throw new AppError(409, 'El registro no corresponde al período seleccionado.');
     await openPeriod(r.period_id, db);
     await execute(`DELETE FROM ${kind} WHERE id=?`, [id], db);
     return { ok: true };
