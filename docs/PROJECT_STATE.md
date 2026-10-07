@@ -8,6 +8,9 @@
 - HEAD desplegado: `5144ef5 feat: add customizable period expenses`.
 - Commit anterior relevante: `3774c77 feat: add statistics section and align page titles`.
 - `main` auto-despliega SiteGround.
+- Rama de trabajo actual: `feat/clone-period-config`.
+- HEAD local: `516be17 docs: add project context and workflow`.
+- Clonación de configuración implementada, validada y aprobada manualmente; cambios de la iteración y documentación aún sin commit ni deploy. El HEAD productivo sigue siendo el indicado arriba.
 
 ## Producción
 
@@ -37,6 +40,19 @@
 - Aislamiento por período verificado manualmente.
 - API antigua de publicidad responde `410` / queda fuera de uso operativo.
 - `advertising_investments` permanece como respaldo histórico.
+
+### Clonar configuración al crear período
+
+- Implementada y validada en la rama de trabajo, con revisión manual aprobada por el usuario.
+- El modal del `+` permite crear vacío o copiar el período existente cronológicamente anterior, resuelto por backend.
+- Si la fuente está vacía, no se busca otro período más antiguo.
+- Se copian ofertas, días, múltiples horarios y facilitadores con IDs nuevos, conservando estados y reiniciando `ever_used=0` en ofertas/horarios.
+- No se copian personas, inscripciones, cuentas, cobros, pagos, categorías de gastos ni gastos.
+- Operación transaccional y rollback verificados.
+- Typecheck, lint, tests normales (102 aprobados), integración exclusivamente en `prisma_test` (190 aprobados), build y `git diff --check`: OK.
+- Revisión manual: Diciembre 2026 clonó correctamente desde Noviembre 2026 las ofertas, días, múltiples horarios y facilitadores.
+- No requirió migración; `008.sql` sigue disponible.
+- Documento de cierre: `docs/iterations/2026-10-clone-period-config.md`.
 
 ## Migración histórica de publicidad
 
@@ -80,6 +96,6 @@ Scripts privados:
 
 ## Próximo objetivo
 
-**Clonar configuración al crear un período.**
+**Reestructurar Cobros Período: receptor ≠ medio.**
 
-Ver `docs/iterations/NEXT-clone-period-config.md`.
+Ver `docs/ROADMAP.md` (Prioridad 1).

@@ -10,6 +10,18 @@ export type Booking = Slot & {
   mode: string;
 };
 export const overlaps = (a: Slot, b: Slot) => a.day === b.day && a.start < b.end && a.end > b.start;
+export function previousPeriod<T extends { year: number; month: number }>(
+  existing: T[],
+  destination: { year: number; month: number },
+): T | undefined {
+  const before = destination.year * 12 + destination.month;
+  return existing.reduce<T | undefined>((previous, period) => {
+    const date = period.year * 12 + period.month;
+    return date < before && (!previous || date > previous.year * 12 + previous.month)
+      ? period
+      : previous;
+  }, undefined);
+}
 export function scheduleConflict(next: Booking, existing: Booking[]) {
   for (const old of existing) {
     if (!overlaps(next, old)) continue;

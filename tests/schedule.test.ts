@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { nextPeriod, scheduleConflict, type Booking } from '../shared/schedule.js';
+import { nextPeriod, previousPeriod, scheduleConflict, type Booking } from '../shared/schedule.js';
 const b: Booking = {
   person_id: 1,
   activity_id: 1,
@@ -11,6 +11,18 @@ const b: Booking = {
   start: '10:00',
   end: '11:00',
 };
+it('resuelve el anterior por fecha, con huecos, cambio de año e IDs desordenados', () => {
+  const periods = [
+    { id: 9, year: 2045, month: 8 },
+    { id: 2, year: 2045, month: 10 },
+    { id: 1, year: 2046, month: 2 },
+  ];
+  expect(previousPeriod(periods, { year: 2045, month: 11 })?.id).toBe(2);
+  expect(previousPeriod(periods, { year: 2046, month: 1 })?.id).toBe(2);
+  expect(previousPeriod(periods, { year: 2045, month: 10 })?.id).toBe(9);
+  expect(previousPeriod(periods, { year: 2045, month: 8 })).toBeUndefined();
+  expect(previousPeriod([], { year: 2045, month: 11 })).toBeUndefined();
+});
 it('detecta conflicto personal aunque cambie el docente', () =>
   expect(
     scheduleConflict({ ...b, activity_id: 2, instructor_ids: [2], schedule_id: 2 }, [b]),

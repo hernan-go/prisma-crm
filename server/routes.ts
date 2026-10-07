@@ -2,17 +2,11 @@ import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
 import { expenses } from './expenses.js';
 import { formsImport } from './forms-import.js';
-import { openPeriod, periodEdit, deleteMovement } from './scheduling.js';
+import { openPeriod, periodCreate, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import {
-  periodSchema,
-  money,
-  personSchema,
-  normalizePhone,
-  normalizeDni,
-} from '../shared/domain.js';
+import { money, personSchema, normalizePhone, normalizeDni } from '../shared/domain.js';
 import { query, execute, pool, peopleTransaction } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { accounts, enrollmentList, paymentSelect, duplicates, savePerson } from './repositories.js';
@@ -94,10 +88,7 @@ api.get('/periods', async (_req, res) =>
   res.json(await query('SELECT * FROM periods ORDER BY year DESC,month DESC')),
 );
 api.post('/periods', async (req, res) => {
-  const p = periodSchema.parse(req.body);
-  res.status(201).json({
-    id: (await execute('INSERT INTO periods(year,month) VALUES (?,?)', [p.year, p.month])).insertId,
-  });
+  res.status(201).json(await periodCreate(req.body));
 });
 api.put('/periods/:id', async (req, res) =>
   res.json(await periodEdit(id(req.params.id), req.body)),

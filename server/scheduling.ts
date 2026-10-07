@@ -1,8 +1,69 @@
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
-import { periodSchema } from '../shared/domain.js';
+import { periodCreateSchema, periodSchema } from '../shared/domain.js';
 import { type Booking } from '../shared/schedule.js';
 import { scheduleList } from './offerings.js';
+
+export async function periodCreate(body: unknown) {
+  const p = periodCreateSchema.parse(body);
+  return peopleTransaction(async (db) => {
+    const [source] =
+      p.mode === 'clone_previous'
+        ? await query(
+            'SELECT id FROM periods WHERE year<? OR (year=? AND month<?) ORDER BY year DESC,month DESC LIMIT 1 FOR UPDATE',
+            [p.year, p.year, p.month],
+            db,
+          )
+        : [];
+    if (p.mode === 'clone_previous' && !source)
+      throw new AppError(409, 'No existe un período anterior del que copiar configuración.');
+    const id = (
+      await execute('INSERT INTO periods(year,month) VALUES (?,?)', [p.year, p.month], db)
+    ).insertId;
+    if (source) {
+      // Read period configuration, never catalog defaults or transactional history.
+      const offerings = await query(
+        'SELECT id,activity_id,name,mode,active FROM period_activities WHERE period_id=? ORDER BY id',
+        [source.id],
+        db,
+      );
+      for (const offering of offerings) {
+        const offeringId = (
+          await execute(
+            'INSERT INTO period_activities(period_id,activity_id,name,mode,active,ever_used) VALUES (?,?,?,?,?,0)',
+            [id, offering.activity_id, offering.name, offering.mode, offering.active],
+            db,
+          )
+        ).insertId;
+        await execute(
+          'INSERT INTO period_activity_days(offering_id,day) SELECT ?,day FROM period_activity_days WHERE offering_id=?',
+          [offeringId, offering.id],
+          db,
+        );
+        const schedules = await query(
+          'SELECT id,day,start,end,active FROM activity_schedules WHERE offering_id=? ORDER BY id',
+          [offering.id],
+          db,
+        );
+        for (const schedule of schedules) {
+          const scheduleId = (
+            await execute(
+              'INSERT INTO activity_schedules(offering_id,day,start,end,active,ever_used) VALUES (?,?,?,?,?,0)',
+              [offeringId, schedule.day, schedule.start, schedule.end, schedule.active],
+              db,
+            )
+          ).insertId;
+          await execute(
+            'INSERT INTO schedule_instructors(schedule_id,instructor_id,display_name) SELECT ?,instructor_id,display_name FROM schedule_instructors WHERE schedule_id=?',
+            [scheduleId, schedule.id],
+            db,
+          );
+        }
+      }
+    }
+    return { id };
+  });
+}
 
 export async function openPeriod(period: number, db: Connection) {
   const [p] = await query('SELECT * FROM periods WHERE id=? FOR UPDATE', [period], db);

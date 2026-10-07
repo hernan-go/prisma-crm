@@ -21,6 +21,12 @@ describe('API: validación y límites', () => {
   });
   it('rechaza período inválido', async () =>
     expect((await agent.post('/api/periods').send({ year: 2026, month: 13 })).status).toBe(422));
+  it('rechaza modo inválido y selección arbitraria de fuente antes de consultar DB', async () => {
+    for (const extra of [{ mode: 'invalid' }, { mode: 'clone_previous', source_period_id: 1 }])
+      expect(
+        (await agent.post('/api/periods').send({ year: 2045, month: 11, ...extra })).status,
+      ).toBe(422);
+  });
   it('bloquea escrituras desde otro origen', async () =>
     expect(
       (await agent.post('/api/people').set('Origin', 'https://evil.invalid').send({})).status,

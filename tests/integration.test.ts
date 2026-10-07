@@ -5,6 +5,7 @@ import {
   verifyExpenseMigrationPreflight,
 } from './expenses-cases.js';
 import { monthlyModelTests } from './monthly-model-cases.js';
+import { clonePeriodTests } from './clone-period-cases.js';
 import { facilitatorTests } from './facilitator-cases.js';
 import { formsImportTests } from './forms-import-cases.js';
 import { formsFinanceTests } from './forms-finance-cases.js';
@@ -501,4 +502,5 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   formsImportTests(request.agent(createApp(credentials)), credentials.password);
   formsFinanceTests(request.agent(createApp(credentials)), credentials.password);
   facilitatorTests(request.agent(createApp(credentials)), credentials.password);
+  clonePeriodTests(request.agent(createApp(credentials)), credentials.password);
 });

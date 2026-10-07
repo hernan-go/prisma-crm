@@ -9,27 +9,9 @@
 - `Gastos Período` implementado con categorías personalizables y movimientos.
 - Migración `007.sql` aplicada en producción.
 
-## Prioridad 1 — Clonar configuración al crear período
+- Clonación de configuración al crear período: implementada y validada localmente, con revisión manual aprobada; sin migración, commit ni deploy todavía. Documento de cierre: `docs/iterations/2026-10-clone-period-config.md`.
 
-Al crear un período desde el botón `+`, permitir:
-
-- Crear período vacío.
-- Copiar configuración del período anterior disponible.
-
-Copiar exclusivamente configuración operativa:
-
-- actividades/ofertas;
-- nombre de oferta;
-- modalidad;
-- días;
-- horarios;
-- facilitadores asignados.
-
-No copiar datos transaccionales ni personas.
-
-Documento de alcance: `docs/iterations/NEXT-clone-period-config.md`.
-
-## Prioridad 2 — Cobros: receptor ≠ medio
+## Prioridad 1 — Reestructurar Cobros Período: receptor ≠ medio
 
 Separar:
 
@@ -40,7 +22,7 @@ Permitir las cuatro combinaciones.
 
 Si requiere esquema, usar `008.sql` o superior según el orden real de implementación.
 
-## Prioridad 3 — Ingresos de Informática separados
+## Prioridad 2 — Ingresos de Informática separados
 
 - ingreso exclusivo de Hernán;
 - efectivo o transferencia;
@@ -49,7 +31,7 @@ Si requiere esquema, usar `008.sql` o superior según el orden real de implement
 
 No clasificar solo comparando el texto `Informática`.
 
-## Prioridad 4 — Dashboard financiero definitivo
+## Prioridad 3 — Dashboard financiero definitivo
 
 Construir después de:
 
@@ -66,7 +48,7 @@ Debe distinguir:
 - egresos;
 - eventualmente resultado/neto.
 
-## Prioridad 5 — Responsive / estética fina
+## Prioridad 4 — Responsive / estética fina
 
 Correcciones puntuales por pantalla:
 
@@ -78,7 +60,7 @@ Correcciones puntuales por pantalla:
 
 Sin refactor visual masivo.
 
-## Prioridad 6 — Estadísticas
+## Prioridad 5 — Estadísticas
 
 La ruta/página ya existe. Falta diseñar explícitamente:
 
@@ -90,7 +72,7 @@ La ruta/página ya existe. Falta diseñar explícitamente:
 
 No implementar estadísticas arbitrarias sin definición previa.
 
-## Prioridad 7 — PDF / reportes
+## Prioridad 6 — PDF / reportes
 
 Postergado deliberadamente hasta estabilizar los modelos financieros y Estadísticas.
 

@@ -1,6 +1,6 @@
-# Iteración siguiente — Clonar configuración al crear período
+# Iteración completada — Clonar configuración al crear período
 
-**Estado:** planned
+**Estado:** completada en `feat/clone-period-config`, validada y aprobada por el usuario. Cambios todavía sin commit ni deploy.
 
 ## Objetivo
 
@@ -92,6 +92,21 @@ Después debe proponer un plan corto antes de implementar.
 ## Validación
 
 Seguir `docs/WORKFLOW.md`, incluyendo tests DB únicamente sobre `prisma_test` si son necesarios.
+
+### Resultado local — 2026-10-07
+
+- Modal existente del `+`: creación vacía por defecto o copia de configuración.
+- Backend autoritativo: anterior existente por año/mes, aunque esté cerrado; si está vacío no busca otro más antiguo.
+- Copia ofertas, días, horarios y asignaciones con IDs nuevos, conserva estados y nombres del período, y reinicia `ever_used=0` en ofertas/horarios.
+- Catálogos globales, personas y datos transaccionales permanecen intactos; no se reactivan registros archivados.
+- Sin nueva migración ni cambios a las migraciones existentes.
+- Typecheck, lint, tests normales (102 aprobados), integración exclusiva en `prisma_test` (190 aprobados), build y `git diff --check`: OK.
+- Build con warnings conocidos no bloqueantes de Zod/Rollup.
+- Rollback verificado en MySQL real mediante fallo inducido al copiar facilitadores, sin alterar el esquema para la prueba.
+- Prueba de navegador local sobre `prisma_test`: crear vacío, copiar, seleccionar el nuevo período y deshabilitar copia sin fuente: OK.
+- Se corrigió el texto del modal sobre edición/eliminación de períodos vacíos para incluir configuración y categorías de gastos, conforme a la validación ya existente.
+- Revisión manual del usuario: satisfactoria y aprobada. Diciembre 2026 clonó correctamente desde Noviembre 2026 las ofertas, días, múltiples horarios y facilitadores.
+- Iteración completada sin requerir migración. Producción intacta; pendiente preparación de Git mediante autorización explícita.
 
 ## Git
 
