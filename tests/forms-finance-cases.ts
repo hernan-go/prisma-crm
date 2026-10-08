@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { query } from '../server/db.js';
-import { wallet } from '../shared/domain.js';
 
 // Shares the integration suite's guarded prisma_test lifecycle; no production data or seeds.
 export function formsFinanceTests(agent: any, password: string) {
@@ -36,12 +35,13 @@ export function formsFinanceTests(agent: any, password: string) {
           instructor_ids: [],
         },
       ],
-      payment: { amount: '', method: '', date: '', include: false, ...payment },
+      payment: { amount: '', method: '', recipient: '', date: '', include: false, ...payment },
     });
-    const pay = (amount: string, method = 'transfer') => ({
+    const pay = (amount: string, method = 'transfer', recipient = 'hernan') => ({
       include: true,
       amount,
       method,
+      recipient,
       date: '2032-01-15',
     });
     const body = (rows: any[], request_id: string = randomUUID()) => ({
@@ -146,20 +146,20 @@ export function formsFinanceTests(agent: any, password: string) {
       });
     });
     it.each([
-      ['20000', 'transfer', '15000.00', 'Hernán'],
-      ['35000', 'cash', '0.00', 'Jesica'],
-      ['40000', 'transfer', '-5000.00', 'Hernán'],
+      ['20000', 'transfer', '15000.00', 'hernan'],
+      ['35000', 'cash', '0.00', 'jesica'],
+      ['40000', 'transfer', '-5000.00', 'hernan'],
     ])(
       'pago %s %s conserva movimiento independiente y saldo %s',
-      async (amount, method, balance, cartera) => {
-        const r = row('35000', pay(amount, method));
+      async (amount, method, balance, recipient) => {
+        const r = row('35000', pay(amount, method, recipient));
         expect((await commit([r])).status).toBe(200);
         const a = await account(r);
         expect(a).toMatchObject({ amount_due: '35000.00', paid: amount + '.00', balance });
         const payments = await query('SELECT * FROM payments WHERE account_id=?', [a.id]);
         expect(payments).toHaveLength(1);
         expect(payments[0]).toMatchObject({ amount: amount + '.00', method, date: '2032-01-15' });
-        expect(wallet(payments[0].method)).toBe(cartera);
+        expect(payments[0].recipient).toBe(recipient);
       },
     );
     it('vacío conserva importe existente al conservar persona e inscripciones', async () => {
@@ -293,6 +293,7 @@ export function formsFinanceTests(agent: any, password: string) {
         date: '2032-01-16',
         amount: '15000',
         method: 'cash',
+        recipient: 'jesica',
       });
       expect(await account(r)).toMatchObject({ paid: '35000.00', balance: '0.00' });
       expect(await query('SELECT id FROM payments WHERE account_id=?', [a.id])).toHaveLength(2);

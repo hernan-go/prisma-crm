@@ -64,7 +64,7 @@ export async function verifyMembershipMigration() {
   }) as any);
   const earlyAcquire = vi.spyOn(pool, 'getConnection').mockResolvedValueOnce(earlyConnection);
   try {
-    await expect(migrate()).rejects.toThrow('Fallo backfill sintético 008');
+    await expect(migrate('008.sql')).rejects.toThrow('Fallo backfill sintético 008');
   } finally {
     earlySpy.mockRestore();
     earlyAcquire.mockRestore();
@@ -81,7 +81,7 @@ export async function verifyMembershipMigration() {
   }) as any);
   const acquire = vi.spyOn(pool, 'getConnection').mockResolvedValueOnce(connection);
   try {
-    await expect(migrate()).rejects.toThrow('Fallo DDL sintético 008');
+    await expect(migrate('008.sql')).rejects.toThrow('Fallo DDL sintético 008');
   } finally {
     querySpy.mockRestore();
     acquire.mockRestore();
@@ -96,7 +96,7 @@ export async function verifyMembershipMigration() {
       "SELECT CONSTRAINT_NAME name FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME IN ('fk_enrollment_membership','fk_account_membership')",
     ),
   ).toEqual([{ name: 'fk_enrollment_membership' }]);
-  await migrate();
+  await migrate('008.sql');
   expect(
     await query('SELECT person_id,period_id FROM period_memberships ORDER BY person_id,period_id'),
   ).toEqual(expected);
@@ -112,8 +112,8 @@ export async function verifyMembershipMigration() {
   const memberships = await query('SELECT * FROM period_memberships ORDER BY id');
   // Re-run all SQL even if both FKs already exist, then verify registered no-op.
   await execute("DELETE FROM schema_migrations WHERE name='008.sql'");
-  await migrate();
-  await migrate();
+  await migrate('008.sql');
+  await migrate('008.sql');
   expect(await query('SELECT * FROM period_memberships ORDER BY id')).toEqual(memberships);
   expect(
     await Promise.all(
@@ -198,6 +198,7 @@ export function membershipTests(agent: any, password: string) {
             date: '2058-01-02',
             amount: '10',
             method: 'cash',
+            recipient: 'jesica',
           })
         ).status,
       ).toBe(409);
@@ -284,6 +285,7 @@ export function membershipTests(agent: any, password: string) {
         date: '2058-01-02',
         amount: '10',
         method: 'cash',
+        recipient: 'jesica',
       });
       await add(person, other);
       const before = await Promise.all(
@@ -300,6 +302,7 @@ export function membershipTests(agent: any, password: string) {
             date: '2058-02-02',
             amount: '10',
             method: 'cash',
+            recipient: 'jesica',
           })
         ).status,
       ).toBe(409);

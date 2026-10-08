@@ -84,8 +84,26 @@ export const paymentSchema = z.object({
   date: z.iso.date(),
   amount: money.refine((v) => new Decimal(v).gt(0), 'El pago debe ser mayor a cero.'),
   method: z.enum(['cash', 'transfer']),
+  recipient: z.enum(['jesica', 'hernan']),
   notes: text,
 });
+export type PaymentInput = z.infer<typeof paymentSchema>;
+export type PaymentRecipient = PaymentInput['recipient'];
+export type PaymentMethod = PaymentInput['method'];
+export interface Payment extends PaymentInput {
+  id: number;
+  account_id: number;
+}
+export interface WalletTotals {
+  cash: string;
+  transfer: string;
+  total: string;
+}
+export type PeriodWallets = Record<PaymentRecipient, WalletTotals>;
+export const recipientLabel = (recipient: PaymentRecipient) =>
+  ({ jesica: 'Jésica', hernan: 'Hernán' })[recipient];
+export const paymentMethodLabel = (method: PaymentMethod) =>
+  ({ cash: 'Efectivo', transfer: 'Transferencia' })[method];
 export const instructorSchema = z.object({
   name: z.string().trim().min(1).max(100),
   surname: z.string().trim().max(100).default(''),
@@ -110,7 +128,6 @@ export const advertisingSchema = z.object({
   amount: money,
   notes: text,
 });
-export const wallet = (method: 'cash' | 'transfer') => (method === 'cash' ? 'Jesica' : 'Hernán');
 export const sumMoney = (values: string[]) =>
   values.reduce((n, v) => n.plus(v), new Decimal(0)).toFixed(2);
 export const balance = (due: string | null, paid: string) =>

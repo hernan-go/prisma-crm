@@ -21,9 +21,11 @@ import {
   times,
   formatMoney,
   formatDate,
-  wallet,
+  recipientLabel,
+  paymentMethodLabel,
   enrollmentSchema,
   paymentSchema,
+  type Payment,
 } from '../shared/domain';
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -322,7 +324,8 @@ function PersonMonthMember({ person }: { person: any }) {
             <div>
               <b>{formatMoney(p.amount)}</b>
               <small>
-                {formatDate(p.date)} · Cartera {wallet(p.method)}
+                {formatDate(p.date)} · Receptor: {recipientLabel(p.recipient)} · Medio:{' '}
+                {paymentMethodLabel(p.method)}
               </small>
               {p.notes && <small>{p.notes}</small>}
             </div>
@@ -479,14 +482,15 @@ function PaymentForm({
   close,
 }: {
   person: any;
-  payment: any;
+  payment: Partial<Payment>;
   close: () => void;
 }) {
   const { period } = usePeriod();
   const [data, set] = useState({
     date: p.date || today(),
     amount: p.amount || '',
-    method: p.method || 'transfer',
+    method: p.method || '',
+    recipient: p.recipient || '',
     notes: p.notes || '',
   });
   const [error, setError] = useState('');
@@ -533,17 +537,34 @@ function PaymentForm({
             />
           </Field>
         </div>
+        <Field label="Receptor">
+          <select
+            required
+            value={data.recipient}
+            onChange={(e) => set({ ...data, recipient: e.target.value })}
+          >
+            <option value="">Seleccionar receptor</option>
+            <option value="jesica">Jésica</option>
+            <option value="hernan">Hernán</option>
+          </select>
+        </Field>
         <Field label="Medio de pago">
-          <select value={data.method} onChange={(e) => set({ ...data, method: e.target.value })}>
+          <select
+            required
+            value={data.method}
+            onChange={(e) => set({ ...data, method: e.target.value })}
+          >
+            <option value="">Seleccionar medio</option>
             <option value="transfer">Transferencia</option>
             <option value="cash">Efectivo</option>
           </select>
         </Field>
-        <p className="info">Cartera {wallet(data.method as any)} · Asignada automáticamente</p>
         <Field label="Observaciones">
           <textarea value={data.notes} onChange={(e) => set({ ...data, notes: e.target.value })} />
         </Field>
-        <p className="muted">Para un pago dividido, registrá un movimiento por cada medio.</p>
+        <p className="muted">
+          Para un pago dividido, registrá un movimiento por cada combinación de receptor y medio.
+        </p>
         <ErrorBox error={error ? new Error(error) : m.error} />
         <div className="actions">
           <SaveButton pending={m.isPending} />
@@ -719,7 +740,8 @@ function PaymentsPeriod() {
                 {p.nombre} {p.apellido} · {formatMoney(p.amount)}
               </b>
               <small>
-                {formatDate(p.date)} · Cartera {wallet(p.method)}
+                {formatDate(p.date)} · Receptor: {recipientLabel(p.recipient)} · Medio:{' '}
+                {paymentMethodLabel(p.method)}
               </small>
               <small>{p.notes}</small>
             </div>

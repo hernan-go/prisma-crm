@@ -211,10 +211,37 @@ api.get('/dashboard', async (req, res) => {
     'SELECT COALESCE(SUM(amount_due),0) due,SUM(amount_due IS NULL) undefined_accounts FROM monthly_accounts WHERE period_id=?',
     [period],
   );
-  const [paid] = await query(
-    "SELECT COALESCE(SUM(p.amount),0) paid,COALESCE(SUM(IF(method='cash',p.amount,0)),0) cash,COALESCE(SUM(IF(method='transfer',p.amount,0)),0) transfer FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE m.period_id=?",
+  const [paymentTotals] = await query(
+    `SELECT
+      COALESCE(SUM(p.amount),0) paid,
+      COALESCE(SUM(IF(p.method='cash',p.amount,0)),0) cash,
+      COALESCE(SUM(IF(p.method='transfer',p.amount,0)),0) transfer,
+      COALESCE(SUM(CASE WHEN p.recipient='jesica' AND p.method='cash' THEN p.amount ELSE 0 END),0) jesica_cash,
+      COALESCE(SUM(CASE WHEN p.recipient='jesica' AND p.method='transfer' THEN p.amount ELSE 0 END),0) jesica_transfer,
+      COALESCE(SUM(CASE WHEN p.recipient='hernan' AND p.method='cash' THEN p.amount ELSE 0 END),0) hernan_cash,
+      COALESCE(SUM(CASE WHEN p.recipient='hernan' AND p.method='transfer' THEN p.amount ELSE 0 END),0) hernan_transfer,
+      COALESCE(SUM(CASE WHEN p.recipient='jesica' THEN p.amount ELSE 0 END),0) jesica_total,
+      COALESCE(SUM(CASE WHEN p.recipient='hernan' THEN p.amount ELSE 0 END),0) hernan_total
+     FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE m.period_id=?`,
     [period],
   );
+  const paid = {
+    paid: paymentTotals.paid,
+    cash: paymentTotals.cash,
+    transfer: paymentTotals.transfer,
+  };
+  const wallets = {
+    jesica: {
+      cash: paymentTotals.jesica_cash,
+      transfer: paymentTotals.jesica_transfer,
+      total: paymentTotals.jesica_total,
+    },
+    hernan: {
+      cash: paymentTotals.hernan_cash,
+      transfer: paymentTotals.hernan_transfer,
+      total: paymentTotals.hernan_total,
+    },
+  };
   const [pending] = await query(
     'SELECT COALESCE(SUM(GREATEST(amount_due-paid,0)),0) pending,COALESCE(SUM(GREATEST(paid-amount_due,0)),0) credit FROM (SELECT m.amount_due,COALESCE(SUM(p.amount),0) paid FROM monthly_accounts m LEFT JOIN payments p ON p.account_id=m.id WHERE m.period_id=? GROUP BY m.id) balances',
     [period],
@@ -223,7 +250,7 @@ api.get('/dashboard', async (req, res) => {
     'SELECT o.name,COUNT(DISTINCT e.person_id) count FROM period_activities o LEFT JOIN enrollments e ON e.activity_id=o.activity_id AND e.period_id=o.period_id WHERE o.period_id=? GROUP BY o.id ORDER BY count DESC,o.name',
     [period],
   );
-  res.json({ ...enrollment, ...totals, ...paid, ...pending, activities });
+  res.json({ ...enrollment, ...totals, ...paid, ...pending, activities, wallets });
 });
 api.all(['/advertising', '/advertising/:id'], (_req, res) => {
   res

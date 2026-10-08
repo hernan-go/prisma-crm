@@ -7,7 +7,8 @@ import {
   normalizePhone,
   normalizeDni,
   times,
-  wallet,
+  recipientLabel,
+  paymentMethodLabel,
   balance,
   sumMoney,
   validateDays,
@@ -79,9 +80,11 @@ describe('Dinero', () => {
     expect(balance('60000', '40000')).toBe('20000.00');
     expect(balance('10', '15')).toBe('-5.00');
   });
-  it('deriva carteras', () => {
-    expect(wallet('transfer')).toBe('Hernán');
-    expect(wallet('cash')).toBe('Jesica');
+  it('etiqueta receptor y medio independientemente', () => {
+    expect(recipientLabel('hernan')).toBe('Hernán');
+    expect(recipientLabel('jesica')).toBe('Jésica');
+    expect(paymentMethodLabel('cash')).toBe('Efectivo');
+    expect(paymentMethodLabel('transfer')).toBe('Transferencia');
   });
   it('no acepta monto negativo ni fecha imposible', () => {
     expect(
@@ -91,6 +94,7 @@ describe('Dinero', () => {
         date: '2026-02-30',
         amount: '-1',
         method: 'cash',
+        recipient: 'jesica',
       }).success,
     ).toBe(false);
   });

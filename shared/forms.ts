@@ -142,6 +142,7 @@ export const formPaymentSchema = z
   .object({
     amount: z.string(),
     method: z.string(),
+    recipient: z.string().default(''),
     date: z.string(),
     include: z.boolean(),
   })
@@ -154,7 +155,7 @@ export const formPaymentSchema = z
     )
       ctx.addIssue({
         code: 'custom',
-        message: 'El pago inicial requiere un monto mayor a cero, medio y fecha válidos.',
+        message: 'El pago inicial requiere un monto mayor a cero, receptor, medio y fecha válidos.',
       });
   });
 export const formRowSchema = z

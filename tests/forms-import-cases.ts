@@ -9,6 +9,7 @@ export function formsImportTests(agent: any, password: string) {
     const neutralPayment = {
       amount: '',
       method: '',
+      recipient: '',
       date: '',
       include: false,
     };

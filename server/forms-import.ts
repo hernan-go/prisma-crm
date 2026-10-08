@@ -3,6 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
+import { legacyReceiptHash } from './forms-receipt-legacy.js';
 import { readImport, mapRow, strongMatch } from './importer.js';
 import {
   formsMapping,
@@ -69,7 +70,7 @@ formsImport.post('/preview', upload.single('file'), async (req, res) => {
       selections,
       // Financial values are entered manually during review, never read from the CSV.
       amount_due: '',
-      payment: { amount: '', method: '', date: '', include: false },
+      payment: { amount: '', method: '', recipient: '', date: '', include: false },
     });
   }
   res.json({ ...result, rows, mapping, activities: list, schedules });
@@ -83,13 +84,6 @@ formsImport.post('/commit', async (req, res) => {
       rows: z.array(z.unknown()).min(1).max(1000),
     })
     .parse(req.body);
-  // Skipped rows may contain unresolved fields. They never reach writes.
-  const rows = body.rows.map((r) =>
-    (r as any)?.action === 'skip' ? { action: 'skip' as const } : formRowSchema.parse(r),
-  );
-  const hash = createHash('sha256')
-    .update(JSON.stringify({ period: body.period_id, rows }))
-    .digest('hex');
   const result = await peopleTransaction(async (db) => {
     const [receipt] = await query(
       'SELECT * FROM import_receipts WHERE id=?',
@@ -97,10 +91,28 @@ formsImport.post('/commit', async (req, res) => {
       db,
     );
     if (receipt) {
-      if (receipt.payload_hash !== hash)
+      const current = z
+        .array(z.union([z.object({ action: z.literal('skip') }), formRowSchema]))
+        .safeParse(body.rows);
+      const currentHash = current.success
+        ? createHash('sha256')
+            .update(JSON.stringify({ period: body.period_id, rows: current.data }))
+            .digest('hex')
+        : undefined;
+      if (
+        receipt.payload_hash !== currentHash &&
+        receipt.payload_hash !== legacyReceiptHash(body.period_id, body.rows)
+      )
         throw new AppError(409, 'La confirmación ya fue utilizada para otro lote.');
       return JSON.parse(receipt.result);
     }
+    // Only the current contract can reach writes, including new requests from old tabs.
+    const rows = body.rows.map((r) =>
+      (r as any)?.action === 'skip' ? { action: 'skip' as const } : formRowSchema.parse(r),
+    );
+    const hash = createHash('sha256')
+      .update(JSON.stringify({ period: body.period_id, rows }))
+      .digest('hex');
     await openPeriod(body.period_id, db);
     let created = 0,
       updated = 0,

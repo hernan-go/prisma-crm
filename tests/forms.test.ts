@@ -203,7 +203,7 @@ it.each([
       reviewed: true,
       selections: [],
       amount_due: '35000',
-      payment: { ...payment, include: true },
+      payment: { ...payment, recipient: 'jesica', include: true },
     }).success,
   ).toBe(valid);
 });

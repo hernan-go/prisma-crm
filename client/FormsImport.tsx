@@ -5,7 +5,7 @@ import { api } from './api';
 import { Field, ErrorBox, Modal } from './components';
 import { usePeriod, periodName } from './App';
 import { formFields, formRowSchema, formsSourceColumns } from '../shared/forms';
-import { days, wallet } from '../shared/domain';
+import { days } from '../shared/domain';
 import { scheduleConflict, type Booking } from '../shared/schedule';
 export function FormsImport() {
   const { period, periods } = usePeriod();
@@ -460,33 +460,43 @@ export function FormsImport() {
                     {r.payment.include && (
                       <>
                         <div className="form-grid">
-                          {(['amount', 'method', 'date'] as const).map((k) => (
+                          {(['amount', 'recipient', 'method', 'date'] as const).map((k) => (
                             <Field
                               key={k}
                               label={
                                 {
                                   amount: 'Pagado (ARS)',
                                   method: 'Medio de pago',
+                                  recipient: 'Receptor',
                                   date: 'Fecha',
                                 }[k]
                               }
                             >
-                              {k === 'method' ? (
+                              {k === 'method' || k === 'recipient' ? (
                                 <select
                                   required
-                                  value={r.payment.method}
+                                  value={r.payment[k]}
                                   onChange={(e) =>
                                     update(i, {
                                       payment: {
                                         ...r.payment,
-                                        method: e.target.value,
+                                        [k]: e.target.value,
                                       },
                                     })
                                   }
                                 >
                                   <option value="">Seleccionar</option>
-                                  <option value="transfer">Transferencia</option>
-                                  <option value="cash">Efectivo</option>
+                                  {k === 'recipient' ? (
+                                    <>
+                                      <option value="jesica">Jésica</option>
+                                      <option value="hernan">Hernán</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="transfer">Transferencia</option>
+                                      <option value="cash">Efectivo</option>
+                                    </>
+                                  )}
                                 </select>
                               ) : (
                                 <input
@@ -508,10 +518,6 @@ export function FormsImport() {
                             </Field>
                           ))}
                         </div>
-                        <p>
-                          Cartera asignada automáticamente:{' '}
-                          {r.payment.method ? wallet(r.payment.method) : 'Seleccioná el medio'}
-                        </p>
                       </>
                     )}
                   </section>

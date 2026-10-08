@@ -148,15 +148,15 @@ export async function paymentInDB(body: unknown, db: Connection, id?: number) {
   );
   if (id)
     await execute(
-      'UPDATE payments SET account_id=?,date=?,amount=?,method=?,notes=? WHERE id=?',
-      [account.id, p.date, p.amount, p.method, p.notes, id],
+      'UPDATE payments SET account_id=?,date=?,amount=?,method=?,recipient=?,notes=? WHERE id=?',
+      [account.id, p.date, p.amount, p.method, p.recipient, p.notes, id],
       db,
     );
   else
     id = (
       await execute(
-        'INSERT INTO payments(account_id,date,amount,method,notes) VALUES (?,?,?,?,?)',
-        [account.id, p.date, p.amount, p.method, p.notes],
+        'INSERT INTO payments(account_id,date,amount,method,recipient,notes) VALUES (?,?,?,?,?,?)',
+        [account.id, p.date, p.amount, p.method, p.recipient, p.notes],
         db,
       )
     ).insertId;

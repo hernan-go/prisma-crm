@@ -126,7 +126,7 @@ export function clonePeriodTests(agent: any, password: string) {
       )[0].id;
       await execute('UPDATE monthly_accounts SET amount_due=100 WHERE id=?', [account]);
       await execute(
-        "INSERT INTO payments(account_id,date,amount,method,notes) VALUES (?,'2045-10-05',25,'cash','QA')",
+        "INSERT INTO payments(account_id,date,amount,method,recipient,notes) VALUES (?,'2045-10-05',25,'cash','jesica','QA')",
         [account],
       );
       const facilitatorAccount = (

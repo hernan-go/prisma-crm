@@ -4,6 +4,7 @@ import {
   verifyExpenseMigration,
   verifyExpenseMigrationPreflight,
 } from './expenses-cases.js';
+import { verifyPaymentMigration, paymentTests } from './payment-cases.js';
 import { monthlyModelTests } from './monthly-model-cases.js';
 import { clonePeriodTests } from './clone-period-cases.js';
 import { facilitatorTests } from './facilitator-cases.js';
@@ -70,7 +71,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     await verifyExpenseMigrationPreflight();
     // Only the explicit fixture creation may add a period; migration may not.
     snapshots[preservedTables.indexOf('periods')] = await query('SELECT * FROM periods');
-    await migrate();
+    await migrate('008.sql');
     for (const [index, table] of preservedTables.entries()) {
       const rows = await query(`SELECT * FROM ${table}`);
       expect(rows).toEqual(snapshots[index]);
@@ -86,6 +87,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     expect(await query('SELECT * FROM payments')).toEqual(pre);
     expect(await query('SELECT * FROM monthly_accounts')).toEqual(accountsBefore);
     await verifyMembershipMigration();
+    await verifyPaymentMigration();
     const migrated = await query(
       'SELECT si.display_name,s.start,s.end,s.day FROM schedule_instructors si JOIN activity_schedules s ON s.id=si.schedule_id',
     );
@@ -183,7 +185,14 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     for (const method of ['transfer', 'cash']) {
       const r = await agent
         .post('/api/payments')
-        .send({ person_id: pid, period_id: period, date: '2026-10-01', amount: '20000', method });
+        .send({
+          person_id: pid,
+          period_id: period,
+          date: '2026-10-01',
+          amount: '20000',
+          method,
+          recipient: 'hernan',
+        });
       expect(r.status).toBe(201);
       payment = r.body.id;
     }
@@ -208,6 +217,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
           date: '2026-10-01',
           amount: '50000',
           method: 'cash',
+          recipient: 'jesica',
         })
       ).status,
     ).toBe(200);
@@ -362,7 +372,14 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       (
         await agent
           .post('/api/payments')
-          .send({ person_id: p1, period_id: pr, date: '2027-02-01', amount: '10', method: 'cash' })
+          .send({
+            person_id: p1,
+            period_id: pr,
+            date: '2027-02-01',
+            amount: '10',
+            method: 'cash',
+            recipient: 'jesica',
+          })
       ).status,
     ).toBe(409);
     expect((await agent.patch(`/api/periods/${pr}/status`).send({ status: 'open' })).status).toBe(
@@ -402,12 +419,18 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     expect(row.payment).toEqual({
       amount: '',
       method: '',
+      recipient: '',
       date: '',
       include: false,
     });
     row.payment.include = true;
     expect((await agent.post('/api/forms-import/commit').send(body)).status).toBe(422);
-    Object.assign(row.payment, { amount: '25000', method: 'transfer', date: '2027-04-23' });
+    Object.assign(row.payment, {
+      amount: '25000',
+      method: 'transfer',
+      recipient: 'hernan',
+      date: '2027-04-23',
+    });
     const result = await agent.post('/api/forms-import/commit').send(body);
     expect(result.status).toBe(200);
     expect(result.body).toMatchObject({ created: 1, enrollments: 2, payments: 1 });
@@ -469,6 +492,7 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
         date: '2029-01-02',
         amount: '10',
         method: 'cash',
+        recipient: 'jesica',
       })
     ).body.id;
     await agent.patch(`/api/periods/${pr}/status`).send({ status: 'closed' });
@@ -525,5 +549,6 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   formsFinanceTests(request.agent(createApp(credentials)), credentials.password);
   facilitatorTests(request.agent(createApp(credentials)), credentials.password);
   clonePeriodTests(request.agent(createApp(credentials)), credentials.password);
+  paymentTests(request.agent(createApp(credentials)), credentials.password);
   membershipTests(request.agent(createApp(credentials)), credentials.password);
 });

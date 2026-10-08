@@ -392,6 +392,7 @@ export function monthlyModelTests(agent: any, password: string) {
         payment: {
           include: true,
           method: 'cash',
+          recipient: 'jesica',
           date: '2030-10-01',
           amount: '25',
         },

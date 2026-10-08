@@ -25,7 +25,7 @@ export async function verifyExpenseMigrationPreflight() {
   const history = await query('SELECT * FROM advertising_investments ORDER BY id');
   const orphan = history.find((row) => row.date === '2033-03-12')!;
   for (let attempt = 0; attempt < 2; attempt++) {
-    await expect(migrate()).rejects.toThrow(
+    await expect(migrate('007.sql')).rejects.toThrow(
       `007.sql detenida: 1 registro(s) histórico(s) de publicidad sin período existente. IDs y fechas: ${orphan.id} (2033-03-12)`,
     );
     expect(await query('SELECT * FROM periods ORDER BY id')).toEqual(periods);
@@ -73,7 +73,7 @@ export async function verifyExpenseMigration() {
   const categories = await query('SELECT * FROM period_expense_categories ORDER BY id');
   // Simulate a retry after SQL applied but migration registration did not finish.
   await execute("DELETE FROM schema_migrations WHERE name='007.sql'");
-  await migrate();
+  await migrate('007.sql');
   expect(await query('SELECT * FROM period_expense_categories ORDER BY id')).toEqual(categories);
   expect(
     await query(

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Loading, Empty } from './components';
-import { formatMoney } from '../shared/domain';
+import { formatMoney, recipientLabel, type PeriodWallets } from '../shared/domain';
 import { People, PersonDetail } from './People';
 import { Monthly, Agenda, Payments, Configuration } from './Management';
 import { Expenses } from './Expenses';
@@ -53,7 +53,8 @@ export default function App() {
   const [toast, setToast] = useState('');
   const q = useQuery({ queryKey: ['periods'], queryFn: () => api<any[]>('/periods') });
   useEffect(() => {
-    if (!q.isFetching && q.data && !q.data.some((p) => p.id === period)) setPeriod(q.data[0]?.id || 0);
+    if (!q.isFetching && q.data && !q.data.some((p) => p.id === period))
+      setPeriod(q.data[0]?.id || 0);
   }, [q.data, q.isFetching, period]);
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
@@ -169,7 +170,8 @@ function Dashboard() {
   const { period, periods } = usePeriod();
   const q = useQuery({
     queryKey: ['dashboard', period],
-    queryFn: () => api(`/dashboard?period_id=${period}`),
+    queryFn: () =>
+      api<{ wallets: PeriodWallets } & Record<string, any>>(`/dashboard?period_id=${period}`),
     enabled: !!period,
   });
   if (!period) return <Empty>Creá un período con el botón + para comenzar.</Empty>;
@@ -227,26 +229,21 @@ function Dashboard() {
         <div className="stack">
           <section className="panel">
             <h2>Carteras del mes</h2>
-            <div className="wallet">
-              <span className="wallet-icon">
-                <Wallet size={21} />
-              </span>
-              <div>
-                <b>Cartera Hernán</b>
-                <small>Transferencias</small>
+            {(['jesica', 'hernan'] as const).map((recipient) => (
+              <div key={recipient} className="wallet">
+                <span className="wallet-icon">
+                  <Wallet size={21} />
+                </span>
+                <div>
+                  <b>{recipientLabel(recipient)}</b>
+                  <small>Efectivo: {formatMoney(d.wallets[recipient].cash)}</small>
+                  <small>Transferencia: {formatMoney(d.wallets[recipient].transfer)}</small>
+                  <small>
+                    <b>Total: {formatMoney(d.wallets[recipient].total)}</b>
+                  </small>
+                </div>
               </div>
-              <strong>{formatMoney(d.transfer)}</strong>
-            </div>
-            <div className="wallet">
-              <span className="wallet-icon">
-                <Wallet size={21} />
-              </span>
-              <div>
-                <b>Cartera Jesica</b>
-                <small>Efectivo</small>
-              </div>
-              <strong>{formatMoney(d.cash)}</strong>
-            </div>
+            ))}
           </section>
           <section className="panel balance-panel">
             <span className="eyebrow">SALDOS DEL MES</span>
