@@ -58,7 +58,7 @@
 
 - `period_memberships` es la fuente canónica persona ↔ período, independiente de actividades y cuentas.
 - Agregar crea únicamente membresía; cancelar la última actividad conserva la pertenencia.
-- Quitar elimina únicamente membresía y responde `409` si existe cualquier inscripción o cuenta mensual, incluso vacía.
+- Corrección local validada el 2026-10-08: Quitar elimina membresía y, si existe, cuenta estrictamente vacía (`amount_due NULL`, cero pagos y cero inscripciones), atómicamente. Inscripciones, pagos o importe definido (incluido cero) bloquean con `409`. Pendiente de revisión/deploy; producción conserva la regla anterior hasta desplegar.
 - Período cerrado bloquea altas/bajas. Personas archivadas conservan membresías históricas visibles; no pueden incorporarse nuevamente.
 - Lista principal separada del buscador global; Cobros utiliza personas del período.
 - `008.sql` aplicada en `prisma_test` y, con autorización explícita después de preflight de solo lectura, en `prisma_dev`. Integración destructiva y pruebas de recuperación exclusivamente en `prisma_test`.
@@ -129,3 +129,13 @@ Scripts privados:
 - Validación automática local aprobada: Prettier una vez por pasada sobre los archivos compatibles tocados, typecheck, lint, 116 tests aprobados/114 integraciones DB omitidas, build y diff check. Integración DB desactivada; sin cambios DB, migraciones ni lógica de negocio.
 - Revisión visual manual final aprobada por el usuario: 390×900, menú cerrado/abierto y todas las secciones principales; 700/701px, tablet 768px y tablet/notebook 1024px. Sin overflow horizontal observado; header, menú, CTAs y tablas/listados aprobados. Layout anterior preservado desde 701px. Servidores locales sobre `prisma_dev` detenidos al cierre documental; sin autorización de commits ni deploy.
 - Documento: `docs/iterations/2026-10-mobile-redesign.md`.
+
+## Validado localmente — Quitar cuenta mensual vacía
+
+- Rama actual `fix/remove-empty-monthly-account`, base `19eae35`. Sin add, commit, push, merge ni cambio de rama desde Codex.
+- Corrige la imposibilidad de deshacer una incorporación errónea después de eliminar actividades/pagos: la cuenta automática persistía y bloqueaba la baja por su sola existencia.
+- D014 actualizada con autorización explícita: únicamente una cuenta con importe NULL, sin pagos ni inscripciones, puede borrarse junto con la membresía. Cero definido sigue protegido. Se conserva `peopleTransaction`, período abierto, lookup por ID/período, bloqueos y FK sin cascadas nuevas.
+- Modal y mensaje 409 adaptados; sin cambios de estilos, creación de cuentas, pagos, importaciones, dashboard, dependencias, esquema ni migraciones.
+- Validaciones: typecheck, lint, 116 tests normales (122 integraciones omitidas), suite completa 238 aprobados exclusivamente en `prisma_test`, build y diff check. Preflight `SELECT DATABASE()` devolvió exactamente `prisma_test`. Tests/build requirieron reintento fuera del sandbox por EPERM; warnings conocidos de Zod/Rollup no bloqueantes.
+- Evidencia productiva de solo lectura comunicada por el usuario: Noviembre 2026, cuentas 147/148 con NULL y 149 con cero; todas sin inscripciones ni pagos. No se conectó a producción ni se modificó `prisma_dev` o SiteGround. Revisión manual, deploy y smoke productivo pendientes de autorización del usuario.
+- Documento: `docs/iterations/2026-10-remove-empty-monthly-account.md`.

@@ -89,7 +89,9 @@ La existencia de una persona en BBDD no implica pertenencia a ningún período. 
 
 - Agregar al período crea únicamente membresía, sin cuentas, importe a cobrar, inscripciones ni pagos.
 - Una persona puede pertenecer sin actividades; cancelar la última actividad no elimina su membresía.
-- Quitar requiere ausencia de `enrollments` y `monthly_accounts`. Cualquier cuenta, incluso vacía o con importe cero, bloquea la baja con `409`. No se eliminan otras relaciones ni la persona global.
+- Quitar bloquea con `409` ante cualquier inscripción, pago o importe a cobrar definido, incluido `0.00` (decisión explícita de no cobrar ese mes).
+- Una cuenta estrictamente vacía (`amount_due IS NULL`, cero pagos y cero inscripciones del mismo par persona/período) puede eliminarse automáticamente al quitar la membresía. `NULL` significa importe todavía no definido; no equivale a cero.
+- Eliminar cuenta vacía y membresía es atómico dentro de `peopleTransaction`; cualquier fallo revierte ambas eliminaciones. Nunca se elimina la persona global ni datos de otros períodos. Sin cuenta ni inscripciones se elimina solamente la membresía.
 - Períodos cerrados conservan lectura histórica y bloquean altas/bajas de membresías.
 - Personas archivadas no pueden incorporarse; sus membresías existentes siguen visibles.
 - Crear/clonar períodos deja cero membresías. Importar personas al catálogo global no incorpora a ningún período; confirmar la importación específica de inscripciones sí incorpora explícitamente a las filas no omitidas, dentro de su transacción.

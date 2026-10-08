@@ -63,7 +63,7 @@ people + periods → period_memberships
 
 `enrollments` y `monthly_accounts` referencian directamente el par `(person_id, period_id)` de membresías mediante FK compuestas restrictivas. La membresía tiene PK propia, `UNIQUE(person_id, period_id)`, fecha de incorporación e índice por período. No genera entidades operativas al crearse.
 
-API: `GET/POST /periods/:periodId/memberships`, `DELETE /periods/:periodId/memberships/:id`. GET admite `person_id` y devuelve personas archivadas históricas. POST recibe exclusivamente `person_id`. DELETE valida el ID dentro del período y bloquea ante cualquier inscripción o cuenta.
+API: `GET/POST /periods/:periodId/memberships`, `DELETE /periods/:periodId/memberships/:id`. GET admite `person_id` y devuelve personas archivadas históricas. POST recibe exclusivamente `person_id`. DELETE valida el ID dentro del período y bloquea ante cualquier inscripción, pago o importe definido (incluido cero). Una cuenta con importe `NULL`, cero pagos y cero inscripciones se elimina antes de la membresía, dentro de la misma transacción; cualquier fallo revierte ambas eliminaciones. Se conservan el bloqueo existente, las FK restrictivas, la persona global y los datos de otros períodos.
 
 Altas/bajas y operaciones financieras usan la transacción/bloqueo existente `peopleTransaction`, el bloqueo de período abierto y comprobación autoritativa de membresía. Cancelar inscripciones no elimina pertenencia. Bajas de inscripciones/pagos requieren `period_id` explícito; ediciones no trasladan operaciones entre personas/períodos.
 
