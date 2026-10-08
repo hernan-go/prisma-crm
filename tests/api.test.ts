@@ -45,6 +45,10 @@ describe('API: validación y límites', () => {
     for (const kind of ['enrollments', 'payments'])
       expect((await agent.delete(`/api/${kind}/1`)).status).toBe(422);
   });
+  it('valida IDs de eliminación de configuración antes de acceder a DB', async () => {
+    for (const kind of ['offerings', 'schedules'])
+      expect((await agent.delete(`/api/${kind}/invalid`)).status).toBe(422);
+  });
   it('requiere revisión explícita al importar', async () =>
     expect(
       (

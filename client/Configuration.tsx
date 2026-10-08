@@ -51,9 +51,19 @@ export function Configuration() {
                   {o.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'}
                 </small>
               </div>
-              <button disabled={closed} onClick={() => setEdit({ kind: 'offerings', value: o })}>
-                Editar oferta
-              </button>
+              <div className="actions">
+                <button disabled={closed} onClick={() => setEdit({ kind: 'offerings', value: o })}>
+                  Editar oferta
+                </button>
+                {!o.ever_used && !o.schedules.some((h: any) => h.ever_used) && (
+                  <DeleteButton
+                    path={`/offerings/${o.id}`}
+                    label="Eliminar oferta"
+                    disabled={closed}
+                    description="Se eliminarán esta oferta, sus días, horarios y asignaciones nunca utilizados. Las cuentas e inscripciones bloquean la eliminación. La actividad global se conservará."
+                  />
+                )}
+              </div>
             </div>
             <p>{o.days.map((d: number) => days[d]).join(' · ') || 'Sin días habilitados'}</p>
             {o.schedules.map((h: any) => (
@@ -67,18 +77,28 @@ export function Configuration() {
                     {h.active ? 'Habilitado' : 'Deshabilitado'}
                   </small>
                 </div>
-                <button
-                  disabled={closed}
-                  onClick={() =>
-                    setEdit({
-                      kind: 'schedules',
-                      value: { ...h, instructor_ids: h.instructors.map((i: any) => i.id) },
-                      offering: o,
-                    })
-                  }
-                >
-                  Editar horario
-                </button>
+                <div className="actions">
+                  <button
+                    disabled={closed}
+                    onClick={() =>
+                      setEdit({
+                        kind: 'schedules',
+                        value: { ...h, instructor_ids: h.instructors.map((i: any) => i.id) },
+                        offering: o,
+                      })
+                    }
+                  >
+                    Editar horario
+                  </button>
+                  {!h.ever_used && (
+                    <DeleteButton
+                      path={`/schedules/${h.id}`}
+                      label="Eliminar horario"
+                      disabled={closed}
+                      description="Se eliminarán este horario nunca utilizado y sus asignaciones. La oferta y los catálogos se conservarán. Las referencias operativas o financieras bloquean la eliminación."
+                    />
+                  )}
+                </div>
               </div>
             ))}
             <button
@@ -128,7 +148,10 @@ export function Configuration() {
               <button onClick={() => setEdit({ kind: 'activities', value: a })}>
                 Editar actividad
               </button>
-              {!a.ever_used && <DeleteButton path={`/activities/${a.id}`} />}
+              <DeleteButton
+                path={`/activities/${a.id}`}
+                description="Se eliminará la actividad global si no tiene referencias. Quitá primero sus ofertas preparatorias de los períodos donde está configurada. La historia existente bloquea la eliminación."
+              />
             </div>
           </div>
         ))}
@@ -141,23 +164,23 @@ export function Configuration() {
           </button>
         </div>
         <p>
-          Registros administrativos manuales, sin acceso al CRM. Si tuvieron uso, solo pueden
-          inactivarse.
+          Registros administrativos manuales, sin acceso al CRM. Los horarios utilizados y las
+          cuentas o pagos requieren conservar al facilitador; en esos casos puede inactivarse.
         </p>
         {teachers.data?.map((i: any) => (
           <div className="payment-row" key={i.id}>
             <div>
               <b className="config-facilitator-name">{facilitatorName(i)}</b>
-              <small>
-                {i.active ? 'Activo' : 'Inactivo'}
-                {i.ever_used ? ' · Con historial' : ''}
-              </small>
+              <small>{i.active ? 'Activo' : 'Inactivo'}</small>
             </div>
             <div className="actions">
               <button onClick={() => setEdit({ kind: 'instructors', value: i })}>
                 Editar facilitador
               </button>
-              {!i.ever_used && <DeleteButton path={`/instructors/${i.id}`} />}
+              <DeleteButton
+                path={`/instructors/${i.id}`}
+                description="Se eliminará el facilitador y se lo quitará de los horarios todavía no utilizados. Los horarios usados, cuentas, pagos y referencias históricas bloquean la eliminación. Los demás facilitadores se conservarán."
+              />
             </div>
           </div>
         ))}

@@ -10,6 +10,11 @@ import {
 } from '../shared/domain.js';
 import { overlaps } from '../shared/schedule.js';
 import { z } from 'zod';
+import {
+  deleteCatalogInDB,
+  deleteOfferingConfiguration,
+  deleteScheduleConfiguration,
+} from './configuration-deletion.js';
 const id = (v: unknown) => z.coerce.number().int().positive().parse(v);
 export type Schedule = {
   id: number;
@@ -263,28 +268,7 @@ export async function instructorSave(body: unknown, iid?: number) {
   });
 }
 export async function deleteCatalog(kind: 'activities' | 'instructors', iid: number) {
-  return peopleTransaction(async (db) => {
-    const [r] = await query(`SELECT * FROM ${kind} WHERE id=?`, [iid], db);
-    requireFound(r);
-    const refs =
-      kind === 'activities'
-        ? await query(
-            'SELECT id FROM period_activities WHERE activity_id=? UNION SELECT id FROM enrollments WHERE activity_id=?',
-            [iid, iid],
-            db,
-          )
-        : await query(
-            'SELECT schedule_id id FROM schedule_instructors WHERE instructor_id=? UNION SELECT id FROM activities WHERE instructor_id=?',
-            [iid, iid],
-            db,
-          );
-    if (r.ever_used || refs.length)
-      throw new AppError(409, 'Tiene uso histórico. Desactivalo en lugar de eliminarlo.');
-    if (kind === 'activities')
-      await execute('DELETE FROM activity_allowed_days WHERE activity_id=?', [iid], db);
-    await execute(`DELETE FROM ${kind} WHERE id=?`, [iid], db);
-    return { ok: true };
-  });
+  return peopleTransaction((db) => deleteCatalogInDB(kind, iid, db));
 }
 export const offerings = Router();
 offerings.get('/offerings', async (req, res) =>
@@ -302,6 +286,16 @@ offerings.post('/schedules', async (req, res) =>
 offerings.put('/schedules/:id', async (req, res) =>
   res.json(await scheduleSave(req.body, id(req.params.id))),
 );
+offerings.delete('/offerings/:id', async (req, res) => {
+  const offering = id(req.params.id);
+  await peopleTransaction((db) => deleteOfferingConfiguration(offering, db));
+  res.json({ ok: true });
+});
+offerings.delete('/schedules/:id', async (req, res) => {
+  const schedule = id(req.params.id);
+  await peopleTransaction((db) => deleteScheduleConfiguration(schedule, db));
+  res.json({ ok: true });
+});
 offerings.get('/agenda', async (req, res) => {
   const period = id(req.query.period_id);
   let rows = await scheduleList(period);

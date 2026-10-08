@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { z } from 'zod';
 import { AppError } from './errors.js';
+import { deleteCatalogInDB } from './configuration-deletion.js';
 const personNames = [
   'QA Ficticia Noviembre',
   'Ficticia Importada CSV',
@@ -142,11 +143,6 @@ export async function applyCleanup(input: unknown, database: string) {
           409,
           'La persona tiene pertenencia a períodos. La limpieza QA no elimina membresías ni su historial.',
         );
-      if ((c.table === 'activities' || c.table === 'instructors') && data.record.ever_used)
-        throw new AppError(
-          409,
-          'La configuración tiene uso histórico. Desactivala; la limpieza QA no la elimina.',
-        );
       if (fingerprint(data) !== c.fingerprint)
         throw new AppError(409, 'Los datos cambiaron desde la revisión. Regenerá el plan.');
       const label =
@@ -166,19 +162,10 @@ export async function applyCleanup(input: unknown, database: string) {
         await execute('DELETE FROM monthly_accounts WHERE person_id=?', [c.id], db);
         await execute('DELETE FROM enrollments WHERE person_id=?', [c.id], db);
       }
-      if (c.table === 'activities') {
-        if ((await query('SELECT id FROM enrollments WHERE activity_id=?', [c.id], db)).length)
-          throw new AppError(
-            409,
-            'La actividad QA aún tiene asistentes no incluidos. No se eliminó nada.',
-          );
-        await execute('DELETE FROM activity_allowed_days WHERE activity_id=?', [c.id], db);
+      if (c.table === 'activities' || c.table === 'instructors') {
+        await deleteCatalogInDB(c.table, c.id, db);
+        continue;
       }
-      if (
-        c.table === 'instructors' &&
-        (await query('SELECT id FROM activities WHERE instructor_id=?', [c.id], db)).length
-      )
-        throw new AppError(409, 'El docente aún tiene actividades. No se eliminó nada.');
       await execute(`DELETE FROM ${c.table} WHERE id=?`, [c.id], db);
     }
     return { deleted: chosen.length };

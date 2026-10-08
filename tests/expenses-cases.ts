@@ -111,7 +111,11 @@ export function expenseTests(agent: any, password: string) {
       expect(
         (await agent.put(`/api/periods/${period}`).send({ year: 2034, month: 4 })).status,
       ).toBe(409);
-      expect((await agent.delete(`/api/periods/${period}`)).status).toBe(409);
+      // Empty categories are configuration for period deletion; date editing
+      // remains restricted. Exercise deletion on an independent period.
+      const disposable = (await agent.post('/api/periods').send({ year: 2034, month: 5 })).body.id;
+      await agent.post(`/api/periods/${disposable}/expense-categories`).send({ name: 'Vacía' });
+      expect((await agent.delete(`/api/periods/${disposable}`)).status).toBe(200);
     });
     it('valida vacío, duplicados por collation e inyección de claves', async () => {
       for (const name of ['', '   ', 'a'.repeat(201)])

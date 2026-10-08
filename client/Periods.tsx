@@ -25,8 +25,9 @@ export function PeriodForm({
   return (
     <Modal title={value ? 'Editar período vacío' : 'Crear nuevo período'} close={close}>
       <p>
-        Solo los períodos sin configuración, personas incorporadas, inscripciones, cuentas ni
-        categorías de gastos pueden editarse o eliminarse.
+        Editar año o mes requiere un período abierto sin configuración ni datos. Un período puede
+        eliminarse si no conserva personas, movimientos ni datos financieros. Su configuración se
+        eliminará junto con el período. Los períodos cerrados deben reabrirse primero.
       </p>
       <form
         onSubmit={(e) => {
@@ -144,7 +145,9 @@ export function PeriodAdmin() {
             <span className="chip">{p.status === 'closed' ? 'Cerrado' : 'Abierto'}</span>
           </span>
           <div className="actions">
-            <button onClick={() => setEdit(p)}>Editar vacío</button>
+            <button disabled={p.status !== 'open'} onClick={() => setEdit(p)}>
+              Editar vacío
+            </button>
             <button
               onClick={() => {
                 m.reset();
@@ -153,7 +156,11 @@ export function PeriodAdmin() {
             >
               {p.status === 'closed' ? 'Reabrir' : 'Cerrar período'}
             </button>
-            <DeleteButton path={`/periods/${p.id}`} />
+            <DeleteButton
+              path={`/periods/${p.id}`}
+              disabled={p.status !== 'open'}
+              description={`${periodName(p)}: se eliminarán el período y sus ofertas, horarios, asignaciones y categorías vacías, incluso si su configuración tuvo inscripciones canceladas. Las personas incorporadas, inscripciones, cuentas, cobros, pagos y gastos bloquean la operación. Los catálogos globales y otros períodos se conservarán.`}
+            />
           </div>
         </div>
       ))}

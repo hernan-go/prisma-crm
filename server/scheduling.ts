@@ -3,6 +3,7 @@ import { AppError, requireFound } from './errors.js';
 import { periodCreateSchema, periodSchema } from '../shared/domain.js';
 import { type Booking } from '../shared/schedule.js';
 import { scheduleList } from './offerings.js';
+import { deletePeriodConfiguration } from './configuration-deletion.js';
 
 export async function periodCreate(body: unknown) {
   const p = periodCreateSchema.parse(body);
@@ -84,7 +85,7 @@ export async function bookings(period: number, db: Connection, exclude = 0) {
     return { ...s, ...r, instructor_ids: s.instructors.map((i: any) => i.id) } as Booking;
   });
 }
-export async function periodHasData(period: number, db: Connection) {
+export async function periodHasConfigurationOrData(period: number, db: Connection) {
   const [r] = await query(
     `SELECT
     (SELECT COUNT(*) FROM period_activities WHERE period_id=?) +
@@ -99,13 +100,18 @@ export async function periodHasData(period: number, db: Connection) {
 }
 export async function periodEdit(period: number, body?: unknown) {
   return peopleTransaction(async (db) => {
-    requireFound((await query('SELECT id FROM periods WHERE id=? FOR UPDATE', [period], db))[0]);
-    if (await periodHasData(period, db))
-      throw new AppError(409, 'El período tiene movimientos. Solo puede cerrarse o reabrirse.');
-    if (body) {
+    if (body === undefined) {
+      await deletePeriodConfiguration(period, db);
+    } else {
+      await openPeriod(period, db);
+      if (await periodHasConfigurationOrData(period, db))
+        throw new AppError(
+          409,
+          'Solo puede editarse la fecha de un período sin configuración ni datos.',
+        );
       const p = periodSchema.parse(body);
       await execute('UPDATE periods SET year=?,month=? WHERE id=?', [p.year, p.month, period], db);
-    } else await execute('DELETE FROM periods WHERE id=?', [period], db);
+    }
     return { ok: true };
   });
 }

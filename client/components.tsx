@@ -257,8 +257,10 @@ export function DeleteButton({
   label = 'Eliminar',
   disabled = false,
   onDone,
+  description,
 }: {
   path: string;
+  description?: ReactNode;
   label?: string;
   onDone?: () => void;
   disabled?: boolean;
@@ -276,10 +278,14 @@ export function DeleteButton({
       {ask && (
         <Modal title={`${label} registro`} close={() => set(false)}>
           <p>
-            Confirmá esta acción.{' '}
-            {label === 'Archivar'
-              ? 'El historial se conservará.'
-              : 'El registro se eliminará y los totales se recalcularán.'}
+            {description || (
+              <>
+                Confirmá esta acción.{' '}
+                {label === 'Archivar'
+                  ? 'El historial se conservará.'
+                  : 'El registro se eliminará y los totales se recalcularán.'}
+              </>
+            )}
           </p>
           <ErrorBox error={m.error} />
           <div className="actions">

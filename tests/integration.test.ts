@@ -17,6 +17,7 @@ import {
   incorporateTestPerson,
 } from './model-fixtures.js';
 import { membershipTests, verifyMembershipMigration } from './membership-cases.js';
+import { configurationDeletionTests } from './configuration-deletion-cases.js';
 import { cleanupPlan, applyCleanup } from '../server/qa-cleanup.js';
 import { testCredentials } from './auth-helper.js';
 import { randomUUID } from 'node:crypto';
@@ -183,16 +184,14 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       ).status,
     ).toBe(200);
     for (const method of ['transfer', 'cash']) {
-      const r = await agent
-        .post('/api/payments')
-        .send({
-          person_id: pid,
-          period_id: period,
-          date: '2026-10-01',
-          amount: '20000',
-          method,
-          recipient: 'hernan',
-        });
+      const r = await agent.post('/api/payments').send({
+        person_id: pid,
+        period_id: period,
+        date: '2026-10-01',
+        amount: '20000',
+        method,
+        recipient: 'hernan',
+      });
       expect(r.status).toBe(201);
       payment = r.body.id;
     }
@@ -370,16 +369,14 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     ).toBe(409);
     expect(
       (
-        await agent
-          .post('/api/payments')
-          .send({
-            person_id: p1,
-            period_id: pr,
-            date: '2027-02-01',
-            amount: '10',
-            method: 'cash',
-            recipient: 'jesica',
-          })
+        await agent.post('/api/payments').send({
+          person_id: p1,
+          period_id: pr,
+          date: '2027-02-01',
+          amount: '10',
+          method: 'cash',
+          recipient: 'jesica',
+        })
       ).status,
     ).toBe(409);
     expect((await agent.patch(`/api/periods/${pr}/status`).send({ status: 'open' })).status).toBe(
@@ -551,4 +548,5 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   clonePeriodTests(request.agent(createApp(credentials)), credentials.password);
   paymentTests(request.agent(createApp(credentials)), credentials.password);
   membershipTests(request.agent(createApp(credentials)), credentials.password);
+  configurationDeletionTests();
 });
