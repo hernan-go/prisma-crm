@@ -1,6 +1,6 @@
 # Cobros Período — receptor y medio independientes
 
-**Fecha:** 2026-10-07. **Base:** `a599378`. **Estado:** implementación y validación local aprobadas; sin add, commit, push, merge ni deploy. `009.sql` aplicada en `prisma_test` y `prisma_dev`; pendiente en producción, que continúa con `008.sql`. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`.
+**Fecha:** 2026-10-07. **Cierre actualizado:** 2026-10-08. **Base:** `a599378`. **Estado:** completada e integrada en `main` (`df04f17`). `009.sql` aplicada y registrada en producción, además de `prisma_test` y `prisma_dev`, según confirmación del usuario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`.
 
 ## Alcance aprobado
 
@@ -59,8 +59,8 @@ El usuario aprobó la revisión manual local sobre `prisma_dev`. Validó las cua
 
 Reconciliación aprobada: Total Jésica + Total Hernán = $35.000 + $25.000 = Total cobrado $60.000.
 
-## Próximos pasos autorizables por separado
+## Cierre productivo confirmado
 
-`009.sql` todavía NO está aplicada en producción; producción continúa con `008.sql`. Antes del deploy productivo es obligatorio realizar backup, preflight de solo lectura y luego migración productiva controlada: pausar escrituras, aplicar/verificar `009.sql`, registrar y recién entonces desplegar código compatible con autorización explícita. El backend anterior no puede crear pagos válidos tras NOT NULL; recuperar implica conservar pausa y completar esquema/código compatible.
+El usuario confirmó `009.sql` aplicada y registrada en producción, `main` en `df04f17`, deploy `1791429132-5kurej`, build exit code `0`, smoke productivo aprobado e históricos agosto/septiembre/octubre reconciliados correctamente. Git confirma `292018d` para la implementación y `df04f17` para el cierre documental.
 
-Producción/SiteGround se operan manualmente fuera de Codex. Sin autorización de integración/deploy. La iteración anterior de membresías ya está desplegada en a599378, con 008 aplicada en producción y smoke test aprobado según confirmación del usuario.
+Esta corrección documental se incorpora a Rediseño mobile; no genera un commit/deploy separado. Producción/SiteGround se operan manualmente fuera de Codex. No se ejecutaron acciones ni verificaciones productivas nuevas durante esta corrección.

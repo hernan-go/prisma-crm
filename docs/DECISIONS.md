@@ -8,7 +8,7 @@ Este documento registra decisiones que no deben rediscutirse en cada iteración 
 
 ## D002 — Migraciones aplicadas son inmutables
 
-No editar migraciones ya aplicadas. `001.sql` a `008.sql` aplicadas en producción según confirmación del usuario. `009.sql` separa receptor/medio y está aplicada en `prisma_test` y `prisma_dev`, con tests y revisión manual local aprobados. Sigue pendiente en producción, que continúa con `008.sql`; antes del deploy es obligatorio realizar preflight de solo lectura y luego migración productiva controlada. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `010.sql`. Reintentos deben soportar DDL parcial de MySQL.
+No editar migraciones ya aplicadas. `001.sql` a `009.sql` aplicadas y registradas en producción según confirmación del usuario. `009.sql` separa receptor/medio y también está aplicada en `prisma_test` y `prisma_dev`, con tests y revisión manual local aprobados; cierre productivo de Cobros en `df04f17`, smoke e históricos reconciliados aprobados. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `010.sql`. Reintentos deben soportar DDL parcial de MySQL.
 
 ## D003 — Dinero
 
