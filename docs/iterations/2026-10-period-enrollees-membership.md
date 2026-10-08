@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-10-07. **Rama:** `fix/period-enrollees-membership`. **Base:** `66e944a`.
 
-**Estado:** implementada, testeada y validada manualmente en `prisma_dev`; revisión satisfactoria confirmada por el usuario. La rama sigue sin commit ni integración. Sin add, push ni cambios productivos; producción/main continúa en `66e944a`.
+**Estado:** cerrada, integrada y desplegada. `main` en `a599378`; implementación en `c707f7c`. `008.sql` aplicada en producción y smoke test aprobado, confirmados por el usuario al iniciar Cobros Período. Las validaciones y pasos locales siguientes se conservan como registro histórico.
 
 ## Problema y resultado
 
@@ -46,9 +46,9 @@ MySQL confirma DDL implícitamente. Un fallo no garantiza deshacer tabla, backfi
 
 Backfill probado con pares presentes en ambas entidades, sólo en cuenta, sólo en inscripción y persona archivada. Persona global sin operaciones queda fuera. Snapshots verifican preservación de personas, períodos, inscripciones, horarios, cuentas y pagos.
 
-**Estado de aplicación:** `008.sql` aplicada en `prisma_test` y `prisma_dev`; todavía NO aplicada en producción. La aplicación local fue autorizada después de un preflight de solo lectura: cero pares en inscripciones/cuentas, cero pares huérfanos y cero membresías previstas. Se ejecutó únicamente `008.sql` en MySQL local contra `prisma_dev`, sin reconstruir la base, borrar datos ni crear datos de prueba. Se verificaron tabla existente, registro único en `schema_migrations`, `fk_enrollment_membership`, `fk_account_membership` y cero membresías iniciales.
+**Estado de aplicación:** `008.sql` aplicada en `prisma_test` y `prisma_dev`; posteriormente aplicada en producción, con smoke test aprobado según confirmación del usuario. La aplicación local fue autorizada después de un preflight de solo lectura: cero pares en inscripciones/cuentas, cero pares huérfanos y cero membresías previstas. Se ejecutó únicamente `008.sql` en MySQL local contra `prisma_dev`, sin reconstruir la base, borrar datos ni crear datos de prueba. Se verificaron tabla existente, registro único en `schema_migrations`, `fk_enrollment_membership`, `fk_account_membership` y cero membresías iniciales.
 
-**Orden futuro de producción (manual):** backup y preflight obligatorios de la DB productiva, detener escrituras durante migración, aplicar/verificar `008.sql`, registrar y recién después desplegar código compatible con autorización explícita. No ejecutar tests contra producción. Integración destructiva y pruebas de recuperación exclusivamente en `prisma_test`; `prisma_dev` se utilizó para migración controlada y revisión manual autorizadas. `prisma_demo` permanece intacta. Reservar `009.sql` para posteriores cambios de esquema.
+**Procedimiento de producción registrado (ya completado según el usuario):** backup y preflight obligatorios de la DB productiva, detener escrituras durante migración, aplicar/verificar `008.sql`, registrar y recién después desplegar código compatible con autorización explícita. No ejecutar tests contra producción. Integración destructiva y pruebas de recuperación exclusivamente en `prisma_test`; `prisma_dev` se utilizó para migración controlada y revisión manual autorizadas. `prisma_demo` permanece intacta. Reservar `009.sql` para posteriores cambios de esquema.
 
 ## Validación
 
@@ -70,7 +70,7 @@ El usuario verificó:
 - Cancelación de la última actividad conservando la membresía.
 - Baja posterior de la membresía y persistencia intacta de la persona en BBDD Personas.
 
-La validación manual no cambia la regla de baja: cualquier inscripción o cuenta mensual, incluso vacía, debe bloquearla. La iteración queda validada; commit, integración, preparación de producción y deploy siguen pendientes.
+La validación manual no cambia la regla de baja: cualquier inscripción o cuenta mensual, incluso vacía, debe bloquearla. La iteración quedó posteriormente integrada y desplegada, con `008.sql` aplicada en producción y smoke test aprobado según confirmación del usuario.
 
 ## Fuera de alcance
 

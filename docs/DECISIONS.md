@@ -8,7 +8,7 @@ Este documento registra decisiones que no deben rediscutirse en cada iteración 
 
 ## D002 — Migraciones aplicadas son inmutables
 
-No editar migraciones ya aplicadas. Actualmente `001.sql` a `007.sql` están documentadas como aplicadas en producción. `008.sql` implementa membresías y fue probada exclusivamente en `prisma_test`; próxima numeración para nuevas iteraciones: `009.sql`. Reintentar una migración pendiente de registro requiere pasos explícitamente seguros ante el DDL parcial de MySQL.
+No editar migraciones ya aplicadas. `001.sql` a `008.sql` aplicadas en producción según confirmación del usuario. `009.sql` separa receptor/medio y está aplicada en `prisma_test` y `prisma_dev`, con tests y revisión manual local aprobados. Sigue pendiente en producción, que continúa con `008.sql`; antes del deploy es obligatorio realizar preflight de solo lectura y luego migración productiva controlada. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `010.sql`. Reintentos deben soportar DDL parcial de MySQL.
 
 ## D003 — Dinero
 
@@ -66,18 +66,18 @@ No copiar:
 - gastos;
 - ningún movimiento financiero.
 
-## D011 — Receptor y medio de cobro son conceptos distintos
+## D011 — Receptor y medio de cobro independientes
 
-Diseño futuro:
+- Receptor de cada payment: `jesica` (Jésica) o `hernan` (Hernán), responsable del dinero PRISMA.
+- Medio: exclusivamente `cash` (Efectivo) o `transfer` (Transferencia).
+- Las cuatro combinaciones son válidas. Nuevos pagos requieren ambos campos explícitos, sin defaults ni dependencia entre selectores.
+- `009.sql` materializa la clasificación histórica vigente: cash → jesica y transfer → hernan. No deja receptores nulos, no agrega legacy_method ni cambia timestamps.
+- No cambia cuentas, saldos, sobrepagos, membresías ni cierre de períodos.
+- Forms conserva su clave conservadora de duplicados sin recipient. Hashes/receipts anteriores se preservan; reconocimiento legacy exclusivamente de operaciones completadas.
 
-- Receptor: Hernán / Jesica.
-- Medio: Efectivo / Transferencia.
+## D012 — Modelo financiero único PRISMA
 
-No inferir receptor a partir del medio.
-
-## D012 — Informática separada de PRISMA
-
-Las clases particulares de Informática son ingresos exclusivos de Hernán y deben registrarse/reportarse separadas de los ingresos PRISMA.
+La separación especial de Informática y Cartera Independiente fue evaluada y descartada por el usuario. Se reemplaza la decisión anterior de separar ingresos. No agregar cuentas independientes, clasificación por actividad, exclusiones del Dashboard ni reglas particulares de deuda. Esta iteración solamente separa receptor y medio en payments.
 
 ## D013 — Estadísticas
 

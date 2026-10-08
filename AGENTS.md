@@ -35,9 +35,9 @@ Nunca ejecutar tests destructivos contra `prisma_dev`, `prisma_demo` o producci�
 
 ## 4. Migraciones
 
-- Migraciones aplicadas: `001.sql` a `007.sql`.
+- Migraciones aplicadas: `001.sql` a `008.sql`.
 - Las migraciones aplicadas son inmutables.
-- Próxima migración disponible: `008.sql`.
+- `009.sql` implementa receptor independiente de medio; aplicada en `prisma_test` y `prisma_dev`, con tests y revisión manual local aprobados. Producción continúa con `008.sql`; antes del deploy requiere preflight de solo lectura y migración productiva controlada. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `010.sql`.
 - Dinero: `DECIMAL(12,2)`, nunca `FLOAT`.
 
 ## 5. Períodos

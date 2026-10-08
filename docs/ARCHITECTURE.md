@@ -138,22 +138,21 @@ Reglas:
 - sin saldo a favor;
 - período cerrado bloquea cambios.
 
-## Cobros de alumnos — deuda de diseño
+## Cobros de alumnos — receptor y medio
 
-Actualmente el medio de pago sigue necesitando ser separado del receptor.
+`payments` conserva cuenta, fecha, monto DECIMAL(12,2), medio, notas y timestamps. Agrega `recipient VARCHAR(6) CHARACTER SET ascii COLLATE ascii_bin NOT NULL`, sin default y CHECK limitado a jesica/hernan. Receptor pertenece al movimiento, no a monthly_accounts.
 
-Diseño futuro:
+Nuevos cobros exigen receptor y medio independientes. Métodos válidos: cash/transfer. Labels: Jésica/Hernán y Efectivo/Transferencia. El backend valida ambos, conserva membresías y bloqueo de período cerrado.
 
-```text
-Receptor: Hernán | Jesica
-Medio:    Efectivo | Transferencia
-```
+`009.sql` agrega temporalmente nullable, materializa cash → jesica y transfer → hernan solo en nulos, conserva updated_at mediante autoasignación explícita, verifica datos y termina con CHECK y NOT NULL. Guardas SQL abortan ante estructuras o datos inesperados. Reintentos inspeccionan information_schema y no sobrescriben receptores existentes. DDL no es reversible con ROLLBACK. Pausar escrituras hasta completar migración y desplegar código compatible.
 
-Las cuatro combinaciones deben ser válidas.
+Forms exige receptor nuevo. La compatibilidad pre-009 se limita a reconocer hashes de receipts existentes; nunca autoriza escrituras legacy. Duplicados siguen definidos por persona/período/fecha/monto/medio, sin receptor.
 
-## Informática — deuda de diseño
+El Dashboard agrega total cobrado y seis valores de carteras en una misma consulta, manteniendo la igualdad entre total cobrado y totales de Jésica/Hernán. No cambia otras métricas ni filtra actividades.
 
-Las clases particulares de informática son ingresos exclusivos de Hernán y no deben mezclarse con ingresos mensuales PRISMA.
+## Modelo financiero único
+
+Cartera Independiente y separación especial de Informática evaluadas y descartadas. No hay clasificación PRISMA/Informática ni cuentas o exclusiones especiales.
 
 ## Rutas principales
 

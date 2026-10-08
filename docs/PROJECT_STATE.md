@@ -4,21 +4,18 @@
 
 ## Git / producción
 
-- Rama productiva: `main`.
-- Producción/main continúa en `66e944a docs: refine local development workflow`, confirmado por el usuario al cerrar la revisión manual.
-- Commit anterior relevante: `3774c77 feat: add statistics section and align page titles`.
-- `main` auto-despliega SiteGround.
-- Rama de trabajo actual: `fix/period-enrollees-membership`.
-- HEAD local: `66e944a docs: refine local development workflow`, coincidente con `origin/main` tras fetch el 2026-10-07.
-- Clonación incorporada a Git en `a073783`; la descripción anterior de cambios sin commit quedó desactualizada.
-- Corrección de pertenencia explícita implementada, testeada y validada manualmente en `prisma_dev`; la rama `fix/period-enrollees-membership` sigue sin commit ni integración a `main`. Producción y SiteGround no se modificaron.
+- Rama productiva: `main`; auto-despliega SiteGround.
+- HEAD y `origin/main`: `a599378 docs: close period membership iteration`, verificado tras fetch el 2026-10-07.
+- Membresías integradas en `c707f7c`; producción en `a599378`, `008.sql` aplicada y smoke test aprobado, según confirmación explícita del usuario.
+- Iteración actual: Cobros Período, cambios locales sin add/commit/push/merge. No se modificó producción ni SiteGround.
 
 ## Producción
 
 - Web pública: `https://prismacomunidad.com.ar`
 - CRM: `https://crm.prismacomunidad.com.ar`
-- Migraciones aplicadas y registradas: `001.sql` → `007.sql`.
-- `008.sql` todavía NO está aplicada en producción. Antes del deploy son obligatorios backup y preflight de la DB productiva, seguidos de aplicación y verificación manual de `008.sql`.
+- Migraciones aplicadas y registradas: `001.sql` → `008.sql`.
+- `008.sql` aplicada en producción; membresías desplegadas y smoke test aprobado, confirmado por el usuario.
+- `009.sql` aplicada en `prisma_test` y `prisma_dev`; todavía NO aplicada en producción, que continúa con `008.sql`. Antes del deploy es obligatorio realizar preflight de solo lectura y luego migración productiva controlada.
 - Backup previo a `007.sql`: `pre-gastos-periodo-007`.
 - `007.sql` fue validada, aplicada y registrada correctamente.
 
@@ -62,10 +59,10 @@
 - Agregar crea únicamente membresía; cancelar la última actividad conserva la pertenencia.
 - Quitar elimina únicamente membresía y responde `409` si existe cualquier inscripción o cuenta mensual, incluso vacía.
 - Período cerrado bloquea altas/bajas. Personas archivadas conservan membresías históricas visibles; no pueden incorporarse nuevamente.
-- Lista principal separada del buscador global; Cobros utiliza personas del período. Receptor/medio sigue pendiente.
+- Lista principal separada del buscador global; Cobros utiliza personas del período.
 - `008.sql` aplicada en `prisma_test` y, con autorización explícita después de preflight de solo lectura, en `prisma_dev`. Integración destructiva y pruebas de recuperación exclusivamente en `prisma_test`.
 - Aplicación en `prisma_dev` verificada: tabla de membresías, registro único de `008.sql`, ambas FK compuestas y cero membresías iniciales, sin crear datos de prueba durante la migración.
-- Migraciones productivas siguen documentadas hasta `007.sql`; `008.sql` requiere aplicación manual antes de desplegar este código. Reservar `009.sql` para el siguiente cambio de esquema.
+- Cierre posterior confirmado por el usuario: `008.sql` aplicada en producción, membresías desplegadas en `a599378` y smoke test aprobado.
 - Validación: typecheck, lint, 104 tests normales, 202 tests con DB, build y diff check. Revisión manual satisfactoria confirmada por el usuario: búsqueda global, incorporación sin actividades, asignación, bloqueo de baja con inscripción, cancelación conservando membresía, baja posterior y persona global intacta. Detalle en `docs/iterations/2026-10-period-enrollees-membership.md`.
 
 ## Migración histórica de publicidad
@@ -108,10 +105,16 @@ Scripts privados:
 - Build: OK (warnings no bloqueantes conocidos de Zod/Rollup)
 - `git diff --check`: OK
 
-## Próximo objetivo
+## Iteración actual — Cobros Período
 
-**Reestructurar Cobros Período: receptor ≠ medio.**
-
-Inscriptos Período queda implementada, testeada y validada manualmente. Su commit, integración y deploy siguen pendientes de autorización; antes del deploy se requiere backup y preflight de producción y preparación manual de `008.sql`.
-
-Ver `docs/ROADMAP.md` (Prioridad 1).
+- `payments.recipient`: `VARCHAR(6) ascii_bin NOT NULL`, CHECK jesica/hernan y sin default.
+- Históricos materializan cash → jesica, transfer → hernan. `009.sql` preserva campos y timestamps y admite recuperación de DDL parcial.
+- Nuevos pagos requieren receptor y medio independientes; ambos selectores empiezan vacíos.
+- Forms conserva duplicados por persona/período/fecha/monto/medio. Compatibilidad legacy solo para reconocer receipts existentes, sin modificar hashes.
+- Dashboard conserva Carteras del mes y desglosa efectivo/transferencia/total por receptor.
+- Modelo financiero único para PRISMA. Cartera Independiente y separación especial de Informática evaluadas y descartadas.
+- Validación aprobada: typecheck, lint, 116 tests normales aprobados (114 de integración omitidos), suite completa en `prisma_test` con 230 aprobados y ninguno omitido, build y `git diff --check`. Build con warnings no bloqueantes conocidos de Zod/Rollup.
+- `009.sql` aplicada en `prisma_test` y, tras preflight de solo lectura y autorización explícita, exclusivamente esa migración en `prisma_dev`. Se verificaron receptor obligatorio sin default, CHECK activo, registro único y cero pagos antes/después; las otras 20 tablas conservaron datos y esquema, y solo se agregó el registro de 009 en `schema_migrations`.
+- Revisión manual en `prisma_dev` aprobada por el usuario: cuatro combinaciones, independencia receptor/medio, movimientos correctos y cuenta mensual conservando A cobrar / Pagado / Debe, sin regresiones funcionales visibles. Jésica: efectivo $15.000 + transferencia $20.000 = $35.000; Hernán: efectivo $5.000 + transferencia $20.000 = $25.000; total cobrado $60.000, igual a la suma de carteras.
+- Sin integración/deploy de esta iteración. `prisma_demo`, producción y SiteGround intactos. Producción continúa con `008.sql`; antes del deploy requiere backup, preflight de solo lectura y luego migración productiva controlada, verificando y registrando `009.sql` antes de desplegar código compatible.
+- Documento: `docs/iterations/2026-10-payment-recipients.md`.
