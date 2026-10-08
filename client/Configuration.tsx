@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
 import { PeriodAdmin } from './Periods';
-import { Field, Modal, ErrorBox, useSave, SaveButton, DeleteButton } from './components';
+import { Field, Modal, ErrorBox, useSave, SaveButton, DeleteButton, PageTitle } from './components';
 import {
   days,
   times,
@@ -24,8 +24,10 @@ export function Configuration() {
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
   return (
     <>
-      <h1>Configuración</h1>
-      <p>Catálogo global, facilitadores y oferta mensual independiente.</p>
+      <PageTitle
+        title="Configuración"
+        description="Catálogo global, facilitadores y oferta mensual independiente."
+      />
       <ErrorBox error={catalog.error || teachers.error || offers.error} />
       <section className="panel">
         <div className="section-heading">

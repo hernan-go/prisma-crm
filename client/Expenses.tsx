@@ -15,6 +15,7 @@ import {
   Modal,
   SaveButton,
   useSave,
+  PageHeading,
 } from './components';
 import { formatDate, formatMoney } from '../shared/domain';
 import {
@@ -210,16 +211,14 @@ function PeriodExpenses({
   const disabled = !period || !month || closed || query.isPending || !!query.error;
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">ADMINISTRACIÓN</span>
-          <h1>Gastos Período</h1>
-          <p>Organizá los gastos del período por categorías.</p>
-        </div>
+      <PageHeading
+        title="Gastos Período"
+        description="Organizá los gastos del período por categorías."
+      >
         <button className="primary" disabled={disabled} onClick={() => setCategory(null)}>
           <Plus size={17} /> Nueva inversión
         </button>
-      </div>
+      </PageHeading>
       {closed && (
         <p className="info">
           Período cerrado: consulta histórica. Para modificarlo, reabrilo desde Configuración.
@@ -283,7 +282,12 @@ function PeriodExpenses({
               </div>
             </section>
           ))}
-          {query.data?.length === 0 && <Empty>No hay categorías de gastos en este período.</Empty>}
+          {query.data?.length === 0 && (
+            <Empty>
+              <span className="desktop-only">No hay categorías de gastos en este período.</span>
+              <span className="mobile-only">No hay gastos registrados en este período.</span>
+            </Empty>
+          )}
         </>
       )}
       {category !== undefined && !closed && (

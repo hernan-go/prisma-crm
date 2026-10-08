@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from './api';
-import { Field, ErrorBox, Loading, Modal } from './components';
+import { Field, ErrorBox, Loading, Modal, SectionHelp } from './components';
 import { personSchema } from '../shared/domain';
 const fields: Record<string, string> = {
   nombre: 'Nombre',
@@ -91,12 +91,18 @@ export function ImportPeople() {
       </Link>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">IMPORTACIÓN ASISTIDA</span>
-          <h1>Importar personas</h1>
+          <span className="eyebrow page-eyebrow">IMPORTACIÓN ASISTIDA</span>
+          <div className="page-title">
+            <h1>Importar personas</h1>
+            <SectionHelp title="Importar personas">
+              Seleccioná, revisá las columnas y confirmá cada registro. El archivo original se
+              conserva.
+            </SectionHelp>
+          </div>
           <Link className="button primary" to="/importar-forms">
             Importar inscripciones desde Google Forms PRISMA
           </Link>
-          <p>
+          <p className="page-description">
             Seleccioná, revisá las columnas y confirmá cada registro. El archivo original se
             conserva.
           </p>

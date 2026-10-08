@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from './api';
-import { Field, ErrorBox, Modal } from './components';
+import { Field, ErrorBox, Modal, PageTitle } from './components';
 import { usePeriod, periodName } from './App';
 import { formFields, formRowSchema, formsSourceColumns } from '../shared/forms';
 import { days } from '../shared/domain';
@@ -150,11 +150,10 @@ export function FormsImport() {
       <Link className="back" to="/importar">
         ← Importador genérico XLSX / CSV
       </Link>
-      <h1>Importar inscripciones desde Google Forms PRISMA</h1>
-      <p>
-        Preferí CSV. Revisá cada persona, sus inscripciones y la cuenta del período antes de
-        confirmar.
-      </p>
+      <PageTitle
+        title="Importar inscripciones desde Google Forms PRISMA"
+        description="Preferí CSV. Revisá cada persona, sus inscripciones y la cuenta del período antes de confirmar."
+      />
       <section className="panel">
         <Field label="CSV de respuestas (hasta 5 MB)">
           <input

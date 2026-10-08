@@ -13,6 +13,7 @@ import {
   Modal,
   SaveButton,
   useSave,
+  PageHeading,
 } from './components';
 import { formatDate, formatMoney, sumMoney } from '../shared/domain';
 import {
@@ -35,13 +36,10 @@ export function FacilitatorPayments() {
     groups.set(account.instructor_id, [...(groups.get(account.instructor_id) || []), account]);
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">ADMINISTRACIÓN</span>
-          <h1>Pago Facilitadores</h1>
-          <p>Importes manuales y movimientos por actividad del período seleccionado.</p>
-        </div>
-      </div>
+      <PageHeading
+        title="Pago Facilitadores"
+        description="Importes manuales y movimientos por actividad del período seleccionado."
+      />
       {closed && (
         <p className="info">
           Período cerrado. Reabrilo desde la gestión de períodos para corregir datos.

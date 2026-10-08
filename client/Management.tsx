@@ -13,6 +13,7 @@ import {
   useSave,
   SaveButton,
   DeleteButton,
+  PageHeading,
 } from './components';
 import { PersonPicker } from './People';
 import { usePeriod, periodName } from './App';
@@ -47,14 +48,9 @@ function Heading({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="page-heading">
-      <div>
-        <span className="eyebrow">ADMINISTRACIÓN</span>
-        <h1>{title}</h1>
-        <p>{sub}</p>
-      </div>
+    <PageHeading title={title} description={sub}>
       {children}
-    </div>
+    </PageHeading>
   );
 }
 export function Monthly() {
@@ -695,29 +691,40 @@ function PaymentsPeriod() {
         </button>
       </Heading>
       <ErrorBox error={q.error || payments.error} />
-      <section className="panel table-wrap">
+      <section className="panel table-wrap accounts-table-panel">
         <h2>Cuentas del mes</h2>
-        <table>
+        <table className="accounts-table">
           <thead>
             <tr>
               <th>Persona</th>
               <th>A cobrar</th>
-              <th>Pagado</th>
-              <th>Saldo / deuda</th>
+              <th className="desktop-only">Pagado</th>
+              <th>
+                <span className="desktop-only">Saldo / deuda</span>
+                <span className="mobile-only">Saldo</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {q.data?.map((a: any) => (
               <tr key={a.id}>
                 <td>
-                  <Link to={`/personas/${a.person_id}`}>
-                    {a.nombre} {a.apellido}
+                  <Link
+                    className="account-person-link"
+                    to={`/personas/${a.person_id}`}
+                    title={`${a.nombre} ${a.apellido}`}
+                  >
+                    <span>
+                      {a.nombre} {a.apellido}
+                    </span>
                   </Link>
                 </td>
                 <td>{formatMoney(a.amount_due)}</td>
-                <td>{formatMoney(a.paid)}</td>
+                <td className="desktop-only">{formatMoney(a.paid)}</td>
                 <td>
-                  <span className={Number(a.balance) > 0 ? 'debt-chip' : ''}>
+                  <span
+                    className={`${Number(a.balance) > 0 ? 'debt-chip' : ''} account-balance ${a.balance === null ? 'balance-undefined' : Number(a.balance) === 0 ? 'balance-settled' : Number(a.balance) < 0 ? 'balance-credit' : ''}`}
+                  >
                     {a.balance === null
                       ? 'No definido'
                       : Number(a.balance) < 0

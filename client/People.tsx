@@ -16,6 +16,7 @@ import {
   useSave,
   SaveButton,
   DeleteButton,
+  PageHeading,
 } from './components';
 import {
   personSchema,
@@ -150,15 +151,27 @@ export function People() {
     queryKey: ['people', term, page, archived],
     queryFn: () => api(`/people?q=${encodeURIComponent(term)}&page=${page}&archived=${archived}`),
   });
+  const archivedControl = (className = '') => (
+    <label className={`check ${className}`}>
+      <input
+        type="checkbox"
+        checked={archived}
+        onChange={(e) => {
+          setArchived(e.target.checked);
+          setPage(1);
+        }}
+      />{' '}
+      Incluir archivadas
+    </label>
+  );
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">BASE MAESTRA</span>
-          <h1>BBDD Personas</h1>
-          <p>Un registro por persona, toda su historia en un lugar.</p>
-        </div>
-        <div className="actions">
+      <PageHeading
+        title="BBDD Personas"
+        eyebrow="BASE MAESTRA"
+        description="Un registro por persona, toda su historia en un lugar."
+      >
+        <div className="actions desktop-only">
           <Link className="button" to="/importar">
             <Upload size={17} /> Importar
           </Link>
@@ -166,8 +179,14 @@ export function People() {
             <Plus size={17} /> Nueva persona
           </button>
         </div>
+      </PageHeading>
+      <div className="people-mobile-actions mobile-only">
+        <button className="primary" onClick={() => setCreate(true)}>
+          <Plus size={17} /> Nueva persona
+        </button>
+        {archivedControl()}
       </div>
-      <div className="toolbar">
+      <div className="toolbar people-toolbar">
         <SearchBox
           value={search}
           onChange={(s) => {
@@ -175,30 +194,23 @@ export function People() {
             setPage(1);
           }}
         />
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={archived}
-            onChange={(e) => {
-              setArchived(e.target.checked);
-              setPage(1);
-            }}
-          />{' '}
-          Incluir archivadas
-        </label>
+        {archivedControl('desktop-only')}
       </div>
+      <Link className="mobile-only mobile-import" to="/importar">
+        <Upload size={17} /> Importar personas
+      </Link>
       <ErrorBox error={q.error} />
       {q.isPending ? (
         <Loading />
       ) : (
-        <section className="panel table-wrap">
-          <table>
+        <section className="panel table-wrap people-table-panel">
+          <table className="people-table">
             <thead>
               <tr>
                 <th>Persona</th>
                 <th>Teléfono</th>
-                <th>Email</th>
-                <th>Contacto de emergencia</th>
+                <th className="desktop-only">Email</th>
+                <th className="desktop-only">Contacto de emergencia</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -206,21 +218,32 @@ export function People() {
               {q.data?.rows.map((p: any) => (
                 <tr key={p.id}>
                   <td>
-                    <Link className="person-link" to={`/personas/${p.id}`}>
-                      {p.apellido}, {p.nombre}
+                    <Link
+                      className="person-link"
+                      to={`/personas/${p.id}`}
+                      title={`${p.apellido}, ${p.nombre}`}
+                    >
+                      <span>
+                        {p.apellido}, {p.nombre}
+                      </span>
                     </Link>
-                    <small>{p.public_id}</small>
+                    <small className="desktop-only">{p.public_id}</small>
                   </td>
                   <td>{p.telefono}</td>
-                  <td>{p.email || '—'}</td>
-                  <td>
+                  <td className="desktop-only">{p.email || '—'}</td>
+                  <td className="desktop-only">
                     <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
                       {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
                     </span>
                   </td>
                   <td>
-                    <span className={`chip ${p.activo ? 'status-active' : 'status-archived'}`}>
-                      {p.activo ? 'Activa' : 'Archivada'}
+                    <span
+                      className={`chip people-status ${p.activo ? 'status-active' : 'status-archived'}`}
+                      role="img"
+                      aria-label={p.activo ? 'Activa' : 'Archivada'}
+                      title={p.activo ? 'Activa' : 'Archivada'}
+                    >
+                      <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
                     </span>
                   </td>
                 </tr>

@@ -11,6 +11,103 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, LoaderCircle, Search } from 'lucide-react';
 import { api } from './api';
+// Dismissible, non-modal disclosures shared by mobile navigation and section help.
+export function useDisclosure() {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    };
+    const focus = (event: FocusEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const breakpoint = window.matchMedia('(max-width: 700px)');
+    const resize = () => setOpen(false);
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    document.addEventListener('focusin', focus);
+    breakpoint.addEventListener('change', resize);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+      document.removeEventListener('focusin', focus);
+      breakpoint.removeEventListener('change', resize);
+    };
+  }, [open]);
+  return { open, setOpen, root, trigger, id };
+}
+
+export function SectionHelp({ title, children }: { title: string; children: ReactNode }) {
+  const { open, setOpen, root, trigger, id } = useDisclosure();
+  return (
+    <div className="section-help mobile-only" ref={root}>
+      <button
+        ref={trigger}
+        type="button"
+        className="help-toggle"
+        aria-label={`Ayuda de ${title}`}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(!open)}
+      >
+        <span aria-hidden="true">?</span>
+      </button>
+      {open && (
+        <div id={id} className="help-panel" role="region" aria-label={`Ayuda de ${title}`}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function PageTitle({ title, description }: { title: string; description?: ReactNode }) {
+  return (
+    <>
+      <div className="page-title">
+        <h1>{title}</h1>
+        {description && <SectionHelp title={title}>{description}</SectionHelp>}
+      </div>
+      {description && <p className="page-description">{description}</p>}
+    </>
+  );
+}
+
+export function PageHeading({
+  title,
+  description,
+  eyebrow = 'ADMINISTRACIÓN',
+  className = '',
+  children,
+}: {
+  title: string;
+  description: ReactNode;
+  eyebrow?: string;
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={`page-heading ${children ? '' : 'page-heading-no-actions'} ${className}`}>
+      <div className="page-heading-copy">
+        <span className="eyebrow page-eyebrow">{eyebrow}</span>
+        <PageTitle title={title} description={description} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function useDebounce<T>(value: T) {
   const [v, set] = useState(value);
   useEffect(() => {
