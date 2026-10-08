@@ -197,8 +197,9 @@ function RemoveMembership({
         <Modal title="Quitar del período" close={() => setAsk(false)}>
           <p>
             Se quitará únicamente la pertenencia de {person.nombre} {person.apellido} a este
-            período. La persona seguirá en BBDD. Si tiene inscripciones o una cuenta mensual, la
-            operación se bloqueará.
+            período. La persona seguirá en BBDD. Si existe una cuenta mensual completamente vacía
+            (sin importe definido y sin pagos), se eliminará automáticamente. Si tiene actividades,
+            pagos o un importe a cobrar definido, incluido cero, la operación se bloqueará.
           </p>
           <ErrorBox error={remove.error} />
           <div className="actions">

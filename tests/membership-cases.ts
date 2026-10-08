@@ -242,9 +242,17 @@ export function membershipTests(agent: any, password: string) {
       expect((await agent.get(`/api/people/${person}`)).status).toBe(200);
       member = (await add()).body.id;
     });
-    it('asigna actividad después del alta, bloquea baja y conserva membresía al cancelar última actividad', async () => {
+    it('asigna actividad, protege datos y quita cuenta NULL y membresía tras cancelar última actividad', async () => {
       enrollment = await post('/enrollments', enrollmentBody());
+      const snapshot = () =>
+        Promise.all(
+          ['period_memberships', 'monthly_accounts', 'enrollments', 'enrollment_slots'].map((t) =>
+            query(`SELECT * FROM ${t} ORDER BY id`),
+          ),
+        );
+      const before = await snapshot();
       expect((await remove()).status).toBe(409);
+      expect(await snapshot()).toEqual(before);
       expect(
         (
           await agent
@@ -259,9 +267,24 @@ export function membershipTests(agent: any, password: string) {
         (await agent.delete(`/api/enrollments/${enrollment}?period_id=${period}`)).status,
       ).toBe(200);
       expect((await list()).body[0]).toMatchObject({ membership_id: member, activities: null });
+      expect(
+        await query('SELECT id FROM enrollments WHERE person_id=? AND period_id=?', [
+          person,
+          period,
+        ]),
+      ).toEqual([]);
+      const [account] = await query(
+        'SELECT id,amount_due FROM monthly_accounts WHERE person_id=? AND period_id=?',
+        [person, period],
+      );
+      expect(account.amount_due).toBeNull();
+      expect(await query('SELECT id FROM payments WHERE account_id=?', [account.id])).toEqual([]);
       const r = await remove();
-      expect(r.status).toBe(409);
-      expect(r.body.message).toContain('cuenta mensual');
+      expect(r.status).toBe(200);
+      expect(await query('SELECT id FROM monthly_accounts WHERE id=?', [account.id])).toEqual([]);
+      expect((await list()).body).toEqual([]);
+      expect((await agent.get(`/api/people/${person}`)).status).toBe(200);
+      member = (await add()).body.id;
     });
     it('cuenta incluso con cero definido y pagos bloquean baja sin perder datos, IDs financieros cruzados rechazados', async () => {
       expect(
@@ -415,5 +438,184 @@ export function membershipTests(agent: any, password: string) {
       const enrollments = (await agent.get(`/api/enrollments?period_id=${destination}`)).body;
       expect(members.length).toBe(enrollments.length);
     });
+    const financialSnapshot = (pid: number, pr = other) =>
+      Promise.all([
+        query('SELECT * FROM period_memberships WHERE person_id=? AND period_id=?', [pid, pr]),
+        query('SELECT * FROM monthly_accounts WHERE person_id=? AND period_id=?', [pid, pr]),
+        query('SELECT * FROM enrollments WHERE person_id=? AND period_id=?', [pid, pr]),
+        query(
+          'SELECT p.* FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE m.person_id=? AND m.period_id=? ORDER BY p.id',
+          [pid, pr],
+        ),
+      ]);
+    const setDue = (pid: number, amount_due: string | null, pr = other) =>
+      agent.put('/api/accounts').send({ person_id: pid, period_id: pr, amount_due });
+    const payBody = (pid: number, pr = other) => ({
+      person_id: pid,
+      period_id: pr,
+      date: '2058-02-02',
+      amount: '10',
+      method: 'cash',
+      recipient: 'jesica',
+    });
+    it.each(['0', '100'])(
+      'importe definido %s sin pagos ni inscripciones conserva cuenta y membresía',
+      async (amount) => {
+        const fresh = await makePerson();
+        const m = (await add(fresh, other)).body.id;
+        expect((await setDue(fresh, amount)).status).toBe(200);
+        const before = await financialSnapshot(fresh);
+        expect(before[2]).toEqual([]);
+        expect(before[3]).toEqual([]);
+        const r = await remove(m, other);
+        expect(r.status).toBe(409);
+        expect(r.body.message).toContain('importe a cobrar definido');
+        expect(await financialSnapshot(fresh)).toEqual(before);
+      },
+    );
+    it('pago con importe NULL bloquea; eliminar último pago permite quitar cuenta y membresía', async () => {
+      const fresh = await makePerson();
+      const m = (await add(fresh, other)).body.id;
+      const payment = await post('/payments', payBody(fresh));
+      const before = await financialSnapshot(fresh);
+      expect(before[1][0].amount_due).toBeNull();
+      expect(before[2]).toEqual([]);
+      expect((await remove(m, other)).status).toBe(409);
+      expect(await financialSnapshot(fresh)).toEqual(before);
+      expect((await agent.delete(`/api/payments/${payment}?period_id=${other}`)).status).toBe(200);
+      const afterPayment = await financialSnapshot(fresh);
+      expect(afterPayment[1][0].amount_due).toBeNull();
+      expect(afterPayment[3]).toEqual([]);
+      expect((await remove(m, other)).status).toBe(200);
+      expect(await financialSnapshot(fresh)).toEqual([[], [], [], []]);
+      expect((await agent.get(`/api/people/${fresh}`)).status).toBe(200);
+    });
+    it('fallo tras borrar cuenta y antes de borrar membresía revierte ambas y permite reintento', async () => {
+      const fresh = await makePerson();
+      const m = (await add(fresh, other)).body.id;
+      expect((await setDue(fresh, null)).status).toBe(200);
+      const before = await financialSnapshot(fresh);
+      const original = database.execute;
+      let accountDeleted = false;
+      const spy = vi.spyOn(database, 'execute').mockImplementation(async (sql, values, db) => {
+        if (sql.startsWith('DELETE FROM period_memberships')) {
+          expect(
+            await query(
+              'SELECT id FROM monthly_accounts WHERE person_id=? AND period_id=?',
+              [fresh, other],
+              db,
+            ),
+          ).toEqual([]);
+          accountDeleted = true;
+          throw new Error('Fallo sintético entre cuenta y membresía');
+        }
+        return original(sql, values, db);
+      });
+      try {
+        expect((await remove(m, other)).status).toBe(500);
+      } finally {
+        spy.mockRestore();
+      }
+      expect(accountDeleted).toBe(true);
+      expect(await financialSnapshot(fresh)).toEqual(before);
+      expect((await remove(m, other)).status).toBe(200);
+      expect(await financialSnapshot(fresh)).toEqual([[], [], [], []]);
+    });
+    it('quitar cuenta vacía conserva todos los datos de la misma persona en otro período', async () => {
+      const fresh = await makePerson();
+      const destination = await post('/periods', { year: 2059, month: 1 });
+      const m = (await add(fresh, destination)).body.id;
+      expect((await setDue(fresh, null, destination)).status).toBe(200);
+      expect((await add(fresh, other)).status).toBe(201);
+      const [s] = await query(
+        'SELECT s.id FROM activity_schedules s JOIN period_activities o ON o.id=s.offering_id WHERE o.period_id=? AND o.activity_id=? LIMIT 1',
+        [other, activity],
+      );
+      await post('/enrollments', {
+        person_id: fresh,
+        period_id: other,
+        activity_id: activity,
+        schedule_ids: [s.id],
+      });
+      await post('/payments', payBody(fresh));
+      expect((await setDue(fresh, '100')).status).toBe(200);
+      const before = await financialSnapshot(fresh);
+      const slotsBefore = await query(
+        'SELECT es.* FROM enrollment_slots es JOIN enrollments e ON e.id=es.enrollment_id WHERE e.person_id=? AND e.period_id=?',
+        [fresh, other],
+      );
+      expect(before.every((rows) => rows.length === 1)).toBe(true);
+      expect((await remove(m, destination)).status).toBe(200);
+      expect(await financialSnapshot(fresh, destination)).toEqual([[], [], [], []]);
+      expect(await financialSnapshot(fresh)).toEqual(before);
+      expect(
+        await query(
+          'SELECT es.* FROM enrollment_slots es JOIN enrollments e ON e.id=es.enrollment_id WHERE e.person_id=? AND e.period_id=?',
+          [fresh, other],
+        ),
+      ).toEqual(slotsBefore);
+    });
+    it.each(['enrollment', 'payment', 'due'])(
+      'baja de cuenta vacía concurrente con %s conserva toda escritura válida',
+      async (kind) => {
+        const fresh = await makePerson();
+        const destination = await post('/periods', {
+          year: 2059,
+          month: { enrollment: 2, payment: 3, due: 4 }[kind],
+        });
+        const m = (await add(fresh, destination)).body.id;
+        expect((await setDue(fresh, null, destination)).status).toBe(200);
+        let scheduleId: number | undefined;
+        if (kind === 'enrollment') {
+          const o = await post('/offerings', {
+            period_id: destination,
+            activity_id: activity,
+            mode: 'group',
+            days: [1],
+          });
+          scheduleId = await post('/schedules', {
+            offering_id: o,
+            day: 1,
+            start: '09:00',
+            end: '10:00',
+            instructor_ids: [],
+          });
+        }
+        const write =
+          kind === 'enrollment'
+            ? agent
+                .post('/api/enrollments')
+                .send({
+                  person_id: fresh,
+                  period_id: destination,
+                  activity_id: activity,
+                  schedule_ids: [scheduleId],
+                })
+            : kind === 'payment'
+              ? agent.post('/api/payments').send(payBody(fresh, destination))
+              : setDue(fresh, '0', destination);
+        const [removed, written] = await Promise.all([remove(m, destination), write]);
+        const success = kind === 'due' ? 200 : 201;
+        expect([
+          [200, 409],
+          [409, success],
+        ]).toContainEqual([removed.status, written.status]);
+        const [members, accounts, enrollments, payments] = await financialSnapshot(
+          fresh,
+          destination,
+        );
+        if (removed.status === 200) {
+          expect([members, accounts, enrollments, payments]).toEqual([[], [], [], []]);
+        } else {
+          expect(members).toHaveLength(1);
+          expect(accounts).toHaveLength(1);
+          expect(enrollments).toHaveLength(kind === 'enrollment' ? 1 : 0);
+          expect(payments).toHaveLength(kind === 'payment' ? 1 : 0);
+          expect(accounts[0].amount_due).toBe(kind === 'due' ? '0.00' : null);
+          if (kind === 'payment')
+            expect(payments[0]).toMatchObject({ account_id: accounts[0].id, amount: '10.00' });
+        }
+      },
+    );
   });
 }
