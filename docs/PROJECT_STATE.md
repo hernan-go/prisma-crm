@@ -4,6 +4,8 @@
 
 ## Git / producción
 
+- Iteración actual: `Configuración eliminable vs historial real`, implementada y validada localmente en `fix/configuration-cleanup-rules`, base `d6289e6`. Cambios sin stage/commit; Git queda a cargo del usuario. Producción, SiteGround y `prisma_dev` no se consultan ni modifican desde Codex en esta iteración.
+
 - Rama productiva: `main`; auto-despliega SiteGround.
 - Base de Rediseño mobile: `df04f17 docs: close payment recipient iteration`; HEAD, referencia local `origin/main` y `main` remota coincidentes, verificado por consulta de referencia el 2026-10-08.
 - Cobros integrado en `292018d`; `main` productivo anterior a Rediseño mobile en `df04f17`, según Git y confirmación explícita del usuario.
@@ -139,3 +141,15 @@ Scripts privados:
 - Validaciones: typecheck, lint, 116 tests normales (122 integraciones omitidas), suite completa 238 aprobados exclusivamente en `prisma_test`, build y diff check. Preflight `SELECT DATABASE()` devolvió exactamente `prisma_test`. Tests/build requirieron reintento fuera del sandbox por EPERM; warnings conocidos de Zod/Rollup no bloqueantes.
 - Evidencia productiva de solo lectura comunicada por el usuario: Noviembre 2026, cuentas 147/148 con NULL y 149 con cero; todas sin inscripciones ni pagos. No se conectó a producción ni se modificó `prisma_dev` o SiteGround. Revisión manual, deploy y smoke productivo pendientes de autorización del usuario.
 - Documento: `docs/iterations/2026-10-remove-empty-monthly-account.md`.
+
+## Validado localmente — Configuración eliminable vs historial real
+
+- Eliminar período abierto ahora retira atómicamente su configuración y categorías vacías cuando no quedan membresías, inscripciones, cuentas/cobros, cuentas/pagos de facilitadores, gastos, publicidad histórica del mes ni referencias externas sobre horarios. Flags de oferta/horario en 1 por inscripciones canceladas no bloquean el período completo.
+- Editar fecha mantiene regla conservadora: período abierto sin configuración ni datos. Cerrado bloquea edición/eliminación hasta reapertura.
+- DELETE individual de oferta/horario preparatorios, conservando historial, catálogos y finanzas. Los flags de oferta/horario siguen protegiendo edición y borrado individual; no se resetean.
+- Catálogos globales derivan protección desde relaciones, sin bloquear solo por flags legacy. Actividad exige retirar primero sus ofertas; facilitador puede retirarse de horarios nunca usados sin cuentas/historia y solo en períodos abiertos. QA comparte la misma lógica de catálogos.
+- UI con acciones y confirmaciones específicas, sin rediseño ni nuevas dependencias. Cuentas de facilitador, incluso NULL, siempre bloquean; categorías con gastos no se eliminan desde el período.
+- Evidencia productiva aportada por el usuario: Noviembre 2026 conserva 7 ofertas, 19 días, 17 horarios y 17 asignaciones; 2 ofertas/3 horarios tienen flag 1 por inscripciones eliminadas; cero entidades operativas/financieras, categorías y publicidad histórica del mes. No se conectó a producción; el smoke real queda pendiente de deploy manual.
+- Validaciones: typecheck/lint/build/diff-check OK; 117 tests normales aprobados y 157 integraciones omitidas; suite completa 274 aprobados, ninguna omisión, exclusivamente en `prisma_test` tras preflight. Incluye 35 casos nuevos de integración: Noviembre, bloqueos, aislamiento, rollback y concurrencia. Tests/build requirieron reintento fuera del sandbox por EPERM; warnings conocidos de Zod/Rollup no bloqueantes.
+- Sin migración `010.sql`, cambios a `001–009`, resets de flags, commits ni deploy. Revisión manual local preparada exclusivamente en `prisma_test`; confirmaciones destructivas pendientes del usuario.
+- Documento: `docs/iterations/2026-10-configuration-cleanup-rules.md`.

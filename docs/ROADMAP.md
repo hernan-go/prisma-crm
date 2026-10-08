@@ -4,6 +4,8 @@
 
 ## Completado recientemente
 
+- Configuración eliminable vs historial real: implementada y validada localmente, con DELETE de período/configuración y catálogos basado en referencias. Sin migración. Pendientes revisión manual y Git/deploy del usuario. Detalle: `docs/iterations/2026-10-configuration-cleanup-rules.md`.
+
 - Nomenclatura H1 sincronizada con sidebar.
 - Sección `Estadísticas` creada como shell visual.
 - `Gastos Período` implementado con categorías personalizables y movimientos.

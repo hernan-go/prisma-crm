@@ -96,3 +96,21 @@ La existencia de una persona en BBDD no implica pertenencia a ningún período. 
 - Personas archivadas no pueden incorporarse; sus membresías existentes siguen visibles.
 - Crear/clonar períodos deja cero membresías. Importar personas al catálogo global no incorpora a ningún período; confirmar la importación específica de inscripciones sí incorpora explícitamente a las filas no omitidas, dentro de su transacción.
 - El backend valida pertenencia y período antes de escribir; FK compuestas desde inscripciones/cuentas refuerzan integridad sin cascadas destructivas.
+
+## D015 — Configuración eliminable e historia persistente
+
+Configuración no equivale a historia. Las eliminaciones son explícitas, acotadas y transaccionales dentro de `peopleTransaction`, sin nuevas cascadas ni desactivar FK.
+
+- Eliminar un período exige estado abierto y ausencia de membresías, inscripciones, cuentas/cobros, cuentas/pagos de facilitadores, gastos y referencias externas/incompatibles a sus horarios. Publicidad histórica del mismo mes también bloquea. Se elimina exclusivamente su configuración: categorías vacías, asignaciones, horarios, días y ofertas; después el período. Catálogos, personas y otros períodos se conservan.
+- Para eliminar el período completo, `period_activities.ever_used` y `activity_schedules.ever_used` no bloquean por sí solos: pueden quedar de inscripciones canceladas explícitamente. No se ponen en cero. Esta regla se basa en datos persistentes actuales, no afirma que nunca hubo operaciones.
+- Editar año/mes exige un período abierto realmente vacío de configuración y datos. Un período cerrado debe reabrirse antes de editarlo o eliminarlo.
+- DELETE individual de oferta exige oferta y todos sus horarios nunca utilizados, sin inscripciones, slots ni cuentas de facilitadores. Elimina días, horarios y asignaciones propios, sin eliminar la actividad global.
+- DELETE individual de horario exige `ever_used=0`, sin slots ni asignaciones del par oferta/facilitador con cuenta persistida que necesiten preservar su snapshot. Elimina sus asignaciones y el horario, conservando la oferta.
+- Oferta/horario utilizados conservan sus protecciones de edición y borrado individual aun después de cancelar inscripciones; pueden deshabilitarse.
+- Los flags globales de actividades/facilitadores siguen almacenados y activándose por compatibilidad, pero no determinan por sí solos borrabilidad ni la etiqueta «Con historial». Una actividad global requiere cero ofertas y cero inscripciones; primero deben retirarse explícitamente sus ofertas preparatorias.
+- Un facilitador global sin historia puede eliminarse retirando sus asignaciones a horarios nunca usados, en una misma transacción. Bloquean horarios usados, slots, cuentas/pagos, referencias legacy y períodos cerrados cuyas asignaciones deban modificarse. Los otros facilitadores y los horarios se conservan.
+- Cualquier cuenta de facilitador bloquea, incluso con importe NULL y sin pagos: no se define una excepción de cuenta vacía en esta iteración.
+- Categorías sin gastos son configuración eliminable junto con el período. Cualquier gasto bloquea el período antes de borrar categorías. El DELETE individual de categoría conserva su comportamiento existente.
+- QA usa la misma función de eliminación de catálogos que la API, conservando lista permitida, revisión y fingerprint.
+
+Sin migración ni recálculo/reset de flags. Los receipts se conservan: su hash no permite reconstruir el período y no hay una auditoría completa de movimientos ya eliminados. Evidencia productiva de Noviembre 2026 aportada por el usuario; Codex no consulta ni modifica producción. Detalle: `iterations/2026-10-configuration-cleanup-rules.md`.
