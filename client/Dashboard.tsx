@@ -13,6 +13,7 @@ import {
   type AgendaSchedule,
 } from './dashboard-model';
 import './dashboard.css';
+import { Weather } from './Weather';
 
 type DashboardData = {
   people: number;
@@ -247,11 +248,7 @@ export function Dashboard() {
             </div>
             <div className="dashboard-clock">
               <time dateTime={now.toISOString()}>{date.time}</time>
-              <small>
-                Rosario, Santa Fe
-                <br />
-                Clima no disponible
-              </small>
+              <Weather now={now} />
             </div>
           </div>
           {!period ? (

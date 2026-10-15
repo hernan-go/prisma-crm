@@ -313,3 +313,69 @@
     font-size: 19px;
   }
 }
+
+/* Weather stays within the existing gray tile, after the time. */
+.dashboard-clock {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+.dashboard-clock time {
+  flex-shrink: 0;
+}
+.dashboard-weather {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.dashboard-weather-location {
+  font-size: 11px;
+  color: #d0d0d0;
+}
+.dashboard-weather-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e6eaea;
+}
+.dashboard-weather-value strong {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 650;
+}
+.dashboard-weather-condition {
+  font-size: 12px;
+  color: #d0d0d0;
+  overflow-wrap: anywhere;
+}
+.dashboard-clock .dashboard-weather-source {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.dashboard-weather-source a {
+  color: #d6e4e0;
+  text-decoration: underline;
+}
+@media (max-width: 1500px) and (min-width: 1201px) {
+  .dashboard-clock {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .dashboard-clock time {
+    font-size: 30px;
+  }
+  .dashboard-weather-value strong {
+    font-size: 24px;
+  }
+  .dashboard-weather-location {
+    font-size: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .dashboard-clock {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .dashboard-clock time {
+    font-size: 30px;
+  }
+}

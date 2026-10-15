@@ -34,7 +34,7 @@ Cartera Independiente y separación especial de ingresos/deuda de Informática e
 
 ## Iteración 6 — Dashboard implementado localmente
 
-Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima postergado por condiciones del proveedor/alcance de infraestructura. Pendiente revisión final autenticada e integración manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
+Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima de Rosario implementado mediante MET Norway Locationforecast 2.0, con proxy/caché en memoria, atribución CC BY 4.0 y sin dependencia del período. Pendiente revisión final autenticada e integración manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
 
 ## Pendiente — Egresos y resultado financiero
 

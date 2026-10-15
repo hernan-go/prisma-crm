@@ -1,3 +1,4 @@
+import { createWeatherRouter } from './weather.js';
 import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
 import { expenses } from './expenses.js';
@@ -19,6 +20,7 @@ import {
 } from './memberships.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use(createWeatherRouter());
 api.use(facilitators);
 api.use('/forms-import', formsImport);
 api.use(offerings);

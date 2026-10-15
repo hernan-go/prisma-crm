@@ -10,6 +10,7 @@ const app = createApp({ ...credentials, store });
 afterAll(() => pool.end());
 it('API administrativa sin sesión devuelve 401', async () => {
   expect((await request(app).get('/api/people')).status).toBe(401);
+  expect((await request(app).get('/api/weather')).status).toBe(401);
   expect((await request(app).post('/api/import/commit').send({})).status).toBe(401);
 });
 it('login incorrecto no crea cookie ni sesión', async () => {

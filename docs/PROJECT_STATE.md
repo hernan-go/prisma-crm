@@ -13,8 +13,8 @@
 
 - Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres siempre visibles también en mobile, según corrección fina posterior aprobada. Cabecera operativa en dos tiles y ayudas KPI ancladas individualmente.
 - KPIs mantienen cálculos backend: personas del período e inscripciones a actividades son conceptos distintos. Carteras, saldos y gráfico CSS conservados.
-- Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima pendiente: Open-Meteo requiere licencia comercial; MET Norway requeriría proxy/cache backend. Widget informa disponibilidad sin inventar temperaturas.
-- Validación: typecheck, lint, build y diff check aprobados; 126 tests aprobados, 157 integraciones omitidas. QA aislado con fixtures en los siete anchos solicitados; revisión autenticada real pendiente del propietario.
+- Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima integrado mediante GET /api/weather y proxy/caché en memoria hacia MET Norway para Rosario. Temperatura, icono Lucide y condición exclusivamente dentro del tile gris, después de la hora; fuente y licencia visibles. Sin DB ni dependencias nuevas. Se conserva el estado «Clima no disponible» ante fallas.
+- Validación: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión autenticada real y smoke del hosting pendientes del propietario.
 - Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Pendiente revisión final autenticada del propietario e integración/despliegue manual.
 
 ## Producción
