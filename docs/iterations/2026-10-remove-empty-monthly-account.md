@@ -1,5 +1,7 @@
 # Corrección — Quitar membresía con cuenta mensual estrictamente vacía
 
+> Cierre posterior confirmado por el propietario el 2026-10-15: implementación integrada, desplegada y aprobada en producción. Este cierre supera los pendientes de Git/deploy del registro histórico siguiente. La eliminación satisfactoria del período noviembre de 2026 también fue confirmada.
+
 **Fecha:** 2026-10-08. **Rama:** `fix/remove-empty-monthly-account`. **Base:** `19eae35`.
 **Estado:** implementada y validada localmente. Pendiente de revisión manual y autorización de deploy productivo. Sin add, commit, push, merge ni cambio de rama desde Codex.
 

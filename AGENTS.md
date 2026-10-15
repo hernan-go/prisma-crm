@@ -19,9 +19,9 @@ Leer además cuando corresponda:
 ## 2. Reglas críticas
 
 - `main` es la rama productiva y su push dispara deploy en SiteGround.
-- Nunca hacer `git push origin main` salvo autorización explícita al final de una iteración validada.
+- Los pushes son manuales del propietario después de su revisión y aprobación. Codex no hace push ni merge a `main`.
 - Nunca hacer `force push`, rebase destructivo, reset destructivo ni cambios de configuración Git.
-- Los commits locales pueden hacerse solo cuando la iteración/prompt lo autorice explícitamente.
+- En iteraciones aprobadas, Codex administra autónomamente archivos, ramas Git locales, validaciones y commits dentro del alcance autorizado.
 - Producción y SiteGround no se modifican desde Codex. Los cambios productivos de DB son manuales y guiados.
 - Nunca mostrar ni registrar secretos reales.
 

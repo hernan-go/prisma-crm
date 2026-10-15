@@ -1,5 +1,7 @@
 # Corrección — Configuración eliminable vs historial real
 
+> Cierre posterior confirmado por el propietario el 2026-10-15: implementación integrada, desplegada y aprobada en producción. Este cierre supera los pendientes de Git/deploy del registro histórico siguiente. La eliminación satisfactoria del período noviembre de 2026 también fue confirmada.
+
 **Fecha:** 2026-10-08. **Rama:** `fix/configuration-cleanup-rules`. **Base:** `d6289e6`.
 **Estado:** implementada y validada automáticamente. Revisión manual, Git y deploy pendientes del usuario. Sin stage, commits, push, merge, cambio de rama, rebase ni reset.
 
@@ -69,13 +71,13 @@ Se adapta el test de categorías vacías conservando el bloqueo de edición de f
 
 Se prepararon y conservaron estos casos sintéticos exclusivamente en `prisma_test`:
 
-| Período | ID | Caso |
-| --- | --- | --- |
-| Agosto 2094 | 84 | Fuente de clonación; debe conservarse al borrar septiembre. |
-| Septiembre 2094 | 85 | Período clonado, sin operaciones; eliminación completa disponible. |
-| Octubre 2094 | 86 | Horario 80 y facilitador 50 preparatorios; otro facilitador 52 debe conservarse. Oferta 69 nunca usada, independiente del horario anterior. |
-| Noviembre 2094 | 87 | Oferta 70 / horario 82 / facilitador 53 con inscripción y finanzas: bloqueos históricos. |
-| Diciembre 2094 | 88 | Oferta 71 / horario 83 con flags 1 tras cancelación y baja de cuenta vacía/membresía; eliminación individual bloqueada, período completo eliminable. |
+| Período         | ID  | Caso                                                                                                                                                 |
+| --------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agosto 2094     | 84  | Fuente de clonación; debe conservarse al borrar septiembre.                                                                                          |
+| Septiembre 2094 | 85  | Período clonado, sin operaciones; eliminación completa disponible.                                                                                   |
+| Octubre 2094    | 86  | Horario 80 y facilitador 50 preparatorios; otro facilitador 52 debe conservarse. Oferta 69 nunca usada, independiente del horario anterior.          |
+| Noviembre 2094  | 87  | Oferta 70 / horario 82 / facilitador 53 con inscripción y finanzas: bloqueos históricos.                                                             |
+| Diciembre 2094  | 88  | Oferta 71 / horario 83 con flags 1 tras cancelación y baja de cuenta vacía/membresía; eliminación individual bloqueada, período completo eliminable. |
 
 Frontend `http://localhost:5173`, backend local `127.0.0.1:3001` con preflight exclusivo `prisma_test`. Ambos servidores quedan levantados; frontend y proxy API verificados por HTTP 200. El frontend requirió ejecución fuera del sandbox para ser accesible. No se confirmaron eliminaciones manuales. Solo se corrigió automáticamente la inscripción/membresía del fixture recién creado de diciembre para preparar ese caso. Los fixtures son descartables y una nueva suite DB los reconstruirá.
 

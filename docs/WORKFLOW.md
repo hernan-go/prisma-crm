@@ -156,7 +156,7 @@ Si la migración no es backward-compatible, definir explícitamente el orden seg
 
 Codex puede inspeccionar Git siempre.
 
-Puede hacer `git add` / `git commit` solo si la iteración lo autoriza.
+En iteraciones aprobadas, Codex puede administrar autónomamente Git local, archivos, ramas, validaciones y commits dentro del alcance. No necesita aprobación por archivo, test o commit local. Ante cambios inesperados en el working tree, preservarlos y detenerse para informar. Los pushes y la integración a main quedan manuales del propietario, después de revisión y aprobación.
 
 Nunca hacer por defecto:
 
@@ -168,7 +168,7 @@ Nunca hacer por defecto:
 
 ## 10. Deploy productivo
 
-Antes de push a `main`:
+El propietario realiza manualmente el push definitivo. Antes de push a `main`:
 
 - working tree limpio;
 - tests OK;

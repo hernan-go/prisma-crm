@@ -1,10 +1,10 @@
 # PRISMA CRM — Roadmap
 
-**Actualizado:** 2026-10-08
+**Actualizado:** 2026-10-15
 
 ## Completado recientemente
 
-- Configuración eliminable vs historial real: implementada y validada localmente, con DELETE de período/configuración y catálogos basado en referencias. Sin migración. Pendientes revisión manual y Git/deploy del usuario. Detalle: `docs/iterations/2026-10-configuration-cleanup-rules.md`.
+- Configuración eliminable vs historial real: integrada, desplegada y aprobada en producción por el propietario. Noviembre 2026 eliminado satisfactoriamente. Sin migración. Detalle: `docs/iterations/2026-10-configuration-cleanup-rules.md`.
 
 - Nomenclatura H1 sincronizada con sidebar.
 - Sección `Estadísticas` creada como shell visual.
@@ -32,11 +32,15 @@
 
 Cartera Independiente y separación especial de ingresos/deuda de Informática evaluadas y descartadas. Modelo financiero único para PRISMA. No clasificar ni excluir movimientos por nombre de actividad.
 
-## Pendiente — Dashboard financiero definitivo
+## Iteración 6 — Dashboard implementado localmente
 
-Diseñar en otra iteración cualquier incorporación de egresos o resultado/neto. Esta iteración solo corrige la card existente de carteras.
+Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima postergado por condiciones del proveedor/alcance de infraestructura. Pendiente revisión final autenticada e integración manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
 
-## Completado localmente — Rediseño mobile
+## Pendiente — Egresos y resultado financiero
+
+Diseñar en otra iteración cualquier incorporación de egresos o resultado/neto. La Iteración 6 reorganiza la presentación sin agregar cálculos financieros.
+
+## Completado — Rediseño mobile
 
 Alcance exclusivo `max-width: 700px`; tablet/desktop desde `701px` conservan su diseño. Implementación y revisión visual manual final aprobadas:
 
@@ -50,7 +54,7 @@ Alcance exclusivo `max-width: 700px`; tablet/desktop desde `701px` conservan su 
 
 Validación automática aprobada: typecheck, lint, 116 tests aprobados y 114 integraciones DB omitidas, build y diff check. Revisión manual aprobada por el usuario en 390×900 (menú cerrado/abierto y secciones principales), 700/701px, 768px y 1024px, sin overflow horizontal observado y con tablet/desktop preservados.
 
-Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre documental completado; sin add/commit/push/merge ni deploy de esta iteración.
+Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre posterior confirmado por el propietario: integrado, desplegado y aprobado en producción. También está desplegada y aprobada la eliminación de cuentas mensuales estrictamente vacías.
 
 ## Prioridad 5 — Estadísticas
 

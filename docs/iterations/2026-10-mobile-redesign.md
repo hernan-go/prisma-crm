@@ -1,5 +1,7 @@
 # Rediseño mobile
 
+> Cierre posterior confirmado por el propietario el 2026-10-15: implementación integrada, desplegada y aprobada en producción. Este cierre supera los pendientes de Git/deploy del registro histórico siguiente. La eliminación satisfactoria del período noviembre de 2026 también fue confirmada.
+
 **Fecha:** 2026-10-08. **Base:** `df04f17`. **Rama:** `feat/mobile-redesign`.
 **Estado:** completada localmente; validaciones automáticas y revisión visual manual final aprobadas por el usuario. Cierre documental completado. Sin add, commit, push ni merge autorizados; sin deploy de esta iteración.
 

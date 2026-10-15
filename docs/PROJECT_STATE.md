@@ -1,15 +1,21 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-08
+**Corte:** 2026-10-15
 
 ## Git / producción
 
-- Iteración actual: `Configuración eliminable vs historial real`, implementada y validada localmente en `fix/configuration-cleanup-rules`, base `d6289e6`. Cambios sin stage/commit; Git queda a cargo del usuario. Producción, SiteGround y `prisma_dev` no se consultan ni modifican desde Codex en esta iteración.
+- Iteración actual: nuevo Dashboard, implementado en `codex/dashboard-redesign`, base limpia `c20b451` coincidente con `main` y `origin/main` tras fetch el 2026-10-15. Trabajo local autorizado con commits; sin push ni merge.
+- Mobile, quitar cuenta mensual estrictamente vacía y configuración eliminable están integrados, desplegados y aprobados por el propietario en producción, confirmado en el pedido de Iteración 6. Noviembre 2026 creado por error fue eliminado satisfactoriamente. Los apartados anteriores de validación local se conservan como evidencia histórica y quedan superados por este cierre.
+- Producción y SiteGround no se consultan ni modifican en esta iteración. Sin cambios DB ni migraciones; `001–009` siguen inmutables.
+- Nueva política: autonomía de Git local/archivos/validaciones/commits en iteraciones aprobadas; pushes e integración a main manuales del propietario después de revisión.
 
-- Rama productiva: `main`; auto-despliega SiteGround.
-- Base de Rediseño mobile: `df04f17 docs: close payment recipient iteration`; HEAD, referencia local `origin/main` y `main` remota coincidentes, verificado por consulta de referencia el 2026-10-08.
-- Cobros integrado en `292018d`; `main` productivo anterior a Rediseño mobile en `df04f17`, según Git y confirmación explícita del usuario.
-- Rediseño mobile completado localmente y aprobado visualmente por el usuario, rama `feat/mobile-redesign`; cierre documental completado y cambios locales sin add/commit/push/merge. No se modificó producción ni SiteGround en esta iteración.
+## Dashboard — Iteración 6 local
+
+- Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres plegables solo hasta 700px.
+- KPIs mantienen cálculos backend: personas del período e inscripciones a actividades son conceptos distintos. Carteras, saldos y gráfico CSS conservados.
+- Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima pendiente: Open-Meteo requiere licencia comercial; MET Norway requeriría proxy/cache backend. Widget informa disponibilidad sin inventar temperaturas.
+- Validación: typecheck, lint, build y diff check aprobados; 126 tests aprobados, 157 integraciones omitidas. QA aislado con fixtures en los siete anchos solicitados; revisión autenticada real pendiente del propietario.
+- Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Pendiente revisión final autenticada del propietario e integración/despliegue manual.
 
 ## Producción
 
@@ -122,7 +128,7 @@ Scripts privados:
 - Cierre productivo confirmado por el usuario: `009.sql` aplicada y registrada; `main` en `df04f17`, deploy `1791429132-5kurej`, build exit code `0`, smoke aprobado e históricos agosto/septiembre/octubre reconciliados correctamente.
 - Documento: `docs/iterations/2026-10-payment-recipients.md`.
 
-## Completado localmente — Rediseño mobile
+## Historial de validación local — Rediseño mobile (desplegado y aprobado posteriormente)
 
 - Alcance exclusivo `max-width: 700px`; desde `701px` tablet/desktop preservados. Header mobile común sin sticky/fixed: PRISMA + hamburguesa / título + ayuda / período + selector + creación `+`, con alineación compartida entre rutas.
 - Menú desplegable con nueve secciones e íconos actuales, cierre de sesión al final y ayudas accesibles con las descripciones existentes.
@@ -132,7 +138,7 @@ Scripts privados:
 - Revisión visual manual final aprobada por el usuario: 390×900, menú cerrado/abierto y todas las secciones principales; 700/701px, tablet 768px y tablet/notebook 1024px. Sin overflow horizontal observado; header, menú, CTAs y tablas/listados aprobados. Layout anterior preservado desde 701px. Servidores locales sobre `prisma_dev` detenidos al cierre documental; sin autorización de commits ni deploy.
 - Documento: `docs/iterations/2026-10-mobile-redesign.md`.
 
-## Validado localmente — Quitar cuenta mensual vacía
+## Historial de validación local — Quitar cuenta mensual vacía (desplegado y aprobado posteriormente)
 
 - Rama actual `fix/remove-empty-monthly-account`, base `19eae35`. Sin add, commit, push, merge ni cambio de rama desde Codex.
 - Corrige la imposibilidad de deshacer una incorporación errónea después de eliminar actividades/pagos: la cuenta automática persistía y bloqueaba la baja por su sola existencia.
@@ -142,7 +148,7 @@ Scripts privados:
 - Evidencia productiva de solo lectura comunicada por el usuario: Noviembre 2026, cuentas 147/148 con NULL y 149 con cero; todas sin inscripciones ni pagos. No se conectó a producción ni se modificó `prisma_dev` o SiteGround. Revisión manual, deploy y smoke productivo pendientes de autorización del usuario.
 - Documento: `docs/iterations/2026-10-remove-empty-monthly-account.md`.
 
-## Validado localmente — Configuración eliminable vs historial real
+## Historial de validación local — Configuración eliminable (desplegado y aprobado posteriormente)
 
 - Eliminar período abierto ahora retira atómicamente su configuración y categorías vacías cuando no quedan membresías, inscripciones, cuentas/cobros, cuentas/pagos de facilitadores, gastos, publicidad histórica del mes ni referencias externas sobre horarios. Flags de oferta/horario en 1 por inscripciones canceladas no bloquean el período completo.
 - Editar fecha mantiene regla conservadora: período abierto sin configuración ni datos. Cerrado bloquea edición/eliminación hasta reapertura.

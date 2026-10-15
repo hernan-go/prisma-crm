@@ -182,3 +182,7 @@ Cartera Independiente y separación especial de Informática evaluadas y descart
 ```
 
 La URL `/publicidad` se mantiene por ahora aunque la funcionalidad visible sea `Gastos Período`.
+
+## Dashboard
+
+`client/Dashboard.tsx` consume la selección global que permanece en App. `/api/dashboard` y `/api/agenda` se consultan de forma independiente con claves por período, sin datos anteriores como placeholder. `client/dashboard-model.ts` transforma horarios y calcula fecha/día/hora con Intl y zona argentina explícita; `client/dashboard.css` limita los cambios visuales al Dashboard. El reloj no dispara consultas por minuto. No cambian endpoints, contratos ni cálculos financieros. No hay proveedor meteorológico conectado en esta iteración; ver D016 y `iterations/2026-10-dashboard-redesign.md`.

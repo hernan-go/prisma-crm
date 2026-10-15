@@ -4,7 +4,7 @@ Este documento registra decisiones que no deben rediscutirse en cada iteración 
 
 ## D001 — Git y producción
 
-`main` es productiva y su push dispara deploy en SiteGround. El push a `main` requiere autorización explícita después de validar localmente.
+`main` es productiva y su push dispara deploy en SiteGround. Los pushes y la integración a main quedan manuales del propietario después de validar y aprobar. En iteraciones aprobadas, Codex administra autónomamente Git local, archivos, validaciones y commits dentro del alcance autorizado; se mantienen prohibidas las operaciones Git destructivas y los cambios productivos.
 
 ## D002 — Migraciones aplicadas son inmutables
 
@@ -114,3 +114,9 @@ Configuración no equivale a historia. Las eliminaciones son explícitas, acotad
 - QA usa la misma función de eliminación de catálogos que la API, conservando lista permitida, revisión y fingerprint.
 
 Sin migración ni recálculo/reset de flags. Los receipts se conservan: su hash no permite reconstruir el período y no hay una auditoría completa de movimientos ya eliminados. Evidencia productiva de Noviembre 2026 aportada por el usuario; Codex no consulta ni modifica producción. Detalle: `iterations/2026-10-configuration-cleanup-rules.md`.
+
+## D016 — Dashboard y período seleccionado
+
+Todo dato administrativo y operativo del Dashboard pertenece al período seleccionado: KPIs, carteras, saldos, gráfico y programación semanal con inscriptos. La programación usa el día semanal actual dentro de ese período, incluso histórico o futuro; no afirma asistencia ni clases efectivamente dictadas. Solo fecha/hora y eventual clima representan el momento actual en Argentina, independientemente del período.
+
+«Total inscriptos período» cuenta personas únicas incorporadas mediante membresías, incluso sin actividades. «Inscripciones en actividades» cuenta inscripciones, permitiendo que una misma persona participe en varias actividades; varios horarios no agregan inscripciones por sí solos. Se conservan los cálculos existentes del backend. Sin creación implícita de períodos, fallback a otros meses ni cambios de restricciones de períodos cerrados.
