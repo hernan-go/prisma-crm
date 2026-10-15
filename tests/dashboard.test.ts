@@ -209,12 +209,16 @@ it('expone carga y ausencia de período sin usar datos de otro mes', () => {
   expect(empty).toContain('Clima no disponible');
   expect(empty).not.toContain('Total cobrado');
 });
-it('mantiene nombres completos, enlace existente y control inicialmente contraído en período cerrado', () => {
+it('mantiene nombres visibles y enlace existente sin controles de despliegue en período cerrado', () => {
   const html = renderDashboard();
   expect(html).toContain('Persona Completa');
   expect(html).toContain('href="/personas/7"');
-  expect(html).toContain('aria-expanded="false"');
-  expect(html).toContain('Ver personas inscriptas');
+  expect(html).toContain('class="dashboard-people"');
+  expect(html).not.toContain('Ver personas inscriptas');
+  expect(html).not.toContain('dashboard-people-toggle');
+  expect(html).not.toContain('Programación semanal e inscripciones.');
+  expect(html).toContain('dashboard-day-tile');
+  expect(html).toContain('dashboard-clock');
   expect(html).toContain('Programación de los');
   expect(html).not.toContain('Asistentes');
 });

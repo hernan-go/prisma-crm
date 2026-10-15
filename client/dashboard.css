@@ -20,29 +20,54 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.dashboard-day-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.dashboard-day-tile,
 .dashboard-clock {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   padding: 18px 20px;
-  background: #33453e;
   border-radius: 11px;
+  min-width: 0;
 }
-.dashboard-clock > div {
-  flex: 1;
-  min-width: 135px;
+.dashboard-day-tile {
+  background: #33453e;
 }
-.dashboard-clock b,
-.dashboard-clock span {
-  display: block;
+.dashboard-day-tile > svg {
+  flex-shrink: 0;
 }
-.dashboard-clock b {
-  text-transform: capitalize;
+.dashboard-day-tile h2 {
+  margin: 0 0 4px;
   color: #78cbb2;
+  font-size: clamp(20px, 1.5vw, 26px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.dashboard-day-tile h2 span {
+  text-transform: capitalize;
+}
+.dashboard-day-tile p {
+  margin: 0;
+  color: #78cbb2;
+  font-size: 13px;
+}
+.dashboard-day-tile small {
+  display: block;
+  margin-top: 4px;
+  color: #becac7;
+}
+.dashboard-clock {
+  background: #4b4b4b;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 .dashboard-clock time {
-  font-size: clamp(30px, 3vw, 44px);
+  font-size: clamp(30px, 3vw, 40px);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -50,19 +75,6 @@
 .dashboard-clock small {
   color: #becac7;
   font-size: 12px;
-}
-.dashboard-day-heading {
-  margin: 24px 0 16px;
-}
-.dashboard-day-heading h2 {
-  color: #78cbb2;
-  font-size: 25px;
-  margin-bottom: 6px;
-}
-.dashboard-day-heading p {
-  color: #a8bab4;
-  font-size: 13px;
-  margin: 0;
 }
 .dashboard .dashboard-schedule {
   margin-bottom: 16px;
@@ -119,9 +131,6 @@
 .dashboard-people p {
   margin-bottom: 0;
 }
-.dashboard-people-toggle {
-  display: none;
-}
 .dashboard .dashboard-stats {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
@@ -131,7 +140,7 @@
 .dashboard .stat {
   padding: 14px;
   min-width: 0;
-  position: static;
+  position: relative;
 }
 .dashboard-metric-title {
   display: flex;
@@ -176,9 +185,10 @@
 .dashboard-help-panel {
   position: absolute;
   z-index: 5;
-  top: 68px;
-  left: 8px;
-  width: min(360px, calc(100% - 16px));
+  top: calc(100% + 8px);
+  left: 0;
+  width: max(100%, 240px);
+  max-width: min(360px, calc(100vw - 40px));
   padding: 14px;
   background: #172c25;
   border: 1px solid #78cbb2;
@@ -187,6 +197,10 @@
   color: #e6eaea;
   font-size: 13px;
   overflow-wrap: anywhere;
+}
+.dashboard .stat:nth-child(2) .dashboard-help-panel {
+  left: auto;
+  right: 0;
 }
 .dashboard-help-panel p {
   margin-bottom: 10px;
@@ -244,6 +258,10 @@
   }
 }
 @container (min-width: 680px) {
+  .dashboard .stat:nth-child(2) .dashboard-help-panel {
+    left: 0;
+    right: auto;
+  }
   .dashboard .dashboard-stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -263,31 +281,19 @@
   .dashboard .panel {
     padding: 16px;
   }
+  .dashboard-day-header {
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 16px;
+  }
+  .dashboard-day-tile,
   .dashboard-clock {
-    gap: 12px;
-    padding: 16px;
+    padding: 14px 16px;
   }
   .dashboard-clock time {
     font-size: 34px;
   }
-  .dashboard-clock small {
-    width: 100%;
-    padding-left: 34px;
-  }
-  .dashboard-day-heading h2 {
-    font-size: 22px;
-  }
-  .dashboard-people-toggle {
-    display: inline-flex;
-    min-height: 44px;
-    width: 100%;
-    margin-top: 6px;
-  }
-  .dashboard-people:not(.is-expanded) {
-    display: none;
-  }
   .dashboard-people a {
-    padding: 10px 0;
+    padding: 7px 0;
     min-height: 44px;
   }
   .dashboard .dashboard-stats {

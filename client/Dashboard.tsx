@@ -88,8 +88,6 @@ function useCurrentMinute() {
   return now;
 }
 function ScheduleCard({ schedule }: { schedule: AgendaSchedule }) {
-  const [expanded, setExpanded] = useState(false);
-  const id = `dashboard-people-${schedule.id}`;
   return (
     <article className="panel dashboard-schedule">
       <div className="dashboard-schedule-heading">
@@ -107,16 +105,7 @@ function ScheduleCard({ schedule }: { schedule: AgendaSchedule }) {
           <b>{schedule.people.length}</b>
         </div>
       </div>
-      <button
-        className="dashboard-people-toggle"
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={id}
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? 'Ocultar personas inscriptas' : 'Ver personas inscriptas'}
-      </button>
-      <div id={id} className={`dashboard-people ${expanded ? 'is-expanded' : ''}`}>
+      <div className="dashboard-people">
         {schedule.people.length ? (
           <ul>
             {schedule.people.map((p) => (
@@ -235,29 +224,40 @@ export function Dashboard() {
       </PageHeading>
       <div className="dashboard-layout">
         <section className="dashboard-operation" aria-label="Programación diaria">
-          <div className="dashboard-clock">
-            <Clock3 size={22} aria-hidden="true" />
-            <div>
-              <b>{date.weekday}</b>
-              <span>{date.date}</span>
+          <div className="dashboard-day-header">
+            <div className="dashboard-day-tile">
+              <Clock3 size={22} aria-hidden="true" />
+              <div>
+                <h2>
+                  {selected && programmingTitle(selected, now) === 'Actividades de hoy' ? (
+                    <>
+                      Actividades <span>{date.weekday}</span>
+                    </>
+                  ) : selected ? (
+                    programmingTitle(selected, now)
+                  ) : (
+                    'Programación del día'
+                  )}
+                </h2>
+                <p>{date.date}</p>
+                {selected && (selected.year !== date.year || selected.month !== date.month) && (
+                  <small>{periodName(selected)}</small>
+                )}
+              </div>
             </div>
-            <time dateTime={now.toISOString()}>{date.time}</time>
-            <small>
-              Rosario, Santa Fe
-              <br />
-              Clima no disponible
-            </small>
+            <div className="dashboard-clock">
+              <time dateTime={now.toISOString()}>{date.time}</time>
+              <small>
+                Rosario, Santa Fe
+                <br />
+                Clima no disponible
+              </small>
+            </div>
           </div>
           {!period ? (
             <Empty>Creá un período con el botón + para comenzar.</Empty>
           ) : (
             <>
-              <div className="dashboard-day-heading">
-                <h2>{selected ? programmingTitle(selected, now) : 'Programación del día'}</h2>
-                <p>
-                  {periodName(selected)} · {date.weekday}. Programación semanal e inscripciones.
-                </p>
-              </div>
               {agenda.isPending ? (
                 <Loading />
               ) : agenda.error ? (

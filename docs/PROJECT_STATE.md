@@ -11,7 +11,7 @@
 
 ## Dashboard — Iteración 6 local
 
-- Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres plegables solo hasta 700px.
+- Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres siempre visibles también en mobile, según corrección fina posterior aprobada. Cabecera operativa en dos tiles y ayudas KPI ancladas individualmente.
 - KPIs mantienen cálculos backend: personas del período e inscripciones a actividades son conceptos distintos. Carteras, saldos y gráfico CSS conservados.
 - Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima pendiente: Open-Meteo requiere licencia comercial; MET Norway requeriría proxy/cache backend. Widget informa disponibilidad sin inventar temperaturas.
 - Validación: typecheck, lint, build y diff check aprobados; 126 tests aprobados, 157 integraciones omitidas. QA aislado con fixtures en los siete anchos solicitados; revisión autenticada real pendiente del propietario.

@@ -42,3 +42,11 @@ El acceso real a localhost funciona pero requiere contraseña. No se ingresaron 
 Las tres iteraciones anteriores (mobile, quitar cuenta mensual vacía y configuración eliminable) están integradas, desplegadas y aprobadas en producción, según confirmación explícita del propietario en el pedido. Noviembre 2026 creado por error fue eliminado satisfactoriamente. No se repitió auditoría ni acceso productivo.
 
 Abrir `http://localhost:5173`, iniciar sesión y revisar Dashboard, selección de períodos y mobile. Si el servidor no está activo, ejecutar `.\private\run-dev.ps1`. Push e integración a main quedan manuales después de aprobación del propietario.
+
+## Corrección fina posterior — 2026-10-15
+
+Ajuste aprobado tras revisión manual, sobre la misma rama: cabecera operativa en dos tiles (día/actividades y hora/ubicación), seguida directamente por las actividades, sin la línea redundante. Para otros períodos se conserva su identificación y el título de programación semanal. Las personas quedan siempre visibles también en mobile: se retiran el botón y el estado de despliegue. Esta decisión supera el comportamiento contraído descrito en la implementación inicial.
+
+Cada ayuda KPI se posiciona respecto de su propio tile mediante CSS relativo, con alineación adaptable para evitar desbordamiento. Se conservan texto, apertura/cierre, Escape y retorno de foco. No cambia backend, finanzas, cálculos ni clima.
+
+QA en Chrome headless con respuestas API ficticias aisladas del servidor: 1920, 1366 y 390px. Cabecera sin redundancia, nombres visibles, ambas ayudas ancladas al tile correspondiente, Escape/foco y ausencia de overflow verificados; capturas revisadas. No se usaron credenciales ni se modificaron datos reales.
