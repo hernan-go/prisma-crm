@@ -32,9 +32,9 @@
 
 Cartera Independiente y separación especial de ingresos/deuda de Informática evaluadas y descartadas. Modelo financiero único para PRISMA. No clasificar ni excluir movimientos por nombre de actividad.
 
-## Iteración 6 — Dashboard implementado localmente
+## Iteración 6 — Dashboard completado y aprobado visualmente
 
-Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima de Rosario implementado mediante MET Norway Locationforecast 2.0, con proxy/caché en memoria, atribución CC BY 4.0 y sin dependencia del período. Pendiente revisión final autenticada e integración manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
+Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima de Rosario implementado mediante MET Norway Locationforecast 2.0, con proxy/caché en memoria, atribución CC BY 4.0 y sin dependencia del período. Revisión visual desktop/mobile y MET Norway aprobada por el propietario el 2026-10-15. Cierre técnico local; pendiente aprobación para integrar localmente a main y posterior despliegue manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
 
 ## Pendiente — Egresos y resultado financiero
 

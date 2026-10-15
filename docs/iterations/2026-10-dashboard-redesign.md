@@ -3,6 +3,16 @@
 **Fecha:** 2026-10-15. **Base verificada:** `c20b451707a6f19b8a01a759c6a7c58627d70bf1`, main y origin/main coincidentes tras fetch. Working tree inicial limpio.
 **Rama:** `codex/dashboard-redesign`. Implementación local; sin push, merge, despliegue ni cambios productivos.
 
+## Estado final de cierre — 2026-10-15
+
+Dashboard completo, incluidas las correcciones finas y MET Norway. Revisión visual desktop/mobile e integración meteorológica aprobadas explícitamente por el propietario en el cierre de esta conversación. Este estado final supera los pendientes visuales y meteorológicos descritos en las secciones históricas siguientes.
+
+Rama conservada: `codex/dashboard-redesign`. Commits de implementación: `741dc65` (Dashboard), `28821d0` (corrección visual) y `41860a0` (MET Norway); documentación previa en `f09fb73`. El cierre solo actualiza documentación; no modifica código, producción ni bases de datos.
+
+Validación técnica de cierre repetida y aprobada: typecheck, lint, 162 tests normales aprobados (157 integraciones DB omitidas), build local y git diff --check. Incluye los 36 casos focalizados de clima con respuestas simuladas y sin Internet. Build conserva únicamente los warnings conocidos de Zod/Rollup. No se repitió QA visual ya aprobada ni consultas externas innecesarias.
+
+Listo para integrar localmente a main después de nueva aprobación del propietario. No se hizo push, merge ni despliegue. Riesgos pendientes del hosting: confirmar Node compatible con el runtime documentado (24 LTS) y salida HTTPS a api.met.no; caché por proceso se reinicia con el servidor y la disponibilidad depende de MET Norway. Un fallo meteorológico conserva hora, actividades y finanzas. Persiste documentado el desbordamiento previo del selector global a 701px con cierto fixture, fuera del alcance del Dashboard aprobado. Sin migraciones, nuevas dependencias ni credenciales meteorológicas.
+
 ## Alcance implementado
 
 Dashboard extraído de App a `client/Dashboard.tsx`, con estilos acotados en `client/dashboard.css` y transformación/fecha en `client/dashboard-model.ts`. App conserva navegación y selección global del período. Sin cambios a backend, contratos, cálculos, dependencias, esquema ni migraciones.

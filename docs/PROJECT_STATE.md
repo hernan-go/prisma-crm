@@ -4,7 +4,7 @@
 
 ## Git / producción
 
-- Iteración actual: nuevo Dashboard, implementado en `codex/dashboard-redesign`, base limpia `c20b451` coincidente con `main` y `origin/main` tras fetch el 2026-10-15. Trabajo local autorizado con commits; sin push ni merge.
+- Iteración actual: Dashboard completado y revisión visual desktop/mobile, incluida MET Norway, aprobada explícitamente por el propietario el 2026-10-15. Rama `codex/dashboard-redesign`, base `c20b451`, implementación final en `41860a0`. Cierre técnico local; pendiente aprobación para integrar localmente a main. Sin push ni merge.
 - Mobile, quitar cuenta mensual estrictamente vacía y configuración eliminable están integrados, desplegados y aprobados por el propietario en producción, confirmado en el pedido de Iteración 6. Noviembre 2026 creado por error fue eliminado satisfactoriamente. Los apartados anteriores de validación local se conservan como evidencia histórica y quedan superados por este cierre.
 - Producción y SiteGround no se consultan ni modifican en esta iteración. Sin cambios DB ni migraciones; `001–009` siguen inmutables.
 - Nueva política: autonomía de Git local/archivos/validaciones/commits en iteraciones aprobadas; pushes e integración a main manuales del propietario después de revisión.
@@ -14,8 +14,8 @@
 - Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres siempre visibles también en mobile, según corrección fina posterior aprobada. Cabecera operativa en dos tiles y ayudas KPI ancladas individualmente.
 - KPIs mantienen cálculos backend: personas del período e inscripciones a actividades son conceptos distintos. Carteras, saldos y gráfico CSS conservados.
 - Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima integrado mediante GET /api/weather y proxy/caché en memoria hacia MET Norway para Rosario. Temperatura, icono Lucide y condición exclusivamente dentro del tile gris, después de la hora; fuente y licencia visibles. Sin DB ni dependencias nuevas. Se conserva el estado «Clima no disponible» ante fallas.
-- Validación: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión autenticada real y smoke del hosting pendientes del propietario.
-- Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Pendiente revisión final autenticada del propietario e integración/despliegue manual.
+- Validación: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión visual desktop/mobile y clima aprobada explícitamente por el propietario. Smoke del hosting pendiente del despliegue manual autorizado.
+- Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Revisión visual aprobada; listo para integración local a main después de nueva aprobación. Integración y despliegue aún no realizados.
 
 ## Producción
 
