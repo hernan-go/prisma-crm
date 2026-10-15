@@ -21,8 +21,8 @@ import {
   X,
 } from 'lucide-react';
 import { api } from './api';
-import { ErrorBox, Loading, Empty, PageHeading, PageTitle, useDisclosure } from './components';
-import { formatMoney, recipientLabel, type PeriodWallets } from '../shared/domain';
+import { ErrorBox, Empty, PageTitle, useDisclosure } from './components';
+import { Dashboard } from './Dashboard';
 import { People, PersonDetail } from './People';
 import { Monthly, Agenda, Payments, Configuration } from './Management';
 import { Expenses } from './Expenses';
@@ -302,103 +302,5 @@ export default function App() {
       )}
       {create && <PeriodForm close={() => setCreate(false)} onCreated={setPeriod} />}
     </PeriodContext.Provider>
-  );
-}
-function Dashboard() {
-  const { period, periods } = usePeriod();
-  const q = useQuery({
-    queryKey: ['dashboard', period],
-    queryFn: () =>
-      api<{ wallets: PeriodWallets } & Record<string, any>>(`/dashboard?period_id=${period}`),
-    enabled: !!period,
-  });
-  const heading = (
-    <PageHeading
-      eyebrow="RESUMEN DEL ESPACIO"
-      title="Dashboard"
-      description={`Una mirada a ${periodName(periods.find((p) => p.id === period)) || 'tu espacio'}.`}
-    >
-      <NavLink className="button primary" to="/gestion">
-        <Plus size={17} /> Nueva inscripción
-      </NavLink>
-    </PageHeading>
-  );
-  if (!period) return <Empty>Creá un período con el botón + para comenzar.</Empty>;
-  if (q.isPending) return <Loading />;
-  if (q.error) return <ErrorBox error={q.error} />;
-  const d = q.data;
-  return (
-    <>
-      {heading}
-      <div className="stats">
-        {[
-          ['Personas inscriptas', d.people],
-          ['Inscripciones', d.enrollments],
-          ['Total a cobrar', formatMoney(d.due)],
-          ['Total cobrado', formatMoney(d.paid)],
-        ].map(([label, value]) => (
-          <article className="stat" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            <small>Período seleccionado</small>
-          </article>
-        ))}
-      </div>
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="section-heading">
-            <h2>Inscripciones por actividad</h2>
-            <span className="chip">{d.activities.length} actividades</span>
-          </div>
-          {d.activities.map((a: any) => (
-            <div className="activity-count" key={a.name}>
-              <div>
-                <span>{a.name}</span>
-                <b>{a.count}</b>
-              </div>
-              <div className="track">
-                <i
-                  style={{
-                    width: `${Math.max(0, (a.count / Math.max(1, ...d.activities.map((x: any) => x.count))) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </section>
-        <div className="stack">
-          <section className="panel">
-            <h2>Carteras del mes</h2>
-            {(['jesica', 'hernan'] as const).map((recipient) => (
-              <div key={recipient} className="wallet">
-                <span className="wallet-icon">
-                  <Wallet size={21} />
-                </span>
-                <div>
-                  <b>{recipientLabel(recipient)}</b>
-                  <small>Efectivo: {formatMoney(d.wallets[recipient].cash)}</small>
-                  <small>Transferencia: {formatMoney(d.wallets[recipient].transfer)}</small>
-                  <small>
-                    <b>Total: {formatMoney(d.wallets[recipient].total)}</b>
-                  </small>
-                </div>
-              </div>
-            ))}
-          </section>
-          <section className="panel balance-panel">
-            <span className="eyebrow">SALDOS DEL MES</span>
-            <h2>{formatMoney(d.pending)}</h2>
-            <p>Pendiente de cobro</p>
-            <small>Saldo a favor: {formatMoney(d.credit)}</small>
-            {Number(d.undefined_accounts) > 0 && (
-              <p className="info">
-                {d.undefined_accounts} cuentas con importe a cobrar no definido.
-              </p>
-            )}
-            <NavLink to="/pagos">Ver cuentas y movimientos →</NavLink>
-          </section>
-        </div>
-      </div>
-    </>
   );
 }

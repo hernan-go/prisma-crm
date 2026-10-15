@@ -1,0 +1,309 @@
+/* Scoped to the Dashboard; the shared shell keeps its existing breakpoints. */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.dashboard-operation,
+.dashboard-administration {
+  min-width: 0;
+}
+.dashboard-administration {
+  display: grid;
+  gap: 18px;
+  container-type: inline-size;
+}
+.dashboard .panel {
+  margin: 0;
+  padding: 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-clock {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #33453e;
+  border-radius: 11px;
+}
+.dashboard-clock > div {
+  flex: 1;
+  min-width: 135px;
+}
+.dashboard-clock b,
+.dashboard-clock span {
+  display: block;
+}
+.dashboard-clock b {
+  text-transform: capitalize;
+  color: #78cbb2;
+}
+.dashboard-clock time {
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dashboard-clock small {
+  color: #becac7;
+  font-size: 12px;
+}
+.dashboard-day-heading {
+  margin: 24px 0 16px;
+}
+.dashboard-day-heading h2 {
+  color: #78cbb2;
+  font-size: 25px;
+  margin-bottom: 6px;
+}
+.dashboard-day-heading p {
+  color: #a8bab4;
+  font-size: 13px;
+  margin: 0;
+}
+.dashboard .dashboard-schedule {
+  margin-bottom: 16px;
+}
+.dashboard-schedule-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dashboard-schedule-heading > div:first-child {
+  min-width: 0;
+}
+.dashboard-schedule h3 {
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-schedule-heading p {
+  color: #b0c9bf;
+  margin: 0 0 12px;
+}
+.dashboard-count {
+  flex-shrink: 0;
+  text-align: center;
+}
+.dashboard-count span {
+  display: block;
+  color: #a8bab4;
+  font-size: 12px;
+}
+.dashboard-count b {
+  display: inline-block;
+  padding: 3px 12px;
+  margin-top: 5px;
+  background: #78cbb2;
+  color: #122e26;
+  border-radius: 4px;
+}
+.dashboard-people ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dashboard-people li {
+  padding: 5px 0;
+  border-bottom: 1px solid #35443e;
+}
+.dashboard-people a {
+  color: #e6eaea;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.dashboard-people p {
+  margin-bottom: 0;
+}
+.dashboard-people-toggle {
+  display: none;
+}
+.dashboard .dashboard-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  position: relative;
+}
+.dashboard .stat {
+  padding: 14px;
+  min-width: 0;
+  position: static;
+}
+.dashboard-metric-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  font-size: 12px;
+  color: #d4dfdb;
+}
+.dashboard .stat strong {
+  font-size: 30px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.dashboard .stat .dashboard-money {
+  font-size: 20px;
+  letter-spacing: -0.4px;
+}
+.dashboard .stat small {
+  font-size: 11px;
+}
+.dashboard-help {
+  flex-shrink: 0;
+}
+.dashboard-help > button {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.dashboard-help > button span {
+  width: 16px;
+  height: 16px;
+  background: #78cbb2;
+  color: #122e26;
+  font-size: 12px;
+  line-height: 16px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+.dashboard-help-panel {
+  position: absolute;
+  z-index: 5;
+  top: 68px;
+  left: 8px;
+  width: min(360px, calc(100% - 16px));
+  padding: 14px;
+  background: #172c25;
+  border: 1px solid #78cbb2;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px #0006;
+  color: #e6eaea;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.dashboard-help-panel p {
+  margin-bottom: 10px;
+}
+.dashboard-help-panel button {
+  min-height: 44px;
+}
+.dashboard-finances {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.dashboard .dashboard-finances h2 {
+  font-size: 19px;
+  color: #78cbb2;
+  margin: 0 0 18px;
+}
+.dashboard .wallet {
+  padding: 16px 0;
+  gap: 12px;
+}
+.dashboard .wallet > div {
+  min-width: 0;
+}
+.dashboard .wallet small {
+  font-size: 13px;
+}
+.dashboard .wallet-icon {
+  padding: 10px;
+  flex-shrink: 0;
+}
+.dashboard-balance {
+  display: block;
+  margin: 22px 0 8px;
+  font-size: 26px;
+  overflow-wrap: anywhere;
+}
+.dashboard .balance-panel small {
+  display: block;
+  margin-bottom: 14px;
+}
+.dashboard .balance-panel .info {
+  font-size: 13px;
+  padding: 10px;
+}
+.dashboard-chart h2 {
+  font-size: 16px;
+}
+.dashboard-chart .activity-count {
+  margin-top: 20px;
+}
+@container (min-width: 570px) {
+  .dashboard-finances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 680px) {
+  .dashboard .dashboard-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1200px) {
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .dashboard-layout {
+    gap: 24px;
+  }
+  .dashboard-finances {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard .panel {
+    padding: 16px;
+  }
+  .dashboard-clock {
+    gap: 12px;
+    padding: 16px;
+  }
+  .dashboard-clock time {
+    font-size: 34px;
+  }
+  .dashboard-clock small {
+    width: 100%;
+    padding-left: 34px;
+  }
+  .dashboard-day-heading h2 {
+    font-size: 22px;
+  }
+  .dashboard-people-toggle {
+    display: inline-flex;
+    min-height: 44px;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .dashboard-people:not(.is-expanded) {
+    display: none;
+  }
+  .dashboard-people a {
+    padding: 10px 0;
+    min-height: 44px;
+  }
+  .dashboard .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard .stat {
+    padding: 12px;
+  }
+  .dashboard-metric-title {
+    gap: 0;
+    font-size: 12px;
+  }
+  .dashboard-help > button {
+    width: 44px;
+  }
+  .dashboard .stat .dashboard-money {
+    font-size: 19px;
+  }
+}
