@@ -221,6 +221,12 @@ header {
   justify-content: space-between;
   gap: 20px;
 }
+.desktop-header {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 88px;
+  padding-block: 12px;
+}
 .breadcrumb {
   font-size: 12px;
   color: #b6c0bf;

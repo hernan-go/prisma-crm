@@ -46,7 +46,7 @@ docs/                Análisis de fuentes, modelo y verificación
 
 ## Requisitos
 
-Node.js 22.12+ o 24 LTS, npm, MySQL 8.0.16+ (probado con 8.4.8), base UTF-8 y usuario con acceso a esa base. Git para versionar. No requiere Docker. CI usa un contenedor MySQL únicamente como servicio de pruebas.
+Node.js 22.12+ o 24 LTS, npm, MySQL 8.0.16+ (entorno local vigente: Community Server 8.4.11), base UTF-8 y usuario con acceso a esa base. Git para versionar. No requiere Docker. CI usa un contenedor MySQL únicamente como servicio de pruebas.
 
 ## Instalación local
 
@@ -75,15 +75,23 @@ Abrir `http://localhost:5173`. Vite redirige `/api` al puerto 3001. Para desarro
 
 Las migraciones aplicadas quedan en `schema_migrations`. El runner usa un bloqueo exclusivo. MySQL realiza commit implícito de DDL: no asumir rollback completo de una migración de esquema. La inicial es reejecutable con `IF NOT EXISTS`; respaldar antes de futuras migraciones y no editar migraciones ya aplicadas. La seed actual no inserta ni modifica configuración operativa. En instalaciones nuevas, cargar manualmente catálogo, facilitadores, períodos, ofertas y horarios desde Configuración. No carga personas ni asignaciones predefinidas.
 
-En este equipo se preparó una instancia **local de desarrollo** MySQL 8.4.8 en `tmp/mysql/`, con puerto 3307 y bases `prisma_dev`/`prisma_test`. No es un servicio de Windows y no se despliega. `.env` contiene la credencial local generada; `private/local-mysql-admin.json` es solo para administrar esa instancia. Ambos están excluidos de Git. Para volver a iniciarla desde PowerShell:
+### Entorno local vigente en Windows
+
+MySQL Community Server 8.4.11 funciona como servicio Windows `MySQL84`, en `127.0.0.1:3306`. La antigua instancia portátil en `tmp/mysql` y el puerto 3307 ya no corresponden al entorno vigente.
+
+- `prisma_dev`: desarrollo normal.
+- `prisma_demo`: demos y datos ficticios.
+- `prisma_test`: única base permitida para pruebas de integración destructivas.
+
+Con el servicio activo, iniciar el proyecto desde PowerShell con el script correspondiente:
 
 ```powershell
-$base = Join-Path (Get-Location) 'tmp/mysql/mysql-8.4.8-winx64'
-$data = Join-Path (Get-Location) 'tmp/mysql-data'
-& "$base/bin/mysqld.exe" --no-defaults "--basedir=$base" "--datadir=$data" --port=3307 --bind-address=127.0.0.1 --mysqlx=OFF --console
+.\private\run-dev.ps1
+# O bien, para demo:
+.\private\run-demo.ps1
 ```
 
-`scripts/setup-local-db.ts` es una utilidad de arranque único para esa instancia recién inicializada, no un instalador ni un paso de producción. Las pruebas generan fixtures exclusivamente en la base descartable prisma_test; no copiar esa base al entorno operativo.
+Los scripts privados seleccionan la base correspondiente; las credenciales permanecen exclusivamente en la configuración local excluida de Git. `scripts/setup-local-db.ts` es una utilidad histórica para la instancia portátil, no un paso del arranque vigente ni de producción. Las pruebas generan fixtures exclusivamente en la base descartable `prisma_test`; nunca ejecutarlas contra `prisma_dev`, `prisma_demo` o producción, ni copiar la base de pruebas al entorno operativo.
 
 ## Variables de entorno
 
@@ -191,4 +199,4 @@ mysqldump --single-transaction --routines --triggers --no-tablespaces -h HOST -u
 - **Reglas de día:** editar Configuración; no cambiar componentes. Verificar oferta y horarios del período. Los facilitadores inactivos conservan sus asignaciones históricas pero no admiten nuevas asignaciones.
 - **Importación rechazada:** revisar fila de encabezados, campos obligatorios, teléfono con al menos seis dígitos, tamaño y duplicados. No se aceptan ZIP64 ni libros con más de 40 MB descomprimidos; exportar solo la hoja de personas si el libro es grande.
 - **Windows / esbuild / tsx con Access denied:** ejecutar el comando autorizado en una terminal normal fuera del sandbox de la herramienta, no cambiar permisos del sistema de forma global.
-- **Cerrar entorno local:** detener Node con Ctrl+C. Apagar la instancia MySQL propia con `mysqladmin` usando las credenciales locales guardadas. No detener otras instalaciones.
+- **Cerrar entorno local:** detener Node con Ctrl+C. El servicio Windows `MySQL84` se administra por separado; no ejecutar el procedimiento histórico de apagado de MySQL portátil ni detener otras instalaciones.

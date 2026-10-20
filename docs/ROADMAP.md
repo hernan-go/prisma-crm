@@ -1,6 +1,6 @@
 # PRISMA CRM — Roadmap
 
-**Actualizado:** 2026-10-15
+**Actualizado:** 2026-10-20
 
 ## Completado recientemente
 
@@ -32,9 +32,9 @@
 
 Cartera Independiente y separación especial de ingresos/deuda de Informática evaluadas y descartadas. Modelo financiero único para PRISMA. No clasificar ni excluir movimientos por nombre de actividad.
 
-## Iteración 6 — Dashboard completado y aprobado visualmente
+## Iteración 6 — Dashboard desplegado y verificado en producción
 
-Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima de Rosario implementado mediante MET Norway Locationforecast 2.0, con proxy/caché en memoria, atribución CC BY 4.0 y sin dependencia del período. Revisión visual desktop/mobile y MET Norway aprobada por el propietario el 2026-10-15. Cierre técnico local; pendiente aprobación para integrar localmente a main y posterior despliegue manual. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
+Nuevo diseño operativo/administrativo implementado en `codex/dashboard-redesign`, sin cambios financieros ni DB. Fecha/hora argentina, agenda semanal por período y ayudas accesibles. Clima de Rosario implementado mediante MET Norway Locationforecast 2.0, con proxy/caché en memoria, atribución CC BY 4.0 y sin dependencia del período. Revisión visual desktop/mobile y MET Norway aprobada por el propietario el 2026-10-15. Cierre productivo confirmado por el propietario y registrado el 2026-10-20: integrado a `main`, push realizado, HEAD `e13f952`, build SiteGround con exit code `0` y Dashboard/clima verificados visualmente en producción. Sin nuevas migraciones ni pruebas productivas adicionales desde Codex. Detalle: `docs/iterations/2026-10-dashboard-redesign.md`.
 
 ## Pendiente — Egresos y resultado financiero
 
@@ -72,6 +72,6 @@ No implementar estadísticas arbitrarias sin definición previa.
 
 Postergado deliberadamente hasta estabilizar los modelos financieros y Estadísticas.
 
-## Backlog documental menor
+## Mantenimiento documental — Iteración 7
 
-Actualizar README histórico que todavía menciona el antiguo MySQL portátil en `tmp/mysql`.
+README actualizado al entorno local MySQL Community Server 8.4.11, servicio `MySQL84`, puerto 3306 y scripts privados de desarrollo/demo. Registro de mantenimiento y verificación responsive: `docs/iterations/2026-10-maintenance.md`.

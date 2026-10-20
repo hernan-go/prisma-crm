@@ -1,9 +1,17 @@
 # Iteración 6 — Nuevo Dashboard
 
 **Fecha:** 2026-10-15. **Base verificada:** `c20b451707a6f19b8a01a759c6a7c58627d70bf1`, main y origin/main coincidentes tras fetch. Working tree inicial limpio.
-**Rama:** `codex/dashboard-redesign`. Implementación local; sin push, merge, despliegue ni cambios productivos.
+**Rama de implementación:** `codex/dashboard-redesign`. El estado local original se conserva como registro histórico más abajo.
 
-## Estado final de cierre — 2026-10-15
+## Cierre productivo confirmado — registrado el 2026-10-20
+
+El propietario confirmó Dashboard y MET Norway integrados a `main`, push productivo realizado y HEAD final `e13f952`. Build SiteGround finalizado con exit code `0`; Dashboard y clima verificados visualmente en producción. Sin cambios de esquema ni nuevas migraciones. Codex no realizó verificaciones productivas adicionales.
+
+Este cierre supera las referencias a integración, despliegue y smoke pendientes del registro histórico siguiente. La limitación responsive a 701px queda registrada como hallazgo de aquella QA; su investigación posterior corresponde a la iteración 7 (`2026-10-maintenance.md`).
+
+## Registro histórico de implementación y cierre local — 2026-10-15
+
+Todas las secciones siguientes describen el trabajo y las verificaciones disponibles antes del cierre productivo confirmado arriba.
 
 Dashboard completo, incluidas las correcciones finas y MET Norway. Revisión visual desktop/mobile e integración meteorológica aprobadas explícitamente por el propietario en el cierre de esta conversación. Este estado final supera los pendientes visuales y meteorológicos descritos en las secciones históricas siguientes.
 

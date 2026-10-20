@@ -1,21 +1,22 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-15
+**Corte:** 2026-10-20
 
 ## Git / producción
 
-- Iteración actual: Dashboard completado y revisión visual desktop/mobile, incluida MET Norway, aprobada explícitamente por el propietario el 2026-10-15. Rama `codex/dashboard-redesign`, base `c20b451`, implementación final en `41860a0`. Cierre técnico local; pendiente aprobación para integrar localmente a main. Sin push ni merge.
+- Iteración 7: mantenimiento local en `codex/iteration-7-maintenance`, desde `e13f952`. Cierre documental de Dashboard regularizado, README MySQL actualizado y desborde del header a 701px reproducido y corregido de forma localizada. Detalle y validaciones: `docs/iterations/2026-10-maintenance.md`. Pendiente revisión del propietario; sin integración a `main` ni publicación de este mantenimiento.
+- Iteración 6 cerrada en producción: Dashboard y MET Norway integrados a `main`, push productivo realizado y HEAD final `e13f952`. El propietario confirmó build SiteGround con exit code `0` y verificación visual productiva del Dashboard y clima. Base `c20b451`, implementación meteorológica en `41860a0`; sin cambios de esquema ni nuevas migraciones. Confirmación registrada el 2026-10-20; no se repitieron pruebas productivas desde Codex.
 - Mobile, quitar cuenta mensual estrictamente vacía y configuración eliminable están integrados, desplegados y aprobados por el propietario en producción, confirmado en el pedido de Iteración 6. Noviembre 2026 creado por error fue eliminado satisfactoriamente. Los apartados anteriores de validación local se conservan como evidencia histórica y quedan superados por este cierre.
 - Producción y SiteGround no se consultan ni modifican en esta iteración. Sin cambios DB ni migraciones; `001–009` siguen inmutables.
 - Nueva política: autonomía de Git local/archivos/validaciones/commits en iteraciones aprobadas; pushes e integración a main manuales del propietario después de revisión.
 
-## Dashboard — Iteración 6 local
+## Dashboard — Iteración 6 desplegada y verificada
 
 - Operación diaria y resumen administrativo separados, responsive acotado al Dashboard. Widget de fecha/hora argentina actual; programación del día semanal dentro del período seleccionado; nombres siempre visibles también en mobile, según corrección fina posterior aprobada. Cabecera operativa en dos tiles y ayudas KPI ancladas individualmente.
 - KPIs mantienen cálculos backend: personas del período e inscripciones a actividades son conceptos distintos. Carteras, saldos y gráfico CSS conservados.
 - Agenda y finanzas independientes, claves por período, sin fallback a otro mes. Clima integrado mediante GET /api/weather y proxy/caché en memoria hacia MET Norway para Rosario. Temperatura, icono Lucide y condición exclusivamente dentro del tile gris, después de la hora; fuente y licencia visibles. Sin DB ni dependencias nuevas. Se conserva el estado «Clima no disponible» ante fallas.
-- Validación: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión visual desktop/mobile y clima aprobada explícitamente por el propietario. Smoke del hosting pendiente del despliegue manual autorizado.
-- Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Revisión visual aprobada; listo para integración local a main después de nueva aprobación. Integración y despliegue aún no realizados.
+- Validación local histórica: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión visual desktop/mobile y clima aprobada explícitamente por el propietario. Cierre posterior: build y verificación visual productiva confirmados por el propietario, sin verificaciones productivas adicionales desde Codex.
+- Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Las referencias históricas a integración y despliegue pendientes quedan superadas por el cierre productivo en `e13f952`.
 
 ## Producción
 
