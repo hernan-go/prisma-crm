@@ -113,6 +113,17 @@ small {
   font-size: 12px;
   line-height: 1.6;
 }
+.participant-name,
+a.participant-name,
+.dashboard-people a.participant-name {
+  color: #78cbb2;
+}
+a.participant-name:hover,
+a.participant-name:focus-visible {
+  color: #a3e0cd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .muted {
   color: #9faead;
 }

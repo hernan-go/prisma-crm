@@ -274,7 +274,11 @@ export function FormsImport() {
                     <div className="info" key={p.id}>
                       <b>PERSONA EXISTENTE</b>
                       <p>
-                        {p.public_id} {p.nombre} {p.apellido} ·{' '}
+                        {p.public_id}{' '}
+                        <span className="participant-name">
+                          {p.nombre} {p.apellido}
+                        </span>{' '}
+                        ·{' '}
                         <Link target="_blank" to={`/personas/${p.id}`}>
                           Ver persona
                         </Link>

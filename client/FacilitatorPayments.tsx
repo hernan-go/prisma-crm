@@ -80,12 +80,15 @@ export function FacilitatorPayments() {
                   : formatMoney(sumMoney(accounts.map((a) => a.pending!)))}
               </b>
             </span>
+            {accounts.some((a) => a.amount_due === null) && (
+              <small className="muted facilitator-total-warning">
+                <span className="facilitator-total-separator" aria-hidden="true">
+                  |
+                </span>
+                Hay actividades con importe a pagar todavía no definido.
+              </small>
+            )}
           </div>
-          {accounts.some((a) => a.amount_due === null) && (
-            <small className="muted">
-              Hay actividades con importe a pagar todavía no definido.
-            </small>
-          )}
         </section>
       ))}
     </>
@@ -113,15 +116,15 @@ function AccountBlock({ account: a, closed }: { account: FacilitatorAccount; clo
       )}
       <div className="facilitator-metrics">
         <div className="facilitator-metric">
-          <span>A pagar</span>
+          <span>A pagar:</span>
           <strong>{a.amount_due === null ? '—' : formatMoney(a.amount_due)}</strong>
         </div>
         <div className="facilitator-metric">
-          <span>Pagado</span>
+          <span>Pagado:</span>
           <strong>{formatMoney(a.paid)}</strong>
         </div>
         <div className="facilitator-metric">
-          <span>Pendiente</span>
+          <span>Pendiente:</span>
           <strong>{formatMoney(a.pending)}</strong>
         </div>
       </div>

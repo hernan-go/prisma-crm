@@ -92,7 +92,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
           {person ? (
             <div className="selected-person">
               <div>
-                <Link to={`/personas/${person.id}`}>
+                <Link className="participant-name" to={`/personas/${person.id}`}>
                   {person.nombre} {person.apellido}
                 </Link>
                 <small>
@@ -107,7 +107,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
               {members.data?.map((p: any) => (
                 <div className="payment-row" key={p.membership_id}>
                   <div>
-                    <Link to={`/personas/${p.id}`}>
+                    <Link className="participant-name" to={`/personas/${p.id}`}>
                       {p.nombre} {p.apellido}
                     </Link>
                     <small>
@@ -196,10 +196,14 @@ function RemoveMembership({
       {ask && (
         <Modal title="Quitar del período" close={() => setAsk(false)}>
           <p>
-            Se quitará únicamente la pertenencia de {person.nombre} {person.apellido} a este
-            período. La persona seguirá en BBDD. Si existe una cuenta mensual completamente vacía
-            (sin importe definido y sin pagos), se eliminará automáticamente. Si tiene actividades,
-            pagos o un importe a cobrar definido, incluido cero, la operación se bloqueará.
+            Se quitará únicamente la pertenencia de{' '}
+            <span className="participant-name">
+              {person.nombre} {person.apellido}
+            </span>{' '}
+            a este período. La persona seguirá en BBDD. Si existe una cuenta mensual completamente
+            vacía (sin importe definido y sin pagos), se eliminará automáticamente. Si tiene
+            actividades, pagos o un importe a cobrar definido, incluido cero, la operación se
+            bloqueará.
           </p>
           <ErrorBox error={remove.error} />
           <div className="actions">
@@ -494,7 +498,7 @@ function PaymentForm({
   const m = useSave(p.id ? `/payments/${p.id}` : '/payments', p.id ? 'PUT' : 'POST', close);
   return (
     <Modal title={p.id ? 'Editar pago' : 'Registrar pago'} close={close}>
-      <p>
+      <p className="participant-name">
         {person.nombre} {person.apellido}
       </p>
       <form
@@ -658,11 +662,14 @@ export function Agenda() {
                 {g.instructor} · {g.people.length} asistentes
               </p>
               {g.people.map((p: any) => (
-                <Link className="attendee" key={p.person_id} to={`/personas/${p.person_id}`}>
+                <Link
+                  className="attendee participant-name"
+                  key={p.person_id}
+                  to={`/personas/${p.person_id}`}
+                >
                   <span>
                     {p.nombre} {p.apellido}
                   </span>
-                  <small>{p.public_id}</small>
                 </Link>
               ))}
             </section>
@@ -711,7 +718,7 @@ function PaymentsPeriod() {
               <tr key={a.id}>
                 <td>
                   <Link
-                    className="account-person-link"
+                    className="account-person-link participant-name"
                     to={`/personas/${a.person_id}`}
                     title={`${a.nombre} ${a.apellido}`}
                   >
@@ -745,8 +752,10 @@ function PaymentsPeriod() {
           <div className="payment-row" key={p.id}>
             <div>
               <b>
-                {p.nombre} {p.apellido} ·{' '}
-                <span className="payment-amount">{formatMoney(p.amount)}</span>
+                <span className="participant-name">
+                  {p.nombre} {p.apellido}
+                </span>{' '}
+                · <span className="payment-amount">{formatMoney(p.amount)}</span>
               </b>
               <small>
                 {formatDate(p.date)} · Receptor: {recipientLabel(p.recipient)} · Medio:{' '}
@@ -797,7 +806,9 @@ function PaymentMemberPicker({ onSelect }: { onSelect: (p: any) => void }) {
       <div className="pick-list">
         {q.data?.map((p: any) => (
           <button key={p.membership_id} onClick={() => onSelect(p)}>
-            {p.apellido}, {p.nombre}
+            <span className="participant-name">
+              {p.apellido}, {p.nombre}
+            </span>
           </button>
         ))}
       </div>

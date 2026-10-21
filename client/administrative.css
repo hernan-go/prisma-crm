@@ -138,11 +138,13 @@ main.administrative-page {
 .administrative-page :is(.people-table, .accounts-table) td {
   font-size: 14px;
 }
-.administrative-page .people-table .person-identity {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
+main.administrative-page .people-table {
+  table-layout: auto;
+  min-width: 850px;
+}
+main.administrative-page .people-table :is(th, td) {
+  width: auto;
+  text-align: left;
 }
 .administrative-page .people-table .person-id {
   font-size: 12px;
@@ -156,7 +158,7 @@ main.administrative-page {
   font-size: 14px;
   font-weight: 600;
 }
-.administrative-page .people-table td:nth-child(2),
+.administrative-page .people-table td:nth-child(3),
 .administrative-page .people-table .people-status {
   white-space: nowrap;
 }
@@ -238,31 +240,59 @@ main.administrative-page {
 .administrative-page .facilitator-metrics {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px 20px;
+  padding: 8px 12px;
+  border: 1px solid #57513d;
+  border-radius: 8px;
+  background: #302f28;
   margin-bottom: 8px;
 }
 .administrative-page .facilitator-metric {
-  flex: 1 1 0;
-  min-width: max-content;
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   gap: 4px;
-  padding: 9px 12px;
-  border-radius: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .administrative-page .facilitator-metric > span {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #e0d7c6;
 }
 .administrative-page .facilitator-metric > strong {
-  font-size: 19px;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #e5c185;
   overflow-wrap: normal;
+  white-space: nowrap;
 }
 .administrative-page .facilitator-totals {
-  gap: 6px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
   font-size: 13px;
+  line-height: 1.6;
+}
+.administrative-page .facilitator-totals > span {
+  white-space: nowrap;
+}
+.administrative-page .facilitator-total-warning {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+}
+.administrative-page .facilitator-total-separator {
+  margin-right: 10px;
+  color: #c8b58b;
 }
 .administrative-page button.expense-add {
   width: 34px;
@@ -308,10 +338,6 @@ main.administrative-page {
   padding: 16px;
 }
 @media (max-width: 900px) and (min-width: 701px) {
-  .administrative-page .people-table {
-    min-width: 680px;
-    table-layout: auto;
-  }
   .administrative-page .accounts-table {
     min-width: 560px;
   }
@@ -338,11 +364,19 @@ main.administrative-page {
   .administrative-page .payment-row .actions {
     justify-content: flex-start;
   }
-  .administrative-page .facilitator-metric {
-    padding: 8px 6px;
+  .administrative-page .people-table .people-status {
+    width: auto;
+    height: auto;
+    padding: 4px 8px;
+    border-radius: 999px;
   }
-  .administrative-page .facilitator-metric > strong {
-    font-size: 16px;
+  .administrative-page .people-table .status-active {
+    background: #293d37;
+    color: #bce5d6;
+  }
+  .administrative-page .people-table .status-archived {
+    background: #482e33;
+    color: #edbdc2;
   }
   .administrative-page .people-table .person-link > span {
     display: inline;

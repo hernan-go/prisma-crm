@@ -90,7 +90,11 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
             <b>Posible duplicado</b>
             {matches.map((p) => (
               <p key={p.id}>
-                {p.public_id} {p.nombre} {p.apellido} · Coincidencia: {p.reason} ·{' '}
+                {p.public_id}{' '}
+                <span className="participant-name">
+                  {p.nombre} {p.apellido}
+                </span>{' '}
+                · Coincidencia: {p.reason} ·{' '}
                 <Link target="_blank" to={`/personas/${p.id}`}>
                   Ver persona
                 </Link>
@@ -203,14 +207,19 @@ export function People() {
       {q.isPending ? (
         <Loading />
       ) : (
-        <section className="panel table-wrap people-table-panel">
+        <section
+          className="panel table-wrap people-table-panel"
+          tabIndex={0}
+          aria-label="Tabla de personas: seis columnas"
+        >
           <table className="people-table">
             <thead>
               <tr>
                 <th>Persona</th>
+                <th>ID</th>
                 <th>Teléfono</th>
-                <th className="desktop-only">Email</th>
-                <th className="desktop-only">Contacto de emergencia</th>
+                <th>Email</th>
+                <th>Contacto de emergencia</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -218,22 +227,20 @@ export function People() {
               {q.data?.rows.map((p: any) => (
                 <tr key={p.id}>
                   <td>
-                    <div className="person-identity">
-                      <Link
-                        className="person-link"
-                        to={`/personas/${p.id}`}
-                        title={`${p.apellido}, ${p.nombre}`}
-                      >
-                        <span>
-                          {p.apellido}, {p.nombre}
-                        </span>
-                      </Link>
-                      <small className="person-id">{p.public_id}</small>
-                    </div>
+                    <Link
+                      className="person-link participant-name"
+                      to={`/personas/${p.id}`}
+                      title={`${p.apellido}, ${p.nombre}`}
+                    >
+                      <span>
+                        {p.apellido}, {p.nombre}
+                      </span>
+                    </Link>
                   </td>
+                  <td className="person-id">{p.public_id}</td>
                   <td>{p.telefono}</td>
-                  <td className="desktop-only">{p.email || '—'}</td>
-                  <td className="desktop-only">
+                  <td>{p.email || '—'}</td>
+                  <td>
                     <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
                       {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
                     </span>
@@ -245,7 +252,7 @@ export function People() {
                       aria-label={p.activo ? 'Activa' : 'Archivada'}
                       title={p.activo ? 'Activa' : 'Archivada'}
                     >
-                      <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
+                      <span>{p.activo ? 'Activa' : 'Archivada'}</span>
                     </span>
                   </td>
                 </tr>
@@ -292,7 +299,9 @@ export function PersonPicker({
         {q.data?.rows.map((p: any) => (
           <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
             <span>
-              {p.apellido}, {p.nombre}
+              <span className="participant-name">
+                {p.apellido}, {p.nombre}
+              </span>
               <small>
                 {p.public_id} · {p.telefono}
               </small>
@@ -329,7 +338,7 @@ export function PersonDetail() {
               {p.activo ? 'Activa' : 'Archivada'}
             </span>
           </span>
-          <h1>
+          <h1 className="participant-name">
             {p.nombre} {p.apellido}
           </h1>
           <p>

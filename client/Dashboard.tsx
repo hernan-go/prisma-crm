@@ -111,7 +111,7 @@ function ScheduleCard({ schedule }: { schedule: AgendaSchedule }) {
           <ul>
             {schedule.people.map((p) => (
               <li key={p.person_id}>
-                <Link to={`/personas/${p.person_id}`}>
+                <Link className="participant-name" to={`/personas/${p.person_id}`}>
                   {p.nombre} {p.apellido}
                 </Link>
               </li>
