@@ -1,14 +1,26 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-20
+**Corte:** 2026-10-21
 
 ## Git / producción
 
-- Iteración 7: mantenimiento local en `codex/iteration-7-maintenance`, desde `e13f952`. Cierre documental de Dashboard regularizado, README MySQL actualizado y desborde del header a 701px reproducido y corregido de forma localizada. Detalle y validaciones: `docs/iterations/2026-10-maintenance.md`. Pendiente revisión del propietario; sin integración a `main` ni publicación de este mantenimiento.
+- Iteración 7 completada, publicada y validada visualmente en producción. Ocho commits desde `e13f952` integrados por fast-forward a `main`, con HEAD publicado `06f3d1f69ef6e84be55279b4dbd394a888a74b6b` en `hernan-go/prisma-crm`. El propietario realizó el push manual y confirmó SiteGround con `build_script_exit_code = 0` y aprobación visual desktop/mobile, incluida la corrección final de BBDD Personas. [Registro de cierre e historial técnico](iterations/2026-10-maintenance.md).
 - Iteración 6 cerrada en producción: Dashboard y MET Norway integrados a `main`, push productivo realizado y HEAD final `e13f952`. El propietario confirmó build SiteGround con exit code `0` y verificación visual productiva del Dashboard y clima. Base `c20b451`, implementación meteorológica en `41860a0`; sin cambios de esquema ni nuevas migraciones. Confirmación registrada el 2026-10-20; no se repitieron pruebas productivas desde Codex.
 - Mobile, quitar cuenta mensual estrictamente vacía y configuración eliminable están integrados, desplegados y aprobados por el propietario en producción, confirmado en el pedido de Iteración 6. Noviembre 2026 creado por error fue eliminado satisfactoriamente. Los apartados anteriores de validación local se conservan como evidencia histórica y quedan superados por este cierre.
-- Producción y SiteGround no se consultan ni modifican en esta iteración. Sin cambios DB ni migraciones; `001–009` siguen inmutables.
+- Codex no realizó operaciones ni verificaciones productivas adicionales: el build de SiteGround y la revisión visual en producción fueron comprobados por el propietario. Iteración 7 sin nuevas migraciones SQL ni operaciones DB; `001–009` siguen inmutables. Este cierre no implica una auditoría adicional de datos.
 - Nueva política: autonomía de Git local/archivos/validaciones/commits en iteraciones aprobadas; pushes e integración a main manuales del propietario después de revisión.
+
+## Iteración 7 — Unificación UX/UI y responsive completada
+
+- Regularización documental de la iteración 6, corrección responsive del header a 701px y actualización del README al entorno MySQL vigente.
+- Agrupación de horarios no vigentes y rediseño UX/UI de Configuración.
+- Unificación estética y responsive de los módulos administrativos, ajustes mobile del Dashboard y refinamientos de tablas, Agenda y componentes financieros.
+- Regresión mobile de BBDD Personas corregida: hasta 700px, Persona/Teléfono/Estado circular accesible, nombres completos y sin scroll horizontal; desde 701px se conservan las seis columnas aprobadas.
+- Validación local de cierre aprobada: typecheck, lint, 169 pruebas, build y diff check; 157 integraciones DB omitidas. Revisión funcional/visual local y revisión visual productiva desktop/mobile aprobadas por el propietario. Iteración cerrada; no quedan integración, revisión ni despliegue pendientes de esta iteración.
+
+## Próximos desarrollos pendientes
+
+Autenticación mediante Google decidida expresamente por el propietario y pendiente de desarrollo; el diseño técnico definitivo aún debe realizarse. También permanecen pendientes la definición del resultado económico mensual, Estadísticas e informes/exportaciones PDF, sin cambiar sus prioridades. Alcances y dependencias en [ROADMAP](ROADMAP.md). La siguiente iteración funcional partirá de este estado aprobado, sin reabrir la iteración 7.
 
 ## Dashboard — Iteración 6 desplegada y verificada
 

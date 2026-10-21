@@ -1,6 +1,34 @@
-# Iteración 7 — Mantenimiento
+# Iteración 7 — Unificación UX/UI, responsive y mantenimiento
 
 **Fecha:** 2026-10-20. **Rama:** `codex/iteration-7-maintenance`, desde `main` en `e13f9525a3a067751dc2434b5dd4dbd86b750024`, inicialmente limpio y coincidente con GitHub.
+
+## Cierre definitivo — 2026-10-21
+
+**Estado vigente: completada, publicada y validada visualmente en producción.**
+
+- Repositorio `hernan-go/prisma-crm`, rama publicada `main`, HEAD `06f3d1f69ef6e84be55279b4dbd394a888a74b6b`.
+- Ocho commits integrados por fast-forward, sin squash ni rebase: `dd7dda2`, `9750cf1`, `470a0a7`, `e3ce41d`, `ae044a1`, `b84180c`, `fd2df78` y `06f3d1f`.
+- Push realizado manualmente por el propietario. El propietario comprobó SiteGround con `build_script_exit_code = 0` y aprobó la revisión visual productiva desktop/mobile, incluida la última corrección responsive de BBDD Personas.
+- Validación local de cierre: typecheck, lint, 169 pruebas, build y diff check aprobados; 157 integraciones DB omitidas. Sin nuevas migraciones SQL; `001–009` permanecen inmutables.
+- Codex no realizó verificaciones productivas adicionales ni auditorías de datos. La confirmación productiva corresponde al propietario.
+
+Trabajos completados:
+
+1. Regularización documental del cierre productivo de la iteración 6.
+2. Corrección responsive del header a 701px.
+3. Actualización del README al entorno MySQL Community Server vigente.
+4. Agrupación de horarios no vigentes.
+5. Rediseño UX/UI de Configuración.
+6. Unificación estética y responsive de módulos administrativos.
+7. Ajustes mobile del Dashboard.
+8. Refinamientos finales de tablas, Agenda y componentes financieros.
+9. Corrección de la regresión mobile de BBDD Personas: tres columnas y estado circular hasta 700px, sin scroll horizontal; seis columnas desde 701px.
+
+No quedan integración, revisión ni despliegue pendientes de esta iteración. La siguiente iteración funcional partirá del estado documentado y aprobado en [PROJECT_STATE](../PROJECT_STATE.md) y [ROADMAP](../ROADMAP.md), sin reabrir la iteración 7. La autenticación con Google queda registrada en el roadmap como decisión tomada y desarrollo pendiente, con diseño técnico todavía por realizar.
+
+## Lectura del historial técnico
+
+Las secciones siguientes conservan las evidencias y estados de cada fase anterior al cierre definitivo. Sus referencias a iteración abierta, revisiones, integración o despliegue pendientes describen aquel momento y quedan superadas por el cierre vigente de arriba. No representan pendientes actuales. Las soluciones intermedias de Personas quedan superadas por la corrección final documentada al final del historial.
 
 ## Objetivo y cambios efectivos
 
@@ -28,9 +56,9 @@ La suite existente usa Vitest en Node, sin motor de layout ni runner responsive 
 
 Prettier ejecutado una vez sobre los seis archivos afectados. Typecheck, lint, tests sin integración DB (162 aprobados, 157 omitidos), build y `git diff --check` aprobados. Vitest falló inicialmente antes de ejecutar casos por EPERM al renombrar temporales dentro del sandbox; reintento fuera del sandbox aprobado. Build con los warnings no bloqueantes conocidos de comentarios Zod/Rollup. Sin suites DB, migraciones ni consultas productivas. Servicio `MySQL84` comprobado activo mediante consulta de solo lectura fuera del sandbox; scripts privados revisados para confirmar selección dev/demo. Página QA retirada y servidor temporal detenido al cierre.
 
-## Estado final y pendientes
+## Registro histórico — Estado al finalizar el mantenimiento inicial
 
-Mantenimiento local pendiente de revisión del propietario e integración/publicación manuales. Sin push, merge, migraciones, datos modificados ni operaciones productivas. README conserva otras referencias históricas al despliegue y a repositorio privado, fuera del alcance autorizado de actualización MySQL. No se inició Estadísticas.
+En aquel momento el mantenimiento local estaba pendiente de revisión del propietario e integración/publicación manuales. Codex no había realizado push, merge, migraciones, cambios de datos ni operaciones productivas. README conserva otras referencias históricas al despliegue y a repositorio privado, fuera del alcance autorizado de actualización MySQL. No se inició Estadísticas. Los pendientes de revisión/publicación de esta fase ya fueron resueltos por el cierre definitivo.
 
 ## Nueva fase — Horarios no vigentes en Configuración
 
@@ -100,4 +128,4 @@ Dos pruebas Vitest cubren columnas exclusivas de desktop, ID fuera del nombre, e
 
 QA visual y prueba de navegador aprobados en 360/390/430/700/701/768/1366px. Mobile: tres columnas, círculos de 12px y scrollWidth igual a clientWidth del panel (313/343/383/653px), sin scroll horizontal del documento. Desktop/tablet: seis columnas intactas, incluido el scroll interno ya aprobado en tablet. Nombres largos, activos/archivados, búsqueda con debounce, filtro, paginación y navegación al perfil comprobados con datos ficticios; perfil conserva ID y email. Capturas sintéticas conservadas fuera del repo. Navegador restaurado y Vite detenido. La prueba permanece disponible para repetirla en futuros cambios.
 
-Prettier aplicado una vez a los seis archivos afectados. Typecheck, lint, 169 pruebas aprobadas (157 integraciones DB omitidas), build y diff check aprobados; prueba de navegador con PASS en los siete anchos. Vitest fuera del sandbox por el EPERM conocido; build con los avisos conocidos de Zod/Rollup. Sin dependencias nuevas ni pruebas DB. Iteración 7 abierta, pendiente revisión del propietario mediante `private/run-dev.ps1`; sin push, merge ni despliegue.
+Prettier aplicado una vez a los seis archivos afectados. Typecheck, lint, 169 pruebas aprobadas (157 integraciones DB omitidas), build y diff check aprobados; prueba de navegador con PASS en los siete anchos. Vitest fuera del sandbox por el EPERM conocido; build con los avisos conocidos de Zod/Rollup. Sin dependencias nuevas ni pruebas DB. Esta corrección fue posteriormente integrada, publicada y comprobada visualmente en producción por el propietario. Iteración 7 completada según el cierre definitivo de este documento.
