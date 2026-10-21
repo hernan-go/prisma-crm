@@ -24,7 +24,7 @@ export function Configuration() {
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const renderSchedule = (h: any, o: any) => (
     <div className="payment-row" key={h.id}>
-      <div>
+      <div className="offering-schedule-copy">
         <b>
           {days[h.day]} {h.start}–{h.end}
         </b>
@@ -64,7 +64,7 @@ export function Configuration() {
         description="Catálogo global, facilitadores y oferta mensual independiente."
       />
       <ErrorBox error={catalog.error || teachers.error || offers.error} />
-      <section className="panel">
+      <section className="panel period-offerings">
         <div className="section-heading">
           <h2>Actividades del período · {periodName(periods.find((p) => p.id === period))}</h2>
           <button
@@ -77,11 +77,11 @@ export function Configuration() {
         </div>
         {closed && <p>Período cerrado: solo consulta.</p>}
         {offers.data?.map((o: any) => (
-          <article className="slot-editor" key={o.id}>
-            <div className="section-heading">
-              <div>
+          <article className="slot-editor period-offering" key={o.id}>
+            <div className="section-heading offering-header">
+              <div className="offering-heading-copy">
                 <h3 className="config-activity-name">{o.name}</h3>
-                <small>
+                <small className="offering-meta">
                   {o.active ? 'Ofrecida' : 'No ofrecida'} ·{' '}
                   {o.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'}
                 </small>
@@ -100,7 +100,9 @@ export function Configuration() {
                 )}
               </div>
             </div>
-            <p>{o.days.map((d: number) => days[d]).join(' · ') || 'Sin días habilitados'}</p>
+            <p className="offering-days">
+              {o.days.map((d: number) => days[d]).join(' · ') || 'Sin días habilitados'}
+            </p>
             {o.schedules.filter((h: any) => h.active).map((h: any) => renderSchedule(h, o))}
             <button
               className="info-action add-schedule"
@@ -124,7 +126,9 @@ export function Configuration() {
             {o.schedules.some((h: any) => !h.active) && (
               <details className="inactive-schedules" key={`${period}-${o.id}`}>
                 <summary>
-                  Horarios no vigentes ({o.schedules.filter((h: any) => !h.active).length})
+                  <span>
+                    Horarios no vigentes ({o.schedules.filter((h: any) => !h.active).length})
+                  </span>
                 </summary>
                 {o.schedules.filter((h: any) => !h.active).map((h: any) => renderSchedule(h, o))}
               </details>

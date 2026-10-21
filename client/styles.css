@@ -1781,3 +1781,155 @@ summary .chip {
     animation: none;
   }
 }
+
+/* Configuration: period offerings only. Catalogs and editors keep their styles. */
+.period-offerings .period-offering {
+  padding: 16px 18px;
+  margin: 12px 0 0;
+  background: #222b29;
+  border-color: #3d4e48;
+  border-radius: 10px;
+}
+.period-offerings .offering-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 10px;
+}
+.period-offerings .offering-heading-copy {
+  flex: 1 1 190px;
+  min-width: 0;
+}
+.period-offerings .config-activity-name {
+  display: block;
+  padding: 0;
+  background: none;
+  color: #e6eaea;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.25px;
+}
+.period-offerings .offering-meta {
+  margin-top: 7px;
+  color: #a3b5ae;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.period-offerings .offering-days {
+  margin: 0 0 6px;
+  color: #a3b5ae;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.period-offerings .payment-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 0;
+  border-bottom-color: #35453e;
+}
+.period-offerings .offering-schedule-copy {
+  flex: 1 1 190px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.period-offerings .payment-row b {
+  color: #d4e3dd;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+.period-offerings .payment-row small {
+  margin-top: 3px;
+  color: #a3b5ae;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.period-offerings .period-offering .actions {
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.period-offerings .period-offering button {
+  min-height: 32px;
+  padding: 6px 9px;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #b9d3c9;
+  font-size: 12px;
+  font-weight: 550;
+}
+.period-offerings .period-offering button:hover:not(:disabled) {
+  border-color: #496056;
+  background: #2b3933;
+  color: #e0eee8;
+}
+.period-offerings .period-offering button.danger {
+  color: #dbacad;
+}
+.period-offerings .period-offering button.danger:hover:not(:disabled) {
+  border-color: #70464c;
+  background: #482e33;
+  color: #ffbdc0;
+}
+.period-offerings .period-offering .add-schedule {
+  margin-top: 10px;
+  border-color: #40584d;
+  color: #9ed5c2;
+}
+.period-offerings .inactive-schedules {
+  border: 0;
+  padding: 0;
+  margin: 4px 0 0;
+}
+.period-offerings .inactive-schedules > summary {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0;
+  list-style: none;
+}
+.period-offerings .inactive-schedules > summary::-webkit-details-marker {
+  display: none;
+}
+.period-offerings .inactive-schedules > summary > span {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid #57513d;
+  border-radius: 999px;
+  background: #302f28;
+  color: #e5c185;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+.period-offerings .inactive-schedules > summary > span::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid currentColor;
+  flex-shrink: 0;
+}
+.period-offerings .inactive-schedules[open] > summary > span::before {
+  transform: rotate(90deg);
+}
+.period-offerings .inactive-schedules > summary:hover > span {
+  border-color: #8c7953;
+  background: #3a372b;
+}
+.period-offerings .inactive-schedules .payment-row:last-child {
+  padding-bottom: 0;
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .period-offerings .period-offering button {
+    min-height: 44px;
+  }
+}
