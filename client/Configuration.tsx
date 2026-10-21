@@ -22,6 +22,41 @@ export function Configuration() {
   const offers = useList(`/offerings?period_id=${period}`, !!period);
   const [edit, setEdit] = useState<any>();
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
+  const renderSchedule = (h: any, o: any) => (
+    <div className="payment-row" key={h.id}>
+      <div>
+        <b>
+          {days[h.day]} {h.start}–{h.end}
+        </b>
+        <small>
+          {h.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores'} ·{' '}
+          {h.active ? 'Habilitado' : 'Deshabilitado'}
+        </small>
+      </div>
+      <div className="actions">
+        <button
+          disabled={closed}
+          onClick={() =>
+            setEdit({
+              kind: 'schedules',
+              value: { ...h, instructor_ids: h.instructors.map((i: any) => i.id) },
+              offering: o,
+            })
+          }
+        >
+          Editar horario
+        </button>
+        {!h.ever_used && (
+          <DeleteButton
+            path={`/schedules/${h.id}`}
+            label="Eliminar horario"
+            disabled={closed}
+            description="Se eliminarán este horario nunca utilizado y sus asignaciones. La oferta y los catálogos se conservarán. Las referencias operativas o financieras bloquean la eliminación."
+          />
+        )}
+      </div>
+    </div>
+  );
   return (
     <>
       <PageTitle
@@ -66,41 +101,7 @@ export function Configuration() {
               </div>
             </div>
             <p>{o.days.map((d: number) => days[d]).join(' · ') || 'Sin días habilitados'}</p>
-            {o.schedules.map((h: any) => (
-              <div className="payment-row" key={h.id}>
-                <div>
-                  <b>
-                    {days[h.day]} {h.start}–{h.end}
-                  </b>
-                  <small>
-                    {h.instructors.map((i: any) => i.name).join(' + ') || 'Sin facilitadores'} ·{' '}
-                    {h.active ? 'Habilitado' : 'Deshabilitado'}
-                  </small>
-                </div>
-                <div className="actions">
-                  <button
-                    disabled={closed}
-                    onClick={() =>
-                      setEdit({
-                        kind: 'schedules',
-                        value: { ...h, instructor_ids: h.instructors.map((i: any) => i.id) },
-                        offering: o,
-                      })
-                    }
-                  >
-                    Editar horario
-                  </button>
-                  {!h.ever_used && (
-                    <DeleteButton
-                      path={`/schedules/${h.id}`}
-                      label="Eliminar horario"
-                      disabled={closed}
-                      description="Se eliminarán este horario nunca utilizado y sus asignaciones. La oferta y los catálogos se conservarán. Las referencias operativas o financieras bloquean la eliminación."
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
+            {o.schedules.filter((h: any) => h.active).map((h: any) => renderSchedule(h, o))}
             <button
               className="info-action add-schedule"
               disabled={closed || !o.active || !o.catalog_active}
@@ -120,6 +121,14 @@ export function Configuration() {
             >
               Agregar horario
             </button>
+            {o.schedules.some((h: any) => !h.active) && (
+              <details className="inactive-schedules" key={`${period}-${o.id}`}>
+                <summary>
+                  Horarios no vigentes ({o.schedules.filter((h: any) => !h.active).length})
+                </summary>
+                {o.schedules.filter((h: any) => !h.active).map((h: any) => renderSchedule(h, o))}
+              </details>
+            )}
           </article>
         ))}
         {!offers.data?.length && (

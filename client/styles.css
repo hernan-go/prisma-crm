@@ -708,6 +708,9 @@ summary .muted,
 summary .chip {
   margin-left: 10px;
 }
+.inactive-schedules > summary {
+  padding-block: 12px;
+}
 .back {
   display: flex;
   align-items: center;
