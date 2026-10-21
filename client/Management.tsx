@@ -642,14 +642,14 @@ export function Agenda() {
         </Field>
       </div>
       <ErrorBox error={q.error} />
-      <div className="enroll-grid">
+      <div className="enroll-grid agenda-grid">
         {[...groups.entries()]
           .sort(
             (a, b) =>
               a[1].slot.day - b[1].slot.day || a[1].slot.start.localeCompare(b[1].slot.start),
           )
           .map(([key, g]) => (
-            <section className="panel" key={key}>
+            <section className="panel agenda-card" key={key}>
               <span className="eyebrow">
                 {days[g.slot.day]} · {g.slot.start}–{g.slot.end}
               </span>
@@ -745,7 +745,8 @@ function PaymentsPeriod() {
           <div className="payment-row" key={p.id}>
             <div>
               <b>
-                {p.nombre} {p.apellido} · {formatMoney(p.amount)}
+                {p.nombre} {p.apellido} ·{' '}
+                <span className="payment-amount">{formatMoney(p.amount)}</span>
               </b>
               <small>
                 {formatDate(p.date)} · Receptor: {recipientLabel(p.recipient)} · Medio:{' '}

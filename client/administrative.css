@@ -1,0 +1,354 @@
+/* Administrative routes only. Dashboard, Configuration and Statistics are excluded. */
+main.administrative-page {
+  --admin-border: #6c8879;
+  --admin-surface: #2b3732;
+  --admin-divider: #3b4a44;
+}
+.administrative-page .page-heading {
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.administrative-page .page-heading > div:first-child {
+  min-width: 0;
+  flex: 1 1 240px;
+}
+.administrative-page h1 {
+  overflow-wrap: anywhere;
+}
+.administrative-page h2 {
+  font-size: 20px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.administrative-page h3 {
+  font-size: 17px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.administrative-page .page-heading p {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+.administrative-page .panel {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.administrative-page .section-heading {
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 14px 0;
+}
+.administrative-page .section-heading:first-child {
+  margin-top: 0;
+}
+.administrative-page .section-heading :is(h2, h3) {
+  margin-bottom: 0;
+}
+.administrative-page .toolbar {
+  margin-bottom: 16px;
+}
+.administrative-page .filters {
+  gap: 0 12px;
+  margin-bottom: 12px;
+}
+.administrative-page :is(.actions, .pagination) {
+  gap: 6px;
+}
+.administrative-page
+  :where(.actions, .pagination, .section-heading, .people-mobile-actions, .selected-person, .panel)
+  > :where(button, a.button):not(.icon),
+.administrative-page button.primary,
+.administrative-page a.button.primary {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-surface);
+  color: #d2e5dc;
+  font-weight: 550;
+}
+.administrative-page
+  :where(.actions, .pagination, .section-heading, .people-mobile-actions, .selected-person, .panel)
+  > :where(button, a.button):not(.icon):hover:not(:disabled) {
+  border-color: #78cbb2;
+  background: #344b40;
+  color: #eef6f2;
+}
+.administrative-page button.primary,
+.administrative-page a.button.primary {
+  background: #78cbb2;
+  color: #122e26;
+  border-color: #78cbb2;
+  min-height: 36px;
+}
+.administrative-page button.primary:hover:not(:disabled),
+.administrative-page a.button.primary:hover {
+  background: #94dbc5;
+  color: #122e26;
+  border-color: #78cbb2;
+}
+.administrative-page button.danger {
+  border-color: #a86f7c;
+  color: #ffb5b5;
+  background: transparent;
+}
+.administrative-page button.danger:hover:not(:disabled) {
+  border-color: #aa6876;
+  background: #482e33;
+  color: #ffbdc0;
+}
+.administrative-page button:disabled {
+  cursor: not-allowed;
+}
+.administrative-page .payment-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 11px 0;
+  border-color: var(--admin-divider);
+}
+.administrative-page .payment-row > div:first-child {
+  flex: 1 1 230px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.administrative-page .payment-row :is(b, a) {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.administrative-page .payment-row small {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.administrative-page .payment-row p {
+  font-size: 13px;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.administrative-page :is(.people-table, .accounts-table) :is(td, th) {
+  padding: 10px 10px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.administrative-page :is(.people-table, .accounts-table) td {
+  font-size: 14px;
+}
+.administrative-page .people-table td small {
+  font-size: 12px;
+  margin-top: 3px;
+}
+.administrative-page .people-table .person-link {
+  font-size: 14px;
+  font-weight: 600;
+}
+.administrative-page .people-table td:nth-child(2),
+.administrative-page .people-table .people-status {
+  white-space: nowrap;
+}
+.administrative-page .accounts-table :is(td, th):not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.administrative-page
+  :is(.facilitator-metric, .facilitator-totals, .compact strong, .expense-amount, .payment-amount) {
+  font-variant-numeric: tabular-nums;
+}
+.administrative-page .pagination {
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.administrative-page .enroll-grid {
+  gap: 14px;
+  align-items: start;
+}
+.administrative-page .agenda-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+.administrative-page .agenda-card .eyebrow {
+  margin-bottom: 8px;
+  color: #9ed5c2;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+}
+.administrative-page :is(.payment-amount, .expense-amount) {
+  display: inline-block;
+  color: #e6eaea;
+}
+.administrative-page .enroll-grid > .panel > p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.administrative-page .attendee {
+  padding: 8px 0;
+  gap: 10px;
+  font-size: 14px;
+}
+.administrative-page .attendee > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.administrative-page :is(.slot, .history-row) {
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.administrative-page .detail-grid {
+  gap: 12px 18px;
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.administrative-page .compact {
+  gap: 12px;
+  padding-top: 12px;
+  margin-bottom: 12px;
+}
+.administrative-page .compact strong {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+.administrative-page .facilitator-block > .facilitator-name {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.administrative-page .facilitator-account {
+  padding: 12px 0;
+}
+.administrative-page .facilitator-metrics {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.administrative-page .facilitator-metric {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
+.administrative-page .facilitator-metric > span {
+  font-size: 13px;
+  font-weight: 500;
+}
+.administrative-page .facilitator-metric > strong {
+  font-size: 22px;
+}
+.administrative-page .facilitator-totals {
+  gap: 6px 16px;
+  font-size: 13px;
+}
+.administrative-page .expense-new {
+  margin-top: 10px;
+}
+.administrative-page .empty {
+  padding: 24px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.administrative-page :is(.info, .error-box, .warning) {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.administrative-page dialog {
+  padding: 22px;
+  font-size: 14px;
+}
+.administrative-page dialog .actions > button {
+  min-height: 36px;
+}
+.administrative-page .field {
+  margin-bottom: 12px;
+}
+.administrative-page .field > label {
+  font-size: 13px;
+}
+.administrative-page
+  .field
+  :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  font-size: 14px;
+  min-width: 0;
+  max-width: 100%;
+}
+.administrative-page .import-row {
+  padding: 16px;
+  margin: 12px 0;
+}
+.administrative-page .review-summary {
+  padding: 16px;
+}
+@media (max-width: 900px) and (min-width: 701px) {
+  .administrative-page .people-table {
+    min-width: 680px;
+    table-layout: auto;
+  }
+  .administrative-page .accounts-table {
+    min-width: 560px;
+  }
+  .administrative-page .accounts-table td:not(:first-child) {
+    white-space: nowrap;
+  }
+  .administrative-page .enroll-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  main.administrative-page .panel {
+    padding: 14px;
+  }
+  main.administrative-page :is(.people-table-panel, .accounts-table-panel) {
+    padding: 12px 8px;
+  }
+  .administrative-page :is(.people-table, .accounts-table) :is(td, th) {
+    padding: 8px 4px;
+  }
+  .administrative-page .page-heading > div:first-child {
+    flex-basis: auto;
+  }
+  .administrative-page .payment-row .actions {
+    justify-content: flex-start;
+  }
+  .administrative-page .facilitator-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .administrative-page .facilitator-metric {
+    padding: 8px 6px;
+  }
+  .administrative-page .facilitator-metric > strong {
+    font-size: 18px;
+  }
+  .administrative-page .compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .administrative-page .attendee {
+    min-height: 44px;
+  }
+  .administrative-page dialog {
+    padding: 18px;
+  }
+  .administrative-page
+    .field
+    :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}
+@media (max-width: 700px), (pointer: coarse) {
+  main.administrative-page
+    :where(
+      .actions,
+      .pagination,
+      .section-heading,
+      .people-mobile-actions,
+      .selected-person,
+      .panel
+    )
+    > :where(button, a.button):not(.icon),
+  main.administrative-page button.primary,
+  main.administrative-page a.button.primary {
+    min-height: 44px;
+  }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Wallet, Clock3 } from 'lucide-react';
+import { Plus, Wallet, Clock3, CalendarDays } from 'lucide-react';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
 import { ErrorBox, Loading, Empty, PageHeading, useDisclosure } from './components';
@@ -227,7 +227,8 @@ export function Dashboard() {
         <section className="dashboard-operation" aria-label="Programación diaria">
           <div className="dashboard-day-header">
             <div className="dashboard-day-tile">
-              <Clock3 size={22} aria-hidden="true" />
+              <Clock3 className="dashboard-day-desktop-icon" size={22} aria-hidden="true" />
+              <CalendarDays className="dashboard-day-calendar-icon" size={22} aria-hidden="true" />
               <div>
                 <h2>
                   {selected && programmingTitle(selected, now) === 'Actividades de hoy' ? (
@@ -247,7 +248,10 @@ export function Dashboard() {
               </div>
             </div>
             <div className="dashboard-clock">
-              <time dateTime={now.toISOString()}>{date.time}</time>
+              <span className="dashboard-time">
+                <Clock3 className="dashboard-time-icon" size={20} aria-hidden="true" />
+                <time dateTime={now.toISOString()}>{date.time}</time>
+              </span>
               <Weather now={now} />
             </div>
           </div>

@@ -28,6 +28,7 @@ import { Monthly, Agenda, Payments, Configuration } from './Management';
 import { Expenses } from './Expenses';
 import { ImportPeople } from './ImportPeople';
 import { Statistics } from './Statistics';
+import './administrative.css';
 export const PeriodContext = createContext<{ period: number; periods: any[] }>({
   period: 0,
   periods: [],
@@ -272,7 +273,22 @@ export default function App() {
               />
             </div>
           </header>
-          <main>
+          <main
+            className={
+              [
+                '/personas',
+                '/gestion',
+                '/agenda',
+                '/pagos',
+                '/pago-facilitadores',
+                '/publicidad',
+                '/importar',
+                '/importar-forms',
+              ].includes(location.pathname) || location.pathname.startsWith('/personas/')
+                ? 'administrative-page'
+                : undefined
+            }
+          >
             <ErrorBox error={q.error} />
             <Routes>
               <Route path="/" element={<Dashboard />} />

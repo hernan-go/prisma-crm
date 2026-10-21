@@ -379,3 +379,83 @@
     font-size: 30px;
   }
 }
+
+/* Additional icons and metadata wrappers have no layout effect from 701px. */
+.dashboard-day-calendar-icon,
+.dashboard-time-icon {
+  display: none;
+}
+.dashboard-time,
+.dashboard-weather-meta {
+  display: contents;
+}
+.dashboard-weather-location {
+  order: -1;
+}
+@media (max-width: 700px) {
+  .dashboard-day-header {
+    grid-auto-rows: 1fr;
+  }
+  .dashboard-day-tile,
+  .dashboard-clock {
+    padding: 12px 14px;
+  }
+  .dashboard-day-tile > .dashboard-day-desktop-icon {
+    display: none;
+  }
+  .dashboard-day-tile > .dashboard-day-calendar-icon,
+  .dashboard-time > .dashboard-time-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+  .dashboard-clock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    align-content: center;
+  }
+  .dashboard-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .dashboard-clock time,
+  .dashboard-weather-value strong {
+    font-size: clamp(28px, 8vw, 34px);
+    line-height: 1.1;
+  }
+  .dashboard-weather {
+    display: contents;
+  }
+  .dashboard-weather-value {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 6px;
+    justify-self: end;
+  }
+  .dashboard-weather-value > svg {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+  .dashboard-weather-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 10px;
+  }
+  .dashboard-weather-location,
+  .dashboard-weather-condition,
+  .dashboard-clock .dashboard-weather-source {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .dashboard-clock .dashboard-weather-source {
+    white-space: nowrap;
+  }
+}

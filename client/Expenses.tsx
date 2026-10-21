@@ -251,7 +251,8 @@ function PeriodExpenses({
                 <div className="payment-row" key={expense.id}>
                   <div className="expense-description">
                     <b>
-                      {expense.concept} · {formatMoney(expense.amount)}
+                      {expense.concept} ·{' '}
+                      <span className="expense-amount">{formatMoney(expense.amount)}</span>
                     </b>
                     <small>{formatDate(expense.date)}</small>
                     {expense.notes && <p>{expense.notes}</p>}

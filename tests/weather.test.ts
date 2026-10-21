@@ -296,6 +296,8 @@ it('UI oculta temperatura caducada o fallida sin exponer errores HTTP', () => {
   ]) {
     expect(html).toContain('Clima no disponible');
     expect(html).toContain('ROSARIO, SANTA FE');
+    expect(html).toContain('https://api.met.no/doc/License');
+    expect(html).toContain('https://creativecommons.org/licenses/by/4.0/');
     expect(html).not.toContain('°C');
     expect(html).not.toContain('HTTP 500');
   }
