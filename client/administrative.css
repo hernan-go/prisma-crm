@@ -349,6 +349,21 @@ main.administrative-page .people-table :is(th, td) {
   }
 }
 @media (max-width: 700px) {
+  main.administrative-page .people-table {
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+  main.administrative-page .people-table th:first-child {
+    width: 47%;
+  }
+  main.administrative-page .people-table th:nth-child(3) {
+    width: 35%;
+  }
+  main.administrative-page .people-table :is(th, td):last-child {
+    width: 18%;
+    text-align: center;
+  }
   main.administrative-page .panel {
     padding: 14px;
   }
@@ -363,20 +378,6 @@ main.administrative-page .people-table :is(th, td) {
   }
   .administrative-page .payment-row .actions {
     justify-content: flex-start;
-  }
-  .administrative-page .people-table .people-status {
-    width: auto;
-    height: auto;
-    padding: 4px 8px;
-    border-radius: 999px;
-  }
-  .administrative-page .people-table .status-active {
-    background: #293d37;
-    color: #bce5d6;
-  }
-  .administrative-page .people-table .status-archived {
-    background: #482e33;
-    color: #edbdc2;
   }
   .administrative-page .people-table .person-link > span {
     display: inline;

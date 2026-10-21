@@ -210,16 +210,16 @@ export function People() {
         <section
           className="panel table-wrap people-table-panel"
           tabIndex={0}
-          aria-label="Tabla de personas: seis columnas"
+          aria-label="Tabla de personas"
         >
           <table className="people-table">
             <thead>
               <tr>
                 <th>Persona</th>
-                <th>ID</th>
+                <th className="desktop-only">ID</th>
                 <th>Teléfono</th>
-                <th>Email</th>
-                <th>Contacto de emergencia</th>
+                <th className="desktop-only">Email</th>
+                <th className="desktop-only">Contacto de emergencia</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -237,10 +237,10 @@ export function People() {
                       </span>
                     </Link>
                   </td>
-                  <td className="person-id">{p.public_id}</td>
+                  <td className="person-id desktop-only">{p.public_id}</td>
                   <td>{p.telefono}</td>
-                  <td>{p.email || '—'}</td>
-                  <td>
+                  <td className="desktop-only">{p.email || '—'}</td>
+                  <td className="desktop-only">
                     <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
                       {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
                     </span>
@@ -252,7 +252,7 @@ export function People() {
                       aria-label={p.activo ? 'Activa' : 'Archivada'}
                       title={p.activo ? 'Activa' : 'Archivada'}
                     >
-                      <span>{p.activo ? 'Activa' : 'Archivada'}</span>
+                      <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
                     </span>
                   </td>
                 </tr>
