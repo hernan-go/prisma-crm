@@ -33,7 +33,7 @@ export function Configuration() {
           {h.active ? 'Habilitado' : 'Deshabilitado'}
         </small>
       </div>
-      <div className="actions">
+      <div className="actions configuration-actions">
         <button
           disabled={closed}
           onClick={() =>
@@ -64,7 +64,7 @@ export function Configuration() {
         description="Catálogo global, facilitadores y oferta mensual independiente."
       />
       <ErrorBox error={catalog.error || teachers.error || offers.error} />
-      <section className="panel period-offerings">
+      <section className="panel configuration-section period-offerings">
         <div className="section-heading">
           <h2>Actividades del período · {periodName(periods.find((p) => p.id === period))}</h2>
           <button
@@ -86,7 +86,7 @@ export function Configuration() {
                   {o.mode === 'individual' ? 'Individual · capacidad 1' : 'Grupal'}
                 </small>
               </div>
-              <div className="actions">
+              <div className="actions configuration-actions">
                 <button disabled={closed} onClick={() => setEdit({ kind: 'offerings', value: o })}>
                   Editar oferta
                 </button>
@@ -141,10 +141,11 @@ export function Configuration() {
           </p>
         )}
       </section>
-      <section className="panel">
+      <section className="panel configuration-section">
         <div className="section-heading">
           <h2>Catálogo global de actividades</h2>
           <button
+            className="primary"
             onClick={() => setEdit({ kind: 'activities', value: { days: [0, 1, 2, 3, 4, 5, 6] } })}
           >
             Nueva actividad
@@ -157,7 +158,7 @@ export function Configuration() {
               <b>{a.name}</b>
               <small>{a.active ? 'Activa' : 'Archivada'}</small>
             </div>
-            <div className="actions">
+            <div className="actions configuration-actions">
               <button onClick={() => setEdit({ kind: 'activities', value: a })}>
                 Editar actividad
               </button>
@@ -169,10 +170,10 @@ export function Configuration() {
           </div>
         ))}
       </section>
-      <section className="panel">
+      <section className="panel configuration-section">
         <div className="section-heading">
           <h2>Facilitadores</h2>
-          <button onClick={() => setEdit({ kind: 'instructors', value: {} })}>
+          <button className="primary" onClick={() => setEdit({ kind: 'instructors', value: {} })}>
             Nuevo facilitador
           </button>
         </div>
@@ -186,7 +187,7 @@ export function Configuration() {
               <b className="config-facilitator-name">{facilitatorName(i)}</b>
               <small>{i.active ? 'Activo' : 'Inactivo'}</small>
             </div>
-            <div className="actions">
+            <div className="actions configuration-actions">
               <button onClick={() => setEdit({ kind: 'instructors', value: i })}>
                 Editar facilitador
               </button>

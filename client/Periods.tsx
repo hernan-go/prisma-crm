@@ -132,7 +132,7 @@ export function PeriodAdmin() {
   const [status, setStatus] = useState<any>();
   const m = useSave(`/periods/${status?.id}/status`, 'PATCH', () => setStatus(undefined));
   return (
-    <section className="panel">
+    <section className="panel configuration-section configuration-periods">
       <h2>Períodos</h2>
       <p>
         Cerrar conserva el historial y bloquea nuevos movimientos y ediciones. Podés reabrirlo de
@@ -140,11 +140,11 @@ export function PeriodAdmin() {
       </p>
       {periods.map((p) => (
         <div className="payment-row" key={p.id}>
-          <span>
+          <span className="configuration-period-name">
             {periodName(p)}{' '}
             <span className="chip">{p.status === 'closed' ? 'Cerrado' : 'Abierto'}</span>
           </span>
-          <div className="actions">
+          <div className="actions configuration-actions">
             <button disabled={p.status !== 'open'} onClick={() => setEdit(p)}>
               Editar vacío
             </button>

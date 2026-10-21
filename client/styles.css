@@ -1782,7 +1782,103 @@ summary .chip {
   }
 }
 
-/* Configuration: period offerings only. Catalogs and editors keep their styles. */
+/* Configuration sections only; direct action buttons exclude modal contents. */
+.configuration-section.panel {
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.configuration-section > .section-heading {
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0 0 12px;
+}
+.configuration-section > h2,
+.configuration-section > .section-heading h2 {
+  margin-bottom: 0;
+  font-size: 20px;
+  line-height: 1.4;
+}
+.configuration-section > h2 {
+  margin-bottom: 10px;
+}
+.configuration-section > p {
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.configuration-section > .section-heading > .primary {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.configuration-section > .payment-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 12px 0;
+  border-bottom-color: #3b4a44;
+}
+.configuration-section > .payment-row > div:first-child {
+  flex: 1 1 210px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.configuration-section > .payment-row b:not(.config-facilitator-name) {
+  color: #e6eaea;
+  font-size: 16px;
+  font-weight: 600;
+}
+.configuration-section > .payment-row small {
+  margin-top: 4px;
+  color: #a3b5ae;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.configuration-period-name {
+  display: flex;
+  align-items: center;
+  flex: 1 1 170px;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.configuration-period-name .chip {
+  font-size: 11px;
+}
+.configuration-section .configuration-actions {
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.configuration-section .configuration-actions > button,
+.period-offerings .period-offering > .add-schedule {
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid #6c8879;
+  border-radius: 6px;
+  background: #2b3732;
+  color: #d2e5dc;
+  font-size: 12px;
+  font-weight: 550;
+}
+.configuration-section .configuration-actions > button:hover:not(:disabled),
+.period-offerings .period-offering > .add-schedule:hover:not(:disabled) {
+  border-color: #78cbb2;
+  background: #344b40;
+  color: #eef6f2;
+}
+.configuration-section .configuration-actions > button.danger {
+  border-color: #a86f7c;
+  background: transparent;
+  color: #ffb5b5;
+}
+.configuration-section .configuration-actions > button.danger:hover:not(:disabled) {
+  border-color: #aa6876;
+  background: #482e33;
+  color: #ffbdc0;
+}
 .period-offerings .period-offering {
   padding: 16px 18px;
   margin: 12px 0 0;
@@ -1801,10 +1897,10 @@ summary .chip {
   min-width: 0;
 }
 .period-offerings .config-activity-name {
-  display: block;
-  padding: 0;
-  background: none;
-  color: #e6eaea;
+  display: inline-block;
+  padding: 3px 8px;
+  background: #e6eaea;
+  color: #202526;
   font-size: 20px;
   font-weight: 600;
   line-height: 1.35;
@@ -1845,34 +1941,6 @@ summary .chip {
   color: #a3b5ae;
   font-size: 12px;
   line-height: 1.5;
-}
-.period-offerings .period-offering .actions {
-  flex-wrap: wrap;
-  gap: 4px;
-  min-width: 0;
-}
-.period-offerings .period-offering button {
-  min-height: 32px;
-  padding: 6px 9px;
-  border-color: transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: #b9d3c9;
-  font-size: 12px;
-  font-weight: 550;
-}
-.period-offerings .period-offering button:hover:not(:disabled) {
-  border-color: #496056;
-  background: #2b3933;
-  color: #e0eee8;
-}
-.period-offerings .period-offering button.danger {
-  color: #dbacad;
-}
-.period-offerings .period-offering button.danger:hover:not(:disabled) {
-  border-color: #70464c;
-  background: #482e33;
-  color: #ffbdc0;
 }
 .period-offerings .period-offering .add-schedule {
   margin-top: 10px;
@@ -1929,7 +1997,23 @@ summary .chip {
   padding-bottom: 0;
 }
 @media (max-width: 700px), (pointer: coarse) {
-  .period-offerings .period-offering button {
+  .configuration-section .configuration-actions > button,
+  .configuration-section > .section-heading > .primary,
+  .period-offerings .period-offering > .add-schedule {
     min-height: 44px;
+  }
+}
+@media (max-width: 700px) {
+  .configuration-section.panel {
+    padding: 16px;
+  }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .configuration-periods > .payment-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .configuration-periods .configuration-actions {
+    justify-content: flex-start;
   }
 }
