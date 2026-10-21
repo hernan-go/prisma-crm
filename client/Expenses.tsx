@@ -209,6 +209,17 @@ function PeriodExpenses({
   const [movement, setMovement] = useState<{ categoryId: number; expense?: Expense }>();
   const [remove, setRemove] = useState<ExpenseCategory>();
   const disabled = !period || !month || closed || query.isPending || !!query.error;
+  const addExpenseButton = (categoryId: number) => (
+    <button
+      className="primary expense-add"
+      aria-label="Agregar gasto a esta categoría"
+      title="Agregar gasto a esta categoría"
+      disabled={disabled}
+      onClick={() => setMovement({ categoryId })}
+    >
+      <Plus size={17} aria-hidden="true" />
+    </button>
+  );
   return (
     <>
       <PageHeading
@@ -245,9 +256,10 @@ function PeriodExpenses({
                   >
                     Eliminar
                   </button>
+                  {!item.expenses.length && addExpenseButton(item.id)}
                 </div>
               </div>
-              {item.expenses.map((expense) => (
+              {item.expenses.map((expense, index) => (
                 <div className="payment-row" key={expense.id}>
                   <div className="expense-description">
                     <b>
@@ -268,19 +280,11 @@ function PeriodExpenses({
                       disabled={disabled}
                       path={`${path}/${item.id}/expenses/${expense.id}`}
                     />
+                    {index === item.expenses.length - 1 && addExpenseButton(item.id)}
                   </div>
                 </div>
               ))}
               {!item.expenses.length && <p className="muted">Sin gastos registrados.</p>}
-              <div className="actions expense-new">
-                <button
-                  className="primary"
-                  disabled={disabled}
-                  onClick={() => setMovement({ categoryId: item.id })}
-                >
-                  <Plus size={17} /> Nuevo
-                </button>
-              </div>
             </section>
           ))}
           {query.data?.length === 0 && (

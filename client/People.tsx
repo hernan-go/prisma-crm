@@ -218,16 +218,18 @@ export function People() {
               {q.data?.rows.map((p: any) => (
                 <tr key={p.id}>
                   <td>
-                    <Link
-                      className="person-link"
-                      to={`/personas/${p.id}`}
-                      title={`${p.apellido}, ${p.nombre}`}
-                    >
-                      <span>
-                        {p.apellido}, {p.nombre}
-                      </span>
-                    </Link>
-                    <small className="desktop-only">{p.public_id}</small>
+                    <div className="person-identity">
+                      <Link
+                        className="person-link"
+                        to={`/personas/${p.id}`}
+                        title={`${p.apellido}, ${p.nombre}`}
+                      >
+                        <span>
+                          {p.apellido}, {p.nombre}
+                        </span>
+                      </Link>
+                      <small className="person-id">{p.public_id}</small>
+                    </div>
                   </td>
                   <td>{p.telefono}</td>
                   <td className="desktop-only">{p.email || '—'}</td>

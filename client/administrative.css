@@ -138,11 +138,21 @@ main.administrative-page {
 .administrative-page :is(.people-table, .accounts-table) td {
   font-size: 14px;
 }
-.administrative-page .people-table td small {
+.administrative-page .people-table .person-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.administrative-page .people-table .person-id {
   font-size: 12px;
-  margin-top: 3px;
+  color: #a3b2b1;
+  white-space: nowrap;
+  margin: 0;
 }
 .administrative-page .people-table .person-link {
+  min-width: 0;
+  max-width: 100%;
   font-size: 14px;
   font-weight: 600;
 }
@@ -170,8 +180,14 @@ main.administrative-page {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
 .administrative-page .agenda-card .eyebrow {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid #496c5d;
+  border-radius: 5px;
+  background: #304c40;
   margin-bottom: 8px;
-  color: #9ed5c2;
+  color: #c3eadb;
   font-size: 12px;
   letter-spacing: 0.6px;
 }
@@ -220,10 +236,15 @@ main.administrative-page {
   padding: 12px 0;
 }
 .administrative-page .facilitator-metrics {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
 }
 .administrative-page .facilitator-metric {
+  flex: 1 1 0;
+  min-width: max-content;
+  max-width: 100%;
   display: grid;
   align-content: start;
   gap: 4px;
@@ -235,14 +256,20 @@ main.administrative-page {
   font-weight: 500;
 }
 .administrative-page .facilitator-metric > strong {
-  font-size: 22px;
+  font-size: 19px;
+  line-height: 1.3;
+  overflow-wrap: normal;
 }
 .administrative-page .facilitator-totals {
   gap: 6px 16px;
   font-size: 13px;
 }
-.administrative-page .expense-new {
-  margin-top: 10px;
+.administrative-page button.expense-add {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  flex-shrink: 0;
 }
 .administrative-page .empty {
   padding: 24px 18px;
@@ -311,14 +338,16 @@ main.administrative-page {
   .administrative-page .payment-row .actions {
     justify-content: flex-start;
   }
-  .administrative-page .facilitator-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
   .administrative-page .facilitator-metric {
     padding: 8px 6px;
   }
   .administrative-page .facilitator-metric > strong {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  .administrative-page .people-table .person-link > span {
+    display: inline;
+    -webkit-line-clamp: unset;
+    overflow: visible;
   }
   .administrative-page .compact {
     grid-template-columns: minmax(0, 1fr);
@@ -337,6 +366,10 @@ main.administrative-page {
   }
 }
 @media (max-width: 700px), (pointer: coarse) {
+  .administrative-page button.expense-add {
+    width: 44px;
+    min-width: 44px;
+  }
   main.administrative-page
     :where(
       .actions,
