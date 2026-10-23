@@ -1,0 +1,138 @@
+.recurring-section {
+  container-type: inline-size;
+  min-width: 0;
+  margin-bottom: 30px;
+}
+.recurring-section > .section-heading {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.recurring-section > .section-heading h2 {
+  margin: 0;
+}
+.recurring-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.recurring-card {
+  position: relative;
+  min-width: 0;
+  padding: 42px 14px 14px;
+  background: #2b3732;
+  border: 1px solid #405149;
+  border-radius: 12px;
+}
+.recurring-card-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #78cbb2;
+}
+.recurring-card-name {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 8px;
+  color: #78cbb2;
+  min-height: 34px;
+}
+.recurring-card-name h3 {
+  min-width: 0;
+  color: #f0f6f3;
+}
+.recurring-card-name svg {
+  flex: 0 0 auto;
+}
+.recurring-card .recurring-pencil {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  color: #78cbb2;
+  background: transparent;
+}
+.recurring-card .recurring-pencil::before {
+  position: absolute;
+  inset: 7px;
+  content: '';
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.recurring-card .recurring-pencil:hover {
+  border: 0;
+  background: transparent;
+  color: #a1e6d2;
+}
+.recurring-card .recurring-pencil:focus-visible {
+  outline-offset: 0;
+}
+.recurring-card .recurring-pencil:disabled {
+  opacity: 0.45;
+}
+.recurring-card h3 {
+  font-size: calc(0.95rem - 2px);
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.recurring-card .recurring-amount {
+  margin-top: 8px;
+  display: block;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  padding: 4px 0;
+  color: #f0f6f3;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1rem, calc(2.2cqw - 4px), 1.15rem);
+  line-height: 1.4;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.recurring-review {
+  display: block;
+  color: #e6cb92;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+.recurring-detail {
+  padding: 12px 0;
+  border-bottom: 1px solid #405149;
+  overflow-wrap: anywhere;
+}
+.recurring-catalogue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+@container (min-width: 760px) {
+  .recurring-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@container (min-width: 1440px) {
+  .recurring-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+@container (max-width: 430px) {
+  .recurring-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

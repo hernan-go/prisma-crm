@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Plus } from 'lucide-react';
 import { api } from './api';
 import { usePeriod } from './App';
+import { RecurringExpenses } from './RecurringExpenses';
 import {
   DeleteButton,
   Empty,
@@ -241,53 +242,62 @@ function PeriodExpenses({
         <>
           <ErrorBox error={query.error} />
           {query.isPending && <Loading />}
-          {query.data?.map((item) => (
-            <section className="panel expense-category" key={item.id}>
-              <div className="section-heading">
-                <h2>{item.name}</h2>
-                <div className="actions">
-                  <button disabled={disabled} onClick={() => setCategory(item)}>
-                    Modificar
-                  </button>
-                  <button
-                    className="danger subtle"
-                    disabled={disabled}
-                    onClick={() => setRemove(item)}
-                  >
-                    Eliminar
-                  </button>
-                  {!item.expenses.length && addExpenseButton(item.id)}
-                </div>
-              </div>
-              {item.expenses.map((expense, index) => (
-                <div className="payment-row" key={expense.id}>
-                  <div className="expense-description">
-                    <b>
-                      {expense.concept} ·{' '}
-                      <span className="expense-amount">{formatMoney(expense.amount)}</span>
-                    </b>
-                    <small>{formatDate(expense.date)}</small>
-                    {expense.notes && <p>{expense.notes}</p>}
-                  </div>
+          <RecurringExpenses
+            period={period}
+            month={month}
+            closed={closed}
+            categories={query.data ?? []}
+          />
+          <h2>Gastos adicionales</h2>
+          {query.data
+            ?.filter((item) => !item.recurring_concept_id)
+            .map((item) => (
+              <section className="panel expense-category" key={item.id}>
+                <div className="section-heading">
+                  <h2>{item.name}</h2>
                   <div className="actions">
-                    <button
-                      disabled={disabled}
-                      onClick={() => setMovement({ categoryId: item.id, expense })}
-                    >
-                      Editar
+                    <button disabled={disabled} onClick={() => setCategory(item)}>
+                      Modificar
                     </button>
-                    <DeleteButton
+                    <button
+                      className="danger subtle"
                       disabled={disabled}
-                      path={`${path}/${item.id}/expenses/${expense.id}`}
-                    />
-                    {index === item.expenses.length - 1 && addExpenseButton(item.id)}
+                      onClick={() => setRemove(item)}
+                    >
+                      Eliminar
+                    </button>
+                    {!item.expenses.length && addExpenseButton(item.id)}
                   </div>
                 </div>
-              ))}
-              {!item.expenses.length && <p className="muted">Sin gastos registrados.</p>}
-            </section>
-          ))}
-          {query.data?.length === 0 && (
+                {item.expenses.map((expense, index) => (
+                  <div className="payment-row" key={expense.id}>
+                    <div className="expense-description">
+                      <b>
+                        {expense.concept} ·{' '}
+                        <span className="expense-amount">{formatMoney(expense.amount)}</span>
+                      </b>
+                      <small>{formatDate(expense.date)}</small>
+                      {expense.notes && <p>{expense.notes}</p>}
+                    </div>
+                    <div className="actions">
+                      <button
+                        disabled={disabled}
+                        onClick={() => setMovement({ categoryId: item.id, expense })}
+                      >
+                        Editar
+                      </button>
+                      <DeleteButton
+                        disabled={disabled}
+                        path={`${path}/${item.id}/expenses/${expense.id}`}
+                      />
+                      {index === item.expenses.length - 1 && addExpenseButton(item.id)}
+                    </div>
+                  </div>
+                ))}
+                {!item.expenses.length && <p className="muted">Sin gastos registrados.</p>}
+              </section>
+            ))}
+          {query.data?.filter((item) => !item.recurring_concept_id).length === 0 && (
             <Empty>
               <span className="desktop-only">No hay categorías de gastos en este período.</span>
               <span className="mobile-only">No hay gastos registrados en este período.</span>

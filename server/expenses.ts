@@ -10,17 +10,10 @@ import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { openPeriod } from './scheduling.js';
 import { positiveId } from './services.js';
+import { requireAdditionalCategory } from './recurring-expenses.js';
 
 async function requireCategory(period: number, category: number, db: Connection) {
-  requireFound(
-    (
-      await query(
-        'SELECT id FROM period_expense_categories WHERE id=? AND period_id=?',
-        [category, period],
-        db,
-      )
-    )[0],
-  );
+  await requireAdditionalCategory(period, category, db);
 }
 
 async function requireExpense(category: number, expense: number, db: Connection) {
@@ -38,7 +31,7 @@ async function requireExpense(category: number, expense: number, db: Connection)
 export async function expenseCategories(period: number) {
   requireFound((await query('SELECT id FROM periods WHERE id=?', [period]))[0]);
   const categories = await query<Omit<ExpenseCategory, 'expenses'>>(
-    'SELECT id,period_id,name FROM period_expense_categories WHERE period_id=? ORDER BY id',
+    'SELECT id,period_id,name,recurring_concept_id FROM period_expense_categories WHERE period_id=? ORDER BY id',
     [period],
   );
   const rows = await query<Expense>(

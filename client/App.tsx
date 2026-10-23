@@ -162,7 +162,20 @@ function MobileHeader({
           {open ? <X size={23} /> : <Menu size={23} />}
         </button>
       </div>
-      <PageTitle title={title} description={description} />
+      {sectionPath === '/estadisticas' ? (
+        <div className="mobile-statistics-heading">
+          <PageTitle title={title} />
+          {period > 0 && (
+            <span className="statistics-status">
+              {periods.find((p) => p.id === period)?.status === 'closed'
+                ? 'Período cerrado · consulta histórica'
+                : 'Período abierto · datos sujetos a cambios'}
+            </span>
+          )}
+        </div>
+      ) : (
+        <PageTitle title={title} description={description} />
+      )}
       <div className="period-control mobile-period" hidden={open}>
         {selector}
       </div>

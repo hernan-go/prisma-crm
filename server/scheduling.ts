@@ -1,3 +1,4 @@
+import { initializeRecurringPeriod, requireRecurringSchema } from './recurring-periods.js';
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { periodCreateSchema, periodSchema } from '../shared/domain.js';
@@ -8,6 +9,7 @@ import { deletePeriodConfiguration } from './configuration-deletion.js';
 export async function periodCreate(body: unknown) {
   const p = periodCreateSchema.parse(body);
   return peopleTransaction(async (db) => {
+    await requireRecurringSchema(db);
     const [source] =
       p.mode === 'clone_previous'
         ? await query(
@@ -21,6 +23,7 @@ export async function periodCreate(body: unknown) {
     const id = (
       await execute('INSERT INTO periods(year,month) VALUES (?,?)', [p.year, p.month], db)
     ).insertId;
+    await initializeRecurringPeriod(id, db);
     if (source) {
       // Read period configuration, never catalog defaults or transactional history.
       const offerings = await query(
@@ -92,14 +95,16 @@ export async function periodHasConfigurationOrData(period: number, db: Connectio
     (SELECT COUNT(*) FROM enrollments WHERE period_id=?) +
     (SELECT COUNT(*) FROM monthly_accounts WHERE period_id=?) +
     (SELECT COUNT(*) FROM period_memberships WHERE period_id=?) +
-    (SELECT COUNT(*) FROM period_expense_categories WHERE period_id=?) total`,
-    [period, period, period, period, period],
+    (SELECT COUNT(*) FROM period_expense_categories WHERE period_id=?) +
+    (SELECT COUNT(*) FROM period_recurring_concepts WHERE period_id=?) total`,
+    [period, period, period, period, period, period],
     db,
   );
   return Number(r.total) > 0;
 }
 export async function periodEdit(period: number, body?: unknown) {
   return peopleTransaction(async (db) => {
+    await requireRecurringSchema(db);
     if (body === undefined) {
       await deletePeriodConfiguration(period, db);
     } else {

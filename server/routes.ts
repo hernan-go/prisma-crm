@@ -1,7 +1,9 @@
 import { createWeatherRouter } from './weather.js';
+import { statistics } from './statistics/index.js';
 import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
 import { expenses } from './expenses.js';
+import { recurringExpenses } from './recurring-expenses.js';
 import { formsImport } from './forms-import.js';
 import { openPeriod, periodCreate, periodEdit, deleteMovement } from './scheduling.js';
 import { Router } from 'express';
@@ -20,11 +22,13 @@ import {
 } from './memberships.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use(statistics);
 api.use(createWeatherRouter());
 api.use(facilitators);
 api.use('/forms-import', formsImport);
 api.use(offerings);
 api.use(expenses);
+api.use(recurringExpenses);
 const id = (v: unknown) => positiveId.parse(v);
 api.get('/health', async (_req, res) => {
   await query('SELECT 1');

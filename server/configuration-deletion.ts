@@ -1,6 +1,7 @@
 import { query, execute, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { openPeriod } from './scheduling.js';
+import { requireRecurringSchema } from './recurring-periods.js';
 
 // All callers hold peopleTransaction: configuration, admissions and finance share
 // its cross-process lock. Locking reads also protect the rows being removed.
@@ -66,6 +67,7 @@ export async function requirePeriodWithoutBusinessData(period: number, db: Conne
 }
 
 export async function deletePeriodConfiguration(period: number, db: Connection) {
+  await requireRecurringSchema(db);
   const p = await openPeriod(period, db);
   await requirePeriodWithoutBusinessData(period, db);
   // The historical backup has no FK; preserve its economic period as well.
@@ -105,6 +107,8 @@ export async function deletePeriodConfiguration(period: number, db: Connection) 
     db,
   );
   await execute('DELETE FROM period_activities WHERE period_id=?', [period], db);
+  await execute('DELETE FROM period_recurring_concepts WHERE period_id=?', [period], db);
+  await execute('DELETE FROM period_recurring_settings WHERE period_id=?', [period], db);
   await execute('DELETE FROM periods WHERE id=?', [period], db);
 }
 

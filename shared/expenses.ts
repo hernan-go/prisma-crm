@@ -28,5 +28,6 @@ export type Expense = z.infer<typeof expenseSchema> & { id: number; category_id:
 export type ExpenseCategory = z.infer<typeof expenseCategorySchema> & {
   id: number;
   period_id: number;
+  recurring_concept_id?: number | null;
   expenses: Expense[];
 };
