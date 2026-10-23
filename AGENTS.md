@@ -35,9 +35,9 @@ Nunca ejecutar tests destructivos contra `prisma_dev`, `prisma_demo` o producci�
 
 ## 4. Migraciones
 
-- Migraciones aplicadas y registradas en producción: `001.sql` a `009.sql`, según confirmación del usuario.
+- Migraciones aplicadas y registradas en producción: `001.sql` a `011.sql`, según operaciones y verificaciones del propietario confirmadas el 23/10/2026. Codex no realizó una verificación productiva independiente.
 - Las migraciones aplicadas son inmutables.
-- `009.sql` implementa receptor independiente de medio; aplicada en `prisma_test`, `prisma_dev` y producción. Cobros desplegado en `df04f17`, con smoke productivo e históricos reconciliados aprobados por el usuario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `010.sql`.
+- `009.sql` implementa receptor independiente de medio; `010–011` implementan Gastos Recurrentes e independencia mensual. Aplicadas en `prisma_test`, `prisma_dev` y producción. Iteración 8 publicada en `51e247e`, con build y smoke productivos aprobados por el propietario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `012.sql`.
 - Dinero: `DECIMAL(12,2)`, nunca `FLOAT`.
 
 ## 5. Períodos

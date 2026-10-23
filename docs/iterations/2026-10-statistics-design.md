@@ -1,8 +1,38 @@
 # Iteración 8 — Diseño funcional de Estadísticas
 
-**Fecha:** 2026-10-22. **Estado:** definiciones funcionales principales aprobadas por Hernán; Etapa 1 autorizada e implementada y validada localmente. Pendiente de revisión del propietario, integración y producción.
+**Diseño original:** 2026-10-22. **Actualización documental:** 2026-10-23. **Estado vigente:** resumen v1, IPC y desglose de gastos implementados; publicación en `51e247e`, build exitoso y smoke productivo confirmados por el propietario el 23/10/2026, con migraciones `001–011` aplicadas y registradas. Codex verificó el código y Git locales, sin comprobación productiva independiente. Siete bloques/acordeones y gráficos diseñados y aprobados funcionalmente, todavía sin implementar; Recharts sin instalar.
 
 PRISMA es el emprendimiento de la primera instalación, no el nombre genérico del software. Este documento distingue acuerdos funcionales, hechos del modelo y propuestas técnicas; el registro de Etapa 1 al final identifica la implementación local.
+
+## Ampliación documental de Iteración 9 — alcance vigente
+
+[D020](../DECISIONS.md#d020--doble-finalidad-de-estadísticas-y-capa-analítica-compartida) registra la doble finalidad: gestión visual y capa analítica reutilizable para futuras consultas autorizadas con IA. [ARCHITECTURE](../ARCHITECTURE.md#estadísticas--v1-publicada-y-capa-analítica-compartida) define backend como fuente de cálculo, metadatos de métricas y límites de acceso. La integración externa no está implementada ni autorizada; API, exportación y MCP son posibilidades por diseñar, sin mecanismo elegido. El eventual detalle desidentificado requiere controles propios: desidentificar no garantiza anonimato.
+
+La secuencia aprobada es mensual por período seleccionado → anual con evolución de sus meses → histórica con rangos personalizados y ajustes IPC cuando los datos sean suficientes; detalle en [ROADMAP](../ROADMAP.md#prioridad-5--estadísticas). Los dos gráficos mensuales de gastos recomendados en la inspección son una propuesta pendiente de aprobación, no un alcance de implementación autorizado. No incorporar ahora cálculos de resultado económico, tarifas, paquetes, promociones, asistencia ni simulaciones sin definiciones y autorizaciones adicionales. D021 amplía la regla de honorarios mayoritariamente fijos respecto de participantes, renegociables y variables por prestación/período.
+
+Los apartados siguientes preservan la cronología del diseño y sus autorizaciones parciales. Las menciones a shell, revisión/integración/producción pendientes, IPC futuro o próxima migración 010 describen etapas anteriores, superadas para lo entregado por el cierre productivo del 23/10 en [PROJECT_STATE](../PROJECT_STATE.md). No son instrucciones para repetir migraciones, verificaciones o despliegues; próxima numeración disponible: `012.sql`. Las propuestas no entregadas conservan su condición pendiente.
+
+## Diseño visual, experiencia de usuario y presentación profesional
+
+Premisa aprobada para Iteración 9, complementaria de D020: utilidad analítica, excelencia visual/experiencia de usuario y preparación para IA son inseparables. La información debe ser confiable, comprensible y relevante para decisiones administrativas, económicas y comerciales; la interfaz moderna, elegante, atractiva, intuitiva y agradable de explorar; y las métricas estructuradas y reutilizables independientemente de la presentación. Ninguna dimensión debe perjudicar a las demás ni convertir la consulta en una montaña de números.
+
+La aspiración estética es comparable a dashboards profesionales modernos exhibidos en plataformas como Behance, adaptada a una aplicación administrativa real: datos auténticos, interacción funcional y comportamiento responsive. Es una referencia de calidad, no una selección actual de diseños externos. Respetar la identidad visual existente mediante una evolución consistente y una dirección común para los siete acordeones.
+
+Antes de implementar gráficos, la etapa funcional correspondiente definirá criterios reutilizables para tipos de gráficos y usos, paleta y significado de colores, tarjetas/contenedores, tipografía/jerarquía, ejes/etiquetas/unidades/leyendas, tooltips/interacciones, animaciones/transiciones, estados vacíos/parciales/de error y presentación responsive/accesible. Esta actualización registra la exigencia, sin diseñar ahora todo el sistema visual ni producir imágenes, mockups o prototipos.
+
+### Criterios de aceptación de futuras entregas
+
+- Cada gráfico debe justificar su presencia por el valor de la información que comunica y responder una pregunta de negocio. Elegirlo por claridad y utilidad; no por disponibilidad en Recharts ni asignando arbitrariamente un tipo distinto a cada indicador. Aprovechar bien los componentes adecuados, sin intentar utilizar toda la biblioteca.
+- La calidad estética forma parte de la aceptación desde el diseño, no de un pulido final opcional. Usar jerarquía visual, tipografía, espacios, agrupaciones y contrastes; evitar saturación de colores, métricas, porcentajes, leyendas y decoración. No distorsionar escalas, proporciones ni magnitudes para lograr efectos visuales.
+- Mantener gráficos modernos, atractivos y fáciles de interpretar, con tarjetas, colores semánticos, ejes, unidades, leyendas, tooltips e interacciones cuidados y consistentes entre los siete bloques y con el resto del sistema. Evitar información redundante entre gráficos, tablas y KPIs; conservar la alternativa tabular accesible ya exigida, sin repetirla innecesariamente en la vista inicial.
+- Garantizar experiencia adecuada en escritorio, tablet y móvil; navegación por teclado, foco visible, contraste suficiente e información esencial accesible sin depender solo de color, hover o animación. Usar animaciones y transiciones únicamente cuando mejoren la experiencia sin perjudicar comprensión, rendimiento ni accesibilidad, respetando movimiento reducido.
+- Comunicar estados vacíos, cobertura parcial y errores con claridad y coherencia visual. La estética nunca debe ocultar incertidumbre ni sacrificar precisión, claridad o funcionalidad por una captura atractiva. Mantener los criterios analíticos y de privacidad de D020/D021.
+
+### Valor profesional y demostraciones públicas
+
+Estadísticas también podrá demostrar la calidad real del software en LinkedIn, portfolio, presentaciones comerciales y demostraciones a potenciales clientes. Su calidad estética no es secundaria; debe surgir de un producto útil y funcional, sin elementos puramente publicitarios dentro del módulo ni pantallas artificiales preparadas solo para publicidad. Las particularidades de PRISMA no se convierten en requisitos universales.
+
+Para demostraciones públicas, utilizar información sintética identificada como tal o adecuadamente anonimizada y autorizada, sin exponer datos personales ni información económica privada. No fabricar indicadores o cifras aparentando que provienen de operaciones reales. D020 conserva la advertencia de que desidentificar no garantiza anonimato; el eventual uso de datos reales requiere evaluar esa protección y su autorización.
 
 ## Alcance del cierre documental anterior
 

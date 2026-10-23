@@ -1,6 +1,22 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-22
+**Corte:** 2026-10-23
+
+## Estado vigente — Iteración 8 cerrada en producción
+
+Según las operaciones y verificaciones realizadas por el propietario y confirmadas el 23/10/2026: Iteración 8 implementada y publicada en `51e247e`, migraciones `001–011` aplicadas y registradas en producción, build SiteGround con exit code `0` y smoke productivo aprobado. Estadísticas v1, IPC, desglose de Gastos y Gastos Recurrentes con independencia mensual funcionan en producción. Octubre 2026 quedó reclasificado y conciliado económicamente; es un cierre con fecha de corte, no un parámetro permanente. La reclasificación por UI recreó movimientos y cambió IDs/timestamps; no acredita identidad histórica de registros.
+
+Codex comprobó independientemente en la inspección local de Iteración 9: working tree limpio, `main` y referencias locales `origin/main`, `origin/HEAD` y rama de Iteración 8 en `51e247e`, y presencia del código y migraciones correspondientes. No consultó GitHub ni producción ni verificó allí la DB. El despliegue, las migraciones y la conciliación productivos se registran como confirmaciones del propietario, aportadas en los handoffs del 23/10; el handoff del 22/10 es antecedente anterior al despliegue.
+
+## Iteración 9 — Documentación aprobada; desarrollo pendiente
+
+Doble finalidad y arquitectura compartida registradas en D020; honorarios dinámicos y límites económicos en D021 de [DECISIONS](DECISIONS.md). Resumen mensual, IPC y desglose están implementados; siete bloques/acordeones exclusivos están aprobados funcionalmente y diseñados, sin implementar. Recharts no está instalado. Próxima fase funcional: gráficos mensuales por período seleccionado; después anual y luego histórica, según [ROADMAP](ROADMAP.md). Los dos gráficos de gastos sugeridos son una propuesta pendiente de aprobación; no se autorizó su implementación.
+
+La conexión con IA no existe y queda para un proyecto posterior con diseño y autorización independientes. Esta intervención autoriza únicamente los seis Markdown acordados, sin cambios de código, dependencias, DB, ramas, commits ni producción; no repite pruebas ni auditorías previas.
+
+## Antecedentes de cierre y validación
+
+Los registros siguientes conservan el estado y la evidencia de cada intervención anterior. Las menciones a pantalla vacía, producción hasta 009, activación 010–011, integración o despliegue pendientes quedan superadas por el estado vigente anterior; no representan tareas actuales. La aprobación productiva no amplía los casos automatizados a pruebas manuales que no fueron informadas.
 
 ## Iteración 8 — Cierre local aprobado
 
@@ -54,11 +70,11 @@ Estadísticas anuales e históricas queda registrada como pendiente en Roadmap y
 - Validación local histórica: typecheck, lint, build y diff check aprobados; 162 tests aprobados, 157 integraciones omitidas; 36 casos nuevos de clima. QA meteorológico aislado en los siete anchos, éxito y error; consulta real a MET Norway aprobada. Desbordamiento previo del selector global en 701px documentado. Revisión visual desktop/mobile y clima aprobada explícitamente por el propietario. Cierre posterior: build y verificación visual productiva confirmados por el propietario, sin verificaciones productivas adicionales desde Codex.
 - Detalle de implementación, QA y limitaciones: `docs/iterations/2026-10-dashboard-redesign.md`. Las referencias históricas a integración y despliegue pendientes quedan superadas por el cierre productivo en `e13f952`.
 
-## Producción
+## Producción — referencia vigente y antecedentes de Cobros
 
 - Web pública: `https://prismacomunidad.com.ar`
 - CRM: `https://crm.prismacomunidad.com.ar`
-- Migraciones aplicadas y registradas: `001.sql` → `009.sql`, según confirmación del usuario.
+- Migraciones aplicadas y registradas: `001.sql` → `011.sql`, según confirmación del propietario del 23/10/2026. Publicación vigente: `51e247e`; los puntos siguientes conservan la evidencia histórica de Cobros.
 - `008.sql` aplicada en producción; membresías desplegadas y smoke test aprobado, confirmado por el usuario.
 - `009.sql` aplicada y registrada también en producción, confirmado por el usuario.
 - Deploy productivo de Cobros: `1791429132-5kurej`; build exit code `0`, smoke productivo aprobado e históricos agosto/septiembre/octubre reconciliados, según confirmación del usuario. No se repitieron verificaciones productivas desde Codex.
@@ -71,7 +87,7 @@ Estadísticas anuales e históricas queda registrada como pendiente en Roadmap y
 
 - H1 sincronizados con sidebar.
 - Nueva entrada `Estadísticas` con icono y ruta `/estadisticas`.
-- Página de Estadísticas existe pero está deliberadamente vacía salvo su H1.
+- En la entrega inicial de nomenclatura, Estadísticas era una pantalla vacía salvo su H1; ese estado histórico fue superado por la v1 publicada en Iteración 8.
 
 ### Gastos Período
 

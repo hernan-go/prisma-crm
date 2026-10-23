@@ -1,13 +1,13 @@
 # PRISMA CRM — Roadmap
 
-**Actualizado:** 2026-10-22
+**Actualizado:** 2026-10-23
 
 ## Completado recientemente
 
 - Configuración eliminable vs historial real: integrada, desplegada y aprobada en producción por el propietario. Noviembre 2026 eliminado satisfactoriamente. Sin migración. Detalle: `docs/iterations/2026-10-configuration-cleanup-rules.md`.
 
 - Nomenclatura H1 sincronizada con sidebar.
-- Sección `Estadísticas` creada como shell visual.
+- Estadísticas v1 publicada en `51e247e`: resumen mensual, IPC y desglose de gastos; sustituye al shell inicial.
 - `Gastos Período` implementado con categorías personalizables y movimientos.
 - Migración `007.sql` aplicada en producción.
 
@@ -85,31 +85,35 @@ Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre posterior confir
 
 ## Prioridad 5 — Estadísticas
 
-Etapa 1 autorizada posteriormente e implementada localmente: contratos, motor Decimal, endpoint agregado y seis tarjetas del resumen. Validación local aprobada; pendiente de revisión del propietario, integración y producción. Definiciones funcionales principales aprobadas por Hernán el 2026-10-22. Detalle y criterios: [iteración 8 — diseño de Estadísticas](iterations/2026-10-statistics-design.md).
+Estadísticas v1 implementada: contratos, motor Decimal, endpoint agregado, seis tarjetas, IPC y desglose de gastos. Según operaciones y verificaciones del propietario confirmadas el 23/10/2026, publicada en `51e247e`, build y smoke productivos aprobados, con migraciones `001–011` aplicadas y registradas. Codex no realizó una comprobación productiva independiente. Detalle y criterios: [iteración 8 — diseño de Estadísticas](iterations/2026-10-statistics-design.md).
 
-- Resumen ejecutivo económico, subtotales con cobertura y siete acordeones con una sola categoría abierta.
+- Resumen ejecutivo económico y subtotales con cobertura implementados; siete bloques en acordeones exclusivos aprobados funcionalmente y diseñados, todavía sin implementar.
 - Motor determinista reutilizable; Recharts como primera opción, todavía sin instalar ni validar.
 - Continuidad principal de personas con inscripción en meses consecutivos, diferenciada de membresías y asistencia.
 - Honorarios y gastos operativos separados. El propietario confirmó pagos a facilitadores exclusivamente en su módulo; no se presume duplicación efectiva.
 - Sin ganancia neta hasta aprobar el modelo contable.
 
-Secuencia propuesta, sujeta a autorización por alcance:
+Secuencia de evolución aprobada, con implementación sujeta a autorización por alcance:
 
-1. Etapa 1 implementada localmente: resumen y contratos con datos existentes, sin migraciones. Revisar antes de integrar.
-2. Incorporar acordeones, gráficos, comparaciones nominales y continuidad descriptiva; validar dependencia gráfica, bundle y accesibilidad.
-3. Consulta de IPC oficial y recuperación ante fallos implementadas localmente; persistencia e historia de IPC siguen pendientes de diseño y autorización.
-4. Incorporar registro histórico de bajas por actividad/vínculo general, con fecha y motivo opcional, preservando historia; efectos operativos y migración pendientes.
-5. Ampliar tarifas, paquetes, atribución de ingresos, costos y capacidad antes de desarrollar simulaciones y contribución por taller.
+1. Fase actual: gráficos analíticos mensuales del período seleccionado dentro de los siete bloques diseñados. Seleccionar una entrega pequeña con datos existentes, preferentemente sin migración. Los dos gráficos de gastos propuestos siguen pendientes de aprobación; no hay implementación autorizada. Validar Recharts, bundle, accesibilidad y responsive antes de su incorporación.
+2. Fase posterior: comparaciones anuales y evolución mensual dentro del año, distinguiendo períodos ausentes, abiertos y cobertura incompleta.
+3. Fase futura: análisis histórico completo y rangos personalizados, series económicas nominales y ajustadas por IPC cuando existan datos suficientes. La consulta actual del último IPC y su fallback están implementados; persistencia y serie histórica requieren diseño específico.
+
+Mantener como diseños independientes el historial de bajas y motivos opcionales, su alcance y efectos operativos; y los modelos de tarifas, paquetes, promociones, atribución de ingresos, costos y capacidad previos a simulaciones o rentabilidad. Asistencia y eventos no forman parte de la primera entrega.
+
+### Proyecto posterior independiente — integración analítica con IA
+
+D020 registra la doble finalidad de Estadísticas: herramienta visual de gestión e infraestructura analítica para futuras consultas autorizadas de ChatGPT u otros asistentes, compartiendo cálculos backend. No requiere mostrar en pantalla cada métrica consultable. API, exportación estructurada y MCP son posibilidades sin mecanismo elegido; agregados y detalle desidentificado requieren diseño de autenticación, permisos, privacidad y auditoría, acceso inicialmente de solo lectura y autorización específica. Desidentificar no garantiza anonimato. La integración no está implementada ni autorizada en esta actualización documental.
 
 La interfaz Estadísticas no requiere por sí sola implementar Google ni conectar IA. La autenticación con Google sigue pendiente con su alcance y prioridad existentes. No se implementan MCP, conectores ni chatbot en esta etapa. PDF/reportes conserva su posición posterior.
 
-### Tarea coordinada — Gastos recurrentes implementados localmente
+### Completado — Gastos recurrentes e independencia mensual
 
-Ocho tarjetas configurables, catálogo transversal, asociación explícita de históricos y edición del mismo movimiento por ID. Migración 010 validada en prisma_test y aplicada posteriormente de forma controlada en prisma_dev; sin cambios de fórmulas de Estadísticas, IPC o facilitadores. Conserva adicionales y reglas D004–D007. [Cierre técnico y validación](iterations/2026-10-recurring-expenses-implementation.md).
+Catálogo transversal configurable, asociación explícita de históricos y edición del mismo movimiento por ID; presencia y posición propias del período mediante 011. Migraciones 010–011 validadas en prisma_test, activadas en prisma_dev y aplicadas/registradas en producción según confirmación del propietario del 23/10/2026. Conserva adicionales y reglas D004–D007. [Cierre técnico y validación local](iterations/2026-10-recurring-expenses-implementation.md).
 
-El propietario informó después que configuró y probó manualmente los ocho conceptos de PRISMA en `prisma_dev`. La aplicación de 010 y su postflight ya fueron completados con autorización independiente. Producción sigue en 001–009; aplicación manual, integración y despliegue todavía pendientes. Nuevos importes cero requieren definición expresa; históricos múltiples legítimos permanecen en consulta.
+El propietario configuró por UI y amplió el catálogo productivo; no es una lista universal de ocho conceptos. Octubre 2026 quedó reclasificado y conciliado, como confirmación con fecha de corte y sin convertir sus importes en parámetros permanentes. Nuevos importes cero requieren definición expresa; históricos múltiples legítimos permanecen en consulta.
 
-Correcciones de importe y desglose de Estadísticas implementadas localmente. 011 e independencia mensual validadas en prisma_test y activadas controladamente en prisma_dev. Hernán aprobó manualmente diciembre de 2026: conciliación de $860.000, posiciones independientes, renumeración, retiro de Luz sin importe, persistencia entre períodos y reincorporación. Próximo paso: revisión de los tres commits locales y preparación autorizada de integración/producción. [Informe y plan de integración](iterations/2026-10-recurring-period-independence.md).
+Correcciones de importe y desglose de Estadísticas publicados con Iteración 8. La aprobación manual local previa de diciembre de 2026 se conserva con el alcance registrado en el [informe histórico](iterations/2026-10-recurring-period-independence.md); el cierre productivo posterior está en [PROJECT_STATE](PROJECT_STATE.md). No quedan migraciones ni despliegue pendientes de Iteración 8.
 
 ## Prioridad 6 — PDF / reportes
 
@@ -117,6 +121,6 @@ Postergado deliberadamente hasta estabilizar los modelos financieros y Estadíst
 
 ## Pendiente — Estadísticas anuales e históricas
 
-La vista mensual seguirá siendo la principal, vinculada al período seleccionado. Se planifica una vista anual seleccionable con evolución de los doce meses y una vista histórica desde el primer período registrado, con rangos personalizados de fechas/años y comparación de ingresos, cobranzas, gastos y honorarios. Deberá cruzar cada mes con su IPC oficial y distinguir evolución nominal de evolución ajustada por inflación. Resultados económicos y rentabilidad solo se incorporarán después de completar y aprobar las reglas contables.
+La secuencia temporal está definida en Prioridad 5. La vista mensual seguirá siendo la principal; las vistas anual e histórica deberán respetar períodos existentes, cobertura y suficiencia de series IPC. Resultados económicos y rentabilidad solo se incorporarán después de completar y aprobar las reglas contables y las limitaciones de honorarios de D021.
 
 Recharts se evaluará en una etapa posterior. Queda pendiente decidir entre un desplegable «Evolución histórica» o su integración en la categoría de evolución económica. Es exclusivamente un pendiente: no hay consultas históricas, filtros anuales, gráficos ni cambios DB implementados para esta ampliación.
