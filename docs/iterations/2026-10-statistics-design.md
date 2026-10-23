@@ -1,0 +1,228 @@
+# Iteración 8 — Diseño funcional de Estadísticas
+
+**Fecha:** 2026-10-22. **Estado:** definiciones funcionales principales aprobadas por Hernán; Etapa 1 autorizada e implementada y validada localmente. Pendiente de revisión del propietario, integración y producción.
+
+PRISMA es el emprendimiento de la primera instalación, no el nombre genérico del software. Este documento distingue acuerdos funcionales, hechos del modelo y propuestas técnicas; el registro de Etapa 1 al final identifica la implementación local.
+
+## Alcance del cierre documental anterior
+
+Exclusivamente documentación local. No modificar código, instalar dependencias, ejecutar tests, iniciar servicios, operar bases, crear migraciones o commits, hacer push ni desplegar. El diagnóstico y las propuestas futuras no autorizan desarrollo. Esperar revisión y autorización expresa después de presentar el diff.
+
+Base comprobada: `main` limpio en `dcee416e7a45cc756e5e5fff59e6de2166fb6d63`, un commit documental por delante de la referencia local `origin/main` en `06f3d1f`. Se creó `codex/iteration-8-statistics-design` desde ese HEAD, sin mover `main`, perder el commit ni sincronizar el remoto. La escritura del índice para crear la rama requirió permiso fuera del sandbox. No se verificó GitHub ni producción en esta intervención.
+
+Lecturas de referencia: PROJECT_STATE, WORKFLOW, cierre de iteración 7, DECISIONS, ROADMAP, ARCHITECTURE y diagnóstico previo de esta conversación. En aquel cierre, `/estadisticas` contenía solo el título. La Etapa 1 posterior se registra al final; no crea tablas.
+
+## Acuerdos funcionales aprobados
+
+- Resumen ejecutivo inicial limpio y prioritariamente económico; no llenar la vista inicial de gráficos.
+- Siete categorías en acordeones, con una sola abierta por vez.
+- Recharts como primera opción gráfica, pendiente de instalación y validación posterior.
+- Motor determinista reutilizable con precisión monetaria decimal.
+- Importes parcialmente conocidos como subtotales, con advertencias y cantidades de casos pendientes de definición.
+- Continuidad principal sobre personas únicas inscriptas en períodos mensuales consecutivos; distinguirla de membresías, asistencia y bajas registradas.
+- Sin cifra de ganancia neta hasta aprobar el modelo contable. No presentar diferencias parciales como beneficio.
+
+### Resumen y navegación
+
+El resumen del período seleccionado contemplará importe a cobrar definido, cobrado, deuda conocida, honorarios comprometidos/pagados/pendientes y gastos operativos registrados. Los créditos se informan aparte. Incluir los últimos indicadores oficiales de inflación con su mes de referencia y fecha de publicación cuando se implemente la integración; mientras tanto, no inventar ni proyectar un dato oficial.
+
+Identificar período abierto/cerrado y cobertura. Cuando el importe total sea desconocido, mostrar claramente el subtotal conocido, incluso si es cero, sin afirmar completitud. Cero, NULL, ausencia de registros y fallo de consulta son estados distintos.
+
+Categorías acordadas:
+
+1. Ingresos y cobranzas.
+2. Gastos operativos, servicios e impuestos.
+3. Facilitadores y honorarios.
+4. Participantes, actividades e inscripciones.
+5. Continuidad, retención y bajas.
+6. Inflación y evolución económica.
+7. Tarifas, promociones y simulaciones comerciales.
+
+Cada gráfico incluirá explicación de significado, período/eje temporal y limitaciones, además de una alternativa tabular accesible. Diseño responsive, teclado, foco visible, toque y reducción de movimiento. Una categoría pendiente no debe mostrar gráficos o datos ficticios.
+
+Como propuesta de presentación, no decisión adicional de negocio: seis tarjetas agrupando los tres importes de honorarios en una; filtros dentro de cada categoría; todos los acordeones cerrados al entrar; carga de gráficos al abrirlos. La composición final y los valores por defecto se revisarán en la implementación.
+
+## Dominios y reglas económicas
+
+**Confirmación del propietario:** los pagos a facilitadores de PRISMA se registran exclusivamente en Pago Facilitadores, no en Gastos. Este dato sustituye la incertidumbre del diagnóstico previo; no es una nueva consulta productiva. No asumir doble carga efectiva sin evidencia. Honorarios y gastos operativos serán dominios diferenciados; conservar controles para prevenir futuras dobles imputaciones sin cambiar la registración actual.
+
+- Honorarios fijos por prestación pactada, variables entre facilitadores, actividades y períodos; sin porcentajes automáticos sobre ingresos.
+- Período económico de la cuenta/oferta, fecha del cobro/pago y timestamp de registro son ejes distintos. Los cobros y pagos a facilitadores pueden tener fecha fuera del período económico; Gastos exige fecha dentro del período seleccionado.
+- `amount_due=NULL` es indefinido; cero es un importe definido. Deudas y créditos por cuenta se suman separadamente, sin compensar personas ni trasladar saldos automáticamente entre meses.
+- Gastos registrados no significa gastos efectivamente pagados. No hay estado estructurado de pago ni vencimiento de esos gastos.
+- No adjudicar el importe completo de un paquete a cada taller. Atribución de ingresos, costos compartidos y resultado económico siguen pendientes.
+- No crear períodos desde consultas, fuentes externas, importaciones ni reorganizaciones de Gastos. Closed conserva lectura y bloquea escrituras hasta reapertura explícita.
+
+## Indicadores v1 y fuentes actuales
+
+Alcance funcional para una futura v1, no código autorizado. `D` es importe a cobrar y `P` suma de cobros de una cuenta; `H` es compromiso de honorario y `F` suma de pagos de ese compromiso. Fórmulas con D/H definidos excluyen indefinidos del subtotal y los informan en cobertura.
+
+| Indicador                       | Fórmula/fuente                                                                         | Eje y límite                                                                                                | Presentación prevista                          |
+| ------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| A cobrar definido               | Suma D definidos; monthly_accounts                                                     | Período de cuenta; incluir en advertencia miembros sin cuenta y cuentas NULL                                | Subtotal y cobertura                           |
+| Cobrado del período             | Suma payments asociados a cuentas del período                                          | Período económico; no caja por mes de fecha                                                                 | Tarjeta y distribución                         |
+| Deuda conocida                  | Suma max(D-P,0) con D definido                                                         | Período de cuenta; no estimar indefinidos                                                                   | Subtotal/tabla                                 |
+| Crédito                         | Suma max(P-D,0) con D definido                                                         | Período de cuenta; no compensa deuda ajena                                                                  | Valor separado                                 |
+| Cobertura de importes           | (Miembros con cuenta definida / miembros) × 100; period_memberships y monthly_accounts | Cero cuenta como definido; denominador cero es no aplicable                                                 | Cantidades y porcentaje                        |
+| Cobros por medio/receptor       | Suma payments agrupados por method/recipient                                           | Período de cuenta por defecto; si se consulta por fecha, declararlo                                         | Barras y tabla; no saldo de cartera disponible |
+| Honorarios comprometidos        | Suma H definidos; facilitator_accounts y pares oferta/facilitador asignados            | Período de oferta; incluir pares sin cuenta en cobertura, sin multiplicar por horarios                      | Subtotal con cobertura                         |
+| Honorarios pagados              | Suma facilitator_payments                                                              | Período de oferta; fecha del movimiento como análisis separado                                              | Tarjeta/tabla                                  |
+| Honorarios pendientes           | Suma max(H-F,0) con H definido                                                         | No convertir H NULL en cero; detectar pagos superiores al compromiso                                        | Subtotal y advertencia                         |
+| Gastos registrados              | Suma period_expenses mediante categorías del período                                   | No acredita pago; no sumar nuevamente respaldo advertising_investments                                      | Total y categorías                             |
+| Personas del período            | Cantidad de period_memberships                                                         | Pertenencia explícita, con o sin actividades                                                                | Tarjeta secundaria                             |
+| Personas con actividades        | Personas distintas en enrollments                                                      | No asistencia; conservar historia de personas archivadas                                                    | Tarjeta secundaria                             |
+| Inscripciones                   | Cantidad de enrollments                                                                | Una persona puede tener varias; varios slots no suman inscripciones                                         | Tarjeta y barras por actividad                 |
+| Inscriptos por actividad/bloque | Personas distintas por oferta/schedule; enrollments y enrollment_slots                 | No ocupación real ni porcentaje de cupo grupal                                                              | Barras/tabla                                   |
+| Continuidad principal           | (Personas únicas inscriptas en A y B / personas únicas inscriptas en A) × 100          | A y B meses calendario consecutivos; sin personas en A o sin alguno de los períodos existente no calculable | Cantidades y porcentaje                        |
+| Sin inscripción posterior       | Personas inscriptas en A que no figuran en B                                           | Mismo par consecutivo; no llamar abandono ni baja efectiva                                                  | Comparación descriptiva                        |
+| Variación nominal               | (Xb/Xa-1) × 100                                                                        | Misma métrica/eje; base cero o faltante no calculable                                                       | Comparación y serie                            |
+
+Para continuidad, deduplicar por persona, sin exigir conservar la misma actividad; cambios de taller no son bajas generales. La continuidad por membresía es un análisis distinto. Períodos abiertos hacen provisional el resultado; un período inexistente no se reemplaza silenciosamente por el anterior disponible. Un período existente sin inscripciones representa cero registros actuales, no prueba que la carga esté completa. Las reglas finales de filtros y advertencias requieren revisión.
+
+No se incorpora como decisión definitiva el porcentaje de «obligación cubierta» propuesto en el diagnóstico. Nombre, fórmula, denominador y eventual inclusión se mantienen pendientes; evitar llamar efectividad de cobranza al cociente simple cobrado/a cobrar cuando existen créditos o importes indefinidos.
+
+### Limitaciones de datos
+
+- El Dashboard actual cuenta cuentas NULL pero no miembros sin cuenta; el futuro motor debe cubrir ambos sin cambiar ahora sus métricas.
+- Facilitadores se resuelve por oferta/horarios/asignaciones, no por activities.instructor_id legado. Las cuentas persistidas sin asignación actual también integran su universo.
+- La edición del compromiso de honorarios puede dejar pagos previos superiores; pendiente cero no describe esa diferencia. No inventar un crédito de facilitador.
+- No se conserva un historial completo de cancelaciones, cambios de importe ni motivos de baja; no reconstruirlo desde timestamps. Los backfills de migraciones no acreditan fecha original de incorporación.
+- No existe asistencia por clase ni cupo grupal configurable. Reservas individuales no acreditan presencia.
+- Períodos cerrados pueden reabrirse: el estado persistente actual no es un snapshot inmutable de lo informado anteriormente.
+- Categorías de gastos pertenecen a cada período; sus nombres/IDs no constituyen todavía una clasificación comparable entre meses.
+- No hay tarifas, paquetes contratados, reglas de atribución o clasificación de costos suficientes para rentabilidad por taller.
+
+## Propuesta técnica para desarrollo posterior
+
+Separar consultas/agregaciones, cálculos puros, contratos y presentación. Reutilizar Decimal.js y MySQL DECIMAL(12,2) para dinero; transportar importes exactos como strings, usar conversión numérica solo para geometría gráfica y mantener valores exactos en tablas/tooltips. Evitar duplicar importes al unir cuentas, pagos, slots y asignaciones. Definir lectura consistente del resumen sin usar el bloqueo global de escrituras de personas para estadísticas.
+
+Contrato propuesto: valor/subtotal conocido, estado de cobertura, universo y casos indefinidos, período y eje temporal, filtros, fuente y fecha de consulta, versión de definición. API agregada autenticada con el esquema existente, sin fichas personales innecesarias; nombres/rutas/archivos finales pendientes. Google no es requisito técnico para consultar Estadísticas internamente; su desarrollo mantiene el alcance y prioridad ya aprobados.
+
+Recharts sigue sin instalarse. La evaluación previa identificó compatibilidad declarada de una versión estable 3.x con React 19; versión exacta, react-is, licencia/avisos, compatibilidad real y tamaño del bundle deberán verificarse al autorizar dependencias. Tomar patrones de composición de shadcn/ui sin introducir por defecto otro sistema completo de interfaz. Reutilizar tarjetas/estilos, selector global, estados de carga/error y TanStack Query. Montar gráficos visibles, preservar claves por período/filtros y no mostrar respuestas tardías bajo otro período.
+
+No implementar MCP, conectores, chatbot ni multitenancy. El motor reutilizable no equivale a autorización externa: privacidad, desidentificación, identidad y scopes de una conexión futura necesitan diseño independiente.
+
+## IPC oficial — integración futura pendiente
+
+Contemplar variación mensual, acumulada del año e interanual. Cada dato debe identificar mes de referencia, serie/región/base, fuente y fecha de publicación; distinguir fecha de recuperación. No anticipar octubre con un dato de septiembre ni mostrar proyecciones como oficiales.
+
+Propuesta pendiente de aprobación técnica: IPC nacional nivel general, adaptador backend a fuente estructurada oficial, caché y persistencia verificable, actualización idempotente tras publicación, conservación de último dato válido y alternativa manual contrastada con fuente oficial. Confirmar formato, condiciones del proveedor y mecanismo de persistencia antes de diseñar una migración. No bloquear finanzas por una falla externa.
+
+Fórmulas conceptuales: mensual = `(I[t]/I[t-1] - 1) × 100`; acumulada = `(I[t]/I[diciembre_anterior] - 1) × 100`; interanual = `(I[t]/I[t-12] - 1) × 100`. No sumar porcentajes mensuales. Para X de un mes, precios de base = `X × I[base]/I[mes]`; variación real = `((Xb/Xa)/(Ib/Ia)-1) × 100`. Exigir índices compatibles y cubrir meses ausentes; ajustar cada mes antes de sumar varios. No equiparar IPC con variación exacta de costos del negocio.
+
+Referencias para verificar en la etapa técnica: [IPC INDEC](https://www.indec.gob.ar/Nivel4/Tema/3/5/31), [metadatos](https://www.indec.gob.ar/ftp/cuadros/economia/serie_ipc_metadatos.txt), [catálogo API-INDEC](https://api.indec.gob.ar/ayuda/faq). No se promete aquí un endpoint público específico ni se congela un valor de inflación como vigente indefinidamente.
+
+## Bajas y recomendaciones comerciales — etapas posteriores
+
+Propuesta de registro desde perfil: distinguir baja de actividad y del vínculo general, fecha efectiva y fecha de registro, motivo opcional y reingreso. Motivos preliminares: económico, incompatibilidad de horarios, razones personales, convivencia/dinámica grupal, insatisfacción con actividad, cambio de intereses, otro y no informado. No reconstruir motivos históricos; preservar cuentas, pagos e inscripciones anteriores. Efectos sobre operaciones vigentes, archivo, correcciones en períodos cerrados y atribución de autor con contraseña compartida están pendientes.
+
+Antes de simulaciones: tarifas versionadas con vigencia, condiciones de paquetes, contratación individual, bonificaciones, atribución de ingresos, costos fijos/variables y compartidos, capacidad y prestación pactada. No recomendar precios definitivos, aumentos de honorarios o discontinuaciones como conclusiones sustentadas si faltan esos datos. Punto de equilibrio y contribución por taller requieren ese diseño; no son indicadores implementados ni ganancia neta aprobada.
+
+## Tarea diferenciada — Gastos recurrentes y adicionales
+
+**Alcance funcional solicitado:** sección superior de conceptos recurrentes; debajo gastos adicionales. Para PRISMA, recurrentes: alquiler, expensas, electricidad, gas, internet, agua cuando corresponda, impuestos y tasas. Adicionales: publicidad, insumos, librería, alimentos, limpieza, mantenimiento, equipamiento y otros conceptos.
+
+Recurrente no equivale a importe fijo ni a pagado. Los importes son propios de cada período; actualizaciones no sobrescriben históricos. Honorarios permanecen en su dominio, conforme a la confirmación del propietario.
+
+Trabajo de diseño requerido antes de implementar:
+
+1. Revisar categorías y movimientos existentes con alcance de lectura expresamente autorizado, sin asumir que conceptos ausentes deban crearse.
+2. Evaluar reutilización y agrupación sin duplicar categorías, recrear movimientos ni perder IDs, importes, fechas y referencias históricas. No clasificar automáticamente por palabras sin revisión.
+3. Definir configuración por instalación y correspondencias comparables entre períodos; las necesidades de PRISMA no son categorías obligatorias para otros clientes.
+4. Resolver organización visual, aplicabilidad opcional, orden, persistencia y eventual migración. Mantener D006: no se aprueban categorías automáticas ni copia automática de importes; cualquier cambio de esa regla necesita decisión expresa.
+5. Preservar aislamiento mensual, fecha exacta del gasto, bloqueo de cerrado y períodos explícitos. La reorganización por sí sola no altera totales.
+6. Coordinar su contrato de clasificación con Estadísticas y controles preventivos de doble imputación. No cambiar el mecanismo actual de registración ni asumir duplicación histórica.
+
+Actualización posterior del alcance G: catálogo transversal y marcador canónico aprobados e implementados localmente; 010 validada en prisma_test y aplicada controladamente en prisma_dev con autorización posterior. Se mantienen categorías bajo demanda, importes propios por período y clonación sin gastos. No cambian las fórmulas de este resumen. [Cierre técnico de recurrentes](2026-10-recurring-expenses-implementation.md); Catálogo PRISMA todavía sin configurar en prisma_dev; producción pendiente de autorización independiente.
+
+## Plan incremental propuesto
+
+Cada etapa exige autorización de implementación; este documento no concede una autorización acumulativa.
+
+| Etapa | Entregable y dependencias                                                       | Archivos previsibles, no creados por este plan                                                                 | DB y validación futura                                                                                  |
+| ----- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1     | Contratos y resumen con indicadores actuales/cobertura                          | client/Statistics.tsx, App.tsx y estilos acotados; shared/statistics.ts, server/statistics/ y montaje de rutas | Sin migración prevista; fórmulas, aislamiento, consistencia y reconciliación                            |
+| 2     | Siete acordeones, gráficos disponibles, comparaciones y continuidad descriptiva | client/statistics/, package.json y lockfile; consultas agregadas                                               | Sin migración prevista; compatibilidad/bundle, teclado, touch, responsive y respuestas tardías          |
+| G     | Reorganización de Gastos como tarea independiente coordinada                    | client/Expenses.tsx, server/expenses.ts, shared/expenses.ts y contratos analíticos según diseño                | Migración solo si el diseño la exige; preservación de registros/totales y configuración por instalación |
+| 3     | IPC oficial; confirmar fuente, caché y persistencia                             | server/inflation/, contrato shared y sección de Estadísticas                                                   | Eventual migración; parser, actualización, errores, publicación, revisión e índices faltantes           |
+| 4     | Historial de bajas por actividad/vínculo, desde perfil                          | client/People.tsx, módulos backend/shared y sección analítica                                                  | Nueva estructura/migración a diseñar; preservación, rectificación y reingreso                           |
+| 5     | Tarifas, paquetes, costos/capacidad y luego escenarios                          | Dominio comercial, Gastos y motor/UI según alcance                                                             | Nuevas estructuras a diseñar antes de rentabilidad o simuladores                                        |
+
+G puede planificarse en paralelo conceptual con el motor, pero no se autoriza desarrollo paralelo ni se altera la prioridad de Google/PDF. Las categorías futuras se muestran con su limitación; no simuladores ficticios. La próxima numeración disponible sigue siendo 010; no reservar números por etapa ni editar 001–009.
+
+Actualizar durante cada implementación únicamente PROJECT_STATE, ROADMAP, este documento y DECISIONS/ARCHITECTURE si cambian reglas o diseño técnico. No modificar documentos históricos para aparentar que funciones futuras ya existen.
+
+## Criterios de aceptación y pruebas futuras
+
+- Resumen reconciliable con Cobros, Pago Facilitadores, Gastos y fórmulas del Dashboard, explicando diferencias de cobertura sin cambiar ahora esos módulos.
+- Casos NULL/cero/sin cuenta, pagos parciales, sobrepagos, pagos fuera del mes, importes altos y aritmética decimal; sin multiplicar por joins ni compensar personas.
+- Facilitadores con varios horarios, cuentas sin asignación actual, pares sin cuenta e importe reducido después de pagar.
+- Personas únicas frente a varias actividades/slots, archivados históricos, continuidad de meses consecutivos y período ausente/abierto/vacío.
+- Sin creación de períodos ni escrituras analíticas; aislamiento, consultas autenticadas, errores parciales y respuestas tardías.
+- Una sola categoría abierta, explicación y tabla por gráfico, foco/teclado/touch, reducción de movimiento y QA en mobile 390/700, límite 701, tablet y desktop.
+- En etapas correspondientes: IPC con mes no publicado/fuente caída/corrección; Gastos con importes variables e históricos intactos; bajas sin pérdida de datos financieros.
+
+Al implementar, seguir validación estándar de WORKFLOW y limitar integración/destrucción exclusivamente a prisma_test. En este cierre documental no se ejecutan tests, typecheck, lint ni build; solo revisión documental, enlaces locales, diff y comprobación de alcance.
+
+## Decisiones y autorizaciones pendientes
+
+- Revisión de la implementación local de Etapa 1; autorización independiente para etapas posteriores.
+- Contratos finales, filtros, composición visual, comparación nominal predeterminada y detalle de advertencias; la base principal de continuidad ya está aprobada.
+- Eventual porcentaje de obligación cubierta y definición contable del resultado económico.
+- Serie/región IPC, mecanismo oficial de consulta, persistencia y procedimiento de correcciones.
+- Diseño de Gastos: reutilización/clasificación, configuración por instalación, esquema y tratamiento de históricos, sin categorías automáticas aprobadas.
+- Efectos operativos y correcciones del registro de bajas; alcance final de motivos y protección de texto libre.
+- Tarifas/paquetes, atribución de ingresos y costos, capacidad y criterios comerciales previos a simulación.
+
+No quedan por redecidir el resumen económico, los siete acordeones exclusivos, Recharts como primera opción, el motor determinista, los subtotales con cobertura, la continuidad principal ni la separación confirmada de honorarios/Gastos. La autorización posterior abarca únicamente la Etapa 1 descrita a continuación.
+
+## Etapa 1 — Implementación local autorizada posteriormente
+
+Se preservaron los cinco documentos previos mediante copia temporal antes de editar; rama `codex/iteration-8-statistics-design`, HEAD y main en `dcee416`. Sin sincronización remota, commits ni integración.
+
+Implementado: motor puro Decimal, contratos Zod, consulta autenticada `GET /api/statistics/summary?period_id=<id>` y resumen de seis tarjetas. Devuelve versión 1, período/estado, fecha de lectura, ocho métricas con valor exacto, cobertura (`complete`, `partial`, `undefined`, `empty`), universo, definidos, NULL, sin cuenta, eje `economic_period`, fuentes y advertencias; sobrepagos de honorarios separados. IPC usa `pending_integration` y valores/fechas nulos. No devuelve identidades ni fichas.
+
+Fórmulas: a cobrar = suma D definidos; cobrado = suma P de cuentas del período; deuda = suma max(D-P,0) y crédito = suma max(P-D,0) por cuenta definida. Honorarios: suma H definidos, suma F pagados y suma max(H-F,0); diferencia superior = suma max(F-H,0), sin denominarla crédito. Gastos = suma de movimientos vía categorías del período, sin respaldo de publicidad ni honorarios. No se filtra por fecha calendario de cobro/pago ni por archivo de personas/facilitadores.
+
+Lectura parametrizada en una única conexión y snapshot MySQL REPEATABLE READ, READ ONLY; commit o rollback y release incluso ante errores. La unión de asignaciones y cuentas históricas deduplica pares oferta/facilitador; pagos se agregan antes de joins. El motor usa Decimal local con precisión 40 y strings de dos decimales; la UI formatea strings sin Number. Las claves Query y la comprobación del ID recibido evitan mostrar respuestas de otro período. Las tarjetas usan el selector global y distinguen carga, error/reintento, vacío y cobertura incompleta. No se incorporaron acordeones vacíos.
+
+Pruebas añadidas: fórmulas/contratos, API autenticada, snapshot/limpieza ante fallos, renderizado y respuestas tardías. `tests/statistics-db.test.ts` es opt-in independiente: comprueba host local, DB_NAME y SELECT DATABASE() antes de insertar fixtures; prueba joins, pagos fuera del mes, archivados, períodos abiertos/cerrados/vacíos y reconciliación SQL, luego rollback. No ejecuta migraciones. La suite antigua de integración queda deshabilitada porque recrea/migra esquema. Fixture visual sin backend en `tests/browser/statistics.html`.
+
+Validaciones: typecheck, lint, 180 pruebas generales y build aprobados; 158 casos DB omitidos en la suite general. La prueba aislada de Estadísticas pasó adicionalmente en prisma_test, tras verificar configuración local y SELECT DATABASE(); fixtures revertidos. Diff check aprobado. QA visual con datos ficticios: 390/700/701/768/1024/1440 px sin overflow horizontal, selección de período cerrado correcta. Vitest y MySQL requirieron permisos fuera del sandbox; el primer intento de tests falló por EPERM en archivos temporales, sin ejecutar casos. Build emitió solo avisos de anotaciones de Zod. Revisión visual del propietario, integración y producción pendientes. Sin dependencias nuevas ni modificaciones de reglas de Cobros, Dashboard, Gastos o Facilitadores.
+
+Prueba manual: iniciar `.\private\run-dev.ps1`, abrir `http://localhost:5173/estadisticas`, iniciar sesión y elegir períodos abiertos/cerrados. Comparar cobrado/deuda/crédito con Dashboard y Cobros; revisar miembros sin cuenta, honorarios y Gastos. Cambiar rápidamente de período y comprobar título/estado/valores. Para revisar sin datos reales, abrir `/tests/browser/statistics.html` en Vite; comprobar 390/700/701/768/1024/1440 px y navegación de teclado.
+
+Siguiente autorización propuesta: Etapa 2 acotada a siete acordeones exclusivos y gráficos de indicadores disponibles; evaluar versión/peer/licencia/bundle de Recharts, instalar solo tras aprobación y probar accesibilidad, responsive y movimiento reducido. Comparaciones/continuidad requieren contratos y consultas específicos; IPC externo, bajas, Gastos y simuladores siguen separados.
+
+## Refinamiento posterior de Etapa 1 — UI e IPC mínimo autorizado
+
+La revisión del propietario aprobó los cálculos y la actualización de montos; autorizó este refinamiento y una integración mínima de IPC, adelantada respecto del plan original. No autoriza acordeones ni Recharts.
+
+- Seis tiles en una fila con área de contenido >=1300 px; grilla 3x2 intermedia, dos columnas en áreas estrechas y una en mobile pequeño. Tarjetas neutras sin franja superior; importes y subtotales visibles, detalles/cobertura/metodología en Información. Honorarios conserva pagado/pendiente y aviso breve de sobrepago; créditos siguen visibles por separado.
+- Encabezado sin repetir descripción, “Resumen ejecutivo” y mes ya presente en el selector global. Estado abierto/cerrado junto a Estadísticas en desktop y mobile. Ayudas reutilizan useDisclosure: botón accesible, Escape, clic exterior, cierre explícito y retorno de foco; ajuste de posición para evitar desbordamiento.
+- Nuevo contrato independiente `shared/inflation.ts` y endpoint autenticado `GET /api/statistics/inflation`, independiente del período económico. Se conserva el campo reservado pending_integration del contrato financiero v1 por compatibilidad; el tile consume la consulta independiente. No se modifica el motor de dinero.
+- Fuente: página [IPC INDEC](https://www.indec.gob.ar/Nivel4/Tema/3/5/31) y [CSV oficial](https://www.indec.gob.ar/ftp/cuadros/economia/serie_ipc_divisiones.csv). Exclusivamente código 0, región Nacional. Tasas mensual e interanual publicadas; acumulado = (índice del mes / diciembre anterior - 1) x 100 con Decimal, redondeado a un decimal. Fecha y URL del informe desde la primera publicación técnica; exigir publicación en el mes posterior a la referencia y no futura. Rechazar series incompletas, duplicadas, inválidas o anteriores al respaldo; no inventar proyecciones ni sumar tasas mensuales.
+- Servicio con URLs oficiales fijas, timeout compartido de 8 segundos, límites de tamaño, sin redirecciones, caché de seis horas y solicitudes concurrentes agrupadas. Ante falla, conserva el último valor verificado y reintenta después de 15 minutos. Respaldo inicial contrastado el 22/10/2026: septiembre de 2026, 1,9 % mensual, 23,6 % acumulado, 33,4 % interanual; publicado el 13/10/2026 en el [informe oficial](https://www.indec.gob.ar/uploads/informesdeprensa/ipc_10_268C45A9444C.pdf). No se presenta como dato del mes seleccionado ni como actualización confirmada si falla la consulta.
+- Limitación deliberada: sin DB ni persistencia histórica. Después de reiniciar, si no hay red, solo está disponible el respaldo incluido y debe mostrarse su referencia/fechas y advertencia. Cambios del formato oficial requieren adaptar el parser; las finanzas no dependen de su disponibilidad.
+
+Validaciones del refinamiento: typecheck, lint, 188 pruebas (158 casos DB omitidos), build y diff check aprobados; consulta real al adaptador INDEC aprobada. QA con datos ficticios a 390/700/701/768/1024/1440/1920 px sin scroll horizontal, seis tiles en una fila a 1920 px, todas las ayudas operativas, apertura por teclado, cierre exterior/Escape y retorno de foco comprobados. No se ejecutaron pruebas DB. Prueba manual: ejecutar run-dev.ps1 y abrir /estadisticas; revisar seis columnas en desktop amplio, 3x2 intermedio y mobile; abrir las seis ayudas mediante clic y teclado, cerrar con Escape/exterior y comprobar foco. Cambiar el período y comprobar que el IPC conserva su referencia oficial independiente. El fixture /tests/browser/statistics.html utiliza datos de prueba en memoria y no consulta fuentes externas. Sin migraciones, dependencias nuevas, commits, push, integración ni despliegue.
+
+## Tarea G — Evaluación posterior de Gastos recurrentes
+
+Se recibió autorización condicionada para reorganizar Gastos: si se necesita nueva estructura, presentar la propuesta y esperar aprobación. La inspección identificó la necesidad de persistir conceptos transversales y su vínculo con categorías mensuales. Se preparó el [diseño y DDL propuestos](2026-10-recurring-expenses-design.md), sin implementar esa parte ni crear/ejecutar migraciones. La maqueta de revisión es independiente y no cambia /publicidad. Se preservan motor financiero, IPC, D006, históricos y clonación sin gastos; autorizar el esquema es el siguiente paso antes de desarrollar la reorganización funcional.
+
+### Addendum — Desglose real de Gastos registrados
+
+En la continuación del 2026-10-22 se implementó `GET /api/statistics/expenses?period_id=<id>` y su acción **Ver desglose** dentro de la ayuda del KPI. El backend agrupa por categoría con movimientos en snapshot read-only, separa recurrentes/adicionales por vínculo persistido, usa DECIMAL, muestra conteos y subtotales e incluye total general. El modal compara importe y cantidad contra el KPI para señalar respuestas desactualizadas; no dice que los movimientos estén pagados. Pruebas y limitación visual por autenticación: [cierre de correcciones de Gastos recurrentes](2026-10-recurring-expenses-implementation.md).
+
+## Pendiente — Estadísticas anuales e históricas
+
+La vista mensual seguirá siendo la principal, vinculada al período seleccionado. Se planifica una vista anual seleccionable con evolución de los doce meses y una vista histórica desde el primer período registrado, con rangos personalizados de fechas/años y comparación de ingresos, cobranzas, gastos y honorarios. Deberá cruzar cada mes con su IPC oficial y distinguir evolución nominal de evolución ajustada por inflación. Resultados económicos y rentabilidad solo se incorporarán después de completar y aprobar las reglas contables.
+
+Recharts se evaluará en una etapa posterior. Queda pendiente decidir entre un desplegable «Evolución histórica» o su integración en la categoría de evolución económica. Es exclusivamente un pendiente: no hay consultas históricas, filtros anuales, gráficos ni cambios DB implementados para esta ampliación.
+
+## Cierre local y aprobación manual de Hernán
+
+Hernán confirmó las pruebas manuales satisfactorias en prisma_dev sobre el período diciembre de 2026: importes y conciliación de $860.000, posiciones independientes entre períodos, renumeración, retiro de Luz sin importe, persistencia entre períodos y reincorporación. Esta aprobación corresponde a esos recorridos y no amplía la evidencia manual a eliminación de movimientos con importe, concurrencia, rollback, recuperación o restricciones de integridad: esos casos conservan únicamente la cobertura automatizada/técnica ya registrada.
+
+Cierre Git autorizado en tres commits locales dependientes: migraciones 010–011; implementación integrada de Estadísticas/IPC/Gastos Recurrentes y pruebas; documentación. No se repitieron suites extensas ni auditorías DB durante este cierre porque no hubo cambios funcionales. Fetch de origin realizado antes de los commits: main local dcee416 está un commit documental por delante de origin/main 06f3d1f, sin divergencia inesperada. Main no se modifica. Integración, respaldo/migraciones productivas 010→011 y publicación permanecen pendientes de autorización y ejecución del propietario.

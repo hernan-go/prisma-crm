@@ -1,6 +1,10 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-21
+**Corte:** 2026-10-22
+
+## Iteración 8 — Cierre local aprobado
+
+Hernán aprobó manualmente en prisma_dev, para diciembre de 2026: importes y conciliación de $860.000, posiciones independientes, renumeración, retiro de Luz sin importe, persistencia entre períodos y reincorporación. No se declara aprobación manual de los casos cubiertos solo por pruebas automatizadas. Se autorizaron tres commits locales (010–011, implementación integrada y documentación). Integración a main y despliegue pendientes; ninguna operación DB en este cierre. Los apartados anteriores de esta iteración conservan el contexto histórico y sus pendientes de revisión quedan superados únicamente para los recorridos expresamente aprobados.
 
 ## Git / producción
 
@@ -20,7 +24,27 @@
 
 ## Próximos desarrollos pendientes
 
-Autenticación mediante Google decidida expresamente por el propietario y pendiente de desarrollo; el diseño técnico definitivo aún debe realizarse. También permanecen pendientes la definición del resultado económico mensual, Estadísticas e informes/exportaciones PDF, sin cambiar sus prioridades. Alcances y dependencias en [ROADMAP](ROADMAP.md). La siguiente iteración funcional partirá de este estado aprobado, sin reabrir la iteración 7.
+Autenticación mediante Google decidida expresamente por el propietario y pendiente de desarrollo; el diseño técnico definitivo aún debe realizarse. También permanecen pendientes la definición del resultado económico mensual, las siguientes etapas e integración de Estadísticas e informes/exportaciones PDF, sin cambiar sus prioridades. Alcances y dependencias en [ROADMAP](ROADMAP.md). La siguiente iteración funcional partirá de este estado aprobado, sin reabrir la iteración 7.
+
+## Iteración 8 — Diseño funcional de Estadísticas
+
+Definiciones principales aprobadas por Hernán el 2026-10-22; documentación local preparada para revisión. Resumen ejecutivo económico, siete acordeones con apertura exclusiva, motor determinista reutilizable, subtotales con cobertura y continuidad principal por personas inscriptas en meses consecutivos. Recharts es primera opción pendiente de instalación/validación. No mostrar ganancia neta sin modelo contable aprobado.
+
+El propietario confirmó pagos a facilitadores exclusivamente en su módulo, separados de Gastos; no se constató ni se presume duplicación efectiva. Se incorpora a la planificación una tarea diferenciada de Gastos recurrentes/adicionales, configurable por instalación y con importes propios de cada período. No modifica D006 ni autoriza categorías automáticas.
+
+Etapa 1 autorizada después del cierre documental: resumen ejecutivo local, contratos tipados, motor Decimal y endpoint autenticado de lectura consistente. Validación local aprobada; pendiente de revisión del propietario, integración y producción. Sin nuevas dependencias, migraciones, commits ni despliegue. Base local `dcee416` preservada en `main` y en la rama documental `codex/iteration-8-statistics-design`; `origin/main` y `origin/HEAD` locales siguen en `06f3d1f`, sin sincronización ni nueva verificación productiva. Detalle: [diseño, indicadores v1, etapas y pendientes](iterations/2026-10-statistics-design.md).
+
+Correcciones funcionales posteriores implementadas localmente: Quitar importe borra un único movimiento recurrente confirmado dentro del período abierto, preserva tarjeta/categoría y refresca consultas. Estadísticas incorpora desglose read-only por recurrentes/adicionales con cantidades, subtotales y reconciliación del KPI. El esquema 010 carece de presencia/posición mensual; **Quitar del período** y Posición editable quedan detenidos hasta diseñar, autorizar y validar una migración nueva. El propietario informó que los ocho conceptos ya fueron configurados y probados manualmente en prisma_dev; esta intervención no modificó esa base. Suite DB específica aprobada exclusivamente en `prisma_test`; revisión visual autenticada pendiente. Sin migración, commits ni publicación. [Implementación y propuesta de esquema](iterations/2026-10-recurring-expenses-implementation.md).
+
+## Iteración 8 — Activación 011 en prisma_dev completada
+
+011 aplicada con autorización expresa a prisma_dev el 2026-10-22, después de preflight y respaldo externo SHA256 verificado. Postflight: 22 tablas originales idénticas por conteo/hash, tres settings, 22 presencias; diciembre conserva cuatro movimientos por $860.000. Lecturas autenticadas de recurrentes, categorías y Estadísticas responden 200 y concilian. Backend local restablecido. Sin pruebas destructivas, commits ni publicación; prisma_test/demo/producción no modificadas en esta activación. El estado siguiente describe la etapa anterior y queda superado para prisma_dev. [Registro de activación y respaldo](iterations/2026-10-recurring-period-independence.md#activación-controlada-de-011-en-prisma_dev--completada-2026-10-22).
+
+## Iteración 8 — Independencia mensual 011 implementada localmente
+
+El bloqueo documental previo de presencia/posición queda superado por la autorización y la implementación de 011, backend, frontend y pruebas. 011 aplicada y verificada exclusivamente en prisma_test con respaldo externo verificado. prisma_dev permanece en 010 y producción en 001–009 según el estado previamente confirmado, sin nuevas operaciones sobre esos entornos. El código requiere 011 para recurrentes y alta/edición/eliminación de períodos: devuelve error explícito hasta su activación independiente. No hay commits, staging, push, merge ni deploy. [Informe, evidencia, riesgos y procedimiento posterior](iterations/2026-10-recurring-period-independence.md).
+
+Estadísticas anuales e históricas queda registrada como pendiente en Roadmap y diseño funcional; no implementada.
 
 ## Dashboard — Iteración 6 desplegada y verificada
 
@@ -172,3 +196,29 @@ Scripts privados:
 - Validaciones: typecheck/lint/build/diff-check OK; 117 tests normales aprobados y 157 integraciones omitidas; suite completa 274 aprobados, ninguna omisión, exclusivamente en `prisma_test` tras preflight. Incluye 35 casos nuevos de integración: Noviembre, bloqueos, aislamiento, rollback y concurrencia. Tests/build requirieron reintento fuera del sandbox por EPERM; warnings conocidos de Zod/Rollup no bloqueantes.
 - Sin migración `010.sql`, cambios a `001–009`, resets de flags, commits ni deploy. Revisión manual local preparada exclusivamente en `prisma_test`; confirmaciones destructivas pendientes del usuario.
 - Documento: `docs/iterations/2026-10-configuration-cleanup-rules.md`.
+
+## Iteración 8 — Refinamiento del resumen e IPC local
+
+El propietario confirmó los cálculos y la actualización de montos de Etapa 1. Se refinó el resumen: seis tarjetas en una fila cuando el área de contenido supera 1300 px, tres en anchos intermedios, dos en tablet estrecha y una en móvil; sin bordes superiores de colores. Encabezado único con estado del período a la derecha (también junto al título mobile) y ayudas por tarjeta con cierre por Escape/clic exterior y retorno de foco.
+
+IPC mínimo autorizado e implementado localmente: `GET /api/statistics/inflation`, detrás de la autenticación actual, consulta página y CSV oficiales del INDEC, identifica publicación y nivel general Nacional y calcula acumulado desde diciembre anterior. Caché de seis horas, reintento tras 15 minutos si falla y respaldo verificado de septiembre 2026 (1,9 % mensual, 23,6 % acumulado, 33,4 % interanual; publicado 13/10/2026, contrastado 22/10/2026). La UI muestra referencia y advierte si usa el último verificado sin actualización confirmada. Sin DB ni persistencia histórica; al reiniciar sin acceso al proveedor queda el respaldo incluido, con sus fechas explícitas. No modifica las fórmulas financieras. Validaciones del refinamiento: typecheck, lint, 188 pruebas (158 casos DB omitidos), build y diff check aprobados; consulta real al adaptador INDEC aprobada. QA con datos ficticios a 390/700/701/768/1024/1440/1920 px sin scroll horizontal, seis tiles en una fila a 1920 px, todas las ayudas operativas, apertura por teclado, cierre exterior/Escape y retorno de foco comprobados. No se ejecutaron pruebas DB; revisión del propietario, integración y producción pendientes. Acordeones y Recharts continúan pendientes.
+
+## Iteración 8 — Registro previo: evaluación de Gastos antes de autorizar esquema
+
+Este registro previo queda superado por la implementación local descrita debajo. El pedido de esa etapa autorizó reorganizar Gastos y exigió detener la parte que requiriera ampliar MySQL. La inspección confirmó que las categorías son exclusivamente por período y carecen de catálogo/vínculo recurrente. Se preparó una propuesta aditiva: tabla transversal de conceptos y referencia nullable/única por período en las categorías actuales. No se implementó todavía la reorganización ni se creó/ejecutó una migración. Las categorías y movimientos actuales permanecen intactos; D006 sigue vigente.
+
+Propuesta, DDL, tratamiento de históricos, efectos en Estadísticas/clonación y pruebas posteriores: [Gastos recurrentes](iterations/2026-10-recurring-expenses-design.md). Maqueta independiente para revisión: tmp/expenses-reorganization-preview.html, sin datos, almacenamiento ni acciones activas. La captura mencionada no estaba incluida en el adjunto. Estadísticas/IPC y el resto del trabajo pendiente se preservaron. La implementación de configuración/vínculos y nueva pantalla queda pendiente de autorización expresa; no se declara desplegada.
+
+## Iteración 8 — Registro de implementación inicial de Gastos Recurrentes (prisma_test)
+
+Implementación real en /publicidad: ocho tarjetas mediante configuración explícita PRISMA, catálogo transversal, importe mensual con corrección por el mismo ID y asociación histórica por IDs. Adicionales conserva su CRUD. 010 aplicada y registrada solo en prisma_test (MySQL 8.4.11), con respaldo verificado, recuperación de DDL parcial y replay completo; campos económicos originales preservados. Catálogo de prisma_test vacío al terminar la limpieza de fixtures; no se configuró la instalación real.
+
+Validaciones y revisión responsive: [cierre técnico](iterations/2026-10-recurring-expenses-implementation.md). Sin modificación de prisma_dev, prisma_demo o producción; sin commits, push, merge ni deploy. Producción continúa en 001–009. Se preservan Estadísticas e IPC y el HEAD dcee416 en codex/iteration-8-statistics-design. Próximo paso: revisión y autorización separada para activación en prisma_dev.
+
+## Iteración 8 — Migración 010 aplicada controladamente en prisma_dev
+
+Autorización posterior de Hernán completada el 2026-10-22. MySQL 8.4.11, host local, DATABASE prisma_dev, permisos verificados, 001–009 registradas y ninguna estructura parcial de 010. Archivo idéntico al validado en prisma_test. Backend y watcher pausados; sin otras sesiones de prisma_dev durante preflight/respaldo, con bloqueo cooperativo de escrituras durante DDL. Respaldo completo verificado fuera del repositorio; 010 aplicada y registrada mediante runner del proyecto.
+
+Postflight: tabla/campos/FK/índices/CHECK correctos; 21 tablas originales de negocio con hashes idénticos. Publicidad ID 3 $50.000, Insumos ID 4 $40.000, diciembre 2026 total $90.000 intacto. Smoke HTTP autenticado de lectura: categorías, recurrentes, catálogo y Estadísticas responden 200; sesiones del smoke solo en memoria, sin cambios de admin_sessions. Catálogo vacío, sin configurar PRISMA ni crear movimientos. Backend restablecido en 3001 para UI localhost:5173. [Respaldo, SHA256, recuperación y evidencia](iterations/2026-10-recurring-expenses-implementation.md#aplicación-controlada-posterior-en-prisma_dev).
+
+No se modificaron prisma_test, prisma_demo ni producción en esta operación. Producción sigue en 001–009. Sin cambios de código, suites destructivas, commits, push, merge ni deploy. Próximo paso: revisión del propietario y autorización expresa para configurar los ocho conceptos, separada de la aplicación productiva.

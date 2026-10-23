@@ -81,7 +81,16 @@ La separación especial de Informática y Cartera Independiente fue evaluada y d
 
 ## D013 — Estadísticas
 
-La ruta y pantalla existen, pero su contenido funcional todavía no fue definido. No agregar métricas arbitrarias sin una iteración de diseño explícita.
+La ruta y pantalla existen como shell visual. El 2026-10-22 Hernán aprobó las definiciones funcionales principales del diseño de la iteración 8; su implementación sigue pendiente y requiere autorización expresa.
+
+- Resumen ejecutivo inicial limpio, prioritariamente económico, seguido de siete categorías en acordeones con una sola categoría abierta por vez.
+- Recharts es la primera opción gráfica; instalación, versión y validación quedan para una etapa posterior.
+- Motor determinista reutilizable, con precisión decimal y distinción entre período económico, fecha de movimiento y fecha de registro.
+- Importes parcialmente conocidos se presentan como subtotales con advertencias de cobertura. `amount_due=NULL` no equivale a cero; deudas y créditos se mantienen separados, sin compensar personas.
+- Continuidad principal sobre personas únicas con inscripción en períodos mensuales consecutivos, diferenciada de la pertenencia por membresías. Inscripción no prueba asistencia y ausencia posterior no prueba abandono.
+- No presentar ganancia neta ni un resultado parcial como beneficio hasta aprobar el modelo contable. No atribuir el importe íntegro de un paquete a cada actividad.
+
+Categorías, indicadores v1, limitaciones, propuestas técnicas y decisiones pendientes: [diseño funcional de Estadísticas](iterations/2026-10-statistics-design.md). Este acuerdo no autoriza código, dependencias, migraciones, conectores ni cambios del Dashboard.
 
 ## D014 — Pertenencia explícita a períodos
 
@@ -120,3 +129,29 @@ Sin migración ni recálculo/reset de flags. Los receipts se conservan: su hash 
 Todo dato administrativo y operativo del Dashboard pertenece al período seleccionado: KPIs, carteras, saldos, gráfico y programación semanal con inscriptos. La programación usa el día semanal actual dentro de ese período, incluso histórico o futuro; no afirma asistencia ni clases efectivamente dictadas. Solo fecha/hora y eventual clima representan el momento actual en Argentina, independientemente del período.
 
 «Total inscriptos período» cuenta personas únicas incorporadas mediante membresías, incluso sin actividades. «Inscripciones en actividades» cuenta inscripciones, permitiendo que una misma persona participe en varias actividades; varios horarios no agregan inscripciones por sí solos. Se conservan los cálculos existentes del backend. Sin creación implícita de períodos, fallback a otros meses ni cambios de restricciones de períodos cerrados.
+
+## D017 — Honorarios y gastos operativos diferenciados
+
+Hernán confirmó el 2026-10-22 que actualmente los pagos a facilitadores de PRISMA se registran exclusivamente en el módulo Pago Facilitadores, no en Gastos. Es una confirmación del propietario sobre su operación, no una nueva auditoría de datos productivos. No asumir duplicación efectiva sin evidencia.
+
+Honorarios y gastos operativos son dominios diferenciados. Los honorarios son importes fijos por prestación pactada, variables entre facilitadores, actividades y períodos; no porcentajes automáticos de ingresos. Conservar controles para evitar futuras dobles imputaciones, sin modificar ahora la registración. La suma de gastos registrados no demuestra que estén pagados ni habilita por sí sola un resultado neto.
+
+## D018 — Gastos recurrentes configurables y adicionales
+
+Definición aprobada y llevada a implementación local el 2026-10-22. Un concepto recurrente transversal tiene un importe por período: primera carga crea un movimiento y la corrección actualiza el mismo ID. Catálogo configurable por instalación; la acción explícita PRISMA configura Alquiler, Expensas, Luz, Gas, Internet, Agua, Impuestos y Cobertura médica (Emerger, gasto operativo). No hay seed universal, categorías por defecto, creación implícita de períodos ni copia mensual de importes.
+
+Ausencia se muestra como `$ —`; cero histórico válido es distinto de ausencia. Se conserva la restricción de importes positivos nuevos. Primera fecha del gasto vacía y obligatoria dentro del período. Correcciones conservan concepto, fecha y notas salvo edición explícita. Cerrados: consulta, lápiz visible deshabilitado; escritura solo tras reapertura.
+
+Históricos se vinculan expresamente por IDs revisados; no por nombres. Un movimiento se marca conservando campos y timestamps originales. Varios se conservan en revisión, con subtotal de consulta sin fusión ni edición agregada. Desvincular exige confirmación y conserva movimientos en adicionales. El catálogo no cambia nombres mensuales ya persistidos. Con 011, desactivar solo afecta la disponibilidad inicial de períodos futuros: nunca retira presencias mensuales existentes ni sus históricos.
+
+Unicidad MySQL de categoría/concepto/período y movimiento canónico, locks transaccionales, comparación optimista y guardas en todas las rutas genéricas de Gastos. SQL administrativo sin marcador no queda cubierto por el índice: la lectura detecta y bloquea edición ante múltiples/inconsistencias. Estadísticas suma las mismas filas una vez; facilitadores independiente, sin ganancia neta aprobada. 010 validada en prisma_test y aplicada controladamente en prisma_dev con autorización posterior. El propietario informó haber configurado y probado allí los ocho conceptos; Codex no los configuró ni revalidó. Producción no actualizada. [Diseño](iterations/2026-10-recurring-expenses-design.md) y [cierre técnico](iterations/2026-10-recurring-expenses-implementation.md).
+
+## D019 — Corrección mensual y desglose de Gastos
+
+La acción **Quitar importe** solo elimina el único movimiento recurrente canónico confirmado por ID e importe dentro del período seleccionado. Conserva la categoría y tarjeta, vuelve a representar `$ —` y respeta el bloqueo del período cerrado. Si hay varios movimientos o el registro dejó de coincidir, no elimina una suma ni elige un registro automáticamente. Nunca altera importes de otros períodos.
+
+Estadísticas ofrece **Ver desglose** de movimientos reales del período: recurrentes y adicionales, nombre, importe agrupado por categoría, cantidad de movimientos, subtotales y total. Gastos registrados no significa pagados. El total debe reconciliar con el KPI, y la suma conserva DECIMAL en backend.
+
+La posición y presencia de tarjetas son propias del período, persistidas mediante 011. El contrato fue aprobado e implementado localmente; validado exclusivamente en prisma_test. Una ausencia se conserva hasta reincorporación explícita, aun si el concepto sigue activo globalmente. Períodos nuevos (también al clonar) incorporan el catálogo activo sin crear categorías, importes ni movimientos. Conceptos nuevos se agregan explícitamente a meses existentes abiertos; cerrados requieren reapertura.
+
+Quitar del período conserva catálogo y categoría; elimina la presencia y, únicamente con confirmación del estado completo, un movimiento canónico único. Múltiples o inconsistencias bloquean la operación. Reincorporar no restaura dinero. Posiciones 1..N únicas y compactas, revisión BIGINT UNSIGNED transportada como texto decimal, transacciones y comparación de revisión rechazan formularios obsoletos con 409. Quitar importe conserva presencia y posición. Estadísticas sigue sumando movimientos reales independientemente de presencia/actividad del catálogo. [Implementación, pruebas y activación pendiente](iterations/2026-10-recurring-period-independence.md).
