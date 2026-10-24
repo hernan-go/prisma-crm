@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Upload, ArrowLeft } from 'lucide-react';
@@ -29,6 +29,8 @@ import {
 } from '../shared/domain';
 import { usePeriod, periodName } from './App';
 import { PersonMonth } from './Management';
+import { PeopleSkeletonRows } from './PeopleSkeleton';
+import './people.css';
 export function PersonForm({ person, close }: { person?: any; close: () => void }) {
   const defaults = person ? { ...person, activo: !!person.activo } : {};
   const {
@@ -145,16 +147,30 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
     </Modal>
   );
 }
+export const peopleQueryOptions = (term: string, page: number, archived: boolean) =>
+  queryOptions({
+    queryKey: ['people', term, page, archived],
+    queryFn: () => api(`/people?q=${encodeURIComponent(term)}&page=${page}&archived=${archived}`),
+  });
+
 export function People() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [archived, setArchived] = useState(false);
   const [create, setCreate] = useState(false);
   const term = useDebounce(search);
-  const q = useQuery({
-    queryKey: ['people', term, page, archived],
-    queryFn: () => api(`/people?q=${encodeURIComponent(term)}&page=${page}&archived=${archived}`),
-  });
+  const q = useQuery(peopleQueryOptions(term, page, archived));
+  // The input changes before its existing debounce commits a new query key.
+  // Hide prior matches during that interval without pretending a fetch has started.
+  const waitingForSearch = search !== term;
+  const data = waitingForSearch ? undefined : q.data;
+  const loading = !waitingForSearch && q.isPending;
+  const resultsPanel = useRef<HTMLElement>(null);
+  const searchHeight = useRef(0);
+  useLayoutEffect(() => {
+    // Release only after the search settles, not between debounce and fetching.
+    if (!waitingForSearch && !loading) searchHeight.current = 0;
+  }, [waitingForSearch, loading]);
   const archivedControl = (className = '') => (
     <label className={`check ${className}`}>
       <input
@@ -194,6 +210,22 @@ export function People() {
         <SearchBox
           value={search}
           onChange={(s) => {
+            if (!waitingForSearch) {
+              // Keep one viewport through debounce AND the real pending query.
+              // Only the final result/error may change its natural height.
+              const panel = resultsPanel.current;
+              const body = panel?.querySelector('.people-results');
+              const pagination = panel?.querySelector('.pagination');
+              searchHeight.current =
+                body && pagination
+                  ? Math.max(
+                      0,
+                      pagination.getBoundingClientRect().top -
+                        body.getBoundingClientRect().top -
+                        parseFloat(getComputedStyle(pagination).marginTop),
+                    )
+                  : 0;
+            }
             setSearch(s);
             setPage(1);
           }}
@@ -203,14 +235,28 @@ export function People() {
       <Link className="mobile-only mobile-import" to="/importar">
         <Upload size={17} /> Importar personas
       </Link>
-      <ErrorBox error={q.error} />
-      {q.isPending ? (
-        <Loading />
-      ) : (
-        <section
-          className="panel table-wrap people-table-panel"
-          tabIndex={0}
-          aria-label="Tabla de personas"
+      {!waitingForSearch && q.isError && (
+        <div className="people-query-error">
+          <ErrorBox error={q.error} />
+          <button type="button" onClick={() => void q.refetch()}>
+            Reintentar
+          </button>
+        </div>
+      )}
+      <section
+        ref={resultsPanel}
+        className="panel table-wrap people-table-panel"
+        tabIndex={0}
+        aria-label="Tabla de personas"
+        aria-busy={loading || waitingForSearch || undefined}
+      >
+        <div
+          className="people-results"
+          style={
+            (waitingForSearch || loading) && searchHeight.current > 0
+              ? { height: searchHeight.current, overflow: 'hidden' }
+              : undefined
+          }
         >
           <table className="people-table">
             <thead>
@@ -224,7 +270,8 @@ export function People() {
               </tr>
             </thead>
             <tbody>
-              {q.data?.rows.map((p: any) => (
+              {loading && <PeopleSkeletonRows />}
+              {data?.rows.map((p: any) => (
                 <tr key={p.id}>
                   <td>
                     <Link
@@ -259,19 +306,29 @@ export function People() {
               ))}
             </tbody>
           </table>
-          {!q.data?.rows.length && <Empty>No hay personas para mostrar.</Empty>}
-          <div className="pagination">
-            <small>{q.data?.total || 0} personas</small>
-            <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-              Anterior
-            </button>
-            <span>{page}</span>
-            <button disabled={page * 40 >= (q.data?.total || 0)} onClick={() => setPage(page + 1)}>
-              Siguiente
-            </button>
-          </div>
-        </section>
-      )}
+          {data && !q.isError && data.rows.length === 0 && (
+            <Empty>No hay personas para mostrar.</Empty>
+          )}
+        </div>
+        <div className="pagination">
+          <small role={loading || waitingForSearch || q.isFetching ? 'status' : undefined}>
+            {waitingForSearch
+              ? 'Esperando búsqueda…'
+              : loading
+                ? 'Cargando personas…'
+                : data
+                  ? `${data.total} personas${q.isFetching ? ' · Actualizando…' : ''}`
+                  : 'Resultados no disponibles.'}
+          </small>
+          <button disabled={!data || page === 1} onClick={() => setPage(page - 1)}>
+            Anterior
+          </button>
+          <span>{page}</span>
+          <button disabled={!data || page * 40 >= data.total} onClick={() => setPage(page + 1)}>
+            Siguiente
+          </button>
+        </div>
+      </section>
       {create && <PersonForm close={() => setCreate(false)} />}
     </>
   );

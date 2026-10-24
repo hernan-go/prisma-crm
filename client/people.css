@@ -1,0 +1,16 @@
+.people-table .people-skeleton-row td {
+  height: 54px;
+}
+.people-skeleton-state {
+  display: inline-block;
+  width: 12px;
+  line-height: 1;
+}
+.people-query-error {
+  margin-bottom: 12px;
+}
+@media (max-width: 700px) {
+  .people-table .people-skeleton-row td {
+    height: 69px;
+  }
+}
