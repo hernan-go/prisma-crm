@@ -173,3 +173,17 @@ Estado: resumen v1, IPC y desglose implementados, con publicación y validación
 Ampliación de D017 aprobada documentalmente el 23/10/2026 a partir de las aclaraciones del propietario. Los honorarios son mayoritariamente fijos respecto de la cantidad de participantes, sin tarifa universal. Pueden variar entre profesionales, actividades y períodos; renegociarse mensual, bimestral, trimestralmente o cuando corresponda; y aumentar al agregar horarios, sesiones o prestaciones. Un cambio de acuerdo no autoriza sobrescribir importes históricos ni aplicar porcentajes automáticos por participante.
 
 No deducir automáticamente rentabilidad por participante o actividad a partir de esos honorarios. Gastos registrados, honorarios comprometidos, pagos realizados, ingresos atribuibles y resultado económico son conceptos distintos. Tarifas, paquetes, promociones, atribución de ingresos y costos directos/compartidos requieren definiciones adicionales antes de simulaciones o resultados por actividad. No se aprueba aquí una fórmula de ganancia neta ni un nuevo KPI de excedente parcial.
+
+## D022 — Base de Conocimiento Empresarial por instalación
+
+Decisión conceptual aprobada el 23/10/2026. Cada instalación podrá gestionar documentación privada propia: cargar, crear, editar, consultar, activar/desactivar, exportar y recuperar archivos Markdown, con historial de versiones y respaldos. Se distinguirán instrucciones del asesor y documentos de conocimiento empresarial. Los documentos no se incorporarán automáticamente al código fuente ni al repositorio público; las instalaciones independientes no compartirán documentos ni información.
+
+El almacenamiento definitivo, los permisos y la recuperación documental se diseñarán posteriormente. El diseño será reutilizable por distintas empresas, sin convertir automáticamente el producto en SaaS. La futura IA consultará únicamente interfaces autorizadas, inicialmente de lectura; los documentos empresariales no podrán anular políticas de seguridad ni autorizar operaciones por sí mismos. Es conocimiento consultable y personalización contextual, no entrenamiento del modelo.
+
+No se implementa el módulo ni se eligen almacenamiento de archivos, base de datos, búsqueda vectorial, API o MCP. Los documentos privados locales excluidos de Git necesitan respaldos independientes: Git no los sincroniza ni aporta su historial de versiones. Límites conceptuales en [ARCHITECTURE](ARCHITECTURE.md#conocimiento-empresarial-y-asesor-ia--diseño-conceptual).
+
+## D023 — Asesor empresarial contextual
+
+Objetivo estratégico aprobado el 23/10/2026: un futuro asistente de gestión combinará conocimiento empresarial privado, indicadores operativos y económicos del sistema y contexto externo verificado y actualizado para evaluar alternativas y planificar decisiones. Abarcará planificación comercial y operativa, calendario de oportunidades, campañas, promociones, eventos y escenarios económicos; su alcance excede el análisis financiero.
+
+La información deberá distinguir hechos, estimaciones y supuestos, identificar fuentes y fechas y explicitar cobertura, costos, riesgos y alternativas. No se aprueban proveedor definitivo, protocolo, implementación ni capacidad de modificar datos. La conexión con IA sigue reservada a un proyecto posterior con diseño y autorización independientes. Capacidades y dependencias en [ROADMAP](ROADMAP.md#evolución-funcional--estrategia-empresarial-y-asesor-ia).

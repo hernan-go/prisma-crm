@@ -87,15 +87,15 @@ Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre posterior confir
 
 Estadísticas v1 implementada: contratos, motor Decimal, endpoint agregado, seis tarjetas, IPC y desglose de gastos. Según operaciones y verificaciones del propietario confirmadas el 23/10/2026, publicada en `51e247e`, build y smoke productivos aprobados, con migraciones `001–011` aplicadas y registradas. Codex no realizó una comprobación productiva independiente. Detalle y criterios: [iteración 8 — diseño de Estadísticas](iterations/2026-10-statistics-design.md).
 
-- Resumen ejecutivo económico y subtotales con cobertura implementados; siete bloques en acordeones exclusivos aprobados funcionalmente y diseñados, todavía sin implementar.
-- Motor determinista reutilizable; Recharts como primera opción, todavía sin instalar ni validar.
+- Resumen ejecutivo económico y subtotales con cobertura publicados; siete bloques diseñados. Primer acordeón con dos tiles de Gastos y Honorarios implementados localmente con autorización posterior, pendientes de revisión del propietario; los otros seis siguen sin implementar.
+- Motor determinista reutilizable; Recharts 3.10.1 y react-is 19.3.0 incorporados para la entrega local de Gastos, con carga diferida.
 - Continuidad principal de personas con inscripción en meses consecutivos, diferenciada de membresías y asistencia.
 - Honorarios y gastos operativos separados. El propietario confirmó pagos a facilitadores exclusivamente en su módulo; no se presume duplicación efectiva.
 - Sin ganancia neta hasta aprobar el modelo contable.
 
 Secuencia de evolución aprobada, con implementación sujeta a autorización por alcance:
 
-1. Fase actual: gráficos analíticos mensuales del período seleccionado dentro de los siete bloques diseñados. Seleccionar una entrega pequeña con datos existentes, preferentemente sin migración. Los dos gráficos de gastos propuestos siguen pendientes de aprobación; no hay implementación autorizada. Validar Recharts, bundle, accesibilidad y responsive antes de su incorporación.
+1. Fase actual: primera entrega mensual de Gastos autorizada e implementada localmente: dos tiles iguales: barras de todas las categorías/conceptos de gastos y anillo de honorarios contra el comprometido conocido, sin migración. Tooltip exacto y alternativa para lectores de pantalla, sin subdesplegable Ver tabla. Revisión visual/funcional del propietario pendiente antes de versionar o ampliar. El anillo de honorarios fue autorizado posteriormente dentro del primer acordeón; los otros seis bloques y cualquier gráfico adicional siguen fuera del alcance. [Registro y validaciones](iterations/2026-10-statistics-design.md#iteración-9--primer-gráfico-mensual-de-gastos-local).
 2. Fase posterior: comparaciones anuales y evolución mensual dentro del año, distinguiendo períodos ausentes, abiertos y cobertura incompleta.
 3. Fase futura: análisis histórico completo y rangos personalizados, series económicas nominales y ajustadas por IPC cuando existan datos suficientes. La consulta actual del último IPC y su fallback están implementados; persistencia y serie histórica requieren diseño específico.
 
@@ -114,6 +114,49 @@ Catálogo transversal configurable, asociación explícita de históricos y edic
 El propietario configuró por UI y amplió el catálogo productivo; no es una lista universal de ocho conceptos. Octubre 2026 quedó reclasificado y conciliado, como confirmación con fecha de corte y sin convertir sus importes en parámetros permanentes. Nuevos importes cero requieren definición expresa; históricos múltiples legítimos permanecen en consulta.
 
 Correcciones de importe y desglose de Estadísticas publicados con Iteración 8. La aprobación manual local previa de diciembre de 2026 se conserva con el alcance registrado en el [informe histórico](iterations/2026-10-recurring-period-independence.md); el cierre productivo posterior está en [PROJECT_STATE](PROJECT_STATE.md). No quedan migraciones ni despliegue pendientes de Iteración 8.
+
+### Selección analítica acordada — seis primarios y cinco secundarios opcionales
+
+Clasificación confirmada por el propietario el 23/10/2026. Los seis primarios son el objetivo funcional; no autorizan implementarlos todos ahora. Los dos desarrollados localmente conservan su estado de revisión, sin presumir publicación.
+
+| Gráfico primario                | Alcance y estado                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Gastos por concepto          | Todos los recurrentes y adicionales del período; desarrollado localmente.                                                                               |
+| 2. Honorarios por facilitador   | Dona dinámica individual con importes a pagar, pagados y pendientes; desarrollado localmente.                                                           |
+| 3. Estado de cobranzas          | A cobrar, cobrado, deuda y cobertura de cuentas; pendiente.                                                                                             |
+| 4. Inscripciones por actividad  | Personas inscriptas en cada taller y mayor/menor demanda registrada; pendiente, sin inferir asistencia.                                                 |
+| 5. Continuidad de participantes | Permanencia, nuevas inscripciones y personas sin reinscripción entre períodos; futuro, sin equiparar ausencia de reinscripción con abandono confirmado. |
+| 6. Evolución económica          | Tendencias mensuales/anuales de ingresos, gastos y honorarios; futuro, con histórico suficiente y ejes económicos explícitos.                           |
+
+Secundarios opcionales, únicamente si aportan valor real sin duplicar información:
+
+7. Cobros por medio y receptor: distribución de cobranzas.
+8. Inscripciones por horario: demanda según días y horarios.
+9. Participantes con múltiples actividades: distribución por cantidad de talleres contratados.
+10. Composición de gastos: proporción entre recurrentes y adicionales.
+11. Honorarios por importe: comparación de importes a pagar entre facilitadores.
+
+Mantener una sección atractiva, clara y compacta. La futura IA podrá consultar más métricas que las representadas gráficamente. Esta clasificación no redefine los siete bloques de navegación ni agrega autorizaciones de desarrollo. Rentabilidad por actividad, tarifas, promociones, eventos, simulaciones y ajustes IPC requieren definiciones específicas. El detalle de la entrega gráfica local permanece en el documento de iteración, sin duplicarlo aquí.
+
+## Evolución funcional — estrategia empresarial y asesor IA
+
+Orden de prioridad y dependencias registrado el 23/10/2026. Complementa las prioridades existentes de autenticación e informes; no las sustituye ni autoriza implementación. Existente: resumen mensual v1, IPC de referencia y desglose publicados; Gastos y Honorarios gráficos desarrollados localmente. Aprobado conceptualmente: D022/D023. Las capacidades siguientes continúan pendientes de diseño y autorización por alcance.
+
+| Orden | Capacidad futura                                                 | Dependencias y límites                                                                                                                                                                                                                        |
+| ----- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Finalización de Estadísticas mensuales                           | Revisar la entrega local y completar los primarios mensuales por etapas; preservar cobertura, precisión y selección analítica anterior.                                                                                                       |
+| 2     | Tarifas, planes y paquetes versionados                           | Definir vigencias, prestaciones incluidas e historial, sin sobrescribir acuerdos anteriores ni atribuir todo un paquete a cada taller.                                                                                                        |
+| 3     | Promociones y descuentos contratados                             | Dependen de tarifas/planes versionados; definir condiciones, vigencia y contratación histórica.                                                                                                                                               |
+| 4     | Eventos especiales                                               | Modelar ingresos, costos, entradas, asistentes y resultados; distinguirlos de actividades periódicas, sin inferir asistencia desde inscripciones.                                                                                             |
+| 5     | Campañas publicitarias                                           | Inversión, fechas, canales y resultados medibles; definir atribución y vínculo con promociones/eventos. El registro actual de gastos no aporta ese modelo.                                                                                    |
+| 6     | Clasificación económica de gastos y atribución de costos         | Definir costos directos/compartidos y reglas de reparto, sin duplicar honorarios ni declarar ganancia neta sin modelo aprobado.                                                                                                               |
+| 7     | Capacidad y recursos por actividad                               | Definir cupos, espacios, horarios y recursos; demanda registrada no equivale a ocupación o asistencia real.                                                                                                                                   |
+| 8     | Base de Conocimiento Empresarial                                 | Decisión conceptual D022: documentación privada, permisos, versiones, exportación, recuperación y respaldos; almacenamiento definitivo pendiente. Puede diseñarse sin esperar los modelos económicos.                                         |
+| 9     | Simulaciones financieras y comerciales                           | Requieren tarifas, promociones, honorarios dinámicos, costos atribuibles y capacidad definidos; explicitar supuestos, cobertura y riesgos.                                                                                                    |
+| 10    | Comparaciones históricas ajustadas por IPC                       | Requieren series históricas suficientes, persistencia/serie IPC y metodología de ajuste aprobada; el último IPC disponible no sustituye una serie.                                                                                            |
+| 11    | Integración segura del asesor IA con fuentes internas y externas | D023: combinar indicadores, conocimiento empresarial y contexto externo verificado; requiere identidad, permisos, privacidad, auditoría e interfaces autorizadas inicialmente de lectura. Sin proveedor, protocolo o implementación elegidos. |
+
+Las necesidades empresariales podrán orientar diseños en paralelo sin eliminar dependencias ni ampliar autorizaciones. La evolución anual e histórica conserva la secuencia de Prioridad 5. Los documentos privados locales necesitan respaldos independientes porque Git no los sincroniza; su existencia no implementa la Base de Conocimiento ni conecta una IA.
 
 ## Prioridad 6 — PDF / reportes
 
