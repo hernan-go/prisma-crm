@@ -1,9 +1,4 @@
 /* Administrative routes only. Dashboard, Configuration and Statistics are excluded. */
-main.administrative-page {
-  --admin-border: #6c8879;
-  --admin-surface: #2b3732;
-  --admin-divider: #3b4a44;
-}
 .administrative-page .page-heading {
   gap: 16px;
   margin-bottom: 18px;
@@ -65,31 +60,31 @@ main.administrative-page {
   padding: 7px 10px;
   font-size: 13px;
   line-height: 1.4;
-  border: 1px solid var(--admin-border);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--admin-surface);
-  color: #d2e5dc;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-weight: 550;
 }
 .administrative-page
   :where(.actions, .pagination, .section-heading, .people-mobile-actions, .selected-person, .panel)
   > :where(button, a.button):not(.icon):hover:not(:disabled) {
-  border-color: #78cbb2;
-  background: #344b40;
-  color: #eef6f2;
+  border-color: var(--color-accent);
+  background: var(--color-hover);
+  color: var(--color-text);
 }
 .administrative-page button.primary,
 .administrative-page a.button.primary {
-  background: #78cbb2;
-  color: #122e26;
-  border-color: #78cbb2;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
   min-height: 36px;
 }
 .administrative-page button.primary:hover:not(:disabled),
 .administrative-page a.button.primary:hover {
-  background: #94dbc5;
-  color: #122e26;
-  border-color: #78cbb2;
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
 }
 .administrative-page button.danger {
   border-color: #a86f7c;
@@ -109,7 +104,7 @@ main.administrative-page {
   flex-wrap: wrap;
   gap: 8px 16px;
   padding: 11px 0;
-  border-color: var(--admin-divider);
+  border-color: var(--color-divider);
 }
 .administrative-page .payment-row > div:first-child {
   flex: 1 1 230px;
@@ -148,7 +143,7 @@ main.administrative-page .people-table :is(th, td) {
 }
 .administrative-page .people-table .person-id {
   font-size: 12px;
-  color: #a3b2b1;
+  color: var(--color-muted);
   white-space: nowrap;
   margin: 0;
 }
@@ -181,21 +176,34 @@ main.administrative-page .people-table :is(th, td) {
 .administrative-page .agenda-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
+.administrative-page .agenda-card {
+  background: var(--surface-accent);
+  border-color: var(--border-accent);
+}
+.administrative-page .facilitator-block {
+  background: var(--surface-accent);
+  border-color: var(--border-accent);
+}
+.administrative-page .facilitator-block > .facilitator-name {
+  background: var(--surface-accent);
+  color: var(--color-warm);
+  border-color: var(--border-accent);
+}
 .administrative-page .agenda-card .eyebrow {
   display: inline-block;
   width: fit-content;
   padding: 3px 8px;
-  border: 1px solid #496c5d;
+  border: 1px solid var(--color-border);
   border-radius: 5px;
-  background: #304c40;
+  background: var(--color-selected);
   margin-bottom: 8px;
-  color: #c3eadb;
+  color: var(--color-text);
   font-size: 12px;
   letter-spacing: 0.6px;
 }
 .administrative-page :is(.payment-amount, .expense-amount) {
   display: inline-block;
-  color: #e6eaea;
+  color: var(--color-text);
 }
 .administrative-page .enroll-grid > .panel > p {
   font-size: 13px;
@@ -243,9 +251,9 @@ main.administrative-page .people-table :is(th, td) {
   align-items: baseline;
   gap: 6px 20px;
   padding: 8px 12px;
-  border: 1px solid #57513d;
+  border: 1px solid var(--border-accent);
   border-radius: 8px;
-  background: #302f28;
+  background: var(--surface-accent);
   margin-bottom: 8px;
 }
 .administrative-page .facilitator-metric {

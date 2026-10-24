@@ -36,14 +36,14 @@
   min-width: 0;
 }
 .dashboard-day-tile {
-  background: #33453e;
+  background: var(--surface-accent);
 }
 .dashboard-day-tile > svg {
   flex-shrink: 0;
 }
 .dashboard-day-tile h2 {
   margin: 0 0 4px;
-  color: #78cbb2;
+  color: var(--color-accent);
   font-size: clamp(20px, 1.5vw, 26px);
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -53,16 +53,16 @@
 }
 .dashboard-day-tile p {
   margin: 0;
-  color: #78cbb2;
+  color: var(--color-accent);
   font-size: 13px;
 }
 .dashboard-day-tile small {
   display: block;
   margin-top: 4px;
-  color: #becac7;
+  color: var(--color-muted);
 }
 .dashboard-clock {
-  background: #4b4b4b;
+  background: var(--color-elevated);
   justify-content: space-between;
   flex-wrap: wrap;
 }
@@ -73,7 +73,7 @@
   line-height: 1.1;
 }
 .dashboard-clock small {
-  color: #becac7;
+  color: var(--color-muted);
   font-size: 12px;
 }
 .dashboard .dashboard-schedule {
@@ -94,7 +94,7 @@
   overflow-wrap: anywhere;
 }
 .dashboard-schedule-heading p {
-  color: #b0c9bf;
+  color: var(--color-muted);
   margin: 0 0 12px;
 }
 .dashboard-count {
@@ -103,15 +103,15 @@
 }
 .dashboard-count span {
   display: block;
-  color: #a8bab4;
+  color: var(--color-muted);
   font-size: 12px;
 }
 .dashboard-count b {
   display: inline-block;
   padding: 3px 12px;
   margin-top: 5px;
-  background: #78cbb2;
-  color: #122e26;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   border-radius: 4px;
 }
 .dashboard-people ul {
@@ -121,10 +121,10 @@
 }
 .dashboard-people li {
   padding: 5px 0;
-  border-bottom: 1px solid #35443e;
+  border-bottom: 1px solid var(--color-divider);
 }
 .dashboard-people a {
-  color: #e6eaea;
+  color: var(--color-text);
   display: block;
   overflow-wrap: anywhere;
 }
@@ -138,6 +138,8 @@
   position: relative;
 }
 .dashboard .stat {
+  background: var(--surface-accent);
+  border-color: var(--border-accent);
   padding: 14px;
   min-width: 0;
   position: relative;
@@ -148,7 +150,7 @@
   gap: 4px;
   min-height: 44px;
   font-size: 12px;
-  color: #d4dfdb;
+  color: var(--color-muted);
 }
 .dashboard .stat strong {
   font-size: 30px;
@@ -175,8 +177,8 @@
 .dashboard-help > button span {
   width: 16px;
   height: 16px;
-  background: #78cbb2;
-  color: #122e26;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   font-size: 12px;
   line-height: 16px;
   border-radius: 2px;
@@ -190,11 +192,11 @@
   width: max(100%, 240px);
   max-width: min(360px, calc(100vw - 40px));
   padding: 14px;
-  background: #172c25;
-  border: 1px solid #78cbb2;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-accent);
   border-radius: 8px;
   box-shadow: 0 8px 22px #0006;
-  color: #e6eaea;
+  color: var(--color-text);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -213,9 +215,15 @@
   gap: 16px;
   grid-template-columns: minmax(0, 1fr);
 }
+.dashboard-finances > .panel,
+.dashboard .dashboard-schedule,
+.dashboard .dashboard-chart {
+  background: var(--surface-accent);
+  border-color: var(--border-accent);
+}
 .dashboard .dashboard-finances h2 {
   font-size: 19px;
-  color: #78cbb2;
+  color: var(--color-accent);
   margin: 0 0 18px;
 }
 .dashboard .wallet {
@@ -329,13 +337,13 @@
 }
 .dashboard-weather-location {
   font-size: 11px;
-  color: #d0d0d0;
+  color: var(--color-muted);
 }
 .dashboard-weather-value {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #e6eaea;
+  color: var(--color-text);
 }
 .dashboard-weather-value strong {
   font-size: 26px;
@@ -344,7 +352,7 @@
 }
 .dashboard-weather-condition {
   font-size: 12px;
-  color: #d0d0d0;
+  color: var(--color-muted);
   overflow-wrap: anywhere;
 }
 .dashboard-clock .dashboard-weather-source {
@@ -352,7 +360,7 @@
   line-height: 1.4;
 }
 .dashboard-weather-source a {
-  color: #d6e4e0;
+  color: var(--color-muted);
   text-decoration: underline;
 }
 @media (max-width: 1500px) and (min-width: 1201px) {
