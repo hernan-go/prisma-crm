@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Wallet, Receipt, Coins, CircleDollarSign, Clock3, TrendingUp, Info } from 'lucide-react';
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
 import { PageHeading, Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
 import {
   statisticsSummarySchema,
-  statisticsExpenseBreakdownSchema,
   statisticsMoney,
   type StatisticMetric,
   type StatisticsSummary,
@@ -19,10 +18,13 @@ import {
   type InflationResponse,
 } from '../shared/inflation';
 import './statistics.css';
+import { expenseQueryOptions } from './statistics-expenses';
+
+const StatisticsExpenseChart = lazy(() => import('./StatisticsExpenseChart'));
 
 export const statisticsKey = (period: number) => ['statistics-summary', period] as const;
 export const inflationKey = ['statistics-inflation'] as const;
-export const statisticsExpenseKey = (period: number) => ['statistics-expenses', period] as const;
+export { statisticsExpenseKey } from './statistics-expenses';
 
 function ExpenseBreakdown({
   open,
@@ -36,16 +38,8 @@ function ExpenseBreakdown({
   metric: StatisticMetric;
 }) {
   const breakdown = useQuery({
-    queryKey: statisticsExpenseKey(period),
+    ...expenseQueryOptions(period),
     enabled: open,
-    queryFn: async () => {
-      const result = statisticsExpenseBreakdownSchema.parse(
-        await api(`/statistics/expenses?period_id=${period}`),
-      );
-      if (result.period.id !== period)
-        throw new Error('El desglose no corresponde al período seleccionado.');
-      return result;
-    },
   });
   const data = breakdown.data;
   const reconciles = data?.total === metric.value && data?.movement_count === metric.universe;
@@ -411,7 +405,7 @@ export function ExecutiveSummary({
           info={
             <>
               <p>
-                Honorarios de facilitadores: comprometido por prestación pactada, sin multiplicar
+                Honorarios de facilitadores: importe a pagar por prestación pactada, sin multiplicar
                 por horarios ni inscripciones. Pagos imputados al período económico, aunque su fecha
                 sea de otro mes.
               </p>
@@ -429,7 +423,7 @@ export function ExecutiveSummary({
             </>
           }
         >
-          <Amount metric={m.fees_committed} label="Comprometido" />
+          <Amount metric={m.fees_committed} label="A pagar" />
           <dl className="statistics-breakdown">
             <div>
               <dt>Pagado</dt>
@@ -489,6 +483,8 @@ export function ExecutiveSummary({
 }
 export function Statistics() {
   const { period, periods } = usePeriod();
+  const [openBlock, setOpenBlock] = useState<'expenses' | null>(null);
+  const panelId = useId();
   const selected = periods.find((p) => p.id === period);
   const summary = useQuery({
     queryKey: statisticsKey(period),
@@ -534,12 +530,47 @@ export function Statistics() {
           </button>
         </div>
       ) : data ? (
-        <ExecutiveSummary
-          data={data}
-          inflation={inflation.data}
-          inflationError={inflation.isError}
-          inflationLoading={inflation.isPending}
-        />
+        <>
+          <ExecutiveSummary
+            data={data}
+            inflation={inflation.data}
+            inflationError={inflation.isError}
+            inflationLoading={inflation.isPending}
+          />
+          <section className="statistics-analysis" aria-label="Análisis del período">
+            <h2 className="expense-accordion-heading">
+              <button
+                type="button"
+                aria-expanded={openBlock === 'expenses'}
+                aria-controls={panelId}
+                onClick={() => setOpenBlock(openBlock === 'expenses' ? null : 'expenses')}
+              >
+                <span className="expense-accordion-icon">
+                  <Receipt size={21} aria-hidden="true" />
+                </span>
+                <span>
+                  <span className="expense-accordion-title">Gastos operativos y honorarios</span>
+                </span>
+                <span className="expense-accordion-toggle" aria-hidden="true">
+                  {openBlock === 'expenses' ? '−' : '+'}
+                </span>
+              </button>
+            </h2>
+            <div id={panelId} hidden={openBlock !== 'expenses'}>
+              {openBlock === 'expenses' && (
+                <Suspense fallback={<Loading />}>
+                  <StatisticsExpenseChart
+                    key={period}
+                    period={period}
+                    metric={data.metrics.expenses}
+                    summary={data}
+                    refreshSummary={() => void summary.refetch()}
+                  />
+                </Suspense>
+              )}
+            </div>
+          </section>
+        </>
       ) : (
         <Loading />
       )}
