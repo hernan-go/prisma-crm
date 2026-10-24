@@ -16,7 +16,8 @@ import {
   type StatisticsSummary,
   type StatisticsExpenseBreakdown,
 } from '../shared/statistics';
-import { Loading, ErrorBox, Empty } from './components';
+import { ErrorBox, Empty } from './components';
+import { StatisticsChartSkeleton } from './StatisticsSkeleton';
 import { expenseChartRows, expenseQueryOptions } from './statistics-expenses';
 import { StatisticsInfo } from './Statistics';
 import { StatisticsFeesChart } from './StatisticsFeesChart';
@@ -274,10 +275,8 @@ export default function StatisticsExpenseChart({
     <div className="expense-analysis-content">
       <div className="statistics-analysis-grid">
         {query.isPending ? (
-          <article className="expense-analysis-tile">
-            <Loading />
-          </article>
-        ) : query.isError ? (
+          <StatisticsChartSkeleton kind="expenses" />
+        ) : query.isError && !data ? (
           <article className="expense-analysis-tile" role="alert">
             <ErrorBox error={query.error} />
             <button type="button" onClick={() => void query.refetch()}>
@@ -305,6 +304,14 @@ export default function StatisticsExpenseChart({
               </div>
             )}
             <ExpenseVisualization data={data} />
+            {query.isError && (
+              <div role="alert">
+                <ErrorBox error={query.error} />
+                <button type="button" onClick={() => void query.refetch()}>
+                  Reintentar gastos
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <article className="expense-analysis-tile">

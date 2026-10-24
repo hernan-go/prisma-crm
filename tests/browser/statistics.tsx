@@ -8,6 +8,7 @@ import '../../client/styles.css';
 import type { StatisticsExpenseBreakdown } from '../../shared/statistics';
 import { feesFixture } from './statistics-fees-fixtures';
 import { collectionsFixture } from './statistics-collections-fixtures';
+import { useState } from 'react';
 
 const periods = [
   { id: 1, year: 2026, month: 10, status: 'open' as const },
@@ -16,6 +17,64 @@ const periods = [
 const scenario = new URLSearchParams(location.search).get('expenses');
 const feesScenario = new URLSearchParams(location.search).get('fees');
 const collectionsScenario = new URLSearchParams(location.search).get('collections');
+// Explicit fixture controls hold real promises: no delay is added to the application.
+const manualLoading = new URLSearchParams(location.search).get('loading') === 'manual';
+const waiting = new Map<string, () => void>();
+let failNextSummary = false;
+const fixtureClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, staleTime: 20000, refetchOnWindowFocus: false } },
+});
+function LoadingControls() {
+  const [, update] = useState(0);
+  return (
+    <details
+      open
+      aria-label="Controles de prueba de carga"
+      style={{
+        position: 'fixed',
+        bottom: 8,
+        left: 8,
+        zIndex: 10000,
+        width: 'min(360px, 90vw)',
+        padding: 12,
+        background: '#151a1c',
+        border: '1px solid #385158',
+        borderRadius: 8,
+      }}
+    >
+      <summary>Controles de prueba de carga</summary>
+      <p>QA sintético: las respuestas se liberan manualmente, sin DB.</p>
+      {[
+        ['/api/statistics/summary:1', 'Liberar resumen octubre'],
+        ['/api/statistics/summary:2', 'Liberar resumen septiembre'],
+        ['/api/statistics/expenses:1', 'Liberar gastos octubre'],
+        ['/api/statistics/expenses:2', 'Liberar gastos septiembre'],
+        ['/api/facilitator-accounts:1', 'Liberar honorarios octubre'],
+        ['/api/facilitator-accounts:2', 'Liberar honorarios septiembre'],
+        ['/api/statistics/inflation:', 'Liberar IPC'],
+      ].map(([key, label]) => (
+        <button key={key} onClick={() => waiting.get(key)?.()}>
+          {label}
+        </button>
+      ))}
+      <button
+        onClick={() =>
+          void fixtureClient.refetchQueries({ queryKey: ['statistics-summary'], type: 'active' })
+        }
+      >
+        Actualizar resumen
+      </button>
+      <button
+        onClick={() => {
+          failNextSummary = true;
+          update((n) => n + 1);
+        }}
+      >
+        Fallar próximo resumen{failNextSummary ? ' (activado)' : ''}
+      </button>
+    </details>
+  );
+}
 // Fixture-only emulation: validate both motion modes independently of the host OS.
 const motionScenario = new URLSearchParams(location.search).get('motion');
 if (scenario === 'reduced' || motionScenario === 'normal' || motionScenario === 'reduced') {
@@ -115,6 +174,15 @@ const expenseFixture = (period: (typeof periods)[number]): StatisticsExpenseBrea
 window.fetch = async (input, init) => {
   if (init?.method && init.method !== 'GET') throw Error('QA: writes blocked');
   const url = new URL(String(input), location.href);
+  if (manualLoading && url.pathname !== '/api/periods') {
+    const key = `${url.pathname}:${url.searchParams.get('period_id') ?? ''}`;
+    await new Promise<void>((resolve) => {
+      waiting.set(key, () => {
+        waiting.delete(key);
+        resolve();
+      });
+    });
+  }
   if (url.pathname === '/api/facilitator-accounts') {
     const period = Number(url.searchParams.get('period_id'));
     if (feesScenario === 'slow')
@@ -147,6 +215,10 @@ window.fetch = async (input, init) => {
       },
     });
   if (url.pathname === '/api/statistics/summary') {
+    if (failNextSummary) {
+      failNextSummary = false;
+      return Response.json({ message: 'Resumen no disponible (prueba)' }, { status: 503 });
+    }
     const period = periods.find((p) => p.id === Number(url.searchParams.get('period_id')))!;
     if (collectionsScenario === 'slow')
       await new Promise((resolve) => setTimeout(resolve, period.id === 1 ? 2500 : 50));
@@ -191,7 +263,8 @@ window.fetch = async (input, init) => {
   throw Error(`Unexpected QA request: ${url.pathname}`);
 };
 createRoot(document.getElementById('root')!).render(
-  <QueryClientProvider client={new QueryClient()}>
+  <QueryClientProvider client={fixtureClient}>
+    {manualLoading && <LoadingControls />}
     <MemoryRouter initialEntries={['/estadisticas']}>
       <App />
     </MemoryRouter>

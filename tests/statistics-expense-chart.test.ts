@@ -142,7 +142,9 @@ it('distingue carga, error y lecturas desactualizadas sin presentarlas como cero
   }
   const error = renderPanel('error');
   expect(error).toContain('Consulta fallida');
-  expect(error).not.toContain('<table');
+  // A failed refresh keeps the last valid result of this period and offers retry.
+  expect(error).toContain('<table');
+  expect(error).toContain('Reintentar gastos');
   expect(renderPanel('mismatch')).toContain('lecturas diferentes');
   const success = renderPanel('success');
   expect(success).not.toContain('lecturas diferentes');

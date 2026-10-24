@@ -20,6 +20,12 @@ import './statistics.css';
 import { expenseQueryOptions } from './statistics-expenses';
 import { statisticsSummaryQueryOptions } from './statistics-collections';
 import { StatisticsAccordion } from './StatisticsAccordion';
+import { SkeletonRegion } from './Skeleton';
+import {
+  StatisticsChartSkeleton,
+  StatisticsExpensesSkeleton,
+  StatisticsValueSkeleton,
+} from './StatisticsSkeleton';
 
 const StatisticsExpenseChart = lazy(() => import('./StatisticsExpenseChart'));
 const StatisticsCollectionsChart = lazy(() => import('./StatisticsCollectionsChart'));
@@ -232,7 +238,7 @@ function Card({
   title: string;
   icon: ReactNode;
   tone: string;
-  info: ReactNode;
+  info?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -242,7 +248,7 @@ function Card({
           <span aria-hidden="true">{icon}</span>
           {title}
         </h2>
-        <StatisticsInfo title={title}>{info}</StatisticsInfo>
+        {info && <StatisticsInfo title={title}>{info}</StatisticsInfo>}
       </div>
       {children}
     </article>
@@ -320,11 +326,13 @@ export function InflationTile({
             </p>
           )}
         </>
+      ) : loading ? (
+        <SkeletonRegion label="Consultando IPC oficial…">
+          <StatisticsValueSkeleton />
+        </SkeletonRegion>
       ) : (
         <p className="statistics-unavailable" role="status">
-          {loading
-            ? 'Consultando IPC oficial…'
-            : 'No se pudo consultar el IPC. Reintentaremos automáticamente.'}
+          No se pudo consultar el IPC. Reintentaremos automáticamente.
         </p>
       )}
     </Card>
@@ -525,21 +533,66 @@ export function Statistics() {
       </PageHeading>
       {!period ? (
         <Empty>Creá un período para consultar sus estadísticas.</Empty>
-      ) : summary.isError ? (
+      ) : summary.isError && !data ? (
         <div role="alert">
           <ErrorBox error={summary.error} />
           <button type="button" onClick={() => summary.refetch()}>
             Reintentar
           </button>
         </div>
-      ) : data ? (
+      ) : (
         <>
-          <ExecutiveSummary
-            data={data}
-            inflation={inflation.data}
-            inflationError={inflation.isError}
-            inflationLoading={inflation.isPending}
-          />
+          {data ? (
+            <ExecutiveSummary
+              data={data}
+              inflation={inflation.data}
+              inflationError={inflation.isError}
+              inflationLoading={inflation.isPending}
+            />
+          ) : (
+            <>
+              <span className="skeleton-status" role="status">
+                Cargando estadísticas del período…
+              </span>
+              <div className="statistics-grid" aria-busy="true" aria-label="Resumen del período">
+                {(
+                  [
+                    ['Total a cobrar', CircleDollarSign, 'income'],
+                    ['Cobrado', Wallet, 'collected'],
+                    ['Falta cobrar', Clock3, 'debt'],
+                    ['Honorarios', Coins, 'fees'],
+                    ['Gastos registrados', Receipt, 'expenses'],
+                  ] as const
+                ).map(([title, Icon, tone]) => (
+                  <Card key={title} title={title} icon={<Icon size={18} />} tone={tone}>
+                    <StatisticsValueSkeleton />
+                  </Card>
+                ))}
+                <InflationTile
+                  data={inflation.data}
+                  error={inflation.isError}
+                  loading={inflation.isPending}
+                />
+              </div>
+              <div
+                className="statistics-footnote statistics-skeleton-footnote"
+                aria-hidden="true"
+              />
+            </>
+          )}
+          {data && summary.isFetching && (
+            <p className="statistics-footnote" role="status">
+              Actualizando estadísticas…
+            </p>
+          )}
+          {data && summary.isError && (
+            <div role="alert">
+              <ErrorBox error={summary.error} />
+              <button type="button" onClick={() => void summary.refetch()}>
+                Reintentar
+              </button>
+            </div>
+          )}
           <section className="statistics-analysis" aria-label="Análisis del período">
             <StatisticsAccordion
               title="Ingresos y cobranzas"
@@ -548,8 +601,12 @@ export function Statistics() {
               onToggle={() => setCollectionsOpen((value) => !value)}
             >
               <div className="expense-analysis-content">
-                <Suspense fallback={<Loading />}>
-                  <StatisticsCollectionsChart key={period} summary={data} />
+                <Suspense fallback={<StatisticsChartSkeleton kind="collections" />}>
+                  {data ? (
+                    <StatisticsCollectionsChart key={period} summary={data} />
+                  ) : (
+                    <StatisticsChartSkeleton kind="collections" />
+                  )}
                 </Suspense>
               </div>
             </StatisticsAccordion>
@@ -559,20 +616,22 @@ export function Statistics() {
               open={expensesOpen}
               onToggle={() => setExpensesOpen((value) => !value)}
             >
-              <Suspense fallback={<Loading />}>
-                <StatisticsExpenseChart
-                  key={period}
-                  period={period}
-                  metric={data.metrics.expenses}
-                  summary={data}
-                  refreshSummary={() => void summary.refetch()}
-                />
+              <Suspense fallback={<StatisticsExpensesSkeleton />}>
+                {data ? (
+                  <StatisticsExpenseChart
+                    key={period}
+                    period={period}
+                    metric={data.metrics.expenses}
+                    summary={data}
+                    refreshSummary={() => void summary.refetch()}
+                  />
+                ) : (
+                  <StatisticsExpensesSkeleton />
+                )}
               </Suspense>
             </StatisticsAccordion>
           </section>
         </>
-      ) : (
-        <Loading />
       )}
     </section>
   );

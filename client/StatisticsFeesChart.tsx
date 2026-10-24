@@ -2,7 +2,8 @@ import { useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { statisticsMoney, type StatisticsSummary } from '../shared/statistics';
-import { Loading, ErrorBox, Empty } from './components';
+import { ErrorBox, Empty } from './components';
+import { StatisticsChartSkeleton } from './StatisticsSkeleton';
 import { StatisticsInfo } from './Statistics';
 import {
   facilitatorChartRows,
@@ -25,6 +26,7 @@ export function StatisticsFeesChart({
   const differences = query.data ? reconcileFacilitatorAccounts(query.data, summary) : [];
   const [active, setActive] = useState<number | null>(null);
   const current = rows.find((r) => r.id === active);
+  if (query.isPending) return <StatisticsChartSkeleton kind="fees" />;
   const legend = (side: 'left' | 'right', people: typeof rows) => (
     <ul
       className={`fees-ring-legend fees-legend-${side}`}
@@ -101,9 +103,7 @@ export function StatisticsFeesChart({
           )}
         </div>
       )}
-      {query.isPending ? (
-        <Loading />
-      ) : query.isError ? (
+      {query.isError && !query.data ? (
         <div role="alert">
           <ErrorBox error={query.error} />
           <button type="button" onClick={() => void query.refetch()}>
@@ -191,6 +191,14 @@ export function StatisticsFeesChart({
             </div>
           </div>
           {legend('right', rows.slice(Math.ceil(rows.length / 2)))}
+        </div>
+      )}
+      {query.isError && query.data && (
+        <div role="alert">
+          <ErrorBox error={query.error} />
+          <button type="button" onClick={() => void query.refetch()}>
+            Reintentar honorarios
+          </button>
         </div>
       )}
     </article>

@@ -1,0 +1,23 @@
+:root {
+  --skeleton-base: #232d31;
+  --skeleton-highlight: #385158;
+}
+.skeleton-shape {
+  display: block;
+  min-width: 0;
+  line-height: 1;
+}
+.skeleton-shape > span {
+  display: block;
+  line-height: 1;
+}
+.skeleton-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
