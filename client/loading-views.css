@@ -1,0 +1,25 @@
+.loading-list-row > div:first-child {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.loading-card {
+  display: grid;
+  gap: 20px;
+}
+.loading-account-row td {
+  height: 54px;
+}
+.period-person-results {
+  position: relative;
+}
+.period-person-wait {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.dashboard-finance-loading > [aria-busy='true'] {
+  display: grid;
+  gap: 18px;
+}

@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { Decimal } from 'decimal.js';
 import { api } from './api';
-import { Modal, Field, ErrorBox, Loading, SaveButton, useSave } from './components';
+import { Modal, Field, ErrorBox, SaveButton, useSave } from './components';
+import { CardsSkeleton, ListSkeleton, QueryFeedback } from './LoadingViews';
 import {
   recurringIcons,
   type RecurringTile,
@@ -169,17 +170,21 @@ function MonthlyForm({
 function HistoricalLink({
   tile,
   period,
-  categories,
   close,
 }: {
   tile: RecurringTile;
   period: number;
-  categories: ExpenseCategory[];
   close: () => void;
 }) {
   const [selected, setSelected] = useState('');
   const [confirmed, setConfirmed] = useState(false);
-  const candidate = categories.find((c) => c.id === Number(selected));
+  // Same key as Expenses: share the real query instead of treating pending categories as [].
+  const categories = useQuery({
+    queryKey: ['expense-categories', period],
+    queryFn: () => api<ExpenseCategory[]>(`/periods/${period}/expense-categories`),
+    enabled: !!period,
+  });
+  const candidate = categories.data?.find((c) => c.id === Number(selected));
   const save = useSave(`/periods/${period}/recurring-expenses/${tile.id}/link`, 'POST', close);
   return (
     <Modal title={`Vincular categoría a ${tile.name}`} close={close}>
@@ -203,8 +208,8 @@ function HistoricalLink({
             }}
           >
             <option value="">Seleccionar por ID</option>
-            {categories
-              .filter((c) => !c.recurring_concept_id)
+            {categories.data
+              ?.filter((c) => !c.recurring_concept_id)
               .map((c) => (
                 <option key={c.id} value={c.id}>
                   #{c.id} · {c.name} ({c.expenses.length} gastos)
@@ -212,6 +217,10 @@ function HistoricalLink({
               ))}
           </select>
         </Field>
+        <QueryFeedback query={categories} label="categorías del período" />
+        {!!period && categories.isPending && (
+          <ListSkeleton label="Cargando categorías del período…" rows={1} />
+        )}
         {candidate && (
           <>
             <ul>
@@ -253,20 +262,17 @@ function Detail({
   tile,
   period,
   closed,
-  categories,
   close,
 }: {
   tile: RecurringTile;
   period: number;
   closed: boolean;
-  categories: ExpenseCategory[];
   close: () => void;
 }) {
   const [link, setLink] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
   const unlink = useSave(`/periods/${period}/recurring-expenses/${tile.id}/link`, 'DELETE', close);
-  if (link)
-    return <HistoricalLink tile={tile} period={period} categories={categories} close={close} />;
+  if (link) return <HistoricalLink tile={tile} period={period} close={close} />;
   return (
     <Modal title={tile.category_name ?? tile.name} close={close}>
       {tile.category_name && tile.category_name !== tile.name && (
@@ -390,8 +396,8 @@ function Catalogue({ close }: { close: () => void }) {
   return (
     <Modal title="Configurar recurrentes" close={close}>
       <p>Catálogo de esta instalación para todos los períodos. No crea gastos ni copia importes.</p>
-      <ErrorBox error={q.error} />
-      {q.isPending && <Loading />}
+      <QueryFeedback query={q} label="catálogo recurrente" />
+      {q.isPending && <ListSkeleton label="Cargando catálogo recurrente…" />}
       {q.data?.map((c) => (
         <div className="recurring-catalogue-row" key={c.id}>
           <span>
@@ -586,7 +592,9 @@ function PeriodConfiguration({
                   ))}
               </select>
             </Field>
-            <ErrorBox error={q.error ?? add.error} />
+            <QueryFeedback query={q} label="catálogo recurrente" />
+            {q.isPending && <ListSkeleton label="Cargando catálogo recurrente…" rows={1} />}
+            <ErrorBox error={add.error} />
             <button disabled={closed || !selected || add.isPending}>Agregar a este período</button>
           </form>
           <div className="actions">
@@ -603,12 +611,10 @@ export function RecurringExpenses({
   period,
   month,
   closed,
-  categories,
 }: {
   period: number;
   month: string;
   closed: boolean;
-  categories: ExpenseCategory[];
 }) {
   const q = useQuery({
     queryKey: ['recurring-expenses', period],
@@ -626,9 +632,9 @@ export function RecurringExpenses({
           <Settings2 size={17} /> Configurar
         </button>
       </div>
-      <ErrorBox error={q.error} />
-      {q.isPending && <Loading />}
-      {q.data?.tiles.length === 0 && (
+      <QueryFeedback query={q} label="gastos recurrentes" />
+      {!!period && q.isPending && <CardsSkeleton label="Cargando gastos recurrentes…" />}
+      {q.isSuccess && q.data?.tiles.length === 0 && (
         <p className="muted">Agregá conceptos a este período desde Configurar.</p>
       )}
       <div className="recurring-grid">
@@ -677,13 +683,7 @@ export function RecurringExpenses({
         />
       )}
       {detail && (
-        <Detail
-          tile={detail}
-          period={period}
-          closed={closed}
-          categories={categories}
-          close={() => setDetail(undefined)}
-        />
+        <Detail tile={detail} period={period} closed={closed} close={() => setDetail(undefined)} />
       )}
       {config && q.data && (
         <PeriodConfiguration

@@ -7,12 +7,12 @@ import { Plus } from 'lucide-react';
 import { api } from './api';
 import { usePeriod } from './App';
 import { RecurringExpenses } from './RecurringExpenses';
+import { CardsSkeleton, QueryFeedback } from './LoadingViews';
 import {
   DeleteButton,
   Empty,
   ErrorBox,
   Field,
-  Loading,
   Modal,
   SaveButton,
   useSave,
@@ -240,15 +240,10 @@ function PeriodExpenses({
         <Empty>Creá o seleccioná un período.</Empty>
       ) : (
         <>
-          <ErrorBox error={query.error} />
-          {query.isPending && <Loading />}
-          <RecurringExpenses
-            period={period}
-            month={month}
-            closed={closed}
-            categories={query.data ?? []}
-          />
+          <RecurringExpenses period={period} month={month} closed={closed} />
           <h2>Gastos adicionales</h2>
+          <QueryFeedback query={query} label="categorías y gastos adicionales" />
+          {query.isPending && <CardsSkeleton label="Cargando categorías y gastos adicionales…" />}
           {query.data
             ?.filter((item) => !item.recurring_concept_id)
             .map((item) => (
@@ -297,12 +292,13 @@ function PeriodExpenses({
                 {!item.expenses.length && <p className="muted">Sin gastos registrados.</p>}
               </section>
             ))}
-          {query.data?.filter((item) => !item.recurring_concept_id).length === 0 && (
-            <Empty>
-              <span className="desktop-only">No hay categorías de gastos en este período.</span>
-              <span className="mobile-only">No hay gastos registrados en este período.</span>
-            </Empty>
-          )}
+          {query.isSuccess &&
+            query.data?.filter((item) => !item.recurring_concept_id).length === 0 && (
+              <Empty>
+                <span className="desktop-only">No hay categorías de gastos en este período.</span>
+                <span className="mobile-only">No hay gastos registrados en este período.</span>
+              </Empty>
+            )}
         </>
       )}
       {category !== undefined && !closed && (

@@ -15,8 +15,10 @@ import {
   DeleteButton,
   PageHeading,
 } from './components';
-import { PersonPicker } from './People';
+import { PeriodPersonPicker } from './PeriodPersonPicker';
 import { usePeriod, periodName } from './App';
+import { Skeleton, SkeletonRegion } from './Skeleton';
+import { CardsSkeleton, ListSkeleton, QueryFeedback } from './LoadingViews';
 import {
   days,
   times,
@@ -82,8 +84,6 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
         <Empty>Creá o seleccioná un período.</Empty>
       ) : (
         <>
-          <ErrorBox error={members.error} />
-          {members.isPending && <Loading />}
           {closed && (
             <p className="info">
               Período cerrado: consulta histórica. Reabrilo para agregar o quitar personas.
@@ -104,6 +104,8 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
           ) : (
             <section className="panel">
               <h2>Personas inscriptas</h2>
+              <QueryFeedback query={members} label="personas inscriptas" />
+              {members.isPending && <ListSkeleton label="Cargando personas inscriptas…" />}
               {members.data?.map((p: any) => (
                 <div className="payment-row" key={p.membership_id}>
                   <div>
@@ -121,7 +123,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
                   </div>
                 </div>
               ))}
-              {members.data?.length === 0 && (
+              {members.isSuccess && members.data?.length === 0 && (
                 <Empty>No hay personas inscriptas en este período.</Empty>
               )}
             </section>
@@ -129,9 +131,8 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
           {person && <PersonMonth person={person} />}
           {adding && (
             <Modal title="Buscar en BBDD" close={() => setAdding(false)}>
-              <PersonPicker
+              <PeriodPersonPicker
                 excluded={members.data?.map((p: any) => p.id) || []}
-                actionLabel="Agregar al período"
                 onSelect={(p) => {
                   if (!add.isPending) add.mutate({ person_id: p.id });
                 }}
@@ -154,11 +155,15 @@ export function PersonMonth({ person }: { person: any }) {
   );
   const add = useSave(`/periods/${period}/memberships`, 'POST', () => {});
   const { periods } = usePeriod();
-  if (membership.isPending) return <Loading />;
-  if (membership.error) return <ErrorBox error={membership.error} />;
+  if (!period) return <Empty>Creá o seleccioná un período.</Empty>;
+  if (membership.isPending)
+    return <ListSkeleton label="Cargando pertenencia al período…" rows={1} />;
+  if (membership.error && !membership.data)
+    return <QueryFeedback query={membership} label="pertenencia al período" />;
   if (!membership.data?.length)
     return (
       <section className="panel">
+        <QueryFeedback query={membership} label="pertenencia al período" />
         <p>Esta persona no está incorporada al período seleccionado.</p>
         <button
           disabled={
@@ -173,7 +178,12 @@ export function PersonMonth({ person }: { person: any }) {
         <ErrorBox error={add.error} />
       </section>
     );
-  return <PersonMonthMember key={`${period}-${person.id}`} person={person} />;
+  return (
+    <>
+      <QueryFeedback query={membership} label="pertenencia al período" />
+      <PersonMonthMember key={`${period}-${person.id}`} person={person} />
+    </>
+  );
 }
 function RemoveMembership({
   person,
@@ -251,7 +261,8 @@ function PersonMonthMember({ person }: { person: any }) {
           </button>
         )}
       </div>
-      <ErrorBox error={q.error || a.error || payments.error} />
+      <QueryFeedback query={q} label="inscripciones" />
+      {q.isPending && <CardsSkeleton label="Cargando inscripciones…" />}
       <div className="enroll-grid">
         {q.data?.map((e: any) => (
           <article className="panel enrollment" key={e.id}>
@@ -281,45 +292,61 @@ function PersonMonthMember({ person }: { person: any }) {
           </article>
         ))}
       </div>
-      {q.isPending && <Loading />}
-      {q.data?.length === 0 && (
+      {q.isSuccess && q.data?.length === 0 && (
         <Empty>Sin actividades en este período. Agregá la primera inscripción.</Empty>
       )}
       <section className="panel">
         <div className="section-heading">
           <h2 className="finance-title">Cuenta del mes</h2>
-          <button disabled={closed} onClick={() => setDue(true)}>
+          <button disabled={closed || a.data === undefined} onClick={() => setDue(true)}>
             Editar importe a cobrar
           </button>
         </div>
-        <div className="stats compact">
-          <div>
-            <small>A cobrar</small>
-            <strong>
-              {account?.amount_due != null
-                ? formatMoney(account.amount_due)
-                : 'Importe a cobrar no definido'}
-            </strong>
+        <QueryFeedback query={a} label="cuenta del mes" />
+        {a.isPending && (
+          <SkeletonRegion label="Cargando cuenta del mes…">
+            <div className="stats compact">
+              {['A cobrar', 'Pagado', 'Saldo'].map((label) => (
+                <div key={label}>
+                  <small>{label}</small>
+                  <Skeleton width="80%" height={25} />
+                </div>
+              ))}
+            </div>
+          </SkeletonRegion>
+        )}
+        {a.data !== undefined && (
+          <div className="stats compact">
+            <div>
+              <small>A cobrar</small>
+              <strong>
+                {account?.amount_due != null
+                  ? formatMoney(account.amount_due)
+                  : 'Importe a cobrar no definido'}
+              </strong>
+            </div>
+            <div>
+              <small>Pagado</small>
+              <strong>{formatMoney(account?.paid || '0')}</strong>
+            </div>
+            <div>
+              <small>{Number(account?.balance) < 0 ? 'Saldo a favor' : 'Debe'}</small>
+              <strong>
+                {account?.balance != null
+                  ? formatMoney(Math.abs(Number(account.balance)))
+                  : 'No definido'}
+              </strong>
+            </div>
           </div>
-          <div>
-            <small>Pagado</small>
-            <strong>{formatMoney(account?.paid || '0')}</strong>
-          </div>
-          <div>
-            <small>{Number(account?.balance) < 0 ? 'Saldo a favor' : 'Debe'}</small>
-            <strong>
-              {account?.balance != null
-                ? formatMoney(Math.abs(Number(account.balance)))
-                : 'No definido'}
-            </strong>
-          </div>
-        </div>
+        )}
         <div className="section-heading">
           <h3>Movimientos del período</h3>
           <button className="primary" disabled={closed} onClick={() => setPayment({})}>
             Registrar pago
           </button>
         </div>
+        <QueryFeedback query={payments} label="pagos de la persona" />
+        {payments.isPending && <ListSkeleton label="Cargando pagos de la persona…" />}
         {rows.map((p: any) => (
           <div className="payment-row" key={p.id}>
             <div>
@@ -338,7 +365,7 @@ function PersonMonthMember({ person }: { person: any }) {
             </div>
           </div>
         ))}
-        {!rows.length && <p className="muted">No hay pagos registrados.</p>}
+        {payments.isSuccess && !rows.length && <p className="muted">No hay pagos registrados.</p>}
       </section>
       {enroll && (
         <EnrollmentForm person={person} enrollment={enroll} close={() => setEnroll(undefined)} />
@@ -576,6 +603,10 @@ function PaymentForm({
 }
 export function Agenda() {
   const { period } = usePeriod();
+  return <AgendaPeriod key={period} />;
+}
+function AgendaPeriod() {
+  const { period } = usePeriod();
   const q = useData('agenda', `/agenda?period_id=${period}`, !!period);
   const activities = new Map<number, string>();
   const teachers = new Map<number, string>();
@@ -645,7 +676,9 @@ export function Agenda() {
           </select>
         </Field>
       </div>
-      <ErrorBox error={q.error} />
+      {!period && <Empty>Creá o seleccioná un período.</Empty>}
+      <QueryFeedback query={q} label="agenda" />
+      {!!period && q.isPending && <CardsSkeleton label="Cargando horarios y participantes…" />}
       <div className="enroll-grid agenda-grid">
         {[...groups.entries()]
           .sort(
@@ -675,7 +708,7 @@ export function Agenda() {
             </section>
           ))}
       </div>
-      {!groups.size && <Empty>Sin horarios para estos filtros.</Empty>}
+      {q.isSuccess && !groups.size && <Empty>Sin horarios para estos filtros.</Empty>}
     </>
   );
 }
@@ -698,9 +731,18 @@ function PaymentsPeriod() {
           <Plus size={17} /> Registrar pago
         </button>
       </Heading>
-      <ErrorBox error={q.error || payments.error} />
-      <section className="panel table-wrap accounts-table-panel">
+      {!period && <Empty>Creá o seleccioná un período.</Empty>}
+      <section
+        className="panel table-wrap accounts-table-panel"
+        aria-busy={(!!period && q.isPending) || undefined}
+      >
         <h2>Cuentas del mes</h2>
+        <QueryFeedback query={q} label="cuentas" />
+        {!!period && q.isPending && (
+          <span className="skeleton-status" role="status">
+            Cargando cuentas…
+          </span>
+        )}
         <table className="accounts-table">
           <thead>
             <tr>
@@ -714,6 +756,24 @@ function PaymentsPeriod() {
             </tr>
           </thead>
           <tbody>
+            {!!period &&
+              q.isPending &&
+              Array.from({ length: 3 }, (_, i) => (
+                <tr className="loading-account-row" aria-hidden="true" key={`loading-${i}`}>
+                  <td>
+                    <Skeleton width="80%" height={14} />
+                  </td>
+                  <td>
+                    <Skeleton width="75%" height={14} />
+                  </td>
+                  <td className="desktop-only">
+                    <Skeleton width="75%" height={14} />
+                  </td>
+                  <td>
+                    <Skeleton width="75%" height={14} />
+                  </td>
+                </tr>
+              ))}
             {q.data?.map((a: any) => (
               <tr key={a.id}>
                 <td>
@@ -744,10 +804,12 @@ function PaymentsPeriod() {
             ))}
           </tbody>
         </table>
-        {!q.data?.length && <Empty>Sin cuentas en este período.</Empty>}
+        {q.isSuccess && q.data?.length === 0 && <Empty>Sin cuentas en este período.</Empty>}
       </section>
       <section className="panel">
         <h2>Movimientos</h2>
+        <QueryFeedback query={payments} label="movimientos" />
+        {!!period && payments.isPending && <ListSkeleton label="Cargando movimientos…" />}
         {payments.data?.map((p: any) => (
           <div className="payment-row" key={p.id}>
             <div>
@@ -777,7 +839,7 @@ function PaymentsPeriod() {
             </div>
           </div>
         ))}
-        {!payments.data?.length && <Empty>Sin pagos registrados.</Empty>}
+        {payments.isSuccess && payments.data?.length === 0 && <Empty>Sin pagos registrados.</Empty>}
       </section>
       {pick && (
         <Modal title="Seleccionar persona" close={() => setPick(false)}>
@@ -801,8 +863,8 @@ function PaymentMemberPicker({ onSelect }: { onSelect: (p: any) => void }) {
   return (
     <>
       <p>Personas incorporadas al período. Para incorporar otra, usá Inscriptos Período.</p>
-      <ErrorBox error={q.error} />
-      {q.isPending && <Loading />}
+      <QueryFeedback query={q} label="personas del período" />
+      {!!period && q.isPending && <ListSkeleton label="Cargando personas del período…" />}
       <div className="pick-list">
         {q.data?.map((p: any) => (
           <button key={p.membership_id} onClick={() => onSelect(p)}>

@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Wallet, Clock3, CalendarDays } from 'lucide-react';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
-import { ErrorBox, Loading, Empty, PageHeading, useDisclosure } from './components';
+import { Empty, PageHeading, useDisclosure } from './components';
+import { QueryFeedback } from './LoadingViews';
+import { DashboardAgendaSkeleton, DashboardFinanceSkeleton } from './DashboardSkeleton';
 import { formatMoney, recipientLabel, type PeriodWallets } from '../shared/domain';
 import {
   dashboardDate,
@@ -259,16 +261,11 @@ export function Dashboard() {
             <Empty>Creá un período con el botón + para comenzar.</Empty>
           ) : (
             <>
+              <QueryFeedback query={agenda} label="programación" />
               {agenda.isPending ? (
-                <Loading />
-              ) : agenda.error ? (
+                <DashboardAgendaSkeleton />
+              ) : agenda.data !== undefined ? (
                 <>
-                  <ErrorBox error={agenda.error} />
-                  <button onClick={() => void agenda.refetch()}>Reintentar agenda</button>
-                </>
-              ) : (
-                <>
-                  {agenda.isFetching && <small role="status">Actualizando programación…</small>}
                   {schedules.map((s) => (
                     <ScheduleCard key={`${period}-${date.day}-${s.id}`} schedule={s} />
                   ))}
@@ -278,25 +275,18 @@ export function Dashboard() {
                     </Empty>
                   )}
                 </>
-              )}
+              ) : null}
             </>
           )}
         </section>
         {!!period && (
           <section className="dashboard-administration" aria-label="Resumen del período">
+            <QueryFeedback query={finance} label="resumen" />
             {finance.isPending ? (
-              <Loading />
-            ) : finance.error ? (
-              <>
-                <ErrorBox error={finance.error} />
-                <button onClick={() => void finance.refetch()}>Reintentar resumen</button>
-              </>
-            ) : (
-              <>
-                {finance.isFetching && <small role="status">Actualizando resumen…</small>}
-                <FinancialSummary data={finance.data} />
-              </>
-            )}
+              <DashboardFinanceSkeleton />
+            ) : finance.data !== undefined ? (
+              <FinancialSummary data={finance.data} />
+            ) : null}
           </section>
         )}
       </div>

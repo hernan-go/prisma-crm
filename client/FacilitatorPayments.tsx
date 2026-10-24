@@ -9,7 +9,6 @@ import {
   Empty,
   ErrorBox,
   Field,
-  Loading,
   Modal,
   SaveButton,
   useSave,
@@ -22,6 +21,29 @@ import {
   type FacilitatorAccount,
   type FacilitatorPayment,
 } from '../shared/facilitators';
+import { Skeleton, SkeletonRegion } from './Skeleton';
+import { ListSkeleton, QueryFeedback } from './LoadingViews';
+
+function FacilitatorsSkeleton() {
+  return (
+    <SkeletonRegion label="Cargando facilitadores y honorarios…">
+      {[0, 1].map((i) => (
+        <section className="panel facilitator-block loading-card" key={i} aria-hidden="true">
+          <Skeleton width="50%" height={22} />
+          <Skeleton width="65%" height={18} />
+          <div className="facilitator-metrics">
+            {[0, 1, 2].map((n) => (
+              <div className="facilitator-metric" key={n}>
+                <Skeleton width={70} height={14} />
+                <Skeleton width={90} height={22} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </SkeletonRegion>
+  );
+}
 
 export function FacilitatorPayments() {
   const { period, periods } = usePeriod();
@@ -45,10 +67,10 @@ export function FacilitatorPayments() {
           Período cerrado. Reabrilo desde la gestión de períodos para corregir datos.
         </p>
       )}
-      <ErrorBox error={q.error} />
-      {!!period && q.isPending && <Loading />}
+      <QueryFeedback query={q} label="facilitadores" />
+      {!!period && q.isPending && <FacilitatorsSkeleton />}
       {!period && <Empty>Seleccioná un período.</Empty>}
-      {!!period && !q.isPending && !q.error && !groups.size && (
+      {!!period && q.isSuccess && !groups.size && (
         <Empty>
           Sin facilitadores en este período. Revisá{' '}
           <Link to="/configuracion">Configuración → Período</Link>.
@@ -153,8 +175,10 @@ function AccountBlock({ account: a, closed }: { account: FacilitatorAccount; clo
       )}
       {expanded && (
         <>
-          <ErrorBox error={q.error} />
-          {a.id && q.isPending && <Loading />}
+          {!!a.id && <QueryFeedback query={q} label={`movimientos de ${a.activity}`} />}
+          {!!a.id && q.isPending && (
+            <ListSkeleton label={`Cargando movimientos de ${a.activity}…`} />
+          )}
           {q.data?.map((p) => (
             <div className="payment-row" key={p.id}>
               <div>
