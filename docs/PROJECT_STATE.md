@@ -1,18 +1,22 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-23
+**Corte:** 2026-10-24
 
-## Estado vigente — Iteración 8 cerrada en producción
+## Estado vigente — Primera entrega de Iteración 9 cerrada en producción
+
+Según las operaciones y verificaciones del propietario confirmadas el 24/10/2026, `ab7e321` está publicado desde `main`, con push a GitHub exitoso, build SiteGround `1792806441-rucfav`, `build_script_exit_code = 0` y verificación funcional/visual productiva satisfactoria. Incluye gráficos mensuales de Gastos por concepto y Honorarios por facilitador, Recharts e identidad global carbón/cian con tarjetas uniformes y gráficos oscuros translúcidos. Sin nuevas migraciones SQL. Codex comprobó únicamente el estado local: `main`, `origin/main` local y rama de desarrollo en `ab7e321`, árbol inicialmente limpio; no consultó GitHub, hosting ni producción. Detalle de cierre y diseño siguiente en el [registro de Iteración 9](iterations/2026-10-statistics-design.md#cierre-productivo-de-la-primera-entrega-de-iteración-9--2026-10-24).
+
+## Antecedente — Iteración 8 cerrada en producción
 
 Según las operaciones y verificaciones realizadas por el propietario y confirmadas el 23/10/2026: Iteración 8 implementada y publicada en `51e247e`, migraciones `001–011` aplicadas y registradas en producción, build SiteGround con exit code `0` y smoke productivo aprobado. Estadísticas v1, IPC, desglose de Gastos y Gastos Recurrentes con independencia mensual funcionan en producción. Octubre 2026 quedó reclasificado y conciliado económicamente; es un cierre con fecha de corte, no un parámetro permanente. La reclasificación por UI recreó movimientos y cambió IDs/timestamps; no acredita identidad histórica de registros.
 
 Codex comprobó independientemente en la inspección local de Iteración 9: working tree limpio, `main` y referencias locales `origin/main`, `origin/HEAD` y rama de Iteración 8 en `51e247e`, y presencia del código y migraciones correspondientes. No consultó GitHub ni producción ni verificó allí la DB. El despliegue, las migraciones y la conciliación productivos se registran como confirmaciones del propietario, aportadas en los handoffs del 23/10; el handoff del 22/10 es antecedente anterior al despliegue.
 
-## Iteración 9 — Desarrollo local en revisión
+## Iteración 9 — Alcance entregado y continuidad
 
-Doble finalidad y arquitectura compartida registradas en D020; honorarios dinámicos y límites económicos en D021 de [DECISIONS](DECISIONS.md). Resumen mensual, IPC y desglose están publicados. Primera entrega posterior autorizada e implementada localmente: acordeón de Gastos con un gráfico horizontal por categoría/concepto, orden descendente, tipos recurrente/adicional, tooltip exacto y alternativa para lectores de pantalla; conserva los seis indicadores y el modal. Recharts 3.10.1 (MIT) y react-is 19.3.0, alineado con React instalado, incorporados sin actualizar versiones de paquetes preexistentes. Los otros seis bloques siguen diseñados, sin implementar. Continúan después anual e histórica, según [ROADMAP](ROADMAP.md). Reajuste posterior autorizado: primer acordeón con dos tiles iguales en desktop, apilados en mobile; gastos completos sin control visible Ver tabla y anillo de honorarios con las métricas existentes del resumen. No se implementan otros bloques ni gráficos.
+D020–D023 conservan la arquitectura analítica compartida, límites económicos y diseño futuro de conocimiento empresarial/asesor IA. La primera entrega está publicada: acordeón «Gastos operativos y honorarios» con todos los conceptos de gastos con movimientos, orden exacto, tooltip y alternativa accesible; dona individual dinámica por facilitador y conciliación de cuentas con resumen. Conserva los seis KPI, el desglose y dos tiles de igual ancho en desktop, apilados en mobile. Recharts 3.10.1 y react-is 19.3.0 están incorporados. Los otros seis bloques siguen sin implementar.
 
-La conexión con IA no existe y queda para un proyecto posterior con diseño y autorización independientes. El cierre documental previo quedó versionado en `3370c45`. La entrega gráfica parte de ese commit en `codex/iteration-9-expense-chart`, sin commits nuevos, publicación ni operaciones DB. Reutiliza `/api/statistics/expenses` y su contrato/caché para gráfico y desglose; solo geometría en Number, importes exactos y orden por centavos enteros sin nuevas fórmulas. Carga diferida al abrir, aviso de lecturas no conciliadas y actualización de ambas consultas. Validaciones y límites en el [registro de entrega local](iterations/2026-10-statistics-design.md#iteración-9--primer-gráfico-mensual-de-gastos-local).
+Base documental `3370c45`; entrega en `1665851`, `32bc12e` y `ab7e321`, integrada y publicada por el propietario. Próxima entrega autorizada el 24/10/2026: Estado de cobranzas, barra de aplicado/pendiente conocidos con porcentaje sobre el importe a cobrar conocido; sin base positiva, «No calculable». Créditos, cobros de cuentas indefinidas y cobertura separados de la pila. Se aprueba extensión mínima del resumen backend, implementación y pruebas locales en rama propia después de este commit documental; todavía no implementado en este corte. Sigue Inscripciones por actividad con alcance independiente; después anual e histórica según [ROADMAP](ROADMAP.md). No se autoriza conexión IA ni publicación de Cobranzas. Los registros siguientes preservan la evidencia histórica; sus pendientes quedan superados únicamente para la entrega publicada o el diseño expresamente aprobado.
 
 ## Antecedentes de cierre y validación
 

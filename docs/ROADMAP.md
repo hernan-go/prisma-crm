@@ -87,15 +87,15 @@ Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre posterior confir
 
 Estadísticas v1 implementada: contratos, motor Decimal, endpoint agregado, seis tarjetas, IPC y desglose de gastos. Según operaciones y verificaciones del propietario confirmadas el 23/10/2026, publicada en `51e247e`, build y smoke productivos aprobados, con migraciones `001–011` aplicadas y registradas. Codex no realizó una comprobación productiva independiente. Detalle y criterios: [iteración 8 — diseño de Estadísticas](iterations/2026-10-statistics-design.md).
 
-- Resumen ejecutivo económico y subtotales con cobertura publicados; siete bloques diseñados. Primer acordeón con dos tiles de Gastos y Honorarios implementados localmente con autorización posterior, pendientes de revisión del propietario; los otros seis siguen sin implementar.
-- Motor determinista reutilizable; Recharts 3.10.1 y react-is 19.3.0 incorporados para la entrega local de Gastos, con carga diferida.
+- Primera entrega de Iteración 9 publicada en `ab7e321` y validada por el propietario, confirmada el 24/10/2026: dos tiles de Gastos y Honorarios individuales e identidad global carbón/cian. [Cierre productivo](iterations/2026-10-statistics-design.md#cierre-productivo-de-la-primera-entrega-de-iteración-9--2026-10-24). Los otros seis bloques siguen sin implementar.
+- Motor determinista reutilizable; Recharts 3.10.1 y react-is 19.3.0 publicados, con carga diferida de los gráficos.
 - Continuidad principal de personas con inscripción en meses consecutivos, diferenciada de membresías y asistencia.
 - Honorarios y gastos operativos separados. El propietario confirmó pagos a facilitadores exclusivamente en su módulo; no se presume duplicación efectiva.
 - Sin ganancia neta hasta aprobar el modelo contable.
 
 Secuencia de evolución aprobada, con implementación sujeta a autorización por alcance:
 
-1. Fase actual: primera entrega mensual de Gastos autorizada e implementada localmente: dos tiles iguales: barras de todas las categorías/conceptos de gastos y anillo de honorarios contra el comprometido conocido, sin migración. Tooltip exacto y alternativa para lectores de pantalla, sin subdesplegable Ver tabla. Revisión visual/funcional del propietario pendiente antes de versionar o ampliar. El anillo de honorarios fue autorizado posteriormente dentro del primer acordeón; los otros seis bloques y cualquier gráfico adicional siguen fuera del alcance. [Registro y validaciones](iterations/2026-10-statistics-design.md#iteración-9--primer-gráfico-mensual-de-gastos-local).
+1. Fase actual: Gastos por concepto y Honorarios por facilitador cerrados en producción. Estado de cobranzas tiene [diseño aprobado](iterations/2026-10-statistics-design.md#estado-de-cobranzas--diseño-aprobado-2026-10-24) e implementación local autorizada en rama propia después del cierre documental: barra aplicado/pendiente conocidos, porcentaje sobre base conocida positiva o «No calculable», créditos/indefinidos/cobertura fuera de la pila y extensión mínima del resumen backend. La propuesta previa sin porcentaje queda reemplazada. Sigue Inscripciones por actividad, sin implementación autorizada. Completar los primarios mensuales por etapas.
 2. Fase posterior: comparaciones anuales y evolución mensual dentro del año, distinguiendo períodos ausentes, abiertos y cobertura incompleta.
 3. Fase futura: análisis histórico completo y rangos personalizados, series económicas nominales y ajustadas por IPC cuando existan datos suficientes. La consulta actual del último IPC y su fallback están implementados; persistencia y serie histórica requieren diseño específico.
 
@@ -117,13 +117,13 @@ Correcciones de importe y desglose de Estadísticas publicados con Iteración 8.
 
 ### Selección analítica acordada — seis primarios y cinco secundarios opcionales
 
-Clasificación confirmada por el propietario el 23/10/2026. Los seis primarios son el objetivo funcional; no autorizan implementarlos todos ahora. Los dos desarrollados localmente conservan su estado de revisión, sin presumir publicación.
+Clasificación confirmada por el propietario el 23/10/2026. Los seis primarios son el objetivo funcional; no autorizan implementarlos todos ahora. Gastos y Honorarios están publicados y validados por el propietario, según cierre del 24/10/2026.
 
 | Gráfico primario                | Alcance y estado                                                                                                                                        |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Gastos por concepto          | Todos los recurrentes y adicionales del período; desarrollado localmente.                                                                               |
-| 2. Honorarios por facilitador   | Dona dinámica individual con importes a pagar, pagados y pendientes; desarrollado localmente.                                                           |
-| 3. Estado de cobranzas          | A cobrar, cobrado, deuda y cobertura de cuentas; pendiente.                                                                                             |
+| 1. Gastos por concepto          | Todos los recurrentes y adicionales del período; publicado en `ab7e321`, validado por el propietario.                                                   |
+| 2. Honorarios por facilitador   | Dona dinámica individual, avance según su importe a pagar; publicado en `ab7e321`, validado por el propietario.                                         |
+| 3. Estado de cobranzas          | Diseño aprobado el 24/10/2026 e implementación local autorizada: aplicado/pendiente conocidos y porcentaje; referencias y cobertura separadas.          |
 | 4. Inscripciones por actividad  | Personas inscriptas en cada taller y mayor/menor demanda registrada; pendiente, sin inferir asistencia.                                                 |
 | 5. Continuidad de participantes | Permanencia, nuevas inscripciones y personas sin reinscripción entre períodos; futuro, sin equiparar ausencia de reinscripción con abandono confirmado. |
 | 6. Evolución económica          | Tendencias mensuales/anuales de ingresos, gastos y honorarios; futuro, con histórico suficiente y ejes económicos explícitos.                           |
@@ -140,11 +140,11 @@ Mantener una sección atractiva, clara y compacta. La futura IA podrá consultar
 
 ## Evolución funcional — estrategia empresarial y asesor IA
 
-Orden de prioridad y dependencias registrado el 23/10/2026. Complementa las prioridades existentes de autenticación e informes; no las sustituye ni autoriza implementación. Existente: resumen mensual v1, IPC de referencia y desglose publicados; Gastos y Honorarios gráficos desarrollados localmente. Aprobado conceptualmente: D022/D023. Las capacidades siguientes continúan pendientes de diseño y autorización por alcance.
+Orden de prioridad y dependencias registrado el 23/10/2026; estado de entrega actualizado el 24/10/2026. Complementa las prioridades existentes de autenticación e informes; no las sustituye ni autoriza implementación. Existente: resumen mensual v1, IPC de referencia, desglose y gráficos de Gastos y Honorarios publicados. Aprobado conceptualmente: D022/D023. Las capacidades siguientes continúan pendientes de diseño y autorización por alcance.
 
 | Orden | Capacidad futura                                                 | Dependencias y límites                                                                                                                                                                                                                        |
 | ----- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Finalización de Estadísticas mensuales                           | Revisar la entrega local y completar los primarios mensuales por etapas; preservar cobertura, precisión y selección analítica anterior.                                                                                                       |
+| 1     | Finalización de Estadísticas mensuales                           | Diseñar y aprobar Cobranzas; luego Inscripciones por actividad. Completar los primarios por etapas, preservando cobertura y precisión.                                                                                                        |
 | 2     | Tarifas, planes y paquetes versionados                           | Definir vigencias, prestaciones incluidas e historial, sin sobrescribir acuerdos anteriores ni atribuir todo un paquete a cada taller.                                                                                                        |
 | 3     | Promociones y descuentos contratados                             | Dependen de tarifas/planes versionados; definir condiciones, vigencia y contratación histórica.                                                                                                                                               |
 | 4     | Eventos especiales                                               | Modelar ingresos, costos, entradas, asistentes y resultados; distinguirlos de actividades periódicas, sin inferir asistencia desde inscripciones.                                                                                             |
@@ -166,4 +166,4 @@ Postergado deliberadamente hasta estabilizar los modelos financieros y Estadíst
 
 La secuencia temporal está definida en Prioridad 5. La vista mensual seguirá siendo la principal; las vistas anual e histórica deberán respetar períodos existentes, cobertura y suficiencia de series IPC. Resultados económicos y rentabilidad solo se incorporarán después de completar y aprobar las reglas contables y las limitaciones de honorarios de D021.
 
-Recharts se evaluará en una etapa posterior. Queda pendiente decidir entre un desplegable «Evolución histórica» o su integración en la categoría de evolución económica. Es exclusivamente un pendiente: no hay consultas históricas, filtros anuales, gráficos ni cambios DB implementados para esta ampliación.
+Recharts ya está incorporado; su utilización para series anuales/históricas requiere diseño específico. Queda pendiente decidir entre un desplegable «Evolución histórica» o su integración en la categoría de evolución económica. Es exclusivamente un pendiente: no hay consultas históricas, filtros anuales, gráficos ni cambios DB implementados para esta ampliación.
