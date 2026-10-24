@@ -4,6 +4,7 @@
 }
 /* Brand and neutral surfaces. Semantic status/error/debt/warning colors remain separate. */
 :root {
+  scrollbar-gutter: stable;
   --disabled-opacity: 0.45;
   --color-warm: #ecc682;
   --color-violet: #6452ce;

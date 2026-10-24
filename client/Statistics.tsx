@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Wallet, Receipt, Coins, CircleDollarSign, Clock3, TrendingUp, Info } from 'lucide-react';
-import { lazy, Suspense, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
 import { PageHeading, Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
 import {
-  statisticsSummarySchema,
   statisticsMoney,
   type StatisticMetric,
   type StatisticsSummary,
@@ -19,10 +18,13 @@ import {
 } from '../shared/inflation';
 import './statistics.css';
 import { expenseQueryOptions } from './statistics-expenses';
+import { statisticsSummaryQueryOptions } from './statistics-collections';
+import { StatisticsAccordion } from './StatisticsAccordion';
 
 const StatisticsExpenseChart = lazy(() => import('./StatisticsExpenseChart'));
+const StatisticsCollectionsChart = lazy(() => import('./StatisticsCollectionsChart'));
 
-export const statisticsKey = (period: number) => ['statistics-summary', period] as const;
+export { statisticsKey } from './statistics-collections';
 export const inflationKey = ['statistics-inflation'] as const;
 export { statisticsExpenseKey } from './statistics-expenses';
 
@@ -120,18 +122,24 @@ function Amount({ metric, label }: { metric: StatisticMetric; label?: string }) 
       <p className="statistics-value">
         {metric.coverage === 'undefined' ? 'Sin definir' : statisticsMoney(metric.value)}
       </p>
-      <p
-        className={`statistics-coverage ${metric.coverage === 'partial' || metric.coverage === 'undefined' ? 'statistics-warning' : ''}`}
-      >
-        {label && `${label} · `}
-        {metric.coverage === 'empty'
-          ? 'Sin registros'
-          : metric.coverage === 'partial'
-            ? 'Subtotal conocido'
-            : metric.coverage === 'undefined'
-              ? 'Ningún importe definido'
-              : 'Total registrado'}
-      </p>
+      {(label || metric.coverage !== 'complete') && (
+        <p
+          className={`statistics-coverage ${metric.coverage === 'partial' || metric.coverage === 'undefined' ? 'statistics-warning' : ''}`}
+        >
+          {[
+            label,
+            metric.coverage === 'empty'
+              ? 'Sin registros'
+              : metric.coverage === 'partial'
+                ? 'Total parcial'
+                : metric.coverage === 'undefined'
+                  ? 'Faltan importes'
+                  : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
     </>
   );
 }
@@ -139,20 +147,23 @@ function Coverage({ metric, unit }: { metric: StatisticMetric; unit: string }) {
   return (
     <>
       <p>
-        {metric.defined} de {metric.universe} {unit} con importe definido.
+        {metric.defined} de {metric.universe} {unit} con importe registrado.
       </p>
-      {metric.missing > 0 && <p>{metric.missing} sin cuenta.</p>}
+      {metric.missing > 0 && <p>{metric.missing} todavía sin registro de importe.</p>}
       {metric.undefined > 0 && (
         <p>
           {metric.undefined}{' '}
           {metric.undefined === 1
-            ? 'cuenta con importe sin definir'
-            : 'cuentas con importe sin definir'}
+            ? 'cuenta con importe sin registrar'
+            : 'cuentas con importe sin registrar'}
           .
         </p>
       )}
       {(metric.coverage === 'partial' || metric.coverage === 'undefined') && (
-        <p>No se estima el importe faltante.</p>
+        <p>
+          El total es parcial: incluye únicamente los importes registrados, sin estimar los
+          faltantes.
+        </p>
       )}
     </>
   );
@@ -260,6 +271,16 @@ export function InflationTile({
           </p>
           {value && (
             <>
+              <dl className="statistics-breakdown">
+                <div>
+                  <dt>Acumulado anual</dt>
+                  <dd>{inflationRate(value.year_to_date)}</dd>
+                </div>
+                <div>
+                  <dt>Interanual</dt>
+                  <dd>{inflationRate(value.year_over_year)}</dd>
+                </div>
+              </dl>
               <p>Referencia: {inflationMonth(value.reference_period)}.</p>
               <p>Publicado: {value.published_at.split('-').reverse().join('/')}.</p>
               <p>Verificado: {value.verified_at.split('-').reverse().join('/')}.</p>
@@ -293,16 +314,6 @@ export function InflationTile({
         <>
           <p className="statistics-value">{inflationRate(value.monthly)}</p>
           <p className="statistics-coverage">Mensual · {inflationMonth(value.reference_period)}</p>
-          <dl className="statistics-breakdown">
-            <div>
-              <dt>Acumulado anual</dt>
-              <dd>{inflationRate(value.year_to_date)}</dd>
-            </div>
-            <div>
-              <dt>Interanual</dt>
-              <dd>{inflationRate(value.year_over_year)}</dd>
-            </div>
-          </dl>
           {(data.status === 'fallback' || error) && (
             <p className="statistics-warning statistics-notice">
               Último verificado · sin actualización confirmada
@@ -341,20 +352,23 @@ export function ExecutiveSummary({
       )}
       <div className="statistics-grid">
         <Card
-          title="Importe a cobrar"
+          title="Total a cobrar"
           icon={<CircleDollarSign size={18} />}
           tone="income"
           info={
             <>
-              <p>Importes definidos en las cuentas mensuales. Cero es un importe definido.</p>
-              <Coverage metric={m.due} unit="miembros" />
+              <p>
+                Total de los importes a cobrar registrados en las cuentas del período. Cero es un
+                importe registrado; los importes faltantes no se suponen iguales a cero.
+              </p>
+              <Coverage metric={m.due} unit="personas" />
             </>
           }
         >
           <Amount metric={m.due} />
         </Card>
         <Card
-          title="Cobrado del período"
+          title="Cobrado"
           icon={<Wallet size={18} />}
           tone="collected"
           info={
@@ -373,30 +387,27 @@ export function ExecutiveSummary({
           <Amount metric={m.collected} />
         </Card>
         <Card
-          title="Deuda pendiente"
+          title="Falta cobrar"
           icon={<Clock3 size={18} />}
           tone="debt"
           info={
             <>
               <p>
-                Saldos deudores individuales conocidos. Los créditos no compensan deudas de otras
-                personas.
+                Importes que faltan cobrar en las cuentas con importe registrado. Los saldos a favor
+                no compensan deudas de otras personas.
               </p>
-              <Coverage metric={m.debt} unit="miembros" />
+              <Coverage metric={m.debt} unit="personas" />
+              <p>
+                Saldos a favor:{' '}
+                {m.credit.coverage === 'undefined'
+                  ? 'Sin definir'
+                  : statisticsMoney(m.credit.value)}
+                .
+              </p>
             </>
           }
         >
           <Amount metric={m.debt} />
-          <dl className="statistics-breakdown">
-            <div>
-              <dt>Créditos conocidos</dt>
-              <dd>
-                {m.credit.coverage === 'undefined'
-                  ? 'Sin definir'
-                  : statisticsMoney(m.credit.value)}
-              </dd>
-            </div>
-          </dl>
         </Card>
         <Card
           title="Honorarios"
@@ -409,7 +420,21 @@ export function ExecutiveSummary({
                 por horarios ni inscripciones. Pagos imputados al período económico, aunque su fecha
                 sea de otro mes.
               </p>
-              <Coverage metric={m.fees_committed} unit="compromisos" />
+              <dl className="statistics-breakdown">
+                <div>
+                  <dt>Pagado</dt>
+                  <dd>{statisticsMoney(m.fees_paid.value)}</dd>
+                </div>
+                <div>
+                  <dt>Falta pagar · importes registrados</dt>
+                  <dd>
+                    {m.fees_pending.coverage === 'undefined'
+                      ? 'Sin definir'
+                      : statisticsMoney(m.fees_pending.value)}
+                  </dd>
+                </div>
+              </dl>
+              <Coverage metric={m.fees_committed} unit="acuerdos de honorarios" />
               {data.fees_overpaid.count > 0 && (
                 <p>
                   {data.fees_overpaid.count}{' '}
@@ -424,20 +449,6 @@ export function ExecutiveSummary({
           }
         >
           <Amount metric={m.fees_committed} label="A pagar" />
-          <dl className="statistics-breakdown">
-            <div>
-              <dt>Pagado</dt>
-              <dd>{statisticsMoney(m.fees_paid.value)}</dd>
-            </div>
-            <div>
-              <dt>Pendiente conocido</dt>
-              <dd>
-                {m.fees_pending.coverage === 'undefined'
-                  ? 'Sin definir'
-                  : statisticsMoney(m.fees_pending.value)}
-              </dd>
-            </div>
-          </dl>
           {data.fees_overpaid.count > 0 && (
             <p className="statistics-warning statistics-notice">
               Pagos superiores al compromiso · ver información
@@ -483,20 +494,12 @@ export function ExecutiveSummary({
 }
 export function Statistics() {
   const { period, periods } = usePeriod();
-  const [openBlock, setOpenBlock] = useState<'expenses' | null>(null);
-  const panelId = useId();
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [expensesOpen, setExpensesOpen] = useState(false);
   const selected = periods.find((p) => p.id === period);
   const summary = useQuery({
-    queryKey: statisticsKey(period),
+    ...statisticsSummaryQueryOptions(period),
     enabled: Boolean(period),
-    queryFn: async () => {
-      const result = statisticsSummarySchema.parse(
-        await api(`/statistics/summary?period_id=${period}`),
-      );
-      if (result.period.id !== period)
-        throw new Error('La respuesta no corresponde al período seleccionado.');
-      return result;
-    },
   });
   const inflation = useQuery({
     queryKey: inflationKey,
@@ -538,37 +541,34 @@ export function Statistics() {
             inflationLoading={inflation.isPending}
           />
           <section className="statistics-analysis" aria-label="Análisis del período">
-            <h2 className="expense-accordion-heading">
-              <button
-                type="button"
-                aria-expanded={openBlock === 'expenses'}
-                aria-controls={panelId}
-                onClick={() => setOpenBlock(openBlock === 'expenses' ? null : 'expenses')}
-              >
-                <span className="expense-accordion-icon">
-                  <Receipt size={21} aria-hidden="true" />
-                </span>
-                <span>
-                  <span className="expense-accordion-title">Gastos operativos y honorarios</span>
-                </span>
-                <span className="expense-accordion-toggle" aria-hidden="true">
-                  {openBlock === 'expenses' ? '−' : '+'}
-                </span>
-              </button>
-            </h2>
-            <div id={panelId} hidden={openBlock !== 'expenses'}>
-              {openBlock === 'expenses' && (
+            <StatisticsAccordion
+              title="Ingresos y cobranzas"
+              icon={<Wallet size={21} aria-hidden="true" />}
+              open={collectionsOpen}
+              onToggle={() => setCollectionsOpen((value) => !value)}
+            >
+              <div className="expense-analysis-content">
                 <Suspense fallback={<Loading />}>
-                  <StatisticsExpenseChart
-                    key={period}
-                    period={period}
-                    metric={data.metrics.expenses}
-                    summary={data}
-                    refreshSummary={() => void summary.refetch()}
-                  />
+                  <StatisticsCollectionsChart key={period} summary={data} />
                 </Suspense>
-              )}
-            </div>
+              </div>
+            </StatisticsAccordion>
+            <StatisticsAccordion
+              title="Gastos operativos y honorarios"
+              icon={<Receipt size={21} aria-hidden="true" />}
+              open={expensesOpen}
+              onToggle={() => setExpensesOpen((value) => !value)}
+            >
+              <Suspense fallback={<Loading />}>
+                <StatisticsExpenseChart
+                  key={period}
+                  period={period}
+                  metric={data.metrics.expenses}
+                  summary={data}
+                  refreshSummary={() => void summary.refetch()}
+                />
+              </Suspense>
+            </StatisticsAccordion>
           </section>
         </>
       ) : (

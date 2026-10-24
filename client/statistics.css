@@ -23,10 +23,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
+  grid-auto-rows: 1fr;
 }
 .statistics-card {
   min-width: 0;
-  padding: 18px;
+  padding: 12px 24px;
   border: 1px solid var(--border-accent);
   border-radius: 12px;
   background: var(--surface-accent);
@@ -34,10 +35,10 @@
 }
 .statistics-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
 .statistics-card h2 {
   display: flex;
@@ -47,12 +48,19 @@
   font-size: 0.92rem;
   line-height: 1.4;
   font-weight: 600;
-  min-height: 40px;
+  min-height: 0;
 }
 .statistics-card h2 > span {
-  color: var(--statistics-accent);
+  color: #71e1e8;
   display: flex;
   flex-shrink: 0;
+}
+.statistics-card .statistics-info > button {
+  color: #71e1e8;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
 }
 .statistics-card .statistics-value {
   font-size: clamp(1.25rem, 2cqw, 1.8rem);
@@ -111,6 +119,11 @@
 .statistics-analysis {
   width: 100%;
   margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.statistics-accordion {
   border: 1px solid #ff99cc22;
   border-radius: 10px;
   background: #ff99cc08;
@@ -120,7 +133,8 @@
 }
 .expense-accordion-heading > button {
   width: 100%;
-  padding: 20px 22px;
+  min-height: 58px;
+  padding: 7px 22px;
   display: flex;
   justify-content: flex-start;
   text-align: left;
@@ -153,6 +167,18 @@
   font-size: 1.9rem;
   font-weight: 300;
   color: #f8e3ef;
+  line-height: 1;
+}
+.statistics-accordion-panel {
+  height: 0;
+  overflow: hidden;
+}
+.statistics-accordion-inner {
+  min-height: 0;
+  display: flow-root;
+}
+.statistics-accordion-panel[data-open='true'][data-transitioning='false'] {
+  overflow: visible;
 }
 .expense-analysis-content {
   padding: 14px;
@@ -341,7 +367,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .expense-accordion-heading > button {
-    padding: 17px 14px;
+    padding: 7px 14px;
     gap: 10px;
   }
   .expense-accordion-title {
@@ -368,6 +394,98 @@
 .statistics-info {
   position: relative;
   flex-shrink: 0;
+}
+
+/* Collections stays within the approved chart identity; global surfaces are unchanged. */
+.expense-analysis-tile.collections-tile {
+  padding: 12px 16px;
+}
+.collections-tile .expense-chart-heading {
+  margin-bottom: 4px;
+}
+.collections-canvas {
+  height: 88px;
+  min-width: 0;
+}
+.collections-canvas .recharts-surface:focus-visible {
+  outline: 2px solid #71e1e8;
+  outline-offset: -3px;
+  border-radius: 5px;
+}
+.collections-percentage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  margin: 6px 0 2px;
+}
+.collections-percentage strong {
+  color: var(--chart-cyan);
+  font-size: clamp(1.7rem, 4cqw, 2.7rem);
+  font-variant-numeric: tabular-nums;
+}
+.collections-percentage span {
+  color: var(--chart-muted);
+}
+.collections-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 2px 0 0;
+}
+.collections-values[data-extra-count='1'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.collections-values[data-extra-count='2'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.collections-values > div {
+  min-width: 0;
+}
+.collections-values dt {
+  font-size: 0.85rem;
+  color: var(--chart-muted);
+  overflow-wrap: anywhere;
+}
+.collections-values dd {
+  margin: 2px 0 0;
+  color: var(--chart-text);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.collections-values dt i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 2px;
+}
+.collections-applied {
+  background: #71e1e8;
+}
+.collections-pending {
+  background: #ecc682;
+}
+.collections-coverage {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--chart-muted);
+  overflow-wrap: anywhere;
+}
+@container (max-width: 600px) {
+  .collections-values,
+  .collections-values[data-extra-count] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .collections-values > div {
+    grid-column: span 2;
+  }
+  .collections-values > .collections-reference {
+    grid-column: span 3;
+  }
+  .collections-values[data-extra-count='1'] > .collections-reference {
+    grid-column: 1 / -1;
+  }
 }
 .statistics-info > button {
   width: 30px;
@@ -473,7 +591,7 @@
     gap: 12px;
   }
   .statistics-card {
-    padding: 16px;
+    padding: 12px 22px;
   }
   .statistics-card .statistics-value {
     font-size: clamp(1.2rem, 1.55cqw, 1.65rem);
@@ -515,6 +633,13 @@
     width: 44px;
     height: 44px;
     margin: -7px -7px 0 0;
+  }
+  .statistics-card .statistics-info > button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -8px -8px -8px 0;
   }
 }
 @container (max-width: 440px) {

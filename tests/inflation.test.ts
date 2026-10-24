@@ -120,7 +120,7 @@ it('usa solamente URLs oficiales fijas, timeout y sin redirecciones', async () =
   for (const [, options] of fetch.mock.calls)
     expect(options).toMatchObject({ redirect: 'error', signal: expect.any(AbortSignal) });
 });
-it('tile muestra tres tasas y referencia; las explicaciones quedan tras Información', () => {
+it('tile mantiene tasa mensual, referencia y límite de actualización; detalles quedan tras Información', () => {
   const html = renderToStaticMarkup(
     createElement(InflationTile, {
       data: { status: 'fallback', origin: 'bundled_verified', snapshot: verifiedInflation },
@@ -128,8 +128,6 @@ it('tile muestra tres tasas y referencia; las explicaciones quedan tras Informac
   );
   for (const text of [
     '1,9 %',
-    '23,6 %',
-    '33,4 %',
     'septiembre de 2026',
     'Información de Inflación',
     'Último verificado',
@@ -137,4 +135,7 @@ it('tile muestra tres tasas y referencia; las explicaciones quedan tras Informac
     expect(html).toContain(text);
   expect(html).not.toContain('Información pendiente');
   expect(html).not.toContain('El dato más reciente puede');
+  expect(html).not.toContain('Acumulado anual');
+  expect(html).not.toContain('Interanual');
+  expect(html).not.toContain('statistics-breakdown');
 });

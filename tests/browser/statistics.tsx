@@ -7,6 +7,7 @@ import { calculateSummary } from '../../server/statistics/engine';
 import '../../client/styles.css';
 import type { StatisticsExpenseBreakdown } from '../../shared/statistics';
 import { feesFixture } from './statistics-fees-fixtures';
+import { collectionsFixture } from './statistics-collections-fixtures';
 
 const periods = [
   { id: 1, year: 2026, month: 10, status: 'open' as const },
@@ -14,12 +15,15 @@ const periods = [
 ];
 const scenario = new URLSearchParams(location.search).get('expenses');
 const feesScenario = new URLSearchParams(location.search).get('fees');
-if (scenario === 'reduced') {
+const collectionsScenario = new URLSearchParams(location.search).get('collections');
+// Fixture-only emulation: validate both motion modes independently of the host OS.
+const motionScenario = new URLSearchParams(location.search).get('motion');
+if (scenario === 'reduced' || motionScenario === 'normal' || motionScenario === 'reduced') {
   const browserMatchMedia = window.matchMedia.bind(window);
   window.matchMedia = (query) =>
     query === '(prefers-reduced-motion: reduce)'
       ? {
-          matches: true,
+          matches: motionScenario !== 'normal',
           media: query,
           onchange: null,
           addEventListener: () => {},
@@ -144,14 +148,20 @@ window.fetch = async (input, init) => {
     });
   if (url.pathname === '/api/statistics/summary') {
     const period = periods.find((p) => p.id === Number(url.searchParams.get('period_id')))!;
+    if (collectionsScenario === 'slow')
+      await new Promise((resolve) => setTimeout(resolve, period.id === 1 ? 2500 : 50));
+    if (collectionsScenario === 'error')
+      return Response.json({ message: 'Cobranzas no disponibles (prueba)' }, { status: 503 });
     const summary = calculateSummary(
       {
         period,
-        members: [
-          { account_id: 1, amount_due: '1234567.89', paid: '900000.00', payment_count: 12 },
-          { account_id: 2, amount_due: '100.00', paid: '150.00', payment_count: 1 },
-          { account_id: null, amount_due: null, paid: '0.00', payment_count: 0 },
-        ],
+        members: collectionsScenario
+          ? collectionsFixture(collectionsScenario, period.id)
+          : [
+              { account_id: 1, amount_due: '1234567.89', paid: '900000.00', payment_count: 12 },
+              { account_id: 2, amount_due: '100.00', paid: '150.00', payment_count: 1 },
+              { account_id: null, amount_due: null, paid: '0.00', payment_count: 0 },
+            ],
         fees: feesFixture(period.id, feesScenario).balances,
         expenses:
           scenario === 'mismatch'
@@ -174,6 +184,8 @@ window.fetch = async (input, init) => {
       '2026-10-22T15:00:00.000Z',
     );
     if (feesScenario === 'mismatch') summary.metrics.fees_paid.value = '0.01';
+    if (collectionsScenario === 'mismatch') summary.collections!.applied_known = '0.01';
+    if (collectionsScenario === 'legacy') delete summary.collections;
     return Response.json(summary);
   }
   throw Error(`Unexpected QA request: ${url.pathname}`);

@@ -278,7 +278,7 @@ it('muestra carga, error, sin período y vacío sin convertir error en cero', ()
   expect(error).toContain('Consulta fallida');
   expect(error).not.toContain('Total registrado');
 });
-it('muestra cobertura, créditos, IPC pendiente y cerrado; oculta caché de otro período', () => {
+it('muestra límite de cobertura y controles de detalle sin bloques secundarios; oculta caché de otro período', () => {
   const data = calculateSummary(
     input({
       period: { ...period, status: 'closed' },
@@ -288,14 +288,18 @@ it('muestra cobertura, créditos, IPC pendiente y cerrado; oculta caché de otro
   );
   const html = renderPage({ data });
   for (const label of [
-    'Subtotal conocido',
-    'Créditos conocidos',
+    'Total parcial',
+    'Información de Falta cobrar',
+    'Información de Total a cobrar',
+    'Información de Honorarios',
     '$ 10,00',
     'Información de Inflación',
     'Período cerrado',
     'octubre 2026',
   ])
     expect(html).toContain(label);
+  expect(html).not.toContain('statistics-breakdown');
+  expect(html).not.toContain('Créditos conocidos');
   expect(renderPage({ selected: 5, data })).not.toContain('$ 10,00');
   const renderClient = new QueryClient();
   const undefinedHtml = renderToStaticMarkup(

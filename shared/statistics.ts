@@ -36,6 +36,17 @@ export const statisticsSummarySchema = z.object({
     expenses: metricSchema,
   }),
   fees_overpaid: z.object({ count, excess: exactAmount }),
+  // Additive v1 extension. Older summaries remain readable, never treated as zero.
+  collections: z
+    .object({
+      applied_known: exactAmount,
+      collected_undefined: exactAmount,
+      covered_percentage: z
+        .string()
+        .regex(/^(?:100\.00|(?:\d|[1-9]\d)\.\d{2})$/)
+        .nullable(),
+    })
+    .optional(),
   inflation: z.object({
     status: z.literal('pending_integration'),
     value: z.null(),

@@ -76,6 +76,29 @@ export function calculateSummary(input: SummaryInput, asOf: string) {
     };
   };
   const members = balances(input.members, ['period_memberships', 'monthly_accounts', 'payments']);
+  const sum = (values: string[]) => values.reduce((n, v) => n.plus(v), new Money(0));
+  const knownMembers = input.members.filter((r) => r.account_id !== null && r.amount_due !== null);
+  const applied = sum(knownMembers.map((r) => Money.min(r.paid, r.amount_due!).toFixed(2)));
+  const undefinedPaid = sum(
+    input.members.filter((r) => r.account_id !== null && r.amount_due === null).map((r) => r.paid),
+  );
+  const due = new Money(members.due.value);
+  // Same membership universe, account period and snapshot as the existing metrics.
+  // Refuse inconsistent source data instead of clipping percentages or netting people.
+  if (
+    applied.isNegative() ||
+    applied.gt(due) ||
+    !applied.plus(members.pending.value).eq(due) ||
+    !applied.plus(members.excess.value).plus(undefinedPaid).eq(members.paid.value)
+  )
+    throw new Error('No se pudo conciliar el estado de cobranzas.');
+  const collections = {
+    applied_known: applied.toFixed(2),
+    collected_undefined: undefinedPaid.toFixed(2),
+    covered_percentage: due.gt(0)
+      ? applied.div(due).times(100).toFixed(2, Money.ROUND_HALF_UP)
+      : null,
+  };
   const fees = balances(input.fees, [
     'period_activities',
     'activity_schedules',
@@ -109,6 +132,7 @@ export function calculateSummary(input: SummaryInput, asOf: string) {
       ),
     },
     fees_overpaid: { count: fees.overpaid, excess: fees.excess.value },
+    collections,
     inflation: {
       status: 'pending_integration',
       value: null,
