@@ -2,9 +2,11 @@
 
 **Corte:** 2026-10-24
 
-## Estado vigente — Primera entrega de Iteración 9 cerrada en producción
+## Estado vigente — Segunda entrega de Iteración 9 cerrada en producción
 
-Según las operaciones y verificaciones del propietario confirmadas el 24/10/2026, `ab7e321` está publicado desde `main`, con push a GitHub exitoso, build SiteGround `1792806441-rucfav`, `build_script_exit_code = 0` y verificación funcional/visual productiva satisfactoria. Incluye gráficos mensuales de Gastos por concepto y Honorarios por facilitador, Recharts e identidad global carbón/cian con tarjetas uniformes y gráficos oscuros translúcidos. Sin nuevas migraciones SQL. Codex comprobó únicamente el estado local: `main`, `origin/main` local y rama de desarrollo en `ab7e321`, árbol inicialmente limpio; no consultó GitHub, hosting ni producción. Detalle de cierre y diseño siguiente en el [registro de Iteración 9](iterations/2026-10-statistics-design.md#cierre-productivo-de-la-primera-entrega-de-iteración-9--2026-10-24).
+Segunda entrega publicada en `b4b8408` el 24/10/2026. Codex realizó, con autorizaciones expresas y separadas, la integración local por fast-forward y el push de `c3eb268` y `b4b8408`; verificó mediante `git ls-remote` que GitHub `main` quedó en `b4b8408`, sin commits adicionales y con árbol local limpio. El propietario confirmó build SiteGround `1792822475-rkhsme`, Exit Code `0` y revisión personal satisfactoria de Estadísticas en producción para octubre y noviembre de 2026: seis KPI, gráficos de Cobranzas, Gastos y Honorarios y cambios de período correctos, sin problemas detectados en las capturas revisadas. Implementación visual y funcional aprobada. Codex no verificó independientemente el build ni la aplicación productiva. Sin nuevas migraciones SQL. [Registro de cierre](iterations/2026-10-statistics-design.md#cierre-productivo-de-la-segunda-entrega-de-iteración-9--2026-10-24). La Iteración 9 continúa abierta.
+
+PRISMA es el emprendimiento cliente de esta instalación, no el nombre genérico del sistema de gestión.
 
 ## Antecedente — Iteración 8 cerrada en producción
 
@@ -14,9 +16,9 @@ Codex comprobó independientemente en la inspección local de Iteración 9: work
 
 ## Iteración 9 — Alcance entregado y continuidad
 
-D020–D023 conservan la arquitectura analítica compartida, límites económicos y diseño futuro de conocimiento empresarial/asesor IA. La primera entrega está publicada: acordeón «Gastos operativos y honorarios» con todos los conceptos de gastos con movimientos, orden exacto, tooltip y alternativa accesible; dona individual dinámica por facilitador y conciliación de cuentas con resumen. Conserva los seis KPI, el desglose y dos tiles de igual ancho en desktop, apilados en mobile. Recharts 3.10.1 y react-is 19.3.0 están incorporados. Los otros seis bloques siguen sin implementar.
+D020–D023 conservan la arquitectura analítica compartida, límites económicos y diseño futuro de conocimiento empresarial/asesor IA. Gastos por concepto y Honorarios por facilitador, publicados en la primera entrega `ab7e321`, se conservan en la segunda entrega `b4b8408`, que incorpora Cobranzas y refinamientos de KPI y acordeones. Dos acordeones independientes, «Ingresos y cobranzas» y «Gastos operativos y honorarios», mantienen su apertura al cambiar de mes. Se conservan los seis KPI, el desglose, tooltips y alternativas tabulares accesibles, responsive y movimiento reducido. Recharts 3.10.1 y react-is 19.3.0 están incorporados; los demás bloques siguen pendientes.
 
-Base documental `3370c45`; entrega en `1665851`, `32bc12e` y `ab7e321`, integrada y publicada por el propietario. Próxima entrega autorizada el 24/10/2026: Estado de cobranzas, barra de aplicado/pendiente conocidos con porcentaje sobre el importe a cobrar conocido; sin base positiva, «No calculable». Créditos, cobros de cuentas indefinidas y cobertura separados de la pila. Se aprueba extensión mínima del resumen backend, implementación y pruebas locales en rama propia después de este commit documental; todavía no implementado en este corte. Sigue Inscripciones por actividad con alcance independiente; después anual e histórica según [ROADMAP](ROADMAP.md). No se autoriza conexión IA ni publicación de Cobranzas. Los registros siguientes preservan la evidencia histórica; sus pendientes quedan superados únicamente para la entrega publicada o el diseño expresamente aprobado.
+Base documental `3370c45`; primera entrega en `1665851`, `32bc12e` y `ab7e321`, integrada y publicada por el propietario. Segunda entrega en `b4b8408`, precedida por el cierre documental `c3eb268`: Cobranzas representa aplicado/pendiente de obligaciones definidas y su porcentaje; sin base positiva, «No calculable». Créditos, cobros de cuentas indefinidas y cobertura se informan separados de la pila. La extensión compatible del resumen calcula agregados exactos en backend con Decimal, sin compensar personas ni mezclar períodos. Quedan pendientes Skeleton Loaders con Shimmer (evaluación técnica previa de una librería React especializada, preferentemente `react-loading-skeleton`) e Inscripciones por actividad, con alcances independientes; después anual e histórica según [ROADMAP](ROADMAP.md). No se implementó ni autorizó conexión IA. Los registros siguientes preservan la evidencia histórica; las menciones a revisión, commit o publicación pendientes quedan superadas únicamente para las entregas cerradas.
 
 ## Antecedentes de cierre y validación
 
@@ -78,7 +80,7 @@ Estadísticas anuales e históricas queda registrada como pendiente en Roadmap y
 
 - Web pública: `https://prismacomunidad.com.ar`
 - CRM: `https://crm.prismacomunidad.com.ar`
-- Migraciones aplicadas y registradas: `001.sql` → `011.sql`, según confirmación del propietario del 23/10/2026. Publicación vigente: `51e247e`; los puntos siguientes conservan la evidencia histórica de Cobros.
+- Migraciones aplicadas y registradas: `001.sql` → `011.sql`, según confirmación del propietario del 23/10/2026. Publicación vigente: `b4b8408`, build `1792822475-rkhsme`, validado por el propietario el 24/10/2026; sin nuevas migraciones en Iteración 9. Los puntos siguientes conservan la evidencia histórica de Cobros.
 - `008.sql` aplicada en producción; membresías desplegadas y smoke test aprobado, confirmado por el usuario.
 - `009.sql` aplicada y registrada también en producción, confirmado por el usuario.
 - Deploy productivo de Cobros: `1791429132-5kurej`; build exit code `0`, smoke productivo aprobado e históricos agosto/septiembre/octubre reconciliados, según confirmación del usuario. No se repitieron verificaciones productivas desde Codex.
