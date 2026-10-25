@@ -1,6 +1,10 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-24
+**Corte:** 2026-10-25
+
+## Prioridad estratégica P0 — planificación comercial con IA
+
+Objetivo funcional de planificación comercial con IA definido y documentado; implementación pendiente. El propietario aprobó la [especificación funcional](AI_COMMERCIAL_PLANNING.md) como PRIORIDAD P0 — MÁXIMA del desarrollo futuro. D020–D023 se conservan; este registro no autoriza implementación ni conexión con IA y no incorpora know-how privado. La Iteración 9 continúa abierta.
 
 ## Estado vigente — Skeleton Loaders en Estadísticas publicados
 

@@ -1,6 +1,12 @@
 # PRISMA CRM — Roadmap
 
-**Actualizado:** 2026-10-23
+**Actualizado:** 2026-10-25
+
+## PRIORIDAD P0 — MÁXIMA: planificación comercial con IA
+
+El propietario aprobó la [especificación funcional de planificación comercial con IA](AI_COMMERCIAL_PLANNING.md) como objetivo estratégico principal del desarrollo futuro: una primera carta útil de alternativas comerciales y eventos, con precios concretos, fundamentos económicos y conversación iterativa. Alcance funcional definido y documentado; implementación pendiente.
+
+Esta prioridad reordena la planificación futura y prevalece sobre las secuencias de ejecución anteriores conservadas más abajo como antecedentes. No autoriza implementación, conexión con IA ni operaciones sobre datos. D020–D023 y sus límites de privacidad, acceso de lectura, cálculos verificables y modelos económicos por aprobar se mantienen vigentes. La especificación es la referencia funcional única; el know-how privado permanece fuera de Git y no se duplica aquí.
 
 ## Completado recientemente
 
