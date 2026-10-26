@@ -3,6 +3,7 @@ import { scrypt, randomBytes, timingSafeEqual, createHmac } from 'node:crypto';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { query, execute } from './db.js';
+import { createProxyDiagnostics } from './proxy-diagnostics.js';
 const lifetime = 8 * 60 * 60 * 1000;
 const derive = (password: string, salt: string) =>
   new Promise<Buffer>((resolve, reject) =>
@@ -44,6 +45,7 @@ export function authentication(options: AuthOptions = {}) {
   const configured = /^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(hash) && secret.length >= 64;
   const store = options.store || mysqlStore;
   const router = Router();
+  const observeProxy = createProxyDiagnostics();
   const cookieName = () =>
     process.env.NODE_ENV === 'production' ? '__Host-prisma_admin' : 'prisma_admin';
   const cookieOptions = () => ({
@@ -71,11 +73,9 @@ export function authentication(options: AuthOptions = {}) {
   };
   const guard: RequestHandler = async (req, res, next) => {
     if (!configured) {
-      res
-        .status(503)
-        .json({
-          message: 'Configurá ADMIN_PASSWORD_HASH y SESSION_SECRET para habilitar el acceso.',
-        });
+      res.status(503).json({
+        message: 'Configurá ADMIN_PASSWORD_HASH y SESSION_SECRET para habilitar el acceso.',
+      });
       return;
     }
     if (!(await valid(req))) {
@@ -84,9 +84,11 @@ export function authentication(options: AuthOptions = {}) {
     }
     next();
   };
-  router.get('/session', async (req, res) =>
-    res.json({ authenticated: await valid(req), configured }),
-  );
+  router.get('/session', async (req, res) => {
+    const authenticated = await valid(req);
+    if (authenticated) observeProxy(req);
+    res.json({ authenticated, configured });
+  });
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10,
