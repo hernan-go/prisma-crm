@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { createProxyDiagnostics } from '../server/proxy-diagnostics.js';
 import { createApp } from '../server/app.js';
 import { pool } from '../server/db.js';
+import * as diagnosticFiles from '../server/proxy-diagnostic-file.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -146,7 +147,10 @@ it('fallo del destino de logs no altera la respuesta', async () => {
 it('solo sesión administrativa válida genera diagnóstico; IA continúa deshabilitada sin consultar negocio', async () => {
   vi.stubEnv('NODE_ENV', 'production');
   vi.stubEnv('PROXY_DIAGNOSTICS', 'true');
-  const log = vi.spyOn(console, 'info').mockImplementation(() => {});
+  const log = vi.fn();
+  vi.spyOn(diagnosticFiles, 'createPrivateDiagnosticLog').mockReturnValue(
+    Object.assign(log, { flush: async () => {} }),
+  );
   const store = { get: vi.fn(async () => Date.now() + 60000), set: vi.fn(), delete: vi.fn() };
   const read = vi.fn();
   const app = createApp(

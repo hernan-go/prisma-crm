@@ -1,36 +1,83 @@
 # Iteración 9 — Preparación de publicación controlada, integración deshabilitada
 
-Procedimiento vigente actualizado el 26/10/2026. No autoriza commit, push, merge, deploy, cambios productivos de configuración ni conexión del Site. Contrato empresarial 2.0 y D024 intactos. La API ya falla cerrada sin AI_READ_TOKEN_SHA256. La única ampliación local es una observación temporal en logs privados, mediante la sesión administrativa existente y apagada por defecto, para medir el proxy sin un endpoint público nuevo.
+Procedimiento vigente actualizado el 26/10/2026: diagnóstico adaptado a archivo privado porque SiteGround no expone stdout de Node. No autoriza commit, push, merge, deploy, configuración productiva ni conexión del Site. Contrato 2.0 y D024 intactos. La API falla cerrada sin AI_READ_TOKEN_SHA256. El diagnóstico sigue usando la sesión administrativa existente, apagado por defecto y sin endpoint público nuevo.
 
 ## Estado vigente al 26/10/2026
 
-- Rama limpia al inicio, HEAD 22c0c1be64b27e9c431b534e0e7d4d2604bb433e, padre 501f5bb4301d6bdb4931e1122cde6d7c5a97c85a. Ambos se conservan. La instrumentación y este procedimiento quedan sin commit y requieren revisión antes de versionarse.
+- Rama limpia al inicio de esta adaptación, HEAD f1dc7705df1229388270fda098565665aff65bfd. Conserva 22c0c1b y 501f5bb. El diagnóstico a stdout ya fue commiteado localmente en f1dc770; su adaptación a archivo privado queda sin commit y requiere revisión.
 - Consulta remota de solo lectura: GitHub main sigue en bcf9f3f995150bf34c2db5750169a2851f21d1d9; rama de trabajo no publicada. No se hizo fetch ni se modificaron referencias locales.
 - El propietario confirmó Forzar HTTPS activo y redirección HTTP satisfactoria. Esta confirmación posterior supera el HTTP 200 observado el 25/10. No se hicieron nuevas solicitudes a producción en esta intervención. La redirección no acredita confianza en los encabezados reenviados.
 - Node.js 24, GitHub main y auto-deploy activo, según confirmación del propietario. AI_READ_* ausentes en producción, según propietario; no se accedió al panel ni se cambiaron variables. Entorno local comprobado: Node v24.21.0.
 
 ## Secuencia ejecutable mínima — aún no autorizada en producción
 
-1. **Revisión y commit posteriores:** revisar únicamente los archivos temporales descritos abajo, validaciones y diff; solicitar autorización de commit local. Actualmente el conjunto a publicar contiene los commits 501f5bb y 22c0c1b, más un futuro commit de diagnóstico/procedimiento que todavía no existe. No publicar archivos sin commit ni omitir esa revisión.
+1. **Revisión y commit posteriores:** revisar los archivos de esta adaptación, validaciones y diff; solicitar autorización de commit local. A publicar: 501f5bb, 22c0c1b, f1dc770 y un futuro commit de adaptación a archivo que todavía no existe. No publicar archivos sin commit ni omitir esa revisión.
 2. **Preflight del propietario:** comprobar rama main/auto-deploy, SHA activo y forma de reinicio en Site Tools. Mantener AI_READ_TOKEN_SHA256 ausente, NODE_ENV=production, APP_URL HTTPS, AI_READ_ALLOW_LOCAL_HTTP=false. Dejar PROXY_DIAGNOSTICS ausente/false para la primera publicación. No introducir secretos nuevos, copiar .env local ni modificar TRUST_PROXY para hacer pasar pruebas.
 3. **Aprobación explícita del despliegue:** después de revisar GitHub de nuevo, integrar por fast-forward si sigue siendo posible y el propietario lo autoriza. El propietario realiza un único push a main, que dispara deploy. Si main remoto avanzó, detener y reevaluar; no forzar, rebasear ni resetear. No se ejecutó ningún paso Git de esta secuencia.
 4. **Smoke deshabilitado:** verificar SHA/build, login y navegación administrativa habitual. Hacer solo peticiones anónimas, sin cookies, al endpoint IA: 503/not_configured y no-store, sin datos ni cookies nuevas. Una cookie administrativa no habilita IA. No ejecutar migraciones ni suites DB.
 5. **Transporte externo sin secretos:** ejecutar los comandos de la sección siguiente. HTTP debe redirigir a HTTPS sin seguirlo automáticamente; HTTPS debe validar certificado. Los 503 de IA, con o sin X-Forwarded-Proto falsificado, NO prueban la sobrescritura: la guarda de configuración corre primero.
-6. **Observación temporal opcional, con autorización de configuración no secreta:** primero verificar que el propietario puede leer stdout runtime privado. Node.js → Logs puede mostrar solo builds; no asumir que contiene stdout de la aplicación. Si el panel no expone esos logs, solicitar a SiteGround ubicación/acceso y detener esta parte; no publicar un visor HTTP de logs. Solo entonces activar PROXY_DIAGNOSTICS=true y reiniciar usando el mecanismo confirmado, sin habilitar AI_READ_*.
-7. **Pruebas del proxy desde sesión existente:** dentro de diez minutos desde crear la aplicación, ejecutar el fragmento de consola indicado abajo en el CRM HTTPS ya autenticado. Revisar únicamente registros proxy_diagnostic privados. No enviar cookies ni tokens por HTTP, no cambiar Host ni exportar el almacén de sesión del navegador.
-8. **Cierre:** desactivar PROXY_DIAGNOSTICS y reiniciar; repetir marcador y comprobar que no genera registros. IA permanece 503. Concluir qué peers/protocolo/Host se observaron y qué quedó sin demostrar. No configurar el token ni conectar MCP hasta autorización posterior.
+6. **Observación temporal opcional, con autorización de configuración no secreta:** establecer por SSH el directorio privado y verificar usuario, permisos, acceso y exclusión de raíces web según la sección siguiente. Solo entonces configurar PROXY_DIAGNOSTICS_DIR con la ruta física absoluta y PROXY_DIAGNOSTICS=true, y reiniciar usando el mecanismo confirmado. Sin ruta válida no se escribe; no hay fallback a stdout ni a otro directorio. No habilitar AI_READ_*.
+7. **Pruebas del proxy desde sesión existente:** dentro de diez minutos desde crear la aplicación, ejecutar el fragmento indicado en el CRM HTTPS autenticado. Leer el JSONL privado por SSH; no publicar su contenido completo. No enviar cookies o tokens por HTTP ni exportar el almacén del navegador.
+8. **Cierre:** desactivar PROXY_DIAGNOSTICS y reiniciar todas las instancias; comprobar ausencia de nuevas escrituras y eliminar los archivos exactos según la sección siguiente. IA permanece 503. Concluir qué se observó y qué quedó sin demostrar. No configurar el token ni conectar MCP hasta autorización posterior.
 
 ## Instrumentación temporal acotada
 
-Archivos: nuevo server/proxy-diagnostics.ts; dos puntos de integración en server/auth.ts (crear observador y llamarlo desde GET /api/auth/session únicamente después de validar sesión); plantilla .env.example con PROXY_DIAGNOSTICS=false; tests/proxy-diagnostics.test.ts. server/app.ts, server/index.ts y ai-router.ts no requieren cambios. No hay ruta nueva ni cambios en la respuesta de sesión o contrato empresarial 2.0.
+Integración existente: server/auth.ts valida sesión y llama al observador de server/proxy-diagnostics.ts. Solo se cambia el destino del registro por server/proxy-diagnostic-file.ts; se actualizan la plantilla .env.example, pruebas y procedimiento. No cambia auth.ts, app.ts, index.ts o ai-router.ts en esta adaptación. No hay rutas nuevas ni cambios de respuesta o contrato empresarial 2.0.
 
 La sesión usa su comprobación de lectura existente en admin_sessions, sin consultas adicionales o escrituras propias del diagnóstico, y sin acceso a negocio. Nunca registra Cookie, Authorization, token, hashes, consultas, cuerpo, nombre de usuario, req.ip o X-Forwarded-For. No hace login por sí misma.
 
-Solo admite marcadores públicos baseline/proto-http/proto-chain. Registra peer real del socket y puerto local, TLS real del socket, clasificación acotada de X-Forwarded-Proto y si es exactamente https, protocolo/secure interpretados por Express, trust proxy numérico, NODE_ENV limitado a production/development/test/other y booleano de Host coincidente con APP_URL. Valores arbitrarios de Host/protocolo/entorno no se imprimen. Las IP observadas son operativas y quedan exclusivamente en logs privados, nunca en la respuesta HTTP. Requiere controlar acceso y retención de esos logs.
+Solo admite marcadores públicos baseline/proto-http/proto-chain. Conserva los campos operativos ya aprobados del socket/proxy, protocolo interpretado, entorno acotado y comparación booleana de Host. Añade recorded_at UTC para distinguir lecturas. No registra la IP del cliente derivada de X-Forwarded-For, identidad de participantes ni contenido empresarial. Valores arbitrarios no se escriben. El peer es metadato operativo de infraestructura; el archivo sigue siendo privado y no garantiza anonimato si el peer resultara ser un cliente directo.
 
 Máximo 12 registros por instancia de aplicación y solo durante diez minutos desde su creación; después no registra aunque la variable siga activa. Reiniciar con la variable activa reinicia la ventana: desactivarla explícitamente al terminar. Un fallo del destino de logs no altera autenticación ni respuesta. No genera logs para clientes anónimos o marcadores ausentes/desconocidos.
 
-Retirada: quitar la variable o fijarla en false y reiniciar; no es necesario modificar código para detener la captura. Posteriormente, en un cambio autorizado, retirar el módulo, su import/creación/llamada en auth.ts, la variable de ejemplo y sus pruebas. No alterar la lógica de validación de sesión. El procedimiento y evidencias pueden conservarse como historial.
+Retirada: fijar PROXY_DIAGNOSTICS=false, reiniciar todas las instancias y esperar el cierre de las escrituras ya iniciadas antes de eliminar archivos. Después retirar también PROXY_DIAGNOSTICS_DIR. La desactivación por sí sola no borra el archivo. Una retirada posterior de código requiere autorización: módulos de diagnóstico, import/creación/llamada en auth.ts y sus pruebas, sin alterar validación de sesión.
+
+## Archivo privado: ubicación, lectura y limpieza
+
+SiteGround documenta que la aplicación puede escribir un archivo propio y leerlo por SSH: https://www.siteground.com/academy/node-js-api-hosting. Esa capacidad NO determina ruta, UID o persistencia de esta cuenta. No se accedió al hosting ni se probó allí escritura.
+
+Destino previsto: una carpeta dedicada .prisma-proxy-diagnostics dentro del área privada de la cuenta, FUERA del proyecto, builds, www, public_html, public, htdocs, wwwroot y dist. No se adopta automáticamente HOME, cwd o /tmp: el operador debe confirmar la raíz física privada y accesible al usuario Node antes de activar. Si no puede comprobar privacidad o permisos, detener el diagnóstico y mantenerlo apagado; no improvisar una ruta pública.
+
+PROXY_DIAGNOSTICS_DIR debe ser absoluta, canónica y existir previamente. En Linux se exige propietario igual al UID del proceso y permisos 0700. Padres físicos sin escritura de grupo/otros y pertenecientes a root o al usuario de Node. No se crean directorios ni se corrigen permisos automáticamente. Se rechazan symlinks/alias y la carpeta no puede estar dentro ni ser antecesora de la aplicación. Windows falla cerrado porque el módulo no acredita ACL privadas mediante modos POSIX; no es necesario activar escritura local para validar Node.js 24.
+
+Archivo fijo: proxy-diagnostics.jsonl, creado con 0600, solo regular, propietario correcto y un único enlace. Nunca seguir symlinks ni escribir hardlinks. Se serializan escrituras asíncronas, fuera del tiempo de respuesta; errores se absorben sin imprimir rutas, registros o excepciones y detienen el escritor hasta reiniciar. El límite original sigue siendo diez minutos/doce intentos por instancia. Además, un lock exclusivo y un tope de 64 KiB limitan el mismo archivo entre procesos y reinicios: al llenarse se deja de registrar, sin truncar, rotar ni crear archivos nuevos. Un lock residual tras caída detiene el registro hasta limpieza manual segura.
+
+Preparación futura por SSH, solo tras autorización. Sustituir el marcador por una ruta física real previamente comprobada, no por el directorio público. No ejecutar estas instrucciones con el marcador literal:
+
+```sh
+DIAG_DIR='/RUTA_PRIVADA_VERIFICADA/.prisma-proxy-diagnostics'
+pwd -P
+id -u
+umask 077
+mkdir -m 700 -- "$DIAG_DIR"
+realpath -- "$DIAG_DIR"
+ls -ld -- "$DIAG_DIR"
+```
+
+mkdir se usa solo para una carpeta NUEVA dedicada, sin -p ni cambios recursivos. Si ya existe, inspeccionarla; no reemplazarla. Verificar que no exista publicación HTTP/alias del directorio y que los padres no sean escribibles por otros. El UID SSH no demuestra que sea el UID de Node: si difieren, solicitar un destino privado accesible al proceso sin relajar permisos. El archivo no se creará si falla esa comprobación. No copiar valores secretos del panel.
+
+Tras configurar las dos variables de diagnóstico y reiniciar, enviar las tres peticiones autenticadas existentes. Luego consultar, sin un endpoint de descarga:
+
+```sh
+ls -l -- "$DIAG_DIR/proxy-diagnostics.jsonl"
+wc -c -- "$DIAG_DIR/proxy-diagnostics.jsonl"
+cat -- "$DIAG_DIR/proxy-diagnostics.jsonl"
+```
+
+Si el directorio aparece en Site Tools → Site → File Manager y el usuario tiene acceso privado, también puede abrirse allí. No asumir que el Gestor expone todos los directorios del usuario Node; SSH es la ruta documentada. No mover el archivo a public_html, dist/client, assets o un bucket público para poder leerlo.
+
+Eliminación: primero apagar y reiniciar TODAS las instancias. Comprobar la ruta física, archivo regular y ausencia de symlinks; eliminar únicamente los dos nombres fijos, nunca un directorio recursivamente ni comodines. El lock solo se retira cuando no queda escritor activo:
+
+```sh
+realpath -- "$DIAG_DIR"
+ls -la -- "$DIAG_DIR"
+rm -i -- "$DIAG_DIR/proxy-diagnostics.jsonl"
+rm -i -- "$DIAG_DIR/proxy-diagnostics.lock"
+```
+
+Es normal que el lock ya no exista. No se necesita eliminar la carpeta; rmdir únicamente si se verificó vacía y el propietario lo desea. Esta limpieza evita borrar otros archivos; no promete borrado forense de discos o respaldos de SiteGround. No se deja activado el diagnóstico mientras se elimina el registro, porque podría recrearlo.
+
+Persistencia: el código agrega al archivo existente y no lo borra al reiniciar; esto se prueba con filesystem simulado. No está comprobado que SiteGround conserve la misma ruta/montaje entre reinicios o despliegues. Antes de depender de ello, registrar únicamente tamaño/fecha/inodo por SSH, reiniciar con diagnóstico apagado y volver a comprobar. Hacer una comprobación equivalente en el siguiente despliegue autorizado. Un directorio fuera de builds reduce dependencia de la versión, pero no prueba persistencia. La documentación de builds confirma que cada deploy crea archivos nuevos: https://www.siteground.com/kb/delete-node-js-builds. Si desaparece, no ampliar permisos ni buscar un fallback público; revisar montaje/acceso con el proveedor.
 
 ## Pruebas exactas con el despliegue deshabilitado
 
@@ -46,7 +93,7 @@ curl.exe --silent --show-error --max-time 15 --proto =http --output NUL --header
 
 Esperado: HTTP 301/302/307/308 a HTTPS, certificado HTTPS válido y 503/not_configured en las dos peticiones IA. No seguir redirects con Authorization. Esta fase no permite comprobar 401/200 del token, que se posponen hasta autorizar credenciales; su comportamiento está cubierto localmente. El HTTPS público ya fue confirmado por el propietario, pero repetirlo después del deploy verifica regresiones.
 
-Desde herramientas de desarrollo del navegador, solo sobre https://crm.prismacomunidad.com.ar y con sesión administrativa ya válida, una vez activados los logs temporales autorizados:
+Desde herramientas de desarrollo del navegador, solo sobre https://crm.prismacomunidad.com.ar y con sesión administrativa ya válida, una vez preparado el directorio privado y activadas las dos variables de diagnóstico autorizadas:
 
 ```javascript
 for (const [probe, forwarded] of [
@@ -67,7 +114,7 @@ for (const [probe, forwarded] of [
 }
 ```
 
-El fragmento nunca lee o imprime cookies, no manipula Authorization ni muestra diagnósticos en la respuesta. Solo accede a la sesión ya existente. Esperado: tres 200 con authenticated=true y tres registros privados correlacionados por marcador. Si un navegador/proxy elimina la cabecera de prueba antes del origen, confirmar el envío en Network (sin copiar Cookie ni Authorization); una observación aislada no identifica qué salto la eliminó.
+El fragmento nunca lee o imprime cookies, no manipula Authorization ni muestra diagnósticos en la respuesta. Esperado: tres 200 con authenticated=true y tres líneas JSONL privadas correlacionadas por marcador/fecha. Un 200 no prueba que se haya podido escribir: verificar el archivo por SSH. Si no aparece, revisar ruta, UID/modos, padres, límite o lock residual, sin activar dumps ni imprimir secretos.
 
 Lectura de resultados con TRUST_PROXY=1 (no modificarlo ahora):
 
@@ -79,23 +126,23 @@ Lectura de resultados con TRUST_PROXY=1 (no modificarlo ahora):
 
 ## Qué puede y qué no puede probarse
 
-| Método                                       | Evidencia posible                                                                                                     | Límite                                                                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| HTTP/HTTPS externo sin secretos              | Certificado, redirect, 503 de IA, comportamiento HTTP frente a XFP ficticio                                           | No ve socket/Host real de Node ni demuestra aislamiento universal.                                           |
-| Sesión autenticada + stdout privado temporal | Peer/puerto real, protocolo recibido, interpretación de Express y NODE_ENV en esas peticiones                         | No identifica con certeza la marca/topología del proxy, su estabilidad futura o todos los caminos.           |
-| TCP externo a un único IP/puerto conocido    | Si un listener es alcanzable en ese destino                                                                           | Un fallo no prueba firewall global; IP pública del dominio no equivale necesariamente al servidor de origen. |
-| Configuración/proveedor                      | Aislamiento de red, peers estables o contrato de confianza, rutas alternativas, ubicación/redacción/retención de logs | No se puede concluir por una redirección o por tres peticiones exitosas.                                     |
+| Método                                     | Evidencia posible                                                                                                     | Límite                                                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| HTTP/HTTPS externo sin secretos            | Certificado, redirect, 503 de IA, comportamiento HTTP frente a XFP ficticio                                           | No ve socket/Host real de Node ni demuestra aislamiento universal.                                           |
+| Sesión autenticada + JSONL privado por SSH | Peer/puerto real, protocolo recibido, interpretación de Express y NODE_ENV en esas peticiones                         | No demuestra estabilidad futura ni persistencia del filesystem del proveedor.                                |
+| TCP externo a un único IP/puerto conocido  | Si un listener es alcanzable en ese destino                                                                           | Un fallo no prueba firewall global; IP pública del dominio no equivale necesariamente al servidor de origen. |
+| Configuración/proveedor                    | Aislamiento de red, peers estables o contrato de confianza, rutas alternativas, ubicación/redacción/retención de logs | No se puede concluir por una redirección o por tres peticiones exitosas.                                     |
 
 No hacer escaneo. Solo con IP pública de origen y puerto reales confirmados por el panel/proveedor puede ejecutarse, con autorización, Test-NetConnection -ComputerName DIRECCION_CONFIRMADA -Port PUERTO_CONFIRMADO desde una red externa. No suponer PORT=3001 ni probar rangos. Si no se conoce ese destino, el aislamiento queda pendiente de SiteGround.
 
-Authorization: no enviar secretos reales para comprobar logging. Revisar primero formato y redacción de access/error/stdout. Puede usarse una cadena ficticia y pública marcada como tal por HTTPS y buscarla localmente en los registros sin publicarlos. Su ausencia no garantiza todos los logs internos/retenciones del proveedor; esa propiedad requiere confirmación o política del hosting. La instrumentación local excluye los campos por construcción y sus pruebas verifican esa exclusión.
+Authorization: no enviar secretos reales para comprobar logging. Revisar primero formato/redacción de access/error y del archivo propio. La ausencia de una cadena ficticia no garantiza todos los logs internos/retenciones del proveedor. La instrumentación propia excluye los campos por construcción y no tiene fallback stdout/stderr; sus pruebas verifican esa exclusión.
 
 ## Rollback concreto, sujeto a autorización posterior
 
 - Mientras AI_READ_* siga ausente, no existe exposición de negocio por IA. Si solo falla el diagnóstico, PROXY_DIAGNOSTICS=false y reinicio lo desactivan; no hace falta revertir toda la API ni tocar DB.
 - Antes del push registrar SHA productivo sano, rama vinculada y procedimiento de publicación del propietario. Si falla el build, comprobar qué versión sigue activa; no asumir que el proveedor conserva automáticamente la anterior.
 - Si hay regresión administrativa, pausar auto-deploy solo con autorización del propietario y usar el mecanismo de restauración que SiteGround efectivamente ofrezca. No se presume un botón de rollback a partir de la pantalla de builds.
-- Alternativa reproducible sin reescribir historia: con autorización y main actualizado, revertir primero el futuro commit de diagnóstico y después 22c0c1b, creando nuevos commits locales de reversión; push manual del propietario una vez revisados. 501f5bb se conserva. Si hay commits posteriores relacionados o conflictos, detener y resolver antes del push. No usar reset, force push o rebase. No hay rollback SQL porque no hay migraciones ni cambios DB.
+- Alternativa reproducible sin reescribir historia: con autorización y main actualizado, revertir primero el futuro commit de adaptación a archivo, luego f1dc770 y después 22c0c1b, creando nuevos commits locales de reversión; push manual del propietario tras revisión. 501f5bb se conserva. Ante cambios posteriores o conflictos, detener y revisar. Sin reset, force push, rebase o rollback SQL. El archivo fuera del build no se borra al revertir código: limpiar por SSH con todos los escritores apagados.
 - Después verificar SHA/build, login, navegación, IA ausente/deshabilitada y logs temporales apagados. La activación del token y la conexión MCP siguen en una autorización separada.
 
 Comandos de referencia para el propietario, **solo después de autorizar commit e integración/publicación** y con árbol limpio. Primero volver a consultar main remoto y detenerse si ya no es el SHA revisado; no usar estos comandos para resolver divergencias:
@@ -113,16 +160,16 @@ Revisar el HEAD resultante, confirmar la integración deshabilitada en runtime y
 git push origin main
 ```
 
-Rollback mediante nuevos commits, si se autoriza y no existen cambios posteriores incompatibles: en main limpio y actualizado, sustituir el marcador por el SHA completo real del futuro commit de diagnóstico. No hay todavía un valor para ese marcador:
+Rollback mediante nuevos commits, si se autoriza y no hay cambios posteriores incompatibles: en main limpio y actualizado, sustituir el marcador por el SHA completo real del futuro commit de adaptación a archivo, todavía inexistente:
 
 ```powershell
-git revert --no-commit SHA_COMPLETO_DIAGNOSTICO 22c0c1be64b27e9c431b534e0e7d4d2604bb433e
+git revert --no-commit SHA_COMPLETO_ADAPTACION_ARCHIVO f1dc7705df1229388270fda098565665aff65bfd 22c0c1be64b27e9c431b534e0e7d4d2604bb433e
 git commit -m "revert: roll back AI integration deployment"
 ```
 
 Revisar y validar la reversión antes del único push manual del propietario. Si el revert devuelve conflicto, detenerse antes del commit y resolver con revisión; no continuar automáticamente. No ejecutar migraciones, reset, rebase ni force push. No se ejecutó ningún comando de publicación/reversión en esta preparación.
 
-## Validación local del diagnóstico, 26/10/2026
+## Antecedente de validación del diagnóstico a stdout, 26/10/2026
 
 Typecheck y lint aprobados; 338 pruebas normales aprobadas, incluidas ocho pruebas nuevas de instrumentación; 162 integraciones DB omitidas. Se fijaron explícitamente en false todas las banderas de suites DB. La pasada focalizada de autenticación, IA y diagnóstico pasó 65 pruebas. Build completo aprobado sobre Node v24.21.0, con avisos conocidos no bloqueantes de anotaciones Zod/Rollup. git diff --check aprobado. No se repitieron consultas económicas, no hubo conexión DB ni solicitudes a producción.
 
@@ -197,7 +244,7 @@ Con transporte verificado y configuración de integración habilitada, antes de 
 | Logs        | Revisar configuración y registros de prueba usando primero el marcador ficticio                         | Sin Authorization, tokens, hashes ni cuerpos empresariales en logs, build o respuestas de error. No usar verbose/trace con token válido.                                                         |
 | Revocación  | Retirar hash y reiniciar todas las instancias                                                           | 503; token anterior deja de habilitar consultas.                                                                                                                                                 |
 
-Un timeout al puerto desde una sola ubicación no prueba aislamiento universal: complementar con confirmación del proveedor. No hay endpoint público nuevo; la observación temporal vigente usa solo campos acotados en stdout privado tras validar la sesión existente. Si la plataforma no puede garantizar la cadena, detener habilitación.
+Un timeout al puerto desde una sola ubicación no prueba aislamiento universal: complementar con confirmación del proveedor. No hay endpoint público nuevo; la observación vigente escribe campos acotados en el JSONL privado tras validar sesión. No utiliza stdout. Si la plataforma no puede garantizar la cadena o un directorio privado, detener habilitación de esa parte.
 
 ## Habilitación y conexión real posteriores
 
@@ -207,4 +254,12 @@ Un timeout al puerto desde una sola ubicación no prueba aislamiento universal: 
 4. Con autorización de modificación del Site, almacenar URL fija/token en su runtime servidor y adaptar únicamente consultar_estadisticas_comerciales. Fetch servidor a servidor con timeout, tamaño limitado y redirecciones rechazadas; token nunca al navegador, argumentos/resultados MCP o logs. Validar 2.0 y respetar D024 y cobertura. Mantener audiencia privada y comprobar autorización del usuario MCP.
 5. Probar una consulta y conciliación autorizada; mantener consultar_conocimiento_empresarial explícitamente ficticia/no disponible. Centro de conocimiento, API paga y escrituras fuera de alcance.
 
-El primer commit local fue autorizado y creado posteriormente en 22c0c1b. Los cambios temporales nuevos del 26/10 no están commiteados. No se ejecutaron publicación, activación o conexión; requieren autorización posterior independiente.
+La integración está guardada en 22c0c1b y el diagnóstico anterior a stdout en f1dc770. La adaptación actual a archivo privado no está commiteada. No se ejecutaron publicación, activación o conexión; requieren autorización posterior independiente.
+
+## Validación local de la adaptación a archivo privado, 26/10/2026
+
+- `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` y `git diff --check`: satisfactorios. Suite completa: 356 pruebas aprobadas y 162 omitidas; todas las banderas de integración DB se mantuvieron deshabilitadas. No se consultó ni modificó ninguna base de datos.
+- El build emitió advertencias de Rollup sobre anotaciones de comentarios en Zod, sin impedir su finalización.
+- Las pruebas nuevas simulan metadatos y operaciones POSIX: directorios privados, permisos/propietario, enlaces, exclusión mediante lock, límite acumulado, continuidad entre escritores y fallos de escritura sin salida a consola. La ejecución local fue en Windows: no verifica permisos Linux reales ni almacenamiento de SiteGround.
+- Se conservan las pruebas de diagnóstico apagado por defecto, sesión administrativa obligatoria, respuestas administrativas intactas, diez minutos, doce registros y exclusión de encabezados sensibles. No se alteraron la API empresarial 2.0 ni D024.
+- Siguen pendientes la comprobación manual de ruta privada y usuario de Node, escritura efectiva y persistencia durante reinicios/despliegues. No se eligió una ruta productiva ni se configuraron variables en SiteGround. Primera publicación preparada con IA y diagnóstico deshabilitados, sujeta a revisión y autorización del propietario.

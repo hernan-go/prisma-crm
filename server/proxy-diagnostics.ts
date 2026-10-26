@@ -1,13 +1,14 @@
 import type { Request } from 'express';
 import { isIP } from 'node:net';
 import { TLSSocket } from 'node:tls';
+import { createPrivateDiagnosticLog } from './proxy-diagnostic-file.js';
 
 const probes = new Set(['baseline', 'proto-http', 'proto-chain']);
 const protocols = new Set(['http', 'https', 'http,https', 'https,http']);
 const lifetimeMs = 10 * 60 * 1000;
 const maximumRecords = 12;
 
-// Server logs only. The existing session handler calls this AFTER validating the
+// Private file only. The existing session handler calls this AFTER validating the
 // administrator's session. Never add it to a public route or log arbitrary headers.
 export function createProxyDiagnostics(
   options: {
@@ -19,7 +20,7 @@ export function createProxyDiagnostics(
   const enabled = options.enabled ?? process.env.PROXY_DIAGNOSTICS === 'true';
   const now = options.now ?? (() => performance.now());
   const startedAt = now();
-  const log = options.log ?? ((record) => console.info(JSON.stringify(record)));
+  const log = options.log ?? createPrivateDiagnosticLog();
   let remaining = maximumRecords;
   return (req: Request) => {
     if (!enabled || req.method !== 'GET' || remaining === 0 || now() - startedAt >= lifetimeMs)
