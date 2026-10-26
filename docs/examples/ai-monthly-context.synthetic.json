@@ -1,0 +1,314 @@
+{
+  "version": "2.0",
+  "period": {
+    "id": 1,
+    "year": 2026,
+    "month": 10,
+    "status": "open"
+  },
+  "as_of": "2026-10-25T15:00:00.000Z",
+  "time_axis": "economic_period",
+  "units": {
+    "money": "ARS",
+    "people": "unique_people",
+    "slots": "weekly_slots"
+  },
+  "privacy": {
+    "policy": "authorized_business_read_v2",
+    "participant_identifiers": "excluded",
+    "personal_free_text": "excluded"
+  },
+  "people": {
+    "status": "available",
+    "data": {
+      "members": 1,
+      "enrolled": 1,
+      "without_enrollment": 0
+    }
+  },
+  "contracting": {
+    "status": "available",
+    "data": {
+      "enrollments": 1,
+      "weekly_slots": 2,
+      "activities": [
+        {
+          "activity_id": 10,
+          "name": "Yoga",
+          "enrollments": 1,
+          "weekly_slots": 2
+        }
+      ],
+      "highest_activity_ids": [
+        10
+      ],
+      "lowest_activity_ids": [
+        10
+      ]
+    }
+  },
+  "offered_schedules": [
+    {
+      "schedule_id": 1,
+      "activity_id": 10,
+      "activity": "Yoga",
+      "mode": "group",
+      "day": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "schedule_id": 2,
+      "activity_id": 10,
+      "activity": "Yoga",
+      "mode": "group",
+      "day": 3,
+      "start": "15:00",
+      "end": "16:00"
+    }
+  ],
+  "combinations": {
+    "status": "available",
+    "data": [
+      {
+        "activity_ids": [
+          10
+        ],
+        "people": 1,
+        "enrollments": 1,
+        "weekly_slots": 2
+      }
+    ]
+  },
+  "continuity": {
+    "status": "unavailable",
+    "data": null,
+    "reason": "previous_calendar_period_missing"
+  },
+  "collections": {
+    "status": "available",
+    "data": {
+      "due": {
+        "value": "100.10",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_memberships",
+          "monthly_accounts",
+          "payments"
+        ],
+        "warnings": []
+      },
+      "collected": {
+        "value": "40.05",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_memberships",
+          "monthly_accounts",
+          "payments"
+        ],
+        "warnings": []
+      },
+      "debt": {
+        "value": "60.05",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_memberships",
+          "monthly_accounts",
+          "payments"
+        ],
+        "warnings": []
+      },
+      "credit": {
+        "value": "0.00",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_memberships",
+          "monthly_accounts",
+          "payments"
+        ],
+        "warnings": []
+      },
+      "applied_known": "40.05",
+      "collected_undefined": "0.00",
+      "covered_percentage": "40.01"
+    }
+  },
+  "fees": {
+    "status": "available",
+    "data": {
+      "committed": {
+        "value": "50.00",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_activities",
+          "activity_schedules",
+          "schedule_instructors",
+          "facilitator_accounts",
+          "facilitator_payments"
+        ],
+        "warnings": []
+      },
+      "paid": {
+        "value": "20.00",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_activities",
+          "activity_schedules",
+          "schedule_instructors",
+          "facilitator_accounts",
+          "facilitator_payments"
+        ],
+        "warnings": []
+      },
+      "pending": {
+        "value": "30.00",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_activities",
+          "activity_schedules",
+          "schedule_instructors",
+          "facilitator_accounts",
+          "facilitator_payments"
+        ],
+        "warnings": []
+      },
+      "overpaid_count": 0,
+      "overpaid_excess": "0.00",
+      "agreements": [
+        {
+          "agreement_id": 1,
+          "offering_id": 1,
+          "activity_id": 10,
+          "activity": "Yoga",
+          "professional_id": 1,
+          "professional": "Profesional de ejemplo",
+          "amount_due": "50.00",
+          "paid": "20.00",
+          "pending": "30.00",
+          "excess": "0.00",
+          "payment_count": 1
+        }
+      ]
+    }
+  },
+  "expenses": {
+    "status": "available",
+    "data": {
+      "registered": {
+        "value": "10.00",
+        "coverage": "complete",
+        "universe": 1,
+        "defined": 1,
+        "undefined": 0,
+        "missing": 0,
+        "period_id": 1,
+        "time_axis": "economic_period",
+        "source": [
+          "period_expense_categories",
+          "period_expenses"
+        ],
+        "warnings": []
+      },
+      "categories": [
+        {
+          "category_id": 1,
+          "category_name": "Alquiler",
+          "recurring_concept": "Alquiler",
+          "controlled_concept": "Alquiler",
+          "kind": "recurring",
+          "amount": "10.00",
+          "movement_count": 1
+        }
+      ],
+      "breakdown_status": "available",
+      "concept_detail": "catalogue_or_category_only"
+    }
+  },
+  "coverage": {
+    "basis": "retained_records",
+    "operational_completeness": "unknown",
+    "expense_completeness": "unknown"
+  },
+  "sources": [
+    "period_memberships",
+    "enrollments",
+    "enrollment_slots",
+    "period_activities",
+    "activity_schedules",
+    "activities",
+    "schedule_instructors",
+    "instructors (operational name only)",
+    "monthly_accounts",
+    "payments",
+    "facilitator_accounts",
+    "facilitator_payments",
+    "period_expense_categories",
+    "period_expenses",
+    "expense_recurring_concepts"
+  ],
+  "unavailable": [
+    "structured_historical_tariffs",
+    "structured_promotions_discounts_packages",
+    "incremental_cost_rules",
+    "group_capacity",
+    "income_attribution_by_activity",
+    "actual_attendance",
+    "complete_cancellation_and_correction_history",
+    "structured_additional_expense_concepts",
+    "structured_future_fee_terms"
+  ],
+  "warnings": [
+    "Acceso empresarial completo autorizado: no se suprimen grupos pequeños. No garantiza anonimato frente a conocimiento externo.",
+    "Solo registros conservados; cambios y cancelaciones pueden haber eliminado historia. No acredita asistencia.",
+    "Continuidad compara personas con inscripción en meses calendario consecutivos. Diferencias no prueban baja, abandono o primera incorporación real.",
+    "Cobros y pagos de honorarios imputados al período económico, independientemente de su fecha efectiva.",
+    "Gastos registrados no acredita gastos pagados ni carga completa.",
+    "Conceptos controlados: catálogo recurrente o categoría empresarial. Se excluyen conceptos descriptivos libres y todas las notas.",
+    "NULL, cuenta ausente y cero son distintos; value es subtotal conocido cuando coverage no es complete.",
+    "Acuerdos: importe actual por oferta/profesional; no incluye notas privadas ni historial de renegociación. Nombre profesional operativo actual.",
+    "Sin tarifas, paquetes contratados ni atribución de ingresos; no calcula rentabilidad ni utilidad neta.",
+    "Horarios ofrecidos: catálogo, oferta y horario habilitados; no acredita cupo grupal disponible."
+  ]
+}

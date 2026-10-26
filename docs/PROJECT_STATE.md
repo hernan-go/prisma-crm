@@ -4,7 +4,11 @@
 
 ## Prioridad estratégica P0 — planificación comercial con IA
 
-Objetivo funcional de planificación comercial con IA definido y documentado; implementación pendiente. El propietario aprobó la [especificación funcional](AI_COMMERCIAL_PLANNING.md) como PRIORIDAD P0 — MÁXIMA del desarrollo futuro. D020–D023 se conservan; este registro no autoriza implementación ni conexión con IA y no incorpora know-how privado. La Iteración 9 continúa abierta.
+Etapa 1 implementada LOCALMENTE para revisión: token independiente, HTTPS, límites y motor de Estadísticas. D024 registra acceso empresarial completo aprobado y eliminación de la supresión por grupos pequeños; protección de datos personales obligatoria. Contrato 2.0 incluye combinaciones incluso infrecuentes, gastos con conceptos/categorías controlados y honorarios por actividad/profesional. Arquitectura: sistema → API segura de lectura → complemento MCP privado → ChatGPT, sin API paga de modelos y con contrato independiente del proveedor. IA asesora; administradores deciden. Centro de conocimiento privado dentro del sistema y fuentes externas verificables, en etapas posteriores. Site sin conectar, producción sin cambios, sin migraciones ni datos modificados. Base `501f5bb` preservada; sin nuevos commits, push, merge ni deploy. [Entrega, validación y configuración](iterations/2026-10-ai-read-context.md). La Iteración 9 continúa abierta.
+
+El asistente comercial completo y su conexión real siguen pendientes. El propietario aprobó la [especificación funcional](AI_COMMERCIAL_PLANNING.md) como PRIORIDAD P0 — MÁXIMA y autorizó expresamente esta etapa local de lectura y la corrección D024. D020–D023 conservan sus límites económicos y de conocimiento privado, complementados por D024. No hay autorización de despliegue, conexión del Site o escritura operativa. La Iteración 9 continúa abierta.
+
+Corrección D024 validada localmente: 70 períodos existentes de prisma_test conciliados mediante SELECT en transacción READ ONLY, sin cambios de datos. Sin cobertura real de varios horarios en la misma inscripción ni gastos recurrentes; cubiertos con datos sintéticos. Typecheck/lint/build aprobados, 330 pruebas normales aprobadas y 162 integraciones DB omitidas. La conexión real y el proxy de SiteGround siguen pendientes de revisión; no hay commits nuevos ni publicación.
 
 ## Estado vigente — Skeleton Loaders en Estadísticas publicados
 

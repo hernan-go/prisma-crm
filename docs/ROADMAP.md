@@ -4,9 +4,11 @@
 
 ## PRIORIDAD P0 — MÁXIMA: planificación comercial con IA
 
+Etapa 1 autorizada e implementada solo en local: interfaz HTTP mensual de lectura segura para el futuro Site MCP privado, con métricas existentes y acceso empresarial completo aprobado en D024. Se sustituyó la supresión de grupos pequeños; protección personal obligatoria, combinaciones agregadas, gastos con denominaciones controladas y honorarios por actividad/profesional. Contrato independiente del proveedor; IA asesora y decisión humana. Centro de conocimiento privado dentro del sistema y fuentes externas verificables (inflación, ANSES, poder adquisitivo, mercado, calendario/eventos), posteriores. Pendiente de revisión, configuración segura y conexión posterior autorizada. Sin API paga de modelos ni cambios al Site. [Entrega local](iterations/2026-10-ai-read-context.md).
+
 El propietario aprobó la [especificación funcional de planificación comercial con IA](AI_COMMERCIAL_PLANNING.md) como objetivo estratégico principal del desarrollo futuro: una primera carta útil de alternativas comerciales y eventos, con precios concretos, fundamentos económicos y conversación iterativa. Alcance funcional definido y documentado; implementación pendiente.
 
-Esta prioridad reordena la planificación futura y prevalece sobre las secuencias de ejecución anteriores conservadas más abajo como antecedentes. No autoriza implementación, conexión con IA ni operaciones sobre datos. D020–D023 y sus límites de privacidad, acceso de lectura, cálculos verificables y modelos económicos por aprobar se mantienen vigentes. La especificación es la referencia funcional única; el know-how privado permanece fuera de Git y no se duplica aquí.
+Esta prioridad reordena la planificación futura y prevalece sobre las secuencias anteriores conservadas como antecedentes. La etapa local de lectura y la corrección D024 cuentan con autorización expresa; no se autorizan despliegue, conexión del Site ni escrituras de datos. D020–D023 conservan cálculos verificables y límites económicos, complementados por el acceso empresarial y la protección personal de D024. La especificación es la referencia funcional única; el know-how privado permanece fuera de Git y tendrá su Centro de conocimiento posterior dentro del sistema.
 
 ## Completado recientemente
 
@@ -110,7 +112,7 @@ Mantener como diseños independientes el historial de bajas y motivos opcionales
 
 ### Proyecto posterior independiente — integración analítica con IA
 
-D020 registra la doble finalidad de Estadísticas: herramienta visual de gestión e infraestructura analítica para futuras consultas autorizadas de ChatGPT u otros asistentes, compartiendo cálculos backend. No requiere mostrar en pantalla cada métrica consultable. API, exportación estructurada y MCP son posibilidades sin mecanismo elegido; agregados y detalle desidentificado requieren diseño de autenticación, permisos, privacidad y auditoría, acceso inicialmente de solo lectura y autorización específica. Desidentificar no garantiza anonimato. La integración no está implementada ni autorizada en esta actualización documental.
+D020 registra la doble finalidad de Estadísticas: herramienta visual de gestión e infraestructura analítica para futuras consultas autorizadas de ChatGPT u otros asistentes, compartiendo cálculos backend. No requiere mostrar en pantalla cada métrica consultable. La arquitectura vigente aprobada es API segura de lectura → complemento MCP privado → ChatGPT. Backend local implementado, sin conexión ni despliegue; D024 sustituye la supresión por acceso empresarial completo con protección de datos personales. Autenticación, permisos y trazabilidad obligatorios; desidentificar no garantiza anonimato.
 
 La interfaz Estadísticas no requiere por sí sola implementar Google ni conectar IA. La autenticación con Google sigue pendiente con su alcance y prioridad existentes. No se implementan MCP, conectores ni chatbot en esta etapa. PDF/reportes conserva su posición posterior.
 

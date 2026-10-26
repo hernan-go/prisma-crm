@@ -7,7 +7,7 @@ import { Decimal } from 'decimal.js';
 import { calculateSummary, type BalanceRow } from './engine.js';
 import { inflationService } from './inflation.js';
 
-export async function readSummary(periodId: number, db: Connection, asOf: string) {
+export async function readSummaryInput(periodId: number, db: Connection) {
   const [row] = await query('SELECT id,year,month,status FROM periods WHERE id=?', [periodId], db);
   if (!row) throw new AppError(404, 'El período no existe.');
   const period = statisticsPeriodSchema.parse(row);
@@ -23,9 +23,19 @@ export async function readSummary(periodId: number, db: Connection, asOf: string
     [periodId, periodId],
     db,
   );
-  const fees = await query<BalanceRow>(
+  const fees = await query<
+    BalanceRow & {
+      instructor_id: number;
+      offering_id: number;
+      activity_id: number;
+      activity: string;
+      professional: string;
+    }
+  >(
     `
-    SELECT a.id account_id,a.amount_due,COALESCE(p.paid,0) paid,COALESCE(p.payment_count,0) payment_count
+    SELECT pairs.instructor_id,pairs.offering_id,o.activity_id,o.name activity,
+      CONCAT_WS(' ',i.name,NULLIF(i.surname,'')) professional,
+      a.id account_id,a.amount_due,COALESCE(p.paid,0) paid,COALESCE(p.payment_count,0) payment_count
     FROM (
       SELECT s.offering_id,si.instructor_id FROM activity_schedules s
       JOIN period_activities o ON o.id=s.offering_id
@@ -34,6 +44,8 @@ export async function readSummary(periodId: number, db: Connection, asOf: string
       SELECT a.offering_id,a.instructor_id FROM facilitator_accounts a
       JOIN period_activities o ON o.id=a.offering_id WHERE o.period_id=?
     ) pairs
+    JOIN period_activities o ON o.id=pairs.offering_id
+    JOIN instructors i ON i.id=pairs.instructor_id
     LEFT JOIN facilitator_accounts a ON a.offering_id=pairs.offering_id AND a.instructor_id=pairs.instructor_id
     LEFT JOIN (SELECT p.account_id,SUM(p.amount) paid,COUNT(*) payment_count
       FROM facilitator_payments p JOIN facilitator_accounts a ON a.id=p.account_id
@@ -49,7 +61,11 @@ export async function readSummary(periodId: number, db: Connection, asOf: string
     [periodId],
     db,
   );
-  return calculateSummary({ period, members, fees, expenses }, asOf);
+  return { period, members, fees, expenses };
+}
+
+export async function readSummary(periodId: number, db: Connection, asOf: string) {
+  return calculateSummary(await readSummaryInput(periodId, db), asOf);
 }
 
 export async function statisticsSummary(periodId: number) {

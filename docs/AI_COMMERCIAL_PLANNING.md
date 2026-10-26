@@ -2,7 +2,7 @@
 
 > **Prioridad: P0 — MÁXIMA (objetivo estratégico principal).**
 >
-> **Estado: alcance y dirección funcional aprobados; no implementado.** Documento de referencia persistente para futuras iteraciones y handoffs. No autoriza cambios de código, base de datos, arquitectura, documentación existente ni despliegues por sí mismo.
+> **Estado: alcance funcional aprobado; API empresarial de lectura implementada localmente, asistente real aún sin conectar.** La etapa local fue autorizada expresamente; despliegue y conexión del Site requieren autorización posterior. Este documento no autoriza por sí mismo otras implementaciones.
 >
 > **Alcance del nombre:** PRISMA es el emprendimiento que utiliza el sistema de gestión, no el nombre comercial genérico del software.
 
@@ -21,6 +21,7 @@ Para cada planificación mensual, producir una respuesta ordenada con:
 ### A. Tres opciones comerciales alternativas
 
 **Opción 1 — Captación de participantes** (u otro objetivo comercial justificado):
+
 - Tarifas mensuales sugeridas por taller individual.
 - Paquetes concretos de dos y tres talleres/horarios, con combinaciones permitidas y precios propuestos.
 - Promociones y condiciones de aplicación.
@@ -38,6 +39,7 @@ Las tres opciones deben ser **realmente diferentes y comparables**, no variacion
 Presentar **hasta tres propuestas pertinentes** para el mes y la localidad, respaldadas por calendario, estacionalidad y contexto actual verificable (p. ej., Halloween cuando corresponda; otras efemérides o acontecimientos relevantes en Rosario). No inventar eventos ni forzar celebraciones sin sentido para el público.
 
 Para cada evento propuesto indicar:
+
 - Propósito, público, dinámica, juegos/actividades y logística básica.
 - Si conviene o no ofrecer merienda, té, pizza u otros servicios y **presupuesto máximo** para esos conceptos.
 - Costos fijos y variables, capacidad disponible, precio sugerido de entrada, concurrencia mínima para cubrir costos y escenarios de resultado económico.
@@ -54,6 +56,7 @@ La planificación se construye por iteraciones. Por ejemplo:
 «Conservamos Halloween y la opción 2 de paquetes, pero proponé otras combinaciones para Inclusión Digital; no queremos cobrar menos de $30.000».
 
 El asistente debe:
+
 1. **Conservar** los elementos seleccionados provisionalmente y las restricciones vigentes en esa conversación.
 2. **Modificar solo** la parte solicitada, sin rehacer ni perder el resto.
 3. Recalcular precios, márgenes y escenarios afectados por esos cambios.
@@ -65,6 +68,14 @@ Los pisos de precio mencionados en ejemplos son **restricciones hipotéticas**, 
 **Primera versión: la IA es asesora y simuladora en el chat. No escribe en el sistema, no crea paquetes, no registra eventos, no cambia tarifas, no altera cuentas ni ejecuta operaciones administrativas automáticamente.** Las decisiones finales corresponden a Jesica y Hernán.
 
 ## 4. Fuentes necesarias y controles de confiabilidad
+
+**Decisión definitiva del propietario, 25/10/2026 (D024): máxima disponibilidad de información empresarial, mínima exposición de datos personales.** El asesor autenticado y autorizado podrá consultar la economía completa, actividades, horarios, plazas, combinaciones incluso infrecuentes y comparaciones sobre registros conservados. Se sustituye expresamente la política anterior de supresión de grupos pequeños: no hay umbral de cinco, supresión complementaria ni ocultamiento de gastos/honorarios por escasez de registros.
+
+Se excluyen identidades y IDs reales de participantes, DNI, contactos privados, domicilios, emergencias, salud, notas personales, credenciales y textos libres innecesarios. Las denominaciones empresariales de actividades, categorías y conceptos controlados, y la identificación operativa de profesionales, sí son pertinentes. Combinaciones y continuidad se agregan en SQL sin exportar IDs de participantes; no se necesita seudonimización en esta entrega. Acceso privado y agregación no garantizan anonimato absoluto: subsiste riesgo de inferencia en poblaciones pequeñas, aceptado sin inutilizar el análisis. Los datos siguen siendo privados y requieren autorización de servicio.
+
+Arquitectura aprobada: sistema → API segura de lectura → complemento MCP privado → ChatGPT, sin API paga de modelos en esta etapa; contrato independiente del proveedor de IA. La IA recomienda y los administradores deciden; no hay escritura operativa. El conocimiento privado tendrá su propio Centro de conocimiento dentro del sistema en una etapa posterior, con documentos Markdown y controles de acceso/versiones; no se implementa ahora.
+
+El contexto externo futuro deberá cubrir inflación e indicadores oficiales argentinos, jubilaciones/pensiones y actualizaciones de ANSES, poder adquisitivo del público, mercado y actividades similares en Rosario, festividades/feriados/calendario local, fechas especiales, estacionalidad, eventos y costos verificables. ChatGPT podrá consultar fuentes, identificando fuente, referencia y fecha de consulta. No fijar tasas ni montos coyunturales como constantes permanentes. Esta etapa no agrega integración de noticias/economía.
 
 1. **Sistema de gestión (datos estructurados):** inscripciones por actividad/período, personas únicas, horarios/plazas contratadas, cupos cuando existan, cuentas, importes, cobranzas, gastos, honorarios, precios y promociones vigentes o anteriores cuando estén registrados.
 2. **Know-how privado:** archivos Markdown privados del emprendimiento, sus criterios comerciales, necesidades de adultos mayores, flexibilidad de pagos, reglas y excepciones de operación. Mantenerlos fuera de Git y no copiarlos a documentación pública del repositorio.
@@ -114,4 +125,4 @@ Este archivo se propone como **fuente única de verdad funcional** para la prior
 
 `docs/ROADMAP.md` debería enlazarlo en su primera prioridad; `docs/PROJECT_STATE.md` debería distinguir **especificado, no implementado**. No duplicar toda esta especificación allí. `docs/DECISIONS.md` y las decisiones D020–D023 se conservan como referencia y restricciones existentes, sujetas a revisión focalizada de compatibilidad cuando corresponda.
 
-**Origen:** definición del propietario en conversación de la Iteración 9 (octubre de 2026). **No indica que Codex, el repositorio o producción hayan sido modificados.**
+**Origen:** definición del propietario en conversación de la Iteración 9 (octubre de 2026), ampliada por la decisión D024. La API empresarial está implementada y validada localmente por autorización específica; producción y Site permanecen sin modificar por esta entrega.

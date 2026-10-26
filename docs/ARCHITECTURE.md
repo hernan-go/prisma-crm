@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Integración de lectura para asistente — etapa 1 local
+
+Arquitectura autorizada el 25/10/2026: sistema → API segura → complemento MCP privado → ChatGPT, sin API paga de modelos. `GET /api/integrations/ai/monthly-context?period=AAAA-MM` tiene router terminal propio antes de la autenticación administrativa, Bearer independiente verificado por SHA-256, HTTPS con proxy explícito, límites y acceso empresarial completo conforme a D024. Solo SELECT en transacción consistente READ ONLY; reutiliza `readSummaryInput` y `calculateSummary`. Contrato 2.0 en `shared/ai-context.ts`, sin IDs/identidades de participantes ni escrituras; incluye identificación operativa de profesionales y denominaciones empresariales. No aplica umbrales de grupos pequeños. Protección de datos personales obligatoria. Implementación local para revisión; Site sin conectar, sin deploy, migraciones ni cambios de datos. [Contrato, configuración y limitaciones](iterations/2026-10-ai-read-context.md).
+
 ## Stack
 
 ### Frontend
@@ -201,7 +205,7 @@ D020 establece la doble finalidad: gestión visual e infraestructura analítica 
 
 Separar período económico, fecha efectiva de movimiento y fecha de registro. Inscripciones no prueban asistencia ni ausencia de reinscripción una baja confirmada. Gastos registrados, honorarios comprometidos y pagos son magnitudes distintas; D021 precisa acuerdos mayoritariamente fijos respecto de participantes pero variables por profesional, prestación y período. No calcular ganancia neta o rentabilidad por actividad sin modelos aprobados de ingresos atribuibles y costos.
 
-La integración con IA no está implementada ni autorizada: API, exportación estructurada y MCP son alternativas por evaluar, sin mecanismo elegido. Podrá contemplar agregados y detalle desidentificado; desidentificación no garantiza anonimato. Requiere diseño independiente, acceso inicialmente de solo lectura, autenticación, permisos, privacidad, auditoría y autorización. No supone acceso automático a MySQL ni multitenancy.
+Estado vigente D024: API de lectura empresarial implementada localmente para el complemento MCP privado; sin conexión al Site ni despliegue. Autenticación y autorización independientes, máxima disponibilidad empresarial sin supresión por tamaño y exclusión de datos personales privados. No garantiza anonimato absoluto ni supone acceso directo a MySQL o multitenancy. La IA recomienda; administradores deciden.
 
 Persistencia del IPC, historial de bajas y modelos de tarifas, paquetes, promociones, atribución y simulaciones requieren diseños específicos. Siete bloques/acordeones exclusivos están diseñados y aprobados funcionalmente; solo Gastos tiene implementación gráfica local, los otros seis siguen pendientes. Evolución prevista: mensual, anual y finalmente histórica con rangos e IPC cuando los datos sean suficientes; integración IA en proyecto posterior independiente. Indicadores v1, plan, límites y decisiones pendientes: [diseño funcional de Estadísticas](iterations/2026-10-statistics-design.md).
 
@@ -213,7 +217,7 @@ D022 y D023 establecen tres fuentes complementarias para una futura consulta aut
 2. **Base documental privada por instalación:** reglas, objetivos, políticas, decisiones, promociones, eventos y aprendizajes propios, separados del código fuente y del repositorio público.
 3. **Fuentes externas verificadas y actualizadas:** contexto geográfico, económico y cultural, con procedencia, fecha de publicación y fecha de consulta explícitas.
 
-La IA consultará estas fuentes mediante mecanismos autorizados, inicialmente de lectura. La selección de un proveedor, protocolo o interfaz queda pendiente; no se elige entre archivos, base de datos, búsqueda vectorial, API o MCP. La documentación aporta conocimiento consultable y personalización contextual; no significa que la IA quede entrenada con ella. No hay integración implementada ni autorización de escrituras.
+La IA consultará mediante la API de lectura y el complemento MCP privado aprobados, con contrato independiente del proveedor y sin API paga de modelos. La interfaz empresarial está implementada localmente; conexión y despliegue pendientes. El Centro de conocimiento privado tendrá su propia gestión dentro del sistema en una etapa posterior: almacenamiento y recuperación documental aún pendientes, sin escrituras operativas de IA ni entrenamiento implícito por consultar documentos. Fuentes externas futuras: inflación, ANSES, poder adquisitivo, mercado rosarino y calendario/eventos, siempre con fuente/fecha (D024).
 
 Separar responsabilidades en el diseño posterior:
 

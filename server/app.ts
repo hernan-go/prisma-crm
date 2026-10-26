@@ -7,11 +7,15 @@ import { resolve } from 'node:path';
 import { api } from './routes.js';
 import { AppError } from './errors.js';
 import { authentication, type AuthOptions } from './auth.js';
-export function createApp(authOptions: AuthOptions = {}) {
+import { aiIntegration, type AiIntegrationOptions } from './integrations/ai-router.js';
+export function createApp(authOptions: AuthOptions = {}, aiOptions: AiIntegrationOptions = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
   app.use(helmet());
+  // Separate, terminal namespace: service credentials never reach administrative routes.
+  // Mount before browser CORS/body parsing/session auth; this router owns safe errors.
+  app.use('/api/integrations/ai', aiIntegration(aiOptions));
   app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5173', credentials: true }));
   app.use(express.json({ limit: '8mb' }));
   app.use(
