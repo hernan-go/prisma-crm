@@ -2,7 +2,12 @@ import { afterAll, afterEach, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { randomBytes } from 'node:crypto';
-import { createProxyDiagnostics } from '../server/proxy-diagnostics.js';
+import { once } from 'node:events';
+import {
+  createProxyDiagnostics,
+  classifyServerAddress,
+  registerProxyDiagnosticServer,
+} from '../server/proxy-diagnostics.js';
 import { createApp } from '../server/app.js';
 import { pool } from '../server/db.js';
 import * as diagnosticFiles from '../server/proxy-diagnostic-file.js';
@@ -24,6 +29,73 @@ function probeApp(hops = 1, enabled = true, now = () => 0) {
   });
   return { app, log };
 }
+
+it.each([
+  [{ address: '127.0.0.1', family: 'IPv4', port: 3001 }, 'linux', 'tcp'],
+  [{ address: '::1', family: 'IPv6', port: 443 }, 'linux', 'tcp'],
+  ['/private/runtime/socket', 'linux', 'unix'],
+  ['\0private-abstract-socket', 'linux', 'unix'],
+  ['private-pipe', 'win32', 'unknown'],
+  [null, 'linux', 'unknown'],
+  [undefined, 'linux', 'unknown'],
+  ['', 'linux', 'unknown'],
+  [{}, 'linux', 'unknown'],
+  [{ address: 'private-host', family: 'IPv4', port: 3001 }, 'linux', 'unknown'],
+  [{ address: '127.0.0.1', family: 'IPv6', port: 3001 }, 'linux', 'unknown'],
+  [{ address: '127.0.0.1', family: 'IPv4', port: 0 }, 'linux', 'unknown'],
+])('clasifica address() sin exportar su valor: %j (%s)', (address, platform, expected) => {
+  expect(classifyServerAddress(address, platform as string)).toBe(expected);
+});
+
+it('consulta el servidor registrado para esa app y no deduce transporte del peer o headers', async () => {
+  const first = probeApp();
+  const second = probeApp();
+  const address = vi.fn(() => ({ address: '127.0.0.1', family: 'IPv4', port: 32123 }));
+  registerProxyDiagnosticServer(first.app, { address });
+  await request(first.app).get('/session');
+  expect(address).not.toHaveBeenCalled();
+  await request(first.app).get('/session').set('X-Proxy-Check', 'baseline');
+  expect(address).toHaveBeenCalledTimes(1);
+  expect(first.log.mock.calls[0][0].server_transport).toBe('tcp');
+  // Even a real TCP peer and a client-supplied Passenger header do not substitute
+  // for the server's own address() observation.
+  await request(second.app)
+    .get('/session')
+    .set('X-Proxy-Check', 'baseline')
+    .set('Passenger-Proto', 'https')
+    .set('X-Forwarded-Proto', 'https');
+  expect(second.log.mock.calls[0][0].server_transport).toBe('unknown');
+  expect(JSON.stringify(first.log.mock.calls)).not.toContain('32123');
+});
+
+it('consulta address() del listener TCP real que atiende la solicitud', async () => {
+  const { app, log } = probeApp();
+  const server = app.listen(0, '127.0.0.1');
+  registerProxyDiagnosticServer(app, server);
+  try {
+    await once(server, 'listening');
+    const response = await request(server).get('/session').set('X-Proxy-Check', 'baseline');
+    expect(response.body).toEqual({ ok: true });
+    expect(log.mock.calls[0][0].server_transport).toBe('tcp');
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('address() fallido permanece unknown sin filtrar error ni cambiar respuesta', async () => {
+  const { app, log } = probeApp();
+  registerProxyDiagnosticServer(app, {
+    address: () => {
+      throw Error('private-address-error');
+    },
+  });
+  const response = await request(app).get('/session').set('X-Proxy-Check', 'baseline');
+  expect(response.body).toEqual({ ok: true });
+  expect(log.mock.calls[0][0].server_transport).toBe('unknown');
+  expect(JSON.stringify(log.mock.calls)).not.toContain('private-address-error');
+});
 
 it('apagado por defecto y marcador desconocido no producen registros', async () => {
   vi.stubEnv('PROXY_DIAGNOSTICS', 'false');
