@@ -11,6 +11,7 @@ export interface AiIntegrationOptions {
   tokenHash?: string;
   publicOrigin?: string;
   trustedProxyIps?: string;
+  transportMode?: string;
   allowLocalHttp?: boolean;
   read?: typeof monthlyContext;
 }
@@ -23,6 +24,9 @@ export function aiIntegration(options: AiIntegrationOptions = {}) {
   const tokenHash = options.tokenHash ?? process.env.AI_READ_TOKEN_SHA256 ?? '';
   const publicOrigin = options.publicOrigin ?? process.env.AI_READ_PUBLIC_ORIGIN ?? '';
   const proxyConfig = options.trustedProxyIps ?? process.env.AI_READ_TRUSTED_PROXY_IPS ?? '';
+  const transportMode =
+    options.transportMode ?? process.env.AI_READ_TRANSPORT_MODE ?? 'verified_peer';
+  const managed = transportMode === 'siteground_managed';
   const proxies = proxyConfig ? proxyConfig.split(',').map((ip) => normalizeIp(ip.trim())) : [];
   const allowLocal =
     !production && (options.allowLocalHttp ?? process.env.AI_READ_ALLOW_LOCAL_HTTP === 'true');
@@ -41,6 +45,8 @@ export function aiIntegration(options: AiIntegrationOptions = {}) {
   }
   const configured =
     /^[a-f0-9]{64}$/.test(tokenHash) &&
+    (transportMode === 'verified_peer' || managed) &&
+    (!managed || (production && origin !== undefined)) &&
     (origin || allowLocal) &&
     proxies.every((ip) => isIP(ip)) &&
     proxies.length <= 10;
@@ -71,10 +77,20 @@ export function aiIntegration(options: AiIntegrationOptions = {}) {
       return res
         .status(503)
         .json({ code: 'not_configured', message: 'Integración no disponible.' });
-    const peer = normalizeIp(req.socket.remoteAddress ?? '');
+    const rawPeer = req.socket.remoteAddress;
+    const peer = normalizeIp(rawPeer ?? '');
     const directTls = req.socket instanceof TLSSocket && req.socket.encrypted;
     const proxiedTls = proxies.includes(peer) && req.get('x-forwarded-proto') === 'https';
-    const secure = origin && req.get('host') === origin.host && (directTls || proxiedTls);
+    // Explicit hosting trust assumption, not proof of proxy identity: SiteGround
+    // must isolate Node and overwrite XFP. Only an actually absent peer qualifies;
+    // malformed/empty peers or unlisted IPs never gain trust via this mode.
+    const managedTls =
+      managed &&
+      production &&
+      (rawPeer === undefined || (isIP(peer) !== 0 && proxies.includes(peer))) &&
+      req.get('x-forwarded-proto') === 'https';
+    const secure =
+      origin && req.get('host') === origin.host && (managed ? managedTls : directTls || proxiedTls);
     const local =
       allowLocal &&
       loopback(peer) &&
@@ -82,7 +98,18 @@ export function aiIntegration(options: AiIntegrationOptions = {}) {
     // Do not use req.secure: the administrative app's numeric trust-proxy setting is independent.
     if (!secure && !local)
       return res.status(403).json({ code: 'https_required', message: 'Transporte no permitido.' });
-    if (req.get('origin') || req.get('sec-fetch-site'))
+    const browserRequest = managed
+      ? [
+          'origin',
+          'cookie',
+          'referer',
+          'sec-fetch-site',
+          'sec-fetch-mode',
+          'sec-fetch-dest',
+          'sec-fetch-user',
+        ].some((header) => req.headers[header] !== undefined)
+      : req.get('origin') || req.get('sec-fetch-site');
+    if (browserRequest)
       return res
         .status(403)
         .json({ code: 'service_only', message: 'Acceso exclusivo de servicio.' });
