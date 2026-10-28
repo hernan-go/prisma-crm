@@ -2,7 +2,7 @@
 
 > **Prioridad: P0 — MÁXIMA (objetivo estratégico principal).**
 >
-> **Estado: alcance funcional aprobado; API empresarial de lectura implementada localmente, asistente real aún sin conectar.** La etapa local fue autorizada expresamente; despliegue y conexión del Site requieren autorización posterior. Este documento no autoriza por sí mismo otras implementaciones.
+> **Estado al 27/10/2026: alcance funcional aprobado; API empresarial 2.0 desplegada y conexión MCP privada de lectura funcionando desde Work y ChatGPT normal. El asistente comercial completo sigue pendiente.** La consulta real de octubre fue confirmada por el propietario. El conocimiento empresarial real y las simulaciones todavía no están implementados; la herramienta MCP de conocimiento conserva cinco documentos ficticios. Este hito no acredita los criterios de aceptación del asistente ni autoriza por sí mismo otras implementaciones. La Iteración 9 continúa abierta.
 >
 > **Alcance del nombre:** PRISMA es el emprendimiento que utiliza el sistema de gestión, no el nombre comercial genérico del software.
 
@@ -123,6 +123,6 @@ Un primer asistente cumplirá el objetivo solo si:
 
 Este archivo se propone como **fuente única de verdad funcional** para la prioridad P0 de planificación comercial con IA, ubicado en `docs/AI_COMMERCIAL_PLANNING.md`.
 
-`docs/ROADMAP.md` debería enlazarlo en su primera prioridad; `docs/PROJECT_STATE.md` debería distinguir **especificado, no implementado**. No duplicar toda esta especificación allí. `docs/DECISIONS.md` y las decisiones D020–D023 se conservan como referencia y restricciones existentes, sujetas a revisión focalizada de compatibilidad cuando corresponda.
+`docs/ROADMAP.md` debe enlazarlo en su primera prioridad; `docs/PROJECT_STATE.md` debe distinguir **conexión MCP de lectura completada** de **asistente comercial especificado, todavía no completado**. No duplicar toda esta especificación allí. `docs/DECISIONS.md` y las decisiones D020–D024 se conservan como referencia y restricciones existentes, sin modificarlas por este hito.
 
-**Origen:** definición del propietario en conversación de la Iteración 9 (octubre de 2026), ampliada por la decisión D024. La API empresarial está implementada y validada localmente por autorización específica; producción y Site permanecen sin modificar por esta entrega.
+**Origen:** definición del propietario en conversación de la Iteración 9 (octubre de 2026), ampliada por D024. Estado de integración actualizado el 27/10: backend de lectura desplegado en `448554f` y Worker MCP funcional respaldado en el repositorio privado `hernan-go/prisma-mcp`, commit `25487c43778370fce101e24f697b011ff7201219`, tag `v1.0.0`. Sin API paga de modelos ni escritura operativa. El contrato funcional de las secciones 1–7 se conserva íntegro.
