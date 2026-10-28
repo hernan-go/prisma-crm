@@ -40,6 +40,8 @@ La migración histórica solo opera sobre períodos existentes. Si encuentra un 
 
 `activities.instructor_id` es legado y no es fuente de verdad histórica. La asignación real de facilitadores se resuelve mediante horarios/ofertas del período.
 
+Corrección de presentación aprobada el 28/10/2026 (Iteración 9): el nombre visible del facilitador se obtiene del catálogo global vigente `instructors.name` / `surname` mediante su `instructor_id`, también en períodos anteriores y cerrados. `schedule_instructors.display_name` se conserva físicamente como snapshot, incluida su copia al clonar; no es el nombre principal de presentación. Renombrar el catálogo no modifica asignaciones, cuentas, honorarios, pagos, saldos ni snapshots. Los nombres de actividades/ofertas por período mantienen su semántica histórica y las protecciones de D015 permanecen vigentes.
+
 ## D010 — Clonación de períodos
 
 La clonación implementada copia configuración operativa, no movimientos, personas ni membresías.

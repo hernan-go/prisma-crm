@@ -14,7 +14,7 @@ export async function facilitatorAccounts(period: number) {
   requireFound((await query('SELECT id FROM periods WHERE id=?', [period]))[0]);
   const rows = await query(
     `SELECT c.id,o.id offering_id,i.id instructor_id,
-    COALESCE(assignments.display_name,CONCAT_WS(' ',i.name,NULLIF(i.surname,''))) instructor,
+    CONCAT_WS(' ',i.name,NULLIF(i.surname,'')) instructor,
     o.name activity,c.amount_due,COALESCE(c.notes,'') notes,
     COALESCE(p.paid,0) paid,IF(assignments.instructor_id IS NULL,0,1) assigned
     FROM (
@@ -24,7 +24,7 @@ export async function facilitatorAccounts(period: number) {
     ) pairs JOIN period_activities o ON o.id=pairs.offering_id
     JOIN instructors i ON i.id=pairs.instructor_id
     LEFT JOIN facilitator_accounts c ON c.offering_id=o.id AND c.instructor_id=i.id
-    LEFT JOIN (SELECT s.offering_id,si.instructor_id,MIN(si.display_name) display_name
+    LEFT JOIN (SELECT s.offering_id,si.instructor_id
       FROM activity_schedules s JOIN schedule_instructors si ON si.schedule_id=s.id
       GROUP BY s.offering_id,si.instructor_id) assignments
       ON assignments.offering_id=o.id AND assignments.instructor_id=i.id

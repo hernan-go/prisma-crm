@@ -20,9 +20,10 @@ export function facilitatorTests(agent: any, password: string) {
     beforeAll(async () => {
       if (process.env.DB_NAME !== 'prisma_test') throw new Error('Only prisma_test');
       expect((await agent.post('/api/auth/login').send({ password })).status).toBe(200);
-      period = (await execute('INSERT INTO periods(year,month) VALUES (2027,1)')).insertId;
-      teacher = (await execute("INSERT INTO instructors(name,surname) VALUES ('Lucía','QA')"))
-        .insertId;
+      period = (await execute('INSERT INTO periods(year,month) VALUES (2025,1)')).insertId;
+      const created = await agent.post('/api/instructors').send({ name: 'Lucía', surname: 'QA' });
+      expect(created.status).toBe(201);
+      teacher = created.body.id;
       replacement = (await execute("INSERT INTO instructors(name) VALUES ('Reemplazo QA')"))
         .insertId;
       for (const name of ['Movimiento QA', 'Yoga QA']) {
@@ -88,6 +89,73 @@ export function facilitatorTests(agent: any, password: string) {
         pending: '30000.00',
       });
       expect((await agent.get(path())).body[0].date).toBe('2027-02-03');
+    });
+    it('refleja renombres por ID en configuración, agenda y cuentas abiertas/cerradas sin alterar historia', async () => {
+      const tables = [
+        'periods',
+        'period_activities',
+        'period_activity_days',
+        'activity_schedules',
+        'schedule_instructors',
+        'facilitator_accounts',
+        'facilitator_payments',
+        'monthly_accounts',
+        'payments',
+        'enrollments',
+        'enrollment_slots',
+      ];
+      const snapshot = () => Promise.all(tables.map((table) => query(`SELECT * FROM ${table}`)));
+      for (const status of ['open', 'closed']) {
+        expect((await agent.patch(`/api/periods/${period}/status`).send({ status })).status).toBe(
+          200,
+        );
+        const before = await snapshot();
+        const accountsBefore = (await list()).body;
+        const names = new Map([
+          [teacher, { name: 'Lucila', surname: status === 'open' ? 'QA Actual' : 'QA Cerrada' }],
+          [replacement, { name: 'Reemplazo QA', surname: '' }],
+        ]);
+        for (const [id, name] of names) {
+          const updated = await agent.put(`/api/instructors/${id}`).send(name);
+          expect(updated.status).toBe(200);
+          expect(updated.body.id).toBe(id);
+        }
+        const catalog = await agent.get('/api/instructors');
+        expect(catalog.status).toBe(200);
+        for (const [id, name] of names)
+          expect(catalog.body.find((i: any) => i.id === id)).toMatchObject(name);
+        const offers = await agent.get(`/api/offerings?period_id=${period}`);
+        const agenda = await agent.get(`/api/agenda?period_id=${period}`);
+        expect(offers.status).toBe(200);
+        expect(agenda.status).toBe(200);
+        for (const schedules of [offers.body.flatMap((o: any) => o.schedules), agenda.body]) {
+          expect(schedules).toHaveLength(4);
+          for (const s of schedules) {
+            expect(s.instructors).toHaveLength(s.offering_id === offering ? 2 : 1);
+            for (const i of s.instructors) {
+              const current = names.get(i.id)!;
+              expect(i.name).toBe([current.name, current.surname].filter(Boolean).join(' '));
+            }
+          }
+        }
+        const accounts = await list();
+        expect(accounts.status).toBe(200);
+        expect(accounts.body).toHaveLength(accountsBefore.length);
+        for (const row of accounts.body) {
+          const current = names.get(row.instructor_id)!;
+          expect(row.instructor).toBe([current.name, current.surname].filter(Boolean).join(' '));
+          const old = accountsBefore.find(
+            (a: any) => a.offering_id === row.offering_id && a.instructor_id === row.instructor_id,
+          );
+          expect({ ...row, instructor: old.instructor }).toEqual(old);
+        }
+        expect(await snapshot()).toEqual(before);
+        expect((await agent.delete(`/api/instructors/${teacher}`)).status).toBe(409);
+        expect(await snapshot()).toEqual(before);
+      }
+      expect(
+        (await agent.patch(`/api/periods/${period}/status`).send({ status: 'open' })).status,
+      ).toBe(200);
     });
     it('edita excluyendo el propio pago y rechaza sobrepago', async () => {
       expect(
@@ -225,7 +293,7 @@ export function facilitatorTests(agent: any, password: string) {
       );
       expect(row).toMatchObject({
         activity: 'Movimiento QA',
-        instructor: 'Reemplazo histórico',
+        instructor: 'Reemplazo QA',
         assigned: 1,
       });
       expect(

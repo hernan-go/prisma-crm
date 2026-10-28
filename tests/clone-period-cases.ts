@@ -211,6 +211,18 @@ export function clonePeriodTests(agent: any, password: string) {
           expect(next.instructors).toEqual(
             previous.instructors.map((i: any) => ({ ...i, schedule_id: next.id })),
           );
+          // Presentation uses the catalog; cloning must still preserve stored snapshots.
+          expect(
+            await query(
+              'SELECT instructor_id,display_name FROM schedule_instructors WHERE schedule_id=? ORDER BY instructor_id',
+              [next.id],
+            ),
+          ).toEqual(
+            await query(
+              'SELECT instructor_id,display_name FROM schedule_instructors WHERE schedule_id=? ORDER BY instructor_id',
+              [previous.id],
+            ),
+          );
         }
       }
       const after = await snapshot();

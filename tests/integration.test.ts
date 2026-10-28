@@ -102,6 +102,8 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
       (await agent.post('/api/auth/login').send({ password: credentials.password })).status,
     ).toBe(200);
     for (const table of [
+      'period_recurring_concepts',
+      'period_recurring_settings',
       'period_expenses',
       'period_expense_categories',
       'payments',
