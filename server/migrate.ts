@@ -32,6 +32,15 @@ export async function migrate(through?: string) {
       if ((found as any[]).length) continue;
       // MySQL DDL commits implicitly: reject orphaned history before any 007 statement.
       if (name === '007.sql') await requireHistoricalExpensePeriods(c);
+      if (name === '012.sql') {
+        const [existing] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('knowledge_categories','knowledge_documents','knowledge_document_versions','knowledge_library_state')",
+        );
+        if (existing.length)
+          throw new Error(
+            '012.sql detenida: existen estructuras documentales sin registro de migración. Inspeccionar la aplicación parcial antes de continuar. No se modificaron estas tablas.',
+          );
+      }
       const sql = await readFile(resolve('server/migrations', name), 'utf8');
       for (const statement of sql.split(';').filter((x) => x.trim())) {
         if (name === '007.sql' && statement.trim().toUpperCase() === 'COMMIT')

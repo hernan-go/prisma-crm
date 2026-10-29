@@ -120,13 +120,16 @@ export function Modal({
   title,
   children,
   close,
+  dirtyOverride,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  dirtyOverride?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [dirty, setDirty] = useState(false);
+  const [changed, setDirty] = useState(false);
+  const dirty = dirtyOverride ?? changed;
   const [discard, setDiscard] = useState(false);
   const titleId = useId();
   const safeClose = () => (dirty ? setDiscard(true) : close());

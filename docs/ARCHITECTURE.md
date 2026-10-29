@@ -1,5 +1,11 @@
 # PRISMA CRM — Arquitectura
 
+## Know-How IA — implementación local, entrega 1
+
+`/know-how` y router administrativo `/api/knowledge`, bajo sesión existente. Markdown privado en MySQL mediante `knowledge_categories`, `knowledge_documents`, `knowledge_document_versions` y `knowledge_library_state`. Migración aditiva 012 validada solo en prisma_test, sin activación en desarrollo/producción. Biblioteca global por instalación, sin períodos ni multitenancy. Inicialización explícita/idempotente de cinco documentos pilares inactivos y genéricos, sin categorías obligatorias.
+
+Transacciones y bloqueo exclusivo del singleton documental; revisión esperada para conflictos. `revision` incluye activación, mientras `content_version` conserva únicamente cambios de contenido/título/categoría. No se depuran versiones. Vista previa restringida con react-markdown, sin HTML/imágenes; importación UTF-8 hasta 512 KiB, sin archivos persistentes en el servidor. Campos futuros de papelera/protección/retención sin comportamiento implementado. No hay conexión documental MCP, borrado, restauración ni respaldos integrales. [Detalle y límites](iterations/2026-10-knowledge-library.md). Los apartados conceptuales siguientes conservan el antecedente anterior a esta implementación local.
+
 ## Integración de lectura para asistente — desplegada y conectada
 
 Topología funcional al 27/10/2026, con consulta real de octubre confirmada por el propietario desde Work y ChatGPT normal:

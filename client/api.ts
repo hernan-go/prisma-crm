@@ -7,6 +7,14 @@ export class ApiError extends Error {
     super(message);
   }
 }
+export function download(content: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 export async function api<T = any>(path: string, method = 'GET', body?: unknown): Promise<T> {
   const r = await fetch(`/api${path}`, {
     method,

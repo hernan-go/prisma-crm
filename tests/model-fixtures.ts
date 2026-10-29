@@ -8,8 +8,15 @@ export async function resetTestSchema() {
   )
     throw new Error('Only prisma_test');
   for (const t of [
+    'knowledge_document_versions',
+    'knowledge_documents',
+    'knowledge_categories',
+    'knowledge_library_state',
+    'period_recurring_concepts',
+    'period_recurring_settings',
     'period_expenses',
     'period_expense_categories',
+    'expense_recurring_concepts',
     'facilitator_payments',
     'facilitator_accounts',
     'enrollment_slots',

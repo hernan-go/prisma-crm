@@ -2,6 +2,8 @@
 
 **Actualizado:** 2026-10-27
 
+Actualización local 28/10: [Know-How IA, biblioteca operativa](iterations/2026-10-knowledge-library.md) implementada para revisión, sin publicar. Migración 012 solo en prisma_test. Pendientes activación autorizada en desarrollo y revisión del propietario; entregas posteriores de historial/restauración, retención/papelera y respaldos no implementadas. La conexión documental al MCP sigue pendiente y la integración existente permanece intacta.
+
 ## PRIORIDAD P0 — MÁXIMA: planificación comercial con IA
 
 Conexión de lectura completada el 27/10/2026: ChatGPT ↔ Site MCP privado ↔ API empresarial 2.0 desplegada en SiteGround, con consulta real de octubre de 2026 exitosa desde Work y ChatGPT normal, confirmada por el propietario. Backend publicado en `448554f`; Worker respaldado en el repositorio privado [hernan-go/prisma-mcp](https://github.com/hernan-go/prisma-mcp), commit `25487c43778370fce101e24f697b011ff7201219`, tag `v1.0.0`, con 23 pruebas sintéticas aprobadas. Sin API paga de modelos ni escritura operativa. D024 mantiene acceso empresarial completo y protección personal. [Estado y límites actuales](PROJECT_STATE.md#prioridad-estratégica-p0--planificación-comercial-con-ia); la [entrega de la API](iterations/2026-10-ai-read-context.md) se conserva como antecedente.

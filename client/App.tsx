@@ -3,7 +3,7 @@ import { FacilitatorPayments } from './FacilitatorPayments';
 import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   BarChart3,
   Menu,
   X,
+  BrainCircuit,
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Empty, PageTitle, useDisclosure } from './components';
@@ -28,6 +29,7 @@ import { Monthly, Agenda, Payments, Configuration } from './Management';
 import { Expenses } from './Expenses';
 import { ImportPeople } from './ImportPeople';
 import { Statistics } from './Statistics';
+import { Knowledge } from './Knowledge';
 import './administrative.css';
 export const PeriodContext = createContext<{ period: number; periods: any[] }>({
   period: 0,
@@ -47,10 +49,12 @@ const nav = [
   ['/pago-facilitadores', 'Pago Facilitadores', Coins],
   ['/publicidad', 'Gastos Período', Receipt],
   ['/estadisticas', 'Estadísticas', BarChart3],
+  ['/know-how', 'Know-How IA', BrainCircuit],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
 
 const sectionDescriptions: Record<string, string> = {
+  '/know-how': 'Documentos privados de esta instalación, independientes de los períodos.',
   '/personas': 'Un registro por persona, toda su historia en un lugar.',
   '/gestion': 'Personas incorporadas explícitamente al período seleccionado.',
   '/agenda': 'Horarios y asistentes del período seleccionado.',
@@ -126,7 +130,9 @@ function MobileHeader({
   const { period, periods } = usePeriod();
   const sectionPath = pathname.startsWith('/personas/') ? '/personas' : pathname;
   const title =
-    nav.find(([path]) => path === sectionPath)?.[1] ||
+    (sectionPath === '/know-how'
+      ? 'Centro de Conocimiento Empresarial'
+      : nav.find(([path]) => path === sectionPath)?.[1]) ||
     (pathname === '/importar'
       ? 'Importar personas'
       : pathname === '/importar-forms'
@@ -176,7 +182,7 @@ function MobileHeader({
       ) : (
         <PageTitle title={title} description={description} />
       )}
-      <div className="period-control mobile-period" hidden={open}>
+      <div className="period-control mobile-period" hidden={open || sectionPath === '/know-how'}>
         {selector}
       </div>
       {open && (
@@ -204,6 +210,28 @@ export default function App() {
   const [create, setCreate] = useState(false);
   const [toast, setToast] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
+  const [knowledgeUnsaved, setKnowledgeUnsaved] = useState(false);
+  const [heldLocation, setHeldLocation] = useState(location);
+  const holdKnowledge =
+    knowledgeUnsaved && heldLocation.pathname === '/know-how' && location.pathname !== '/know-how';
+  useEffect(() => {
+    const listener = (event: Event) => setKnowledgeUnsaved(Boolean((event as CustomEvent).detail));
+    window.addEventListener('knowledge-unsaved', listener);
+    return () => window.removeEventListener('knowledge-unsaved', listener);
+  }, []);
+  useEffect(() => {
+    if (!holdKnowledge) {
+      setHeldLocation(location);
+      return;
+    }
+    // Keep the editor mounted while a browser Back/Forward navigation is decided.
+    if (window.confirm('Hay cambios sin guardar en Know-How IA. ¿Querés descartarlos y salir?')) {
+      setKnowledgeUnsaved(false);
+    } else {
+      navigate(heldLocation.pathname + heldLocation.search + heldLocation.hash, { replace: true });
+    }
+  }, [holdKnowledge, heldLocation, location, navigate]);
   const mobileMenu = useDisclosure();
   useEffect(() => {
     mobileMenu.setOpen(false);
@@ -278,12 +306,14 @@ export default function App() {
             </div>
             <div className="period-control">
               <Logout />
-              <PeriodSelector
-                period={period}
-                periods={q.data || []}
-                onChange={setPeriod}
-                onCreate={() => setCreate(true)}
-              />
+              {location.pathname !== '/know-how' && (
+                <PeriodSelector
+                  period={period}
+                  periods={q.data || []}
+                  onChange={setPeriod}
+                  onCreate={() => setCreate(true)}
+                />
+              )}
             </div>
           </header>
           <main
@@ -297,13 +327,14 @@ export default function App() {
                 '/publicidad',
                 '/importar',
                 '/importar-forms',
+                '/know-how',
               ].includes(location.pathname) || location.pathname.startsWith('/personas/')
                 ? 'administrative-page'
                 : undefined
             }
           >
-            <ErrorBox error={q.error} />
-            <Routes>
+            {location.pathname !== '/know-how' && <ErrorBox error={q.error} />}
+            <Routes location={holdKnowledge ? heldLocation : location}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/personas" element={<People />} />
               <Route path="/personas/:id" element={<PersonDetail />} />
@@ -315,6 +346,7 @@ export default function App() {
               <Route path="/pago-facilitadores" element={<FacilitatorPayments />} />
               <Route path="/publicidad" element={<Expenses />} />
               <Route path="/estadisticas" element={<Statistics />} />
+              <Route path="/know-how" element={<Knowledge />} />
               <Route path="/configuracion" element={<Configuration />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />
             </Routes>

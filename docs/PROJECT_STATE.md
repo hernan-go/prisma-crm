@@ -2,6 +2,10 @@
 
 **Corte:** 2026-10-27
 
+## Actualización local — Know-How IA, entrega 1 (28/10/2026)
+
+Biblioteca administrativa implementada localmente sobre `d57d0df`, sin publicar: Markdown privado en MySQL, categorías, edición, activación, importación/exportación y cinco pilares explícitos e idempotentes. Revisión de concurrencia separada de versión de contenido; se conservan todas las instantáneas, sin historial UI ni depuración. Migración aditiva `012.sql` aplicada exclusivamente en `prisma_test`; prisma_dev/demo y producción permanecen sin cambios. Producción sigue con `001–011`. MCP intacto. Rama `codex/iteration-9-knowledge-library`, sin commits nuevos y pendiente de revisión del propietario. [Alcance, pruebas y revisión manual](iterations/2026-10-knowledge-library.md).
+
 ## Prioridad estratégica P0 — planificación comercial con IA
 
 **Hito funcional del 27/10/2026: conexión ChatGPT ↔ MCP privado ↔ API empresarial de lectura completada.** El propietario confirmó consulta real exitosa de octubre de 2026 desde Work y desde ChatGPT normal. Backend desplegado en SiteGround: `GET /api/integrations/ai/monthly-context?period=AAAA-MM`, contrato JSON 2.0, acceso autorizado sin escritura operativa ni API paga de modelos. Este hito no declara completado el asistente comercial P0.
