@@ -182,6 +182,9 @@ export function monthlyModelTests(agent: any, password: string) {
     });
     it('oferta futura y cambios del catálogo no reescriben historia', async () => {
       const old = (await agent.get(`/api/enrollments?period_id=${sep}`)).body;
+      const snapshots = await query(
+        'SELECT * FROM schedule_instructors ORDER BY schedule_id,instructor_id',
+      );
       const future = await offer(oct, a);
       await slot(future, [f2], 5, '18:00', '19:00');
       expect(
@@ -207,7 +210,9 @@ export function monthlyModelTests(agent: any, password: string) {
           ...e,
           slots: e.slots.map((s: any) => ({
             ...s,
-            instructors: s.instructors.map((i: any) => (i.id === f1 ? { ...i, active: 0 } : i)),
+            instructors: s.instructors.map((i: any) =>
+              i.id === f1 ? { ...i, name: 'Nombre futuro', active: 0 } : i,
+            ),
           })),
         })),
       );
@@ -216,6 +221,10 @@ export function monthlyModelTests(agent: any, password: string) {
           (e: any) => e.activity_id === a,
         ).activity,
       ).toBe('Oferta intermitente QA');
+      const persisted = await query(
+        'SELECT * FROM schedule_instructors ORDER BY schedule_id,instructor_id',
+      );
+      for (const snapshot of snapshots) expect(persisted).toContainEqual(snapshot);
     });
     it('inactivo visible en historial pero no en nuevas asignaciones', async () => {
       const o = await offer(oct, b);
@@ -229,7 +238,7 @@ export function monthlyModelTests(agent: any, password: string) {
       const h = (await agent.get(`/api/agenda?period_id=${sep}`)).body.find(
         (h: any) => h.id === group,
       );
-      expect(h.instructors.find((i: any) => i.id === f1).name).toBe('Facilitador A');
+      expect(h.instructors.find((i: any) => i.id === f1).name).toBe('Nombre futuro');
     });
     it('DELETE seguro y sin perder referencias históricas', async () => {
       expect((await agent.delete(`/api/instructors/${f1}`)).status).toBe(409);

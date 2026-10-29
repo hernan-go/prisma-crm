@@ -57,7 +57,7 @@ export async function scheduleList(period: number, db: Connection = pool): Promi
     name: string;
     active: number;
   }>(
-    `SELECT si.schedule_id,si.instructor_id id,si.display_name name,i.active FROM schedule_instructors si JOIN instructors i ON i.id=si.instructor_id JOIN activity_schedules s ON s.id=si.schedule_id JOIN period_activities o ON o.id=s.offering_id WHERE o.period_id=?`,
+    `SELECT si.schedule_id,si.instructor_id id,CONCAT_WS(' ',i.name,NULLIF(i.surname,'')) name,i.active FROM schedule_instructors si JOIN instructors i ON i.id=si.instructor_id JOIN activity_schedules s ON s.id=si.schedule_id JOIN period_activities o ON o.id=s.offering_id WHERE o.period_id=?`,
     [period],
     db,
   );

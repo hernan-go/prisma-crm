@@ -113,7 +113,7 @@ Los períodos son entidades de negocio explícitas. Nunca deben surgir como efec
 - `DELETE /offerings/:id` y `DELETE /schedules/:id`, bajo `/api`, validan uso histórico y referencias antes de retirar configuración propia. No borran catálogos ni operaciones.
 - Los flags de oferta/horario permanecen como memoria de inscripciones para edición/borrado individual. La eliminación completa del período admite esos flags en 1 cuando no quedan datos operativos/financieros ni referencias protegidas. No modifica flags de filas sobrevivientes.
 - Actividades globales se eliminan solo sin ofertas/inscripciones, retirando sus días sugeridos. Facilitadores se eliminan solo sin historia, retirando asignaciones preparatorias; cuentas/pagos, horarios usados, slots, referencias legacy o asignaciones en períodos cerrados bloquean.
-- Una cuenta de facilitador protege las asignaciones de su par oferta/facilitador al eliminar horarios: `display_name` participa en su presentación histórica. No se elimina automáticamente ninguna cuenta.
+- Una cuenta de facilitador protege las asignaciones de su par oferta/facilitador al eliminar horarios; se conserva su snapshot `display_name`. La presentación usa el nombre vigente de `instructors` por ID, incluso en períodos cerrados (D009). No se elimina automáticamente ninguna cuenta.
 
 La UI conserva el modal destructivo compartido, con descripciones específicas y errores autoritativos del backend. Los botones globales no dependen de los flags legacy; ofertas/horarios muestran acciones potenciales según sus flags, sin duplicar las comprobaciones financieras en React. Sin cambios de esquema, FK ni migración 010. Ver D015.
 
