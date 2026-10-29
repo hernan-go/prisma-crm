@@ -21,6 +21,14 @@ const doc = {
 window.fetch = async (input, init) => {
   const url = String(input);
   if (!url.startsWith('/api/')) throw Error('Fixture without network');
+  if (url === '/api/knowledge/import' && init?.body instanceof FormData) {
+    const file = init.body.get('file') as File;
+    return new Response(JSON.stringify({ content_md: await file.text() }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  if (url.endsWith('/export'))
+    return new Response(doc.content_md, { headers: { 'Content-Type': 'text/markdown' } });
   if (init?.method && init.method !== 'GET')
     return new Response(JSON.stringify({ message: 'Fixture visual: escrituras deshabilitadas.' }), {
       status: 409,
@@ -28,7 +36,20 @@ window.fetch = async (input, init) => {
     });
   let data: unknown = [];
   if (url === '/api/knowledge/state') data = { initialized: false };
-  else if (url.startsWith('/api/knowledge/documents?')) data = { rows: [doc], page: 1, total: 1 };
+  else if (url.startsWith('/api/knowledge/documents?'))
+    data = {
+      rows: [
+        doc,
+        {
+          ...doc,
+          id: '00000000-0000-4000-8000-000000000002',
+          title: 'Documento activo sintético',
+          is_active: true,
+        },
+      ],
+      page: 1,
+      total: 2,
+    };
   else if (url.startsWith('/api/knowledge/documents/')) data = doc;
   return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
 };

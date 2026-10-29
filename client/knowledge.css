@@ -190,3 +190,62 @@ dialog:has(.knowledge-editor) {
     min-height: 300px;
   }
 }
+.knowledge-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.knowledge-state.is-active {
+  background: #203b32;
+  color: #a8e6bf;
+  border-color: #466d56;
+}
+.knowledge-state.is-inactive {
+  background: #422b30;
+  color: #f4b6bc;
+  border-color: #825059;
+}
+.knowledge-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+dialog.knowledge-notice {
+  width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 28px;
+  margin: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-elevated);
+  color: var(--color-text);
+  box-shadow: 0 24px 80px #0009;
+}
+dialog.knowledge-notice::backdrop {
+  background: #0009;
+}
+.knowledge-notice h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+.knowledge-notice p {
+  line-height: 1.65;
+}
+.knowledge-notice .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+@media (max-width: 700px) {
+  .knowledge-notice .actions button {
+    width: 100%;
+  }
+}

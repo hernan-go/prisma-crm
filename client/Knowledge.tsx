@@ -13,6 +13,8 @@ import {
   useDebounce,
 } from './components';
 import { KnowledgePreview } from './KnowledgePreview';
+import { KnowledgeDialog } from './KnowledgeDialog';
+import { knowledgeFilename, suggestedMarkdownTitle } from './knowledge-files';
 import {
   documentInput,
   KNOWLEDGE_MAX_BYTES,
@@ -58,22 +60,25 @@ function formatDate(value: string) {
 export function KnowledgeEditor({
   document,
   initial,
+  initialTitle,
   categories,
   close,
 }: {
   document?: KnowledgeDocument;
   initial?: string;
+  initialTitle?: string;
   categories: KnowledgeCategory[];
   close: () => void;
 }) {
   const [id] = useState(() => document?.id || crypto.randomUUID());
   const [value, setValue] = useState<KnowledgeInput>({
-    title: document?.title || '',
+    title: document?.title || initialTitle || '',
     category_id: document?.category_id ?? null,
     content_md: document?.content_md ?? initial ?? '',
   });
   const [preview, setPreview] = useState(false);
   const [latest, setLatest] = useState<KnowledgeDocument>();
+  const [conflictNotice, setConflictNotice] = useState(false);
   const refresh = useRefresh();
   const dirty =
     value.title !== (document?.title || '') ||
@@ -82,6 +87,9 @@ export function KnowledgeEditor({
   useUnsaved(dirty);
   const bytes = new TextEncoder().encode(value.content_md).length;
   const save = useMutation({
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) setConflictNotice(true);
+    },
     mutationFn: async () => {
       const input = documentInput.parse(value);
       return api<KnowledgeDocument>(
@@ -105,6 +113,7 @@ export function KnowledgeEditor({
       title={document ? 'Editar documento' : 'Nuevo documento Markdown'}
       close={close}
       dirtyOverride={dirty}
+      centeredDiscard
     >
       <form
         className="knowledge-editor"
@@ -189,6 +198,9 @@ export function KnowledgeEditor({
           />
           {conflict && (
             <div className="warning">
+              <button type="button" onClick={() => setConflictNotice(true)}>
+                Revisar conflicto
+              </button>
               <p>
                 Tu texto permanece en el editor. Consultá la versión vigente o descargá tu borrador
                 antes de cerrar y volver a abrir el documento.
@@ -230,6 +242,38 @@ export function KnowledgeEditor({
           </div>
         </fieldset>
       </form>
+      {conflict && conflictNotice && (
+        <KnowledgeDialog
+          title="El documento fue modificado en otra sesión"
+          close={() => setConflictNotice(false)}
+        >
+          <p>
+            Existe una versión más reciente. Tus cambios permanecen en el editor, pero no pueden
+            guardarse sobre la versión actual sin revisarlos.
+          </p>
+          <ErrorBox error={current.error} />
+          <div className="actions">
+            <button
+              type="button"
+              disabled={current.isPending}
+              onClick={() =>
+                current.mutate(undefined, { onSuccess: () => setConflictNotice(false) })
+              }
+            >
+              Consultar versión vigente
+            </button>
+            <button
+              type="button"
+              onClick={() => download(value.content_md, knowledgeFilename(value.title, id))}
+            >
+              Descargar mi borrador
+            </button>
+            <button type="button" data-initial-focus onClick={() => setConflictNotice(false)}>
+              Volver al editor
+            </button>
+          </div>
+        </KnowledgeDialog>
+      )}
     </Modal>
   );
 }
@@ -258,7 +302,7 @@ function CategoryForm({ category, close }: { category?: KnowledgeCategory; close
     },
   });
   return (
-    <Modal title={category ? 'Editar categoría' : 'Nueva categoría'} close={close}>
+    <Modal title={category ? 'Editar categoría' : 'Nueva categoría'} close={close} centeredDiscard>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -308,7 +352,11 @@ export function Knowledge() {
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
-  const [edit, setEdit] = useState<{ document?: KnowledgeDocument; initial?: string }>();
+  const [edit, setEdit] = useState<{
+    document?: KnowledgeDocument;
+    initial?: string;
+    initialTitle?: string;
+  }>();
   const [editCategory, setEditCategory] = useState<{ category?: KnowledgeCategory }>();
   const [showCategories, setShowCategories] = useState(false);
   const [initialize, setInitialize] = useState(false);
@@ -353,9 +401,10 @@ export function Knowledge() {
       if (file.size > KNOWLEDGE_MAX_BYTES) throw new Error('El documento supera 512 KiB.');
       const body = new FormData();
       body.append('file', file);
-      return api<{ content_md: string }>(`${root}/import`, 'POST', body);
+      const result = await api<{ content_md: string }>(`${root}/import`, 'POST', body);
+      return { ...result, title: suggestedMarkdownTitle(result.content_md, file.name) };
     },
-    onSuccess: (result) => setEdit({ initial: result.content_md }),
+    onSuccess: (result) => setEdit({ initial: result.content_md, initialTitle: result.title }),
   });
   return (
     <div className="knowledge-page">
@@ -490,7 +539,12 @@ export function Knowledge() {
                     <h2>{doc.title}</h2>
                     <p>
                       {doc.category_name || 'Sin categoría'} ·{' '}
-                      <strong>{doc.is_active ? 'Activo' : 'Inactivo'}</strong>
+                      <span
+                        className={`knowledge-state ${doc.is_active ? 'is-active' : 'is-inactive'}`}
+                      >
+                        <span aria-hidden="true" className="knowledge-led" />
+                        {doc.is_active ? 'Activo' : 'Inactivo'}
+                      </span>
                     </p>
                     <small>
                       Versión {doc.content_version} · Modificado {formatDate(doc.updated_at)}
@@ -503,7 +557,7 @@ export function Knowledge() {
                     <button disabled={toggle.isPending} onClick={() => toggle.mutate(doc)}>
                       {doc.is_active ? 'Desactivar' : 'Activar'}
                     </button>
-                    <ExportDocument id={doc.id} />
+                    <ExportDocument id={doc.id} title={doc.title} />
                   </div>
                 </article>
               ))}
@@ -555,7 +609,7 @@ export function Knowledge() {
     </div>
   );
 }
-function ExportDocument({ id }: { id: string }) {
+function ExportDocument({ id, title }: { id: string; title: string }) {
   const exportFile = useMutation({
     mutationFn: async () => {
       const result = await fetch(`/api/knowledge/documents/${id}/export`, {
@@ -565,7 +619,7 @@ function ExportDocument({ id }: { id: string }) {
         if (result.status === 401) window.dispatchEvent(new Event('session-expired'));
         throw new Error('No se pudo exportar el documento.');
       }
-      download(await result.text(), `knowledge-${id}.md`);
+      download(await result.text(), knowledgeFilename(title, id));
     },
   });
   return (

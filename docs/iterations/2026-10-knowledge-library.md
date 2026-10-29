@@ -69,6 +69,16 @@ Remove-Item Env:DB_NAME
 
 Esta suite verifica base/host y reinicia únicamente las tablas documentales de prisma_test. Retira sus documentos sintéticos al finalizar y deja el esquema preparado.
 
+## Ajustes UX/UI posteriores a revisión manual — 29/10/2026
+
+El propietario confirmó revisión funcional satisfactoria de Entrega 1 y publicación del commit `249ba3f` en su rama. Se prepararon ajustes locales sin nuevo commit: pastillas Activo/Inactivo con LED decorativo y texto; exportación con slug de título (hasta 100 caracteres) y UUID para distinguir títulos iguales; propuesta editable de título desde H1 fuera de bloques de código o nombre legible del archivo. El Markdown no se transforma ni se guarda automáticamente.
+
+Descarte centrado mediante opción `centeredDiscard` de Modal, utilizada solo por editor/categorías de Know-How. El modo predeterminado de otros formularios permanece igual. Aviso 409 centrado con consulta vigente, descarga del borrador y retorno al editor; se puede reabrir y conserva comparación, revisión esperada y bloqueo de guardado. Diálogo nativo en portal con fondo atenuado, foco inicial en acción conservadora, Escape y retorno del foco.
+
+QA de navegador con fixture sintético, sin backend/DB: 390, 768 y 1440 px; descarte/seguir editando/Escape, foco, título importado editable sin alterar Markdown, conflicto reabrible y consulta vigente sin reemplazar borrador. Descarga de borrador comparada byte a byte con contenido local UTF-8. Capturas en `tmp/knowledge-ux/` (excluidas de Git). Fixture permite importación sintética y exportación, pero rechaza persistencia con 409. Pruebas focalizadas: 21 aprobadas, incluidas seis nuevas sobre nombres, títulos, estados accesibles, editor y modo predeterminado de Modal. Sin cambios de backend, migración, autenticación, versiones o MCP; sin dependencias nuevas ni pruebas DB.
+
+Validación final de ajustes UX/UI: typecheck, lint, build y diff check aprobados; suite normal secuencial, 448 aprobadas y 171 omitidas. Build con advertencias conocidas Zod/Rollup. Cambios locales pendientes de revisión, sin commit ni push.
+
 ## Pendientes fuera de alcance
 
 Interfaz de historial, versiones protegidas/restauración/depuración, papelera, eliminación definitiva, backup integral/recuperación, consulta MCP, instrucciones del asesor y Google Login. Los campos futuros quedan sin funcionalidad; retención no configurada, sin plazo automático. Las versiones locales no sustituyen un respaldo. Falta activar la migración en desarrollo bajo autorización separada y revisar manualmente con el propietario antes de cualquier publicación.

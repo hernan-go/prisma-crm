@@ -11,6 +11,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, LoaderCircle, Search } from 'lucide-react';
 import { api } from './api';
+import { KnowledgeDialog } from './KnowledgeDialog';
 // Dismissible, non-modal disclosures shared by mobile navigation and section help.
 export function useDisclosure() {
   const [open, setOpen] = useState(false);
@@ -121,11 +122,13 @@ export function Modal({
   children,
   close,
   dirtyOverride,
+  centeredDiscard = false,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
   dirtyOverride?: boolean;
+  centeredDiscard?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [changed, setDirty] = useState(false);
@@ -164,7 +167,20 @@ export function Modal({
           <X size={20} />
         </button>
       </div>
-      {discard && (
+      {discard && centeredDiscard && (
+        <KnowledgeDialog title="Tenés cambios sin guardar" close={() => setDiscard(false)}>
+          <p>¿Querés descartarlos? Los cambios que no hayas guardado se perderán.</p>
+          <div className="actions">
+            <button type="button" data-initial-focus onClick={() => setDiscard(false)}>
+              Seguir editando
+            </button>
+            <button type="button" className="danger" onClick={close}>
+              Descartar cambios
+            </button>
+          </div>
+        </KnowledgeDialog>
+      )}
+      {discard && !centeredDiscard && (
         <div className="discard-confirm" role="alert">
           <p>Hay cambios sin guardar. ¿Querés descartarlos?</p>
           <div className="actions">
