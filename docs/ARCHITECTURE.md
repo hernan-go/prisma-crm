@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Extensión local de conocimiento empresarial — 30/10/2026
+
+MySQL → `/api/integrations/ai/knowledge` → Worker MCP privado → ChatGPT. Listado de metadatos paginado y lectura individual del Markdown vigente, exclusivamente activo/no eliminado. Reutiliza seguridad del router empresarial, sin cambios al contrato estadístico 2.0 ni a D020–D024. [Contrato 1.0, límites y validación](iterations/2026-10-knowledge-mcp.md). Implementación local pendiente de publicación; los apartados anteriores de diseño conservados debajo son antecedentes.
+
 ## Know-How IA — implementación local, entrega 1
 
 `/know-how` y router administrativo `/api/knowledge`, bajo sesión existente. Markdown privado en MySQL mediante `knowledge_categories`, `knowledge_documents`, `knowledge_document_versions` y `knowledge_library_state`. Migración aditiva 012 validada solo en prisma_test, sin activación en desarrollo/producción. Biblioteca global por instalación, sin períodos ni multitenancy. Inicialización explícita/idempotente de cinco documentos pilares inactivos y genéricos, sin categorías obligatorias.

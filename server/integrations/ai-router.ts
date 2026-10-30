@@ -6,6 +6,8 @@ import { rateLimit } from 'express-rate-limit';
 import { monthlyContextQuerySchema, monthlyContextSchema } from '../../shared/ai-context.js';
 import { AppError } from '../errors.js';
 import { monthlyContext } from './ai-context.js';
+import { readKnowledge } from './ai-knowledge.js';
+import { knowledgeQuery, knowledgeResponse } from '../../shared/ai-knowledge.js';
 
 export interface AiIntegrationOptions {
   tokenHash?: string;
@@ -14,6 +16,7 @@ export interface AiIntegrationOptions {
   transportMode?: string;
   allowLocalHttp?: boolean;
   read?: typeof monthlyContext;
+  readKnowledge?: typeof readKnowledge;
 }
 const normalizeIp = (ip: string) => ip.replace(/^::ffff:/, '');
 const loopback = (ip: string) => ['127.0.0.1', '::1'].includes(normalizeIp(ip));
@@ -167,6 +170,43 @@ export function aiIntegration(options: AiIntegrationOptions = {}) {
       return res
         .status(503)
         .json({ code: 'context_unavailable', message: 'No se pudo consultar el contexto.' });
+    } finally {
+      inFlight--;
+    }
+  });
+  router.get('/knowledge', async (req, res) => {
+    const parsed = knowledgeQuery.safeParse(req.query);
+    if (
+      !parsed.success ||
+      req.headers['transfer-encoding'] ||
+      Number(req.headers['content-length'] ?? 0) > 0
+    )
+      return res
+        .status(422)
+        .json({ code: 'invalid_request', message: 'Consulta documental inválida.' });
+    if (inFlight >= 2) return res.status(503).json({ code: 'busy', message: 'Servicio ocupado.' });
+    inFlight++;
+    try {
+      const data = knowledgeResponse.parse(
+        await (options.readKnowledge ?? readKnowledge)(parsed.data),
+      );
+      const json = JSON.stringify(data);
+      if (Buffer.byteLength(json) > 512 * 1024)
+        return res
+          .status(413)
+          .json({
+            code: 'context_too_large',
+            message: 'Documento demasiado extenso para esta consulta.',
+          });
+      return res.type('application/json').send(json);
+    } catch (error) {
+      if (error instanceof AppError && error.status === 404)
+        return res
+          .status(404)
+          .json({ code: 'document_not_found', message: 'Documento no disponible.' });
+      return res
+        .status(503)
+        .json({ code: 'context_unavailable', message: 'No se pudo consultar el conocimiento.' });
     } finally {
       inFlight--;
     }

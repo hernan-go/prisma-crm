@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## Extensión Know-How MCP — desarrollo local 30/10/2026
+
+API privada `GET /api/integrations/ai/knowledge` implementada para listado paginado y documento activo vigente, con autenticación de servicio existente. Sin migraciones ni cambios administrativos/estadísticos. Publicación pendiente; el Worker se desarrolla y valida por separado. [Contrato, pruebas y publicación](iterations/2026-10-knowledge-mcp.md). El propietario confirmó 012/Know-How publicados y fallback SPA ba7fff7 validado en producción; las referencias anteriores a esos pendientes son históricas.
+
 **Corte:** 2026-10-29
 
 ## Estado local aprobado — Know-How IA y Facilitadores (29/10/2026)
