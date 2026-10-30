@@ -1,6 +1,37 @@
 # Iteración 9 — Know-How IA: biblioteca operativa (entrega 1)
 
-Implementación local autorizada el 28/10/2026 sobre `d57d0df`, rama `codex/iteration-9-knowledge-library`. Sin commits, integración, push ni despliegue. No modifica D020–D024 ni el MCP. Pendiente de revisión del propietario.
+Estado vigente: entrega integrada en `0a164246ae3072d14fb7ab8dc56c21a585daf496`, rama `integration/iteration-9-knowledge-facilitators`, respaldada en GitHub y aprobada manualmente por el propietario en desarrollo. Pendiente de producción. La implementación inicial sobre `d57d0df` se conserva en `249ba3f`, los ajustes UX/UI en `e222e09` y la corrección de Facilitadores en `d9483ba`. No modifica D020–D024 ni el MCP. Los apartados de validaciones anteriores son antecedentes; sus pendientes de commit, integración y revisión local quedan superados por el cierre siguiente.
+
+## Cierre local integrado y QA del propietario — 29/10/2026
+
+Merge confirmado con dos padres (`e222e09` y `d9483ba`). Único conflicto en `tests/model-fixtures.ts`: se conservaron las tablas documentales y recurrentes en orden de claves foráneas, sin pérdida de cambios. `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` y `tests/integration.test.ts` combinados y revisados; funcionalidades y pruebas de ambas ramas conservadas. Migración 012 y cinco mejoras UX/UI sin alteraciones por integración.
+
+Validación integrada: typecheck, lint, build y diff check aprobados; 448 pruebas normales aprobadas/172 omitidas; 606 generales MySQL aprobadas/14 omitidas; 9 documentales MySQL y 23 focalizadas aprobadas. Suites ejecutadas secuencialmente, integración solo en `prisma_test`, con host/nombre comprobados. Advertencias de anotaciones Zod/Rollup no bloqueantes. No se repitieron pruebas ni operaciones DB en este cierre exclusivamente documental.
+
+### Migración de desarrollo y respaldo
+
+`012.sql` aplicada y registrada mediante runner acotado en `prisma_dev`, MySQL local `127.0.0.1:3306` 8.4.11. Migraciones exactamente 001–012; 29 tablas, con cuatro documentales nuevas. Columnas, tipos, defaults, charset/collation, ocho índices, cuatro PK, dos UNIQUE, diez CHECK ENFORCED y dos FK RESTRICT verificados contra el SQL. Las cuatro tablas estaban vacías al terminar el postflight, antes de la QA manual posterior. Las 25 tablas originales conservaron esquemas y huellas de todos sus registros, incluidas columnas invisibles, salvo el nuevo registro de migración. Sin objetos inesperados.
+
+El comparador inicial se detuvo por representación textual de `chk_knowledge_document_size`: MySQL almacenó LENGTH en lugar de OCTET_LENGTH. Ambas funciones miden bytes y son sinónimas; se contrastaron las expresiones, documentación MySQL y un ejemplo multibyte mediante SELECT. Verificación completada en lectura, sin reparar ni reejecutar DDL.
+
+Respaldo externo previo: `C:/Users/Hernán/prisma-crm-backups/2026-10-29T19-20-19-pre-012-prisma_dev-6d1334b5f7484256ac08fcc13235aa99/prisma_dev-reintento.sql`, 38.582 bytes, SHA-256 `7AB32B531E552534DBF6F44807FF8612B487E898E229B350DEBFE1930FCBD2D2`. Lectura completa UTF-8, encabezado/cierre, 25 definiciones coincidentes, conteos por tabla y 001–011 verificados; permisos restringidos al propietario y SYSTEM. No se cotejó cada valor del dump con origen ni se restauró: restaurabilidad no demostrada. SHA-256 de 012: `523E330D041AE0D92EA2FA5114CB372B759645CC61387636CE0C27874C33D53E`.
+
+### Aprobación manual comunicada por el propietario
+
+Pruebas realizadas en `prisma_dev`, con datos ficticios, no en producción:
+
+- Facilitadora Lucía QA renombrada a Lucila QA: nombre actualizado en Configuración, horarios y Pago Facilitadores, conservando honorarios y pago ficticio.
+- Cinco pilares inicializados; edición con versión 2; activación/desactivación sin generar versión de contenido.
+- Exportación Markdown correcta; importación y sugerencia de título correctas; sexto documento creado inactivo en versión 1.
+- Advertencia de cambios sin guardar y conflicto HTTP 409 entre pestañas correctos; consulta de versión vigente y descarga de borrador con contenido conservado.
+
+Estos recorridos constituyen aprobación manual del propietario; no se presentan como una nueva auditoría independiente de Codex ni como evidencia productiva.
+
+### Siguiente paso: preflight productivo pendiente
+
+La entrega no está publicada en producción. `012.sql` sigue pendiente allí. Know-How todavía no se conecta al asesor IA; el MCP privado operativo y la autenticación permanecen intactos. Iteración 9 continúa abierta con todos sus demás pendientes.
+
+Antes de producción: verificar destino real y registro 001–011, ausencia de estructuras parciales knowledge, permisos, versión y sesiones/escritores; obtener y verificar respaldo productivo y definir recuperación ante DDL parcial. La restaurabilidad del respaldo local no fue demostrada y no sustituye un respaldo productivo. Aplicación productiva manual/guiada por el propietario, con autorización separada, seguida de postflight antes del despliegue compatible y smoke. El push a main dispara deploy y no debe adelantarse a la preparación de DB. Detenerse ante discrepancias; no asumir rollback de DDL ni restaurar automáticamente. No trasladar datos ficticios ni el respaldo de desarrollo a producción. Inicialización de pilares productivos será explícita y separada.
 
 ## Alcance implementado
 
@@ -24,9 +55,9 @@ API de esta entrega: GET state; POST initialize; GET/POST categories; PUT catego
 
 ## Migración y recuperación de DDL parcial
 
-La migración se aplicó únicamente en `prisma_test`. El runner detecta tablas knowledge preexistentes sin registro 012 y aborta antes de ejecutar sus sentencias. CREATE sin IF NOT EXISTS falla también ante objetos existentes: no se presume compatibilidad ni rollback de DDL.
+La migración se aplicó en `prisma_test` y posteriormente, bajo autorización separada, en `prisma_dev` según el cierre anterior; continúa pendiente en producción. El runner detecta tablas knowledge preexistentes sin registro 012 y aborta antes de ejecutar sus sentencias. CREATE sin IF NOT EXISTS falla también ante objetos existentes: no se presume compatibilidad ni rollback de DDL.
 
-Un fallo parcial requiere inspección manual de tablas, restricciones y datos antes de decidir recuperación; no borrar tablas ni marcar la migración como aplicada automáticamente. El esquema es aditivo y compatible con el código anterior. Antes de cualquier activación futura en otra base, corresponde autorización, respaldo, preflight, aplicación controlada y postflight. Esta entrega no autoriza ejecutarla en prisma_dev/demo/producción.
+Un fallo parcial requiere inspección manual de tablas, restricciones y datos antes de decidir recuperación; no borrar tablas ni marcar la migración como aplicada automáticamente. El esquema es aditivo y compatible con el código anterior. Antes de cualquier activación futura en otra base, corresponde autorización, respaldo, preflight, aplicación controlada y postflight. La activación separada en prisma_dev ya está completada; este cierre no autoriza migraciones en demo o producción.
 
 ## Validación
 
@@ -81,4 +112,4 @@ Validación final de ajustes UX/UI: typecheck, lint, build y diff check aprobado
 
 ## Pendientes fuera de alcance
 
-Interfaz de historial, versiones protegidas/restauración/depuración, papelera, eliminación definitiva, backup integral/recuperación, consulta MCP, instrucciones del asesor y Google Login. Los campos futuros quedan sin funcionalidad; retención no configurada, sin plazo automático. Las versiones locales no sustituyen un respaldo. Falta activar la migración en desarrollo bajo autorización separada y revisar manualmente con el propietario antes de cualquier publicación.
+Interfaz de historial, versiones protegidas/restauración/depuración, papelera, eliminación definitiva, backup integral/recuperación, consulta MCP, instrucciones del asesor y Google Login. Los campos futuros quedan sin funcionalidad; retención no configurada, sin plazo automático. Las versiones locales no sustituyen un respaldo. Activación y QA de desarrollo completadas; falta preflight productivo, migración 012 productiva manual autorizada, publicación y smoke bajo alcances separados.

@@ -1,10 +1,14 @@
 # PRISMA CRM — Estado actual
 
-**Corte:** 2026-10-27
+**Corte:** 2026-10-29
 
-## Actualización local — Know-How IA, entrega 1 (28/10/2026)
+## Estado local aprobado — Know-How IA y Facilitadores (29/10/2026)
 
-Biblioteca administrativa implementada localmente sobre `d57d0df`, sin publicar: Markdown privado en MySQL, categorías, edición, activación, importación/exportación y cinco pilares explícitos e idempotentes. Revisión de concurrencia separada de versión de contenido; se conservan todas las instantáneas, sin historial UI ni depuración. Migración aditiva `012.sql` aplicada exclusivamente en `prisma_test`; prisma_dev/demo y producción permanecen sin cambios. Producción sigue con `001–011`. MCP intacto. Rama `codex/iteration-9-knowledge-library`, sin commits nuevos y pendiente de revisión del propietario. [Alcance, pruebas y revisión manual](iterations/2026-10-knowledge-library.md).
+Know-How IA, Entrega 1 y sus cinco mejoras UX/UI integradas con la corrección de nombres de facilitadores en `0a164246ae3072d14fb7ab8dc56c21a585daf496`, rama `integration/iteration-9-knowledge-facilitators`, respaldada en GitHub y aprobada manualmente por el propietario en `prisma_dev`. No publicada en producción. Typecheck/lint/build aprobados; 448 pruebas normales, 606 generales MySQL, 9 documentales MySQL y 23 focalizadas aprobadas, en suites secuenciales e integración exclusivamente en `prisma_test`. Conflicto de fixtures resuelto conservando ambas funcionalidades y orden de FK.
+
+`012.sql` aplicada y registrada en `prisma_dev`: 29 tablas, cuatro documentales nuevas y esquema/restricciones verificados; las 25 tablas originales conservaron esquema y registros. Respaldo previo verificado por integridad/cobertura, sin restaurabilidad demostrada. El mismatch inicial de CHECK fue textual: MySQL normaliza OCTET_LENGTH como LENGTH, ambas en bytes; postflight completo aprobado sin alterar la migración. La posterior QA del propietario creó datos ficticios y pilares explícitamente en desarrollo. [Evidencia y alcance de QA manual](iterations/2026-10-knowledge-library.md#cierre-local-integrado-y-qa-del-propietario--29102026).
+
+Siguiente paso pendiente: preflight productivo de solo lectura y preparación de respaldo/procedimiento. `012.sql` sigue pendiente de producción, cuyo estado registrado continúa en `001–011`; no se realizó una nueva verificación productiva en este cierre. Know-How todavía no se conecta al asesor IA; MCP y autenticación intactos. Iteración 9 abierta, conservando sus demás pendientes. Sin autorización de migración productiva ni despliegue en este cierre.
 
 ## Prioridad estratégica P0 — planificación comercial con IA
 

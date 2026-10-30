@@ -1,8 +1,8 @@
 # PRISMA CRM — Roadmap
 
-**Actualizado:** 2026-10-27
+**Actualizado:** 2026-10-29
 
-Actualización local 28/10: [Know-How IA, biblioteca operativa](iterations/2026-10-knowledge-library.md) implementada para revisión, sin publicar. Migración 012 solo en prisma_test. Pendientes activación autorizada en desarrollo y revisión del propietario; entregas posteriores de historial/restauración, retención/papelera y respaldos no implementadas. La conexión documental al MCP sigue pendiente y la integración existente permanece intacta.
+Actualización local 29/10: [Know-How IA, Entrega 1 y corrección de Facilitadores](iterations/2026-10-knowledge-library.md#cierre-local-integrado-y-qa-del-propietario--29102026) integradas en `0a16424`, validadas y aprobadas manualmente en `prisma_dev`. `012.sql` aplicada en desarrollo y pruebas; pendiente en producción. Próximo paso: preflight productivo, sin autorización implícita de migración ni despliegue. Entregas posteriores de historial/restauración, retención/papelera y respaldos integrales pendientes. La biblioteca no se conecta todavía al asesor IA; integración MCP existente intacta. Iteración 9 abierta y demás prioridades conservadas.
 
 ## PRIORIDAD P0 — MÁXIMA: planificación comercial con IA
 
@@ -10,7 +10,7 @@ Conexión de lectura completada el 27/10/2026: ChatGPT ↔ Site MCP privado ↔ 
 
 El propietario aprobó la [especificación funcional de planificación comercial con IA](AI_COMMERCIAL_PLANNING.md) como objetivo estratégico principal: una primera carta útil de alternativas comerciales y eventos, con precios concretos, fundamentos económicos y conversación iterativa. El asistente comercial completo sigue pendiente; disponer de conexión real de lectura no satisface por sí solo ese contrato. Centro de Conocimiento empresarial real, fuentes externas verificables y simulaciones siguen pendientes; la herramienta de conocimiento MCP contiene cinco documentos ficticios.
 
-Esta prioridad reordena la planificación futura y prevalece sobre las secuencias anteriores conservadas como antecedentes. La API y su conexión MCP fueron autorizadas y publicadas posteriormente; este roadmap no amplía el alcance a nuevas implementaciones ni escrituras operativas. D020–D023 conservan cálculos verificables y límites económicos, complementados por D024. La especificación sigue siendo la referencia funcional única; el know-how privado permanece fuera de Git y tendrá su Centro de conocimiento posterior dentro del sistema. La Iteración 9 continúa abierta.
+Esta prioridad reordena la planificación futura y prevalece sobre las secuencias anteriores conservadas como antecedentes. La API y su conexión MCP fueron autorizadas y publicadas posteriormente; este roadmap no amplía el alcance a nuevas implementaciones ni escrituras operativas. D020–D023 conservan cálculos verificables y límites económicos, complementados por D024. La especificación sigue siendo la referencia funcional única; el contenido empresarial privado permanece fuera de Git. La primera biblioteca ya está aprobada en desarrollo según la actualización anterior; su publicación y conexión documental al asesor siguen pendientes. Las referencias posteriores al Centro pendiente conservan el alcance completo/productivo, no una implementación inicial todavía ausente. La Iteración 9 continúa abierta.
 
 ## Completado recientemente
 
