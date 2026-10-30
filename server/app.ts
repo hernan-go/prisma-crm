@@ -45,8 +45,9 @@ export function createApp(authOptions: AuthOptions = {}, aiOptions: AiIntegratio
   app.use('/api', auth.guard);
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ message: 'Ruta no encontrada.' }));
-  app.use(express.static(resolve('dist/client')));
-  app.get('/{*path}', (_req, res) => res.sendFile(resolve('dist/client/index.html')));
+  const clientRoot = resolve('dist/client');
+  app.use(express.static(clientRoot));
+  app.get('/{*path}', (_req, res) => res.sendFile('index.html', { root: clientRoot }));
   app.use(
     (error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       if (error instanceof ZodError)
