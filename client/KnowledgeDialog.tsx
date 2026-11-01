@@ -5,10 +5,12 @@ export function KnowledgeDialog({
   title,
   children,
   close,
+  className = '',
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -32,7 +34,7 @@ export function KnowledgeDialog({
   }, []);
   return createPortal(
     <dialog
-      className="knowledge-notice"
+      className={`knowledge-notice ${className}`}
       ref={ref}
       aria-labelledby={titleId}
       onCancel={(event) => {

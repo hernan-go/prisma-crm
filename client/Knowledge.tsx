@@ -14,6 +14,7 @@ import {
 } from './components';
 import { KnowledgePreview } from './KnowledgePreview';
 import { KnowledgeDialog } from './KnowledgeDialog';
+import { KnowledgeProposals, ProposalBadge } from './KnowledgeProposals';
 import { knowledgeFilename, suggestedMarkdownTitle } from './knowledge-files';
 import {
   documentInput,
@@ -63,12 +64,14 @@ export function KnowledgeEditor({
   initialTitle,
   categories,
   close,
+  reviewProposals,
 }: {
   document?: KnowledgeDocument;
   initial?: string;
   initialTitle?: string;
   categories: KnowledgeCategory[];
   close: () => void;
+  reviewProposals?: () => void;
 }) {
   const [id] = useState(() => document?.id || crypto.randomUUID());
   const [value, setValue] = useState<KnowledgeInput>({
@@ -123,6 +126,14 @@ export function KnowledgeEditor({
         }}
       >
         <fieldset disabled={save.isPending}>
+          {document && reviewProposals && (
+            <button type="button" disabled={dirty} onClick={reviewProposals}>
+              Revisar propuestas pendientes
+            </button>
+          )}
+          {document && reviewProposals && dirty && (
+            <p className="muted">Guardá o cerrá tus cambios antes de revisar propuestas.</p>
+          )}
           <div className="knowledge-fields">
             <Field label="Título">
               <input
@@ -347,6 +358,7 @@ function CategoryForm({ category, close }: { category?: KnowledgeCategory; close
   );
 }
 export function Knowledge() {
+  const [review, setReview] = useState<{ id: string; title: string }>();
   const [q, setQ] = useState('');
   const search = useDebounce(q);
   const [category, setCategory] = useState('');
@@ -361,6 +373,11 @@ export function Knowledge() {
   const [showCategories, setShowCategories] = useState(false);
   const [initialize, setInitialize] = useState(false);
   const refresh = useRefresh();
+  const counts = useQuery({
+    queryKey: ['knowledge', 'proposal-counts'],
+    queryFn: () =>
+      api<{ document_id: string; pending_count: number }[]>('/knowledge/proposals/counts'),
+  });
   const params = new URLSearchParams({ q: search, page: String(page) });
   if (category) params.set('category', category);
   if (status) params.set('status', status);
@@ -449,7 +466,8 @@ export function Knowledge() {
           state.error ||
           open.error ||
           toggle.error ||
-          importing.error
+          importing.error ||
+          counts.error
         }
       />
       {importing.isPending && <p role="status">Validando Markdown…</p>}
@@ -544,7 +562,13 @@ export function Knowledge() {
                       >
                         <span aria-hidden="true" className="knowledge-led" />
                         {doc.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </span>{' '}
+                      <ProposalBadge
+                        count={
+                          counts.data?.find((p) => p.document_id === doc.id)?.pending_count ?? 0
+                        }
+                        open={() => setReview({ id: doc.id, title: doc.title })}
+                      />
                     </p>
                     <small>
                       Versión {doc.content_version} · Modificado {formatDate(doc.updated_at)}
@@ -579,6 +603,19 @@ export function Knowledge() {
           {...edit}
           categories={categories.data || []}
           close={() => setEdit(undefined)}
+          reviewProposals={
+            edit.document
+              ? () => setReview({ id: edit.document!.id, title: edit.document!.title })
+              : undefined
+          }
+        />
+      )}
+      {review && (
+        <KnowledgeProposals
+          documentId={review.id}
+          title={review.title}
+          close={() => setReview(undefined)}
+          onResolved={() => setEdit(undefined)}
         />
       )}
       {editCategory && <CategoryForm {...editCategory} close={() => setEditCategory(undefined)} />}

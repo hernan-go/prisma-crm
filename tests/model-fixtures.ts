@@ -8,6 +8,7 @@ export async function resetTestSchema() {
   )
     throw new Error('Only prisma_test');
   for (const t of [
+    'knowledge_edit_proposals',
     'knowledge_document_versions',
     'knowledge_documents',
     'knowledge_categories',

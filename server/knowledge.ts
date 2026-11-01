@@ -25,7 +25,7 @@ const summary = `SELECT d.id,d.title,d.category_id,c.name category_name,d.is_act
 function normalize(row: any): KnowledgeDocument {
   return { ...row, is_active: Boolean(row.is_active) };
 }
-async function lockLibrary(db: Connection) {
+export async function lockLibrary(db: Connection) {
   // An upsert takes the exclusive row lock directly; INSERT IGNORE would take
   // shared duplicate-key locks that deadlock when concurrent writers upgrade.
   await execute(
@@ -115,26 +115,32 @@ export async function knowledgeCreate(body: unknown) {
   });
 }
 export async function knowledgeSave(id: string, body: unknown) {
-  const { expected_revision, ...input } = documentUpdate.parse(body);
+  documentUpdate.parse(body);
   return transaction(async (db) => {
     await lockLibrary(db);
-    const current = await knowledgeDocument(id, db);
-    requireRevision(current.revision, expected_revision);
-    const name = await categoryName(input.category_id, db, current.category_id);
-    if (
-      input.title === current.title &&
-      input.category_id === current.category_id &&
-      input.content_md === current.content_md
-    )
-      return current;
-    await execute(
-      'UPDATE knowledge_documents SET title=?,category_id=?,content_md=?,revision=revision+1,content_version=content_version+1,updated_at=CURRENT_TIMESTAMP(3) WHERE id=?',
-      [input.title, input.category_id, input.content_md, id],
-      db,
-    );
-    await snapshot(id, current.content_version + 1, input, name, 'edit', db);
-    return knowledgeDocument(id, db);
+    return knowledgeSaveLocked(id, body, db);
   });
+}
+// Caller owns the transaction and exclusive library lock. Shared by admin edits
+// and proposal approval so snapshot, proposal receipt and content commit together.
+export async function knowledgeSaveLocked(id: string, body: unknown, db: Connection) {
+  const { expected_revision, ...input } = documentUpdate.parse(body);
+  const current = await knowledgeDocument(id, db);
+  requireRevision(current.revision, expected_revision);
+  const name = await categoryName(input.category_id, db, current.category_id);
+  if (
+    input.title === current.title &&
+    input.category_id === current.category_id &&
+    input.content_md === current.content_md
+  )
+    return current;
+  await execute(
+    'UPDATE knowledge_documents SET title=?,category_id=?,content_md=?,revision=revision+1,content_version=content_version+1,updated_at=CURRENT_TIMESTAMP(3) WHERE id=?',
+    [input.title, input.category_id, input.content_md, id],
+    db,
+  );
+  await snapshot(id, current.content_version + 1, input, name, 'edit', db);
+  return knowledgeDocument(id, db);
 }
 export async function knowledgeSetStatus(id: string, body: unknown) {
   const input = documentStatus.parse(body);

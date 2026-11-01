@@ -8,7 +8,15 @@ import { api } from './routes.js';
 import { AppError } from './errors.js';
 import { authentication, type AuthOptions } from './auth.js';
 import { aiIntegration, type AiIntegrationOptions } from './integrations/ai-router.js';
-export function createApp(authOptions: AuthOptions = {}, aiOptions: AiIntegrationOptions = {}) {
+import {
+  proposalIntegration,
+  type ProposalIntegrationOptions,
+} from './integrations/knowledge-proposals-router.js';
+export function createApp(
+  authOptions: AuthOptions = {},
+  aiOptions: AiIntegrationOptions = {},
+  proposalOptions: ProposalIntegrationOptions = {},
+) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
@@ -16,6 +24,7 @@ export function createApp(authOptions: AuthOptions = {}, aiOptions: AiIntegratio
   // Separate, terminal namespace: service credentials never reach administrative routes.
   // Mount before browser CORS/body parsing/session auth; this router owns safe errors.
   app.use('/api/integrations/ai', aiIntegration(aiOptions));
+  app.use('/api/integrations/knowledge-proposals', proposalIntegration(proposalOptions));
   app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5173', credentials: true }));
   app.use(express.json({ limit: '8mb' }));
   app.use(

@@ -38,6 +38,8 @@ describe.skipIf(!enabled)('Know-How exclusivamente prisma_test', () => {
       throw Error('Only local prisma_test');
     expect((await query('SELECT DATABASE() db'))[0].db).toBe('prisma_test');
     verified = true;
+    await execute('DROP TABLE IF EXISTS knowledge_edit_proposals');
+    await execute("DELETE FROM schema_migrations WHERE name='013.sql'");
     expect(await query("SELECT name FROM schema_migrations WHERE name='011.sql'")).toHaveLength(1);
     for (const t of tables) await execute(`DROP TABLE IF EXISTS ${t}`);
     await execute("DELETE FROM schema_migrations WHERE name='012.sql'");

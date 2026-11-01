@@ -32,6 +32,15 @@ export async function migrate(through?: string) {
       if ((found as any[]).length) continue;
       // MySQL DDL commits implicitly: reject orphaned history before any 007 statement.
       if (name === '007.sql') await requireHistoricalExpensePeriods(c);
+      if (name === '013.sql') {
+        const [existing] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='knowledge_edit_proposals'",
+        );
+        if (existing.length)
+          throw new Error(
+            '013.sql detenida: existe tabla de propuestas sin registro. Inspeccionar aplicación parcial.',
+          );
+      }
       if (name === '012.sql') {
         const [existing] = await c.query<RowDataPacket[]>(
           "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('knowledge_categories','knowledge_documents','knowledge_document_versions','knowledge_library_state')",

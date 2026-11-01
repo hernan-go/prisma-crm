@@ -1,5 +1,6 @@
 import { createWeatherRouter } from './weather.js';
 import { knowledge } from './knowledge.js';
+import { knowledgeProposals } from './knowledge-proposals.js';
 import { statistics } from './statistics/index.js';
 import { facilitators } from './facilitators.js';
 import { offerings, instructorSave, deleteCatalog } from './offerings.js';
@@ -24,6 +25,7 @@ import {
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
 api.use('/knowledge', knowledge);
+api.use('/knowledge/proposals', knowledgeProposals);
 api.use(statistics);
 api.use(createWeatherRouter());
 api.use(facilitators);
