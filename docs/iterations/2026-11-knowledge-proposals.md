@@ -1,5 +1,23 @@
 # Iteración 10.1 — Propuestas de edición del Know-How (CRM)
 
+## Cierre productivo — 02/11/2026
+
+Estado definitivo: Iteración 10.1 completada. Evidencia de producción y de Work/Sites aportada por el propietario para este cierre; no revalidada mediante nuevas operaciones productivas. CRM ae3cea9eb81115f0edb5a665016fa1661e9e6b19 publicado, 012 y 013 registradas; contador, Antes/Después y decisiones administrativas operativos. Regresión CRM previa: 662 aprobadas y lint/typecheck/build satisfactorios.
+
+Worker GitHub c80fc8b61392bb3425cec187c0341e83ef80710b. Site PRISMA — Análisis de Gestión, project_id appgprj_6ade63d3e6948191b5ed522945af814e, privado exclusivo del propietario. Versión 5: appgprj_6ade63d3e6948191b5ed522945af814e~appgver_9cce8b086e948191be6e05ab1866070a; commit interno e57be72e758ad2ea2e8f0d1fa16aae2651b8d937. Deploy inicial appgdep_6ae7c9cab59c8191953846c32fe6cfd7; redespliegue para secreto appgdep_6ae7d7cd14f08191a1d66f723c17d9d8. Recuperación conservada: versión 4, appgprj_6ade63d3e6948191b5ed522945af814e~appgver_0709265231ec819199a713a65b150a6e. No confundir SHA GitHub con SHA interno Sites.
+
+Work/Sites informó instalación oficial pnpm@11.25.0 con lockfile respetado, 40/40 pruebas, typecheck, lint, build y artefacto aprobados y fuentes sincronizadas. El bloqueo Windows es antecedente ambiental, no pendiente productivo. Cuatro herramientas registradas: consultar_estadisticas_comerciales, consultar_conocimiento_empresarial, enviar_propuesta_conocimiento y consultar_estado_propuesta_conocimiento. Credenciales independientes configuradas en runtime de ambos servicios; no se incluyen valores.
+
+QA real autorizada: documento sintético 46005380-7721-4585-8abe-bcda622f70e1, propuesta f252cf1f-7e4d-4fb3-9af7-8c560ce61338, pending → aprobación administrativa → approved, revisión 3, content_version 2 y lectura posterior concordante. Documento desactivado, no eliminado; ausente de activos y lectura por ID DOCUMENTO_NO_DISPONIBLE. Recibo aprobado disponible. Seis documentos empresariales reales sin cambios en esta prueba.
+
+prisma_dev: 013 manual tras respaldo C:/dev/personal/PRISMA-backups-local/prisma_dev_pre_013_20261101_221842.sql, exportación exitosa y verificaciones básicas; restauración no ensayada. Propietario confirmó recepción, indicador/comparador, aprobación e incremento de versión, rechazo con texto ausente y recibo conservado, cero pendientes tras resolver. prisma_demo tuvo errores de consulta y no fue migrado/revalidado: pendiente ambiental independiente.
+
+Límites: consentimiento declarado por cliente, administración compartida, dependencia del proxy HTTPS; sin auditoría exhaustiva de seguridad/concurrencia ni recuperación ante desastres. El historial se almacena pero no tiene explorador administrativo de versiones. Asistente comercial completo, Estadísticas, Google Login e informes/PDF continúan fuera de esta entrega.
+
+## Antecedentes de implementación local
+
+Los estados pendientes siguientes describen su fecha original y quedan superados exclusivamente por el cierre anterior.
+
 Implementación local del alcance autorizado el 01/11/2026. Rama `codex/iteration-10-1-knowledge-proposals`, base `f5945e1`. Sin commits, publicación ni cambios al Worker. El handoff del propietario confirma Know-How y MCP de lectura funcionando en producción; no se releyeron pilares ni se verificó producción durante esta implementación.
 
 ## Modelo y permisos

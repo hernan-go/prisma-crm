@@ -1,5 +1,17 @@
 # PRISMA CRM — Estado actual
 
+## Estado vigente — Iteración 10.1 cerrada en producción (02/11/2026)
+
+CRM publicado en ae3cea9eb81115f0edb5a665016fa1661e9e6b19; migraciones 001–013 aplicadas y registradas en producción según confirmación del propietario. Centro de Conocimiento real y propuestas operativos. Worker respaldado en c80fc8b61392bb3425cec187c0341e83ef80710b; Site privado versión 5, commit interno e57be72e758ad2ea2e8f0d1fa16aae2651b8d937. Lectura y propuestas usan credenciales independientes ya configuradas. La compilación oficial pendiente en Windows quedó completada en Work/Sites según informe aportado por el propietario.
+
+Evidencia previa CRM: 662 pruebas aprobadas, lint/typecheck/build aprobados; Worker: 40/40 y typecheck/lint/build/artefacto aprobados en Work/Sites. Circuito real autorizado sobre documento sintético: propuesta pending → aprobación administrativa → approved, revisión 3 y versión 2; lectura posterior correcta. Documento luego desactivado, recibo conservado y lectura directa no disponible. No se modificaron los seis documentos empresariales reales. Detalles y límites: [cierre de Iteración 10.1](iterations/2026-11-knowledge-proposals.md#cierre-productivo--02112026).
+
+prisma_dev tiene 013 aplicada y QA aprobada por el propietario; respaldo exportado sin prueba de restauración. prisma_demo no fue migrado ni revalidado: pendiente ambiental independiente. Siguen pendientes asistente comercial completo, Estadísticas, Google Login e informes/PDF según roadmap, sin cambio de prioridad.
+
+Los apartados siguientes son antecedentes fechados: sus menciones a 012/013, conexión de conocimiento, compilación o publicación pendientes quedan superadas para esta entrega. Este cierre documental no repite consultas DB, pruebas ni despliegues y no constituye auditoría exhaustiva de seguridad o recuperación.
+
+## Antecedentes conservados
+
 ## Extensión Know-How MCP — desarrollo local 30/10/2026
 
 API privada `GET /api/integrations/ai/knowledge` implementada para listado paginado y documento activo vigente, con autenticación de servicio existente. Sin migraciones ni cambios administrativos/estadísticos. Publicación pendiente; el Worker se desarrolla y valida por separado. [Contrato, pruebas y publicación](iterations/2026-10-knowledge-mcp.md). El propietario confirmó 012/Know-How publicados y fallback SPA ba7fff7 validado en producción; las referencias anteriores a esos pendientes son históricas.

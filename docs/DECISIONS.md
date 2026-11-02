@@ -1,5 +1,9 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## Regla vigente — propuestas Know-How (cierre 02/11/2026)
+
+ChatGPT solo lee documentos activos y envía propuestas con autorización conversacional explícita declarada por el cliente. Esa declaración no acredita criptográficamente consentimiento. Una propuesta no cambia el documento; administración compartida revisa y decide desde CRM, sin atribución personal inventada. Aprobación actualiza contenido/versionado; rechazo preserva documento y retira texto propuesto. Base desactualizada bloquea aprobación, request_id protege idempotencia, credenciales de lectura/propuestas independientes y Site privado obligatorio. No existen herramientas MCP de aprobación/rechazo. Estas reglas consolidan el alcance aprobado de [Iteración 10.1](iterations/2026-11-knowledge-proposals.md), sin ampliar funciones.
+
 Este documento registra decisiones que no deben rediscutirse en cada iteración salvo que exista un motivo explícito para cambiarlas.
 
 ## D001 — Git y producción
@@ -8,7 +12,7 @@ Este documento registra decisiones que no deben rediscutirse en cada iteración 
 
 ## D002 — Migraciones aplicadas son inmutables
 
-No editar migraciones ya aplicadas. `001.sql` a `011.sql` aplicadas y registradas en producción según operaciones y verificaciones del propietario confirmadas el 23/10/2026; Codex no realizó una comprobación productiva independiente. `009.sql` separa receptor/medio; el cierre previo de Cobros en `df04f17` conserva su evidencia. `010–011` incorporan Gastos Recurrentes e independencia mensual, también aplicadas en `prisma_test` y `prisma_dev`. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Próxima numeración: `012.sql`. Reintentos deben soportar DDL parcial de MySQL.
+No editar migraciones ya aplicadas. `001.sql` a `011.sql` aplicadas y registradas en producción según operaciones y verificaciones del propietario confirmadas el 23/10/2026; Codex no realizó una comprobación productiva independiente. `009.sql` separa receptor/medio; el cierre previo de Cobros en `df04f17` conserva su evidencia. `010–011` incorporan Gastos Recurrentes e independencia mensual, también aplicadas en `prisma_test` y `prisma_dev`. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. Actualización de estado al 02/11/2026: 012–013 aplicadas y registradas en producción según el propietario; próxima numeración: `014.sql`. El registro del 23/10 se conserva como antecedente. Reintentos deben soportar DDL parcial de MySQL.
 
 ## D003 — Dinero
 

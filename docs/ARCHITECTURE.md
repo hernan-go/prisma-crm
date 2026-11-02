@@ -1,5 +1,11 @@
 # PRISMA CRM — Arquitectura
 
+## Circuito vigente de Know-How y propuestas — 02/11/2026
+
+ChatGPT → Site MCP privado versión 5 → API CRM. Cuatro herramientas: consultar_estadisticas_comerciales, consultar_conocimiento_empresarial, enviar_propuesta_conocimiento y consultar_estado_propuesta_conocimiento. Las lecturas documentales solo exponen documentos activos. Proponer guarda contenido separado del vigente; únicamente la administración compartida decide desde el CRM. La aprobación reutiliza el guardado/versionado en transacción; rechazo elimina el texto propuesto conservando recibo técnico. Revisión base y SHA-256 protegen la decisión; request_id asegura idempotencia durable. No hay herramientas MCP para aprobar/rechazar/publicar.
+
+AI_READ_TOKEN/AI_READ_TOKEN_SHA256 y AI_PROPOSAL_TOKEN/AI_PROPOSAL_TOKEN_SHA256 son independientes y están configurados según el propietario. El consentimiento conversacional lo declara el cliente; no es prueba criptográfica independiente. El Site mantiene acceso exclusivo del propietario. Persiste confianza en el proxy administrado y no se afirma auditoría exhaustiva. [Contrato y cierre](iterations/2026-11-knowledge-proposals.md). Los estados locales o de publicación pendiente de los apartados históricos quedan superados para esta entrega; el asistente comercial completo continúa pendiente.
+
 ## Extensión local de conocimiento empresarial — 30/10/2026
 
 MySQL → `/api/integrations/ai/knowledge` → Worker MCP privado → ChatGPT. Listado de metadatos paginado y lectura individual del Markdown vigente, exclusivamente activo/no eliminado. Reutiliza seguridad del router empresarial, sin cambios al contrato estadístico 2.0 ni a D020–D024. [Contrato 1.0, límites y validación](iterations/2026-10-knowledge-mcp.md). Implementación local pendiente de publicación; los apartados anteriores de diseño conservados debajo son antecedentes.

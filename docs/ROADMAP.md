@@ -1,5 +1,9 @@
 # PRISMA CRM — Roadmap
 
+## Iteración 10.1 — completada (02/11/2026)
+
+Propuestas autorizadas ChatGPT → CRM, revisión administrativa, aprobación/rechazo y consulta de recibos operativos en producción; Site MCP privado versión 5. Migración 013 registrada. [Evidencia de cierre](iterations/2026-11-knowledge-proposals.md#cierre-productivo--02112026). Las referencias históricas a publicación pendiente de esta entrega quedan superadas. No se cierran ni reordenan las prioridades generales siguientes. prisma_demo conserva un pendiente ambiental de migración/revalidación, separado del circuito productivo.
+
 **Actualizado:** 2026-10-29
 
 Actualización local 29/10: [Know-How IA, Entrega 1 y corrección de Facilitadores](iterations/2026-10-knowledge-library.md#cierre-local-integrado-y-qa-del-propietario--29102026) integradas en `0a16424`, validadas y aprobadas manualmente en `prisma_dev`. `012.sql` aplicada en desarrollo y pruebas; pendiente en producción. Próximo paso: preflight productivo, sin autorización implícita de migración ni despliegue. Entregas posteriores de historial/restauración, retención/papelera y respaldos integrales pendientes. La biblioteca no se conecta todavía al asesor IA; integración MCP existente intacta. Iteración 9 abierta y demás prioridades conservadas.
