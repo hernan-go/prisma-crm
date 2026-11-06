@@ -204,3 +204,46 @@ Actualizar únicamente lo necesario:
 - documento de iteración → marcar completado o archivar.
 
 Evitar handoffs gigantes si estos documentos están al día.
+## 13. Publicaciones coordinadas CRM ↔ MCP ↔ ChatGPT (lección 10.2)
+
+Este control aplica cuando una iteración incorpora o modifica herramientas MCP. No confundir los estados: **implementado** (código), **probado** (QA identificada), **desplegado CRM**, **desplegado Worker/Site**, **actualizado catálogo del complemento en ChatGPT** y **validado en consulta real**. Un commit de GitHub y un despliegue `succeeded` por sí solos no acreditan los últimos pasos.
+
+1. **Antes de producción:** registrar commit exacto de CRM y MCP, esquema/migraciones necesarias, resultados de QA disponibles, compatibilidad, backup y vía de recuperación. No repetir pruebas concluidas sin nuevo riesgo técnico. Si existen migraciones, aplicar las reglas de la sección 8 y verificar `schema_migrations` y estructura efectiva; evitar DDL duplicado. Un respaldo anterior a migración no equivale a rollback automático ni a respaldo posterior.
+2. **CRM primero si la API lo requiere:** confirmar despliegue SiteGround y lectura sin escrituras imprevistas; distinguir inspección visual de QA productiva de escritura. No usar datos reales para tests destructivos.
+3. **Site MCP existente:** en Work/Sites, verificar versión activa, estado y audiencia privada, configuración y versión anterior recuperable. Contrastar las fuentes del repositorio interno del Site con `prisma-site/` del commit GitHub y detenerse ante diferencias no previstas. Los SHA de GitHub y Sites pueden ser distintos. Reutilizar dependencias válidas, respetar lockfile, una compilación por artefacto cuando sea suficiente y publicación privada autorizada. No cambiar secretos, permisos ni otros Sites por conveniencia.
+4. **Despliegue:** registrar versión, ID y estado `succeeded`. Verificar que herramientas previas y nuevas estén definidas, sin efectuar escrituras de negocio como smoke test. **Paso explícito adicional: Configuración → Complementos → PRISMA — Análisis de Gestión → Administrar aplicación → Actualizar herramientas.** Si ChatGPT aún ofrece el catálogo anterior, actualizar herramientas y abrir una conversación nueva antes de diagnosticar una falla del Worker; no desplegar otra vez por ese síntoma aislado.
+5. **Validación funcional:** utilizar la herramienta MCP nueva y consultas reales de solo lectura. Distinguir respuesta válida con lista vacía/cero de herramienta ausente, `401`, error de transporte o contrato. Para Eventos, ausencia de registros no prueba un fallo ni autoriza inventar eventos.
+6. **Recuperación:** si el nuevo Worker está publicado y falla críticamente, evaluar redesplegar la versión anterior *verificada* del mismo Site, con autorización. Esto usa el entorno vigente; no revierte migraciones ni datos CRM. Registrar si la recuperación fue solamente identificada o efectivamente ensayada.
+7. **Cierre:** completar matriz de estados y límites, actualizar `PROJECT_STATE.md` y documento de iteración, y ajustar `ROADMAP.md` si corresponde. El cierre documental en `main` requiere revisión/acción expresa del propietario porque el push de CRM a `main` desencadena SiteGround, incluso para cambios solo Markdown.
+
+Referencia de 10.2: Site privado versión 6, despliegue `appgdep_6aee34f0885881919d6aa1374d1694d9`, quinta herramienta visible después de «Actualizar herramientas»; consulta `2026-11` exitosa sin eventos.
+
+## 14. Diagnóstico Git: `M` sin diferencias de contenido
+
+Ante un archivo marcado como modificado pero `git diff` vacío, **no ejecutar por defecto** `restore`, `reset`, `checkout`, `add`, `clean`, normalizaciones globales, commits ni cambios de `core.autocrlf`. Primero verificar el archivo específico:
+
+```powershell
+$repo = "C:\dev\personal\prisma-crm"
+$file = "tests/remaining-skeletons.test.ts"
+$full = Join-Path $repo $file
+git -C $repo status --short -- $file
+git -C $repo ls-files --eol -- $file
+git -C $repo ls-files --stage -- $file
+git -C $repo ls-files --debug -- $file
+git -C $repo diff --exit-code -- $file
+git -C $repo diff --cached --exit-code -- $file
+git -C $repo hash-object --path="$file" $full
+git -C $repo hash-object --no-filters -- $full
+(Get-Item -LiteralPath $full).Length
+```
+
+Solo cuando **no haya diferencias staged**, el diff de contenido sea `0` y el hash normalizado local coincida con el SHA del índice, valorar refrescar **únicamente esa entrada** del índice (con autorización). En 10.2 funcionó:
+
+```powershell
+git -C "C:\dev\personal\prisma-crm" -c core.autocrlf=false update-index -- tests/remaining-skeletons.test.ts
+git -C "C:\dev\personal\prisma-crm" status --short
+git -C "C:\dev\personal\prisma-crm" diff --cached --exit-code -- tests/remaining-skeletons.test.ts
+```
+
+`update-index -- <archivo>` **modifica el índice**, y podría stagear cambios si los hashes no coincidieran: **no es un paso rutinario**. En el incidente confirmado, índice 9548 bytes / archivo 9326 bytes, hash coincidente, `status` limpio tras la operación. La advertencia de conversión LF→CRLF con `core.autocrlf=true` fue una pista, no prueba concluyente de origen; no configurar políticas de EOL a nivel repositorio sin analizar impacto y aprobarlo.
+
