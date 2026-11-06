@@ -18,7 +18,7 @@
 
 - **No comprobado:** escritura real de Eventos en producción, rollback ejecutado del Site, auditoría integral de seguridad, ni pruebas de recuperación posteriores al despliegue de 10.2. No convertir estos límites en «fallas» ni en pruebas supuestamente realizadas.
 - **No pendiente de la implementación 10.2:** repetir migraciones 014–016, 184 integraciones, builds ya concluidos o volver a publicar versión 6. Cualquier incidente nuevo debe evaluarse por su evidencia y alcance.
-- **Documentación:** cierre histórico a integrar de manera controlada; los documentos de estado, workflow y roadmap incluyen el procedimiento preventivo.
+- **Documentación:** este cierre, el estado general, el workflow y el roadmap recogen el estado productivo y los controles preventivos; su integración en `main` es un paso documental independiente.
 
 **Nota de lectura:** el texto que sigue es el informe de **cierre técnico local previo a commits y producción**. Sus frases «NO DESPLEGADO», «184 pendientes» y sus SHA anteriores describen aquel corte histórico y **están sustituidas para el estado actual** por el cierre productivo precedente.
 
