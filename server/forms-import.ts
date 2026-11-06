@@ -12,7 +12,7 @@ import {
   formRowSchema,
   resolveFormSelection,
 } from '../shared/forms.js';
-import { personSchema } from '../shared/domain.js';
+import { importPersonSchema as personSchema } from '../shared/domain.js';
 import { query, execute, peopleTransaction, pool } from './db.js';
 import { duplicates, savePerson } from './repositories.js';
 import { openPeriod } from './scheduling.js';

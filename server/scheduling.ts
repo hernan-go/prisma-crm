@@ -5,6 +5,7 @@ import { periodCreateSchema, periodSchema } from '../shared/domain.js';
 import { type Booking } from '../shared/schedule.js';
 import { scheduleList } from './offerings.js';
 import { deletePeriodConfiguration } from './configuration-deletion.js';
+import { periodHasEvents } from './event-period-guard.js';
 
 export async function periodCreate(body: unknown) {
   const p = periodCreateSchema.parse(body);
@@ -70,7 +71,11 @@ export async function periodCreate(body: unknown) {
 }
 
 export async function openPeriod(period: number, db: Connection) {
-  const [p] = await query('SELECT * FROM periods WHERE id=? FOR UPDATE', [period], db);
+  const [p] = await query<{ id: number; year: number; month: number; status: string }>(
+    'SELECT * FROM periods WHERE id=? FOR UPDATE',
+    [period],
+    db,
+  );
   requireFound(p);
   if (p.status !== 'open')
     throw new AppError(409, 'El período está cerrado. Reabrilo para modificarlo.');
@@ -89,6 +94,7 @@ export async function bookings(period: number, db: Connection, exclude = 0) {
   });
 }
 export async function periodHasConfigurationOrData(period: number, db: Connection) {
+  if (await periodHasEvents(period, db)) return true;
   const [r] = await query(
     `SELECT
     (SELECT COUNT(*) FROM period_activities WHERE period_id=?) +

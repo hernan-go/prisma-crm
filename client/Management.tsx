@@ -1,3 +1,12 @@
+export function comparePeriodPeople(
+  a: { apellido: string; nombre: string },
+  b: { apellido: string; nombre: string },
+) {
+  return (
+    a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' }) ||
+    a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
+  );
+}
 export { Configuration } from './Configuration';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -106,23 +115,26 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
               <h2>Personas inscriptas</h2>
               <QueryFeedback query={members} label="personas inscriptas" />
               {members.isPending && <ListSkeleton label="Cargando personas inscriptas…" />}
-              {members.data?.map((p: any) => (
-                <div className="payment-row" key={p.membership_id}>
-                  <div>
-                    <Link className="participant-name" to={`/personas/${p.id}`}>
-                      {p.nombre} {p.apellido}
-                    </Link>
-                    <small>
-                      {p.activities || 'Sin actividades asignadas'}
-                      {!p.activo && ' · Archivada'}
-                    </small>
+              {members.data
+                ?.slice()
+                .sort(comparePeriodPeople)
+                .map((p: any) => (
+                  <div className="payment-row" key={p.membership_id}>
+                    <div>
+                      <Link className="participant-name" to={`/personas/${p.id}`}>
+                        {p.nombre} {p.apellido}
+                      </Link>
+                      <small>
+                        {p.activities || 'Sin actividades asignadas'}
+                        {!p.activo && ' · Archivada'}
+                      </small>
+                    </div>
+                    <div className="actions">
+                      <button onClick={() => setPerson(p)}>Gestionar</button>
+                      <RemoveMembership person={p} period={period} disabled={closed} />
+                    </div>
                   </div>
-                  <div className="actions">
-                    <button onClick={() => setPerson(p)}>Gestionar</button>
-                    <RemoveMembership person={p} period={period} disabled={closed} />
-                  </div>
-                </div>
-              ))}
+                ))}
               {members.isSuccess && members.data?.length === 0 && (
                 <Empty>No hay personas inscriptas en este período.</Empty>
               )}
@@ -774,34 +786,37 @@ function PaymentsPeriod() {
                   </td>
                 </tr>
               ))}
-            {q.data?.map((a: any) => (
-              <tr key={a.id}>
-                <td>
-                  <Link
-                    className="account-person-link participant-name"
-                    to={`/personas/${a.person_id}`}
-                    title={`${a.nombre} ${a.apellido}`}
-                  >
-                    <span>
-                      {a.nombre} {a.apellido}
+            {q.data
+              ?.slice()
+              .sort(comparePeriodPeople)
+              .map((a: any) => (
+                <tr key={a.id}>
+                  <td>
+                    <Link
+                      className="account-person-link participant-name"
+                      to={`/personas/${a.person_id}`}
+                      title={`${a.nombre} ${a.apellido}`}
+                    >
+                      <span>
+                        {a.nombre} {a.apellido}
+                      </span>
+                    </Link>
+                  </td>
+                  <td>{formatMoney(a.amount_due)}</td>
+                  <td className="desktop-only">{formatMoney(a.paid)}</td>
+                  <td>
+                    <span
+                      className={`${Number(a.balance) > 0 ? 'debt-chip' : ''} account-balance ${a.balance === null ? 'balance-undefined' : Number(a.balance) === 0 ? 'balance-settled' : Number(a.balance) < 0 ? 'balance-credit' : ''}`}
+                    >
+                      {a.balance === null
+                        ? 'No definido'
+                        : Number(a.balance) < 0
+                          ? `${formatMoney(-Number(a.balance))} a favor`
+                          : formatMoney(a.balance)}
                     </span>
-                  </Link>
-                </td>
-                <td>{formatMoney(a.amount_due)}</td>
-                <td className="desktop-only">{formatMoney(a.paid)}</td>
-                <td>
-                  <span
-                    className={`${Number(a.balance) > 0 ? 'debt-chip' : ''} account-balance ${a.balance === null ? 'balance-undefined' : Number(a.balance) === 0 ? 'balance-settled' : Number(a.balance) < 0 ? 'balance-credit' : ''}`}
-                  >
-                    {a.balance === null
-                      ? 'No definido'
-                      : Number(a.balance) < 0
-                        ? `${formatMoney(-Number(a.balance))} a favor`
-                        : formatMoney(a.balance)}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
         {q.isSuccess && q.data?.length === 0 && <Empty>Sin cuentas en este período.</Empty>}

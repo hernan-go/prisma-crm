@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -18,10 +19,16 @@ import {
   useSave,
   PageHeading,
 } from './components';
+import { CommandForm } from './SpecialEvents';
+import {
+  eventVoidSchema,
+  type EventListItem,
+  type SpecialEventDetail,
+} from '../shared/special-events';
 import { formatDate, formatMoney } from '../shared/domain';
 import {
+  associatedExpenseSchema,
   expenseCategorySchema,
-  expenseSchema,
   expenseSchemaForPeriod,
   type Expense,
   type ExpenseCategory,
@@ -71,7 +78,7 @@ function CategoryForm({
   );
 }
 
-function ExpenseForm({
+export function ExpenseForm({
   path,
   month,
   expense,
@@ -82,68 +89,185 @@ function ExpenseForm({
   expense?: Expense;
   close: () => void;
 }) {
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Argentina/Cordoba',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<z.input<typeof expenseSchema>, unknown, z.output<typeof expenseSchema>>({
-    resolver: zodResolver(expenseSchemaForPeriod(month)),
-    defaultValues: {
-      concept: expense?.concept || '',
-      date: expense?.date || (today.startsWith(month) ? today : `${month}-01`),
-      amount: expense?.amount || '',
-      notes: expense?.notes || '',
-    },
+  const { periods } = usePeriod();
+  const sourcePeriod = Number(/periods\/(\d+)/.exec(path)?.[1]);
+  const category = Number(/expense-categories\/(\d+)/.exec(path)?.[1]);
+  const [linked, setLinked] = useState<number | null>(expense?.special_event_id ?? null);
+  const [target, setTarget] = useState(sourcePeriod),
+    [targetCategory, setTargetCategory] = useState(category);
+  const [values, setValues] = useState({
+    concept: expense?.concept ?? '',
+    date: expense?.date ?? initialExpenseDate(month),
+    amount: expense?.amount ?? '',
+    notes: expense?.notes ?? '',
   });
-  const mutation = useSave(
-    expense ? `${path}/${expense.id}` : path,
+  const [error, setError] = useState<unknown>();
+  const events = useQuery({
+    queryKey: ['special-events', 'list', sourcePeriod],
+    queryFn: () => api<EventListItem[]>('/special-events?period_id=' + sourcePeriod),
+  });
+  const commandEvent = expense?.special_event_id ?? linked;
+  const detail = useQuery({
+    queryKey: ['special-events', 'detail', commandEvent],
+    queryFn: () => api<SpecialEventDetail>('/special-events/' + commandEvent),
+    enabled: !!commandEvent,
+  });
+  const categories = useQuery({
+    queryKey: ['expense-categories', target],
+    queryFn: () => api<ExpenseCategory[]>('/periods/' + target + '/expense-categories'),
+    enabled: !!expense?.special_event_id && linked === null,
+  });
+  const ordinary = useSave(
+    expense ? path + '/' + expense.id : path,
     expense ? 'PUT' : 'POST',
     close,
   );
-  const [year, monthNumber] = month.split('-').map(Number);
-  const lastDay = new Date(year, monthNumber, 0).getDate();
+  const field = (name: keyof typeof values, label: string, type = 'text') => (
+    <Field label={label}>
+      <input
+        name={name}
+        type={type}
+        value={values[name]}
+        required
+        maxLength={name === 'concept' ? 200 : undefined}
+        inputMode={name === 'amount' ? 'decimal' : undefined}
+        onChange={(e) => setValues({ ...values, [name]: e.target.value })}
+      />
+    </Field>
+  );
+  const fields = (
+    <>
+      {field('concept', 'Concepto')}
+      <Field label="Evento asociado">
+        <select
+          value={linked ?? ''}
+          onChange={(e) => setLinked(e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="">Gasto general</option>
+          {events.data?.map((e) => (
+            <option
+              key={e.id}
+              value={e.id}
+              disabled={!!expense?.special_event_id && e.id !== expense.special_event_id}
+            >
+              {e.name}
+              {e.status === 'cancelled' ? ' · Cancelado' : ''}
+            </option>
+          ))}
+        </select>
+      </Field>
+      {events.error && <ErrorBox error={events.error} />}
+      {!!expense?.special_event_id && linked === null && (
+        <>
+          <p className="info">
+            Se conserva el gasto y su fecha real. Elegí un período abierto que corresponda a esa
+            fecha y una categoría adicional.
+          </p>
+          <Field label="Período del gasto general">
+            <select
+              value={target}
+              onChange={(e) => {
+                setTarget(Number(e.target.value));
+                setTargetCategory(0);
+              }}
+            >
+              {periods
+                .filter((p) => p.status === 'open')
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.year}-{String(p.month).padStart(2, '0')}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <Field label="Categoría destino">
+            <select
+              value={targetCategory}
+              onChange={(e) => setTargetCategory(Number(e.target.value))}
+              required
+            >
+              <option value="">Seleccionar</option>
+              {categories.data
+                ?.filter((c) => !c.recurring_concept_id)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <ErrorBox error={categories.error} />
+        </>
+      )}
+      <div className="form-grid">
+        {field('date', 'Fecha real', 'date')}
+        {field('amount', 'Monto')}
+      </div>
+      {linked !== null && (
+        <p className="muted">Se imputa al período del evento; admite una fecha real anterior.</p>
+      )}
+      <Field label="Comentario">
+        <textarea
+          name="notes"
+          maxLength={2000}
+          value={values.notes}
+          onChange={(e) => setValues({ ...values, notes: e.target.value })}
+        />
+      </Field>
+    </>
+  );
+  if (commandEvent) {
+    if (!detail.data)
+      return (
+        <Modal title="Consultar evento asociado" close={close}>
+          <p>Consultando evento…</p>
+          <ErrorBox error={detail.error} />
+        </Modal>
+      );
+    return (
+      <CommandForm
+        title={expense ? 'Editar gasto asociado' : 'Nuevo gasto asociado'}
+        close={close}
+        path={'/special-events/' + commandEvent + '/expenses' + (expense ? '/' + expense.id : '')}
+        method={expense ? 'PATCH' : 'POST'}
+        revision={detail.data.revision}
+        schema={associatedExpenseSchema}
+        done={close}
+        values={() => ({
+          ...values,
+          amount: values.amount.replace(',', '.'),
+          special_event_id: linked,
+          period_id: linked ? sourcePeriod : target,
+          category_id: linked ? category : targetCategory,
+        })}
+      >
+        {fields}
+      </CommandForm>
+    );
+  }
   return (
     <Modal title={expense ? 'Editar gasto' : 'Nuevo gasto'} close={close}>
-      <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
-        <Field label="Concepto" error={errors.concept?.message}>
-          <input {...register('concept')} required maxLength={200} autoFocus />
-        </Field>
-        <div className="form-grid">
-          <Field label="Fecha" error={errors.date?.message}>
-            <input
-              {...register('date')}
-              type="date"
-              required
-              min={`${month}-01`}
-              max={`${month}-${lastDay}`}
-            />
-          </Field>
-          <Field label="Monto" error={errors.amount?.message}>
-            <input
-              {...register('amount')}
-              type="number"
-              required
-              min="0.01"
-              max="9999999999.99"
-              step="0.01"
-            />
-          </Field>
-        </div>
-        <Field label="Comentario" error={errors.notes?.message}>
-          <textarea {...register('notes')} maxLength={2000} />
-        </Field>
-        <ErrorBox error={mutation.error} />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const parsed = expenseSchemaForPeriod(month).safeParse({
+            ...values,
+            amount: values.amount.replace(',', '.'),
+          });
+          if (!parsed.success) {
+            setError(new Error(parsed.error.issues.map((i) => i.message).join(' ')));
+            return;
+          }
+          ordinary.mutate(parsed.data);
+        }}
+      >
+        {fields}
+        <ErrorBox error={error ?? ordinary.error} />
         <div className="actions">
           <button type="button" onClick={close}>
             Cancelar
           </button>
-          <SaveButton pending={mutation.isPending} />
+          <SaveButton pending={ordinary.isPending} />
         </div>
       </form>
     </Modal>
@@ -209,6 +333,7 @@ function PeriodExpenses({
   const [category, setCategory] = useState<ExpenseCategory | null>();
   const [movement, setMovement] = useState<{ categoryId: number; expense?: Expense }>();
   const [remove, setRemove] = useState<ExpenseCategory>();
+  const [removeLinked, setRemoveLinked] = useState<Expense>();
   const disabled = !period || !month || closed || query.isPending || !!query.error;
   const addExpenseButton = (categoryId: number) => (
     <button
@@ -281,10 +406,23 @@ function PeriodExpenses({
                       >
                         Editar
                       </button>
-                      <DeleteButton
-                        disabled={disabled}
-                        path={`${path}/${item.id}/expenses/${expense.id}`}
-                      />
+                      {expense.special_event_id ? (
+                        <>
+                          <Link to={'/eventos/' + expense.special_event_id}>Ver evento</Link>
+                          <button
+                            className="danger subtle"
+                            disabled={disabled}
+                            onClick={() => setRemoveLinked(expense)}
+                          >
+                            Eliminar
+                          </button>
+                        </>
+                      ) : (
+                        <DeleteButton
+                          disabled={disabled}
+                          path={`${path}/${item.id}/expenses/${expense.id}`}
+                        />
+                      )}
                       {index === item.expenses.length - 1 && addExpenseButton(item.id)}
                     </div>
                   </div>
@@ -300,6 +438,9 @@ function PeriodExpenses({
               </Empty>
             )}
         </>
+      )}
+      {removeLinked && !closed && (
+        <DeleteLinkedExpense expense={removeLinked} close={() => setRemoveLinked(undefined)} />
       )}
       {category !== undefined && !closed && (
         <CategoryForm path={path} category={category} close={() => setCategory(undefined)} />
@@ -321,4 +462,43 @@ function PeriodExpenses({
       )}
     </>
   );
+}
+
+function DeleteLinkedExpense({ expense, close }: { expense: Expense; close: () => void }) {
+  const detail = useQuery({
+    queryKey: ['special-events', 'detail', expense.special_event_id],
+    queryFn: () => api<SpecialEventDetail>('/special-events/' + expense.special_event_id),
+  });
+  if (!detail.data)
+    return (
+      <Modal title="Eliminar gasto" close={close}>
+        <QueryFeedback query={detail} label="gasto asociado" />
+      </Modal>
+    );
+  return (
+    <CommandForm
+      submitLabel="Eliminar gasto"
+      title="Eliminar gasto"
+      close={close}
+      done={close}
+      path={'/special-events/' + expense.special_event_id + '/expenses/' + expense.id + '/void'}
+      revision={detail.data.revision}
+      schema={eventVoidSchema}
+      values={() => ({ reason: 'Eliminación administrativa de gasto' })}
+    >
+      <p>
+        ¿Eliminar {expense.concept} por {formatMoney(expense.amount)}?
+      </p>
+    </CommandForm>
+  );
+}
+
+export function initialExpenseDate(month: string, now = new Date()) {
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Argentina/Cordoba',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  return today.startsWith(month) ? today : month + '-01';
 }

@@ -8,13 +8,9 @@ import { Empty, PageHeading, useDisclosure } from './components';
 import { QueryFeedback } from './LoadingViews';
 import { DashboardAgendaSkeleton, DashboardFinanceSkeleton } from './DashboardSkeleton';
 import { formatMoney, recipientLabel, type PeriodWallets } from '../shared/domain';
-import {
-  dashboardDate,
-  dailySchedules,
-  programmingTitle,
-  type AgendaSchedule,
-} from './dashboard-model';
+import { dashboardDate, dailySchedules, type AgendaSchedule } from './dashboard-model';
 import './dashboard.css';
+import type { EventEconomy } from '../shared/event-economy';
 import { Weather } from './Weather';
 
 type DashboardData = {
@@ -26,6 +22,8 @@ type DashboardData = {
   credit: string;
   undefined_accounts: number | null;
   wallets: PeriodWallets;
+  income_sources?: { workshops: string; events: string; total?: string };
+  events?: EventEconomy['events'];
   activities: { name: string; count: number }[];
 };
 export const dashboardHelp = [
@@ -126,75 +124,135 @@ function ScheduleCard({ schedule }: { schedule: AgendaSchedule }) {
     </article>
   );
 }
-export function FinancialSummary({ data: d }: { data: DashboardData }) {
-  const maximum = Math.max(1, ...d.activities.map((a) => a.count));
+export function Wallets({ wallets }: { wallets: PeriodWallets }) {
   return (
     <>
-      <div className="stats dashboard-stats">
+      {(['jesica', 'hernan'] as const).map((recipient) => (
+        <div key={recipient} className="wallet">
+          <span className="wallet-icon">
+            <Wallet size={21} />
+          </span>
+          <div>
+            <b>{recipientLabel(recipient)}</b>
+            <small>Efectivo: {formatMoney(wallets[recipient].cash)}</small>
+            <small>Transferencia: {formatMoney(wallets[recipient].transfer)}</small>
+            <small>
+              <b>Subtotal: {formatMoney(wallets[recipient].total)}</b>
+            </small>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+export function EventFinance({ events }: { events: EventEconomy['events'] }) {
+  const [selected, setSelected] = useState<number>();
+  const current = events.find((e) => e.id === selected) ?? events[0];
+  if (!current?.commercial) return null;
+  return (
+    <section className="panel dashboard-event-finance">
+      <div className="section-heading">
+        <h2>EVENTOS ESPECIALES</h2>
+        <label className="event-dashboard-selector">
+          Evento
+          <select
+            aria-label="Evento del resumen"
+            value={current.id}
+            onChange={(e) => setSelected(Number(e.target.value))}
+          >
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                EVENTO {e.event_number}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <span className="badge">EVENTO {current.event_number}</span>
+      <h3>{current.name}</h3>
+      <div className="stats dashboard-three-stats">
         {[
-          ['Total inscriptos período', d.people, dashboardHelp[0]],
-          ['Inscripciones en actividades', d.enrollments, dashboardHelp[1]],
-          ['Total a cobrar', formatMoney(d.due)],
-          ['Total cobrado', formatMoney(d.paid)],
-        ].map(([label, value, help]) => (
+          ['Participantes', current.active_count],
+          ['Total a cobrar', formatMoney(current.commercial.due)],
+          ['Total cobrado', formatMoney(current.commercial.gross)],
+        ].map(([label, value]) => (
           <article className="stat" key={label}>
             <div className="dashboard-metric-title">
               <span>{label}</span>
-              {help && <MetricHelp title={String(label)} text={String(help)} />}
             </div>
-            <strong className={help ? '' : 'dashboard-money'}>{value}</strong>
-            <small>Período seleccionado</small>
+            <strong>{value}</strong>
           </article>
         ))}
       </div>
       <div className="dashboard-finances">
         <section className="panel">
-          <h2>Carteras del mes</h2>
-          {(['jesica', 'hernan'] as const).map((recipient) => (
-            <div key={recipient} className="wallet">
-              <span className="wallet-icon">
-                <Wallet size={21} />
-              </span>
-              <div>
-                <b>{recipientLabel(recipient)}</b>
-                <small>Efectivo: {formatMoney(d.wallets[recipient].cash)}</small>
-                <small>Transferencia: {formatMoney(d.wallets[recipient].transfer)}</small>
-                <small>
-                  <b>Total: {formatMoney(d.wallets[recipient].total)}</b>
-                </small>
-              </div>
-            </div>
-          ))}
+          <h3>Cartera del evento</h3>
+          <Wallets wallets={current.wallets} />
         </section>
         <section className="panel balance-panel">
-          <h2>Saldos del mes</h2>
-          <strong className="dashboard-balance">{formatMoney(d.pending)}</strong>
-          <p>Pendiente de cobro</p>
-          <small>Saldo a favor: {formatMoney(d.credit)}</small>
-          {Number(d.undefined_accounts) > 0 && (
-            <p className="info">{d.undefined_accounts} cuentas con importe a cobrar no definido.</p>
-          )}
-          <Link to="/pagos">Ver cuentas y movimientos →</Link>
+          <h3>Saldo del evento</h3>
+          <strong className="dashboard-balance">{formatMoney(current.commercial.balance)}</strong>
+          <p>Total a cobrar − Total cobrado. Sin descontar gastos.</p>
         </section>
       </div>
-      <section className="panel dashboard-chart">
-        <div className="section-heading">
-          <h2>Inscripciones por actividad</h2>
-          <span className="chip">{d.activities.length} actividades</span>
+    </section>
+  );
+}
+export function FinancialSummary({ data: d }: { data: DashboardData }) {
+  return (
+    <>
+      <section className="panel dashboard-total">
+        <Wallet size={24} aria-hidden="true" />
+        <div>
+          <h2>TOTAL RECAUDADO</h2>
+          <small>Talleres y actividades + Eventos Especiales</small>
         </div>
-        {d.activities.map((a, index) => (
-          <div className="activity-count" key={`${a.name}-${index}`}>
-            <div>
-              <span>{a.name}</span>
-              <b>{a.count}</b>
-            </div>
-            <div className="track" aria-hidden="true">
-              <i style={{ width: `${Math.max(0, (a.count / maximum) * 100)}%` }} />
-            </div>
-          </div>
-        ))}
-        {!d.activities.length && <Empty>Sin actividades en este período.</Empty>}
+        <strong className="dashboard-balance">
+          {formatMoney(d.income_sources?.total ?? d.paid)}
+        </strong>
       </section>
+      <section className="panel dashboard-workshops" aria-label="Talleres y actividades">
+        <h2>TALLERES Y ACTIVIDADES</h2>
+        <div className="stats dashboard-stats">
+          {[
+            ['Total inscriptos', d.people, dashboardHelp[0]],
+            ['Inscripciones', d.enrollments, dashboardHelp[1]],
+            ['Total a cobrar', formatMoney(d.due)],
+            ['Total cobrado', formatMoney(d.paid)],
+          ].map(([label, value, help]) => (
+            <article className="stat" key={label}>
+              <div className="dashboard-metric-title">
+                <span>{label}</span>
+                {help && <MetricHelp title={String(label)} text={String(help)} />}
+              </div>
+              <strong>{value}</strong>
+            </article>
+          ))}
+        </div>
+        <div className="dashboard-finances">
+          <section className="panel">
+            <h2>Carteras del mes</h2>
+            <Wallets wallets={d.wallets} />
+          </section>
+          <section className="panel balance-panel">
+            <h2>Saldos del mes</h2>
+            <strong className="dashboard-balance">{formatMoney(d.pending)}</strong>
+            <p>Pendiente de cobro</p>
+            <small>Saldo a favor: {formatMoney(d.credit)}</small>
+            {Number(d.undefined_accounts) > 0 && (
+              <p className="info">
+                {d.undefined_accounts} cuentas con importe a cobrar no definido.
+              </p>
+            )}
+            <Link to="/pagos">Ver cuentas y movimientos →</Link>
+          </section>
+        </div>
+      </section>
+      <EventFinance
+        events={(d.events ?? [])
+          .filter((e) => e.status !== 'cancelled')
+          .sort((a, b) => a.event_number - b.event_number)}
+      />
     </>
   );
 }
@@ -213,7 +271,10 @@ export function Dashboard() {
     queryFn: () => api<AgendaSchedule[]>(`/agenda?period_id=${period}`),
     enabled: !!period,
   });
-  const schedules = dailySchedules(agenda.data || [], period, date.day);
+  const [chosenDay, setChosenDay] = useState<number | null>(null);
+  const day = chosenDay ?? (date.day || 1);
+  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const schedules = dailySchedules(agenda.data || [], period, day);
   return (
     <div className="dashboard">
       <PageHeading
@@ -233,15 +294,11 @@ export function Dashboard() {
               <CalendarDays className="dashboard-day-calendar-icon" size={22} aria-hidden="true" />
               <div>
                 <h2>
-                  {selected && programmingTitle(selected, now) === 'Actividades de hoy' ? (
-                    <>
-                      Actividades <span>{date.weekday}</span>
-                    </>
-                  ) : selected ? (
-                    programmingTitle(selected, now)
-                  ) : (
-                    'Programación del día'
-                  )}
+                  {selected?.year === date.year &&
+                  selected?.month === date.month &&
+                  day === date.day
+                    ? `Actividades de hoy · ${dayNames[day]}`
+                    : `Programación · ${dayNames[day]}`}
                 </h2>
                 <p>{date.date}</p>
                 {selected && (selected.year !== date.year || selected.month !== date.month) && (
@@ -256,6 +313,18 @@ export function Dashboard() {
               </span>
               <Weather now={now} />
             </div>
+          </div>
+          <div className="dashboard-days" role="group" aria-label="Día de programación">
+            {dayNames.slice(1).map((name, index) => (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={day === index + 1}
+                onClick={() => setChosenDay(index + 1)}
+              >
+                {name.toLocaleUpperCase('es')}
+              </button>
+            ))}
           </div>
           {!period ? (
             <Empty>Creá un período con el botón + para comenzar.</Empty>

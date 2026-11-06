@@ -1,4 +1,5 @@
 import { Decimal } from 'decimal.js';
+import { hasEventExpenses } from '../event-expenses.js';
 import { pool, query, type Connection } from '../db.js';
 import { AppError } from '../errors.js';
 import { readSummaryInput } from '../statistics/index.js';
@@ -220,7 +221,7 @@ export async function readMonthlyContext(period: string, db: Connection, asOf: s
      COALESCE(r.name,c.name) controlled_concept,IF(c.recurring_concept_id IS NULL,'additional','recurring') kind,
      SUM(e.amount) amount,COUNT(*) movement_count
      FROM period_expense_categories c JOIN period_expenses e ON e.category_id=c.id
-     LEFT JOIN expense_recurring_concepts r ON r.id=c.recurring_concept_id WHERE c.period_id=?
+     LEFT JOIN expense_recurring_concepts r ON r.id=c.recurring_concept_id WHERE c.period_id=? ${(await hasEventExpenses(db)) ? 'AND e.voided_at IS NULL' : ''}
      GROUP BY c.id,c.name,r.name,c.recurring_concept_id ORDER BY c.id LIMIT 501`,
     [ref.id],
     db,

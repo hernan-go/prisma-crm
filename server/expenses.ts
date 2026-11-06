@@ -6,11 +6,12 @@ import {
   type Expense,
   type ExpenseCategory,
 } from '../shared/expenses.js';
-import { query, execute, peopleTransaction, type Connection } from './db.js';
+import { query, execute, peopleTransaction, pool, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { openPeriod } from './scheduling.js';
 import { positiveId } from './services.js';
 import { requireAdditionalCategory } from './recurring-expenses.js';
+import { hasEventExpenses } from './event-expenses.js';
 
 async function requireCategory(period: number, category: number, db: Connection) {
   await requireAdditionalCategory(period, category, db);
@@ -29,13 +30,14 @@ async function requireExpense(category: number, expense: number, db: Connection)
 }
 
 export async function expenseCategories(period: number) {
+  const linked = await hasEventExpenses(pool);
   requireFound((await query('SELECT id FROM periods WHERE id=?', [period]))[0]);
   const categories = await query<Omit<ExpenseCategory, 'expenses'>>(
     'SELECT id,period_id,name,recurring_concept_id FROM period_expense_categories WHERE period_id=? ORDER BY id',
     [period],
   );
   const rows = await query<Expense>(
-    'SELECT e.id,e.category_id,e.concept,e.date,e.amount,e.notes FROM period_expenses e JOIN period_expense_categories c ON c.id=e.category_id WHERE c.period_id=? ORDER BY e.date DESC,e.id DESC',
+    `SELECT e.id,e.category_id,e.concept,e.date,e.amount,e.notes${linked ? ',e.special_event_id,s.revision event_revision' : ''} FROM period_expenses e JOIN period_expense_categories c ON c.id=e.category_id ${linked ? 'LEFT JOIN special_events s ON s.id=e.special_event_id' : ''} WHERE c.period_id=? ${linked ? 'AND e.voided_at IS NULL' : ''} ORDER BY e.date DESC,e.id DESC`,
     [period],
   );
   return categories.map((category) => ({
@@ -79,6 +81,20 @@ export async function expenseCategoryDelete(period: number, category: number) {
   return peopleTransaction(async (db) => {
     await openPeriod(period, db);
     await requireCategory(period, category, db);
+    if (
+      (await hasEventExpenses(db)) &&
+      (
+        await query(
+          'SELECT id FROM period_expenses WHERE category_id=? AND special_event_id IS NOT NULL',
+          [category],
+          db,
+        )
+      ).length
+    )
+      throw new AppError(
+        409,
+        'La categoría conserva gastos asociados o anulados de eventos. Reclasificá los gastos vigentes; los antecedentes se conservan.',
+      );
     await execute(
       'DELETE FROM period_expense_categories WHERE id=? AND period_id=?',
       [category, period],
@@ -98,7 +114,20 @@ export async function expenseSave(
   return peopleTransaction(async (db) => {
     const selectedPeriod = await openPeriod(period, db);
     await requireCategory(period, category, db);
-    if (expense !== undefined) await requireExpense(category, expense, db);
+    if (expense !== undefined) {
+      await requireExpense(category, expense, db);
+      if (
+        (await hasEventExpenses(db)) &&
+        (
+          await query(
+            'SELECT id FROM period_expenses WHERE id=? AND special_event_id IS NOT NULL',
+            [expense],
+            db,
+          )
+        ).length
+      )
+        throw new AppError(409, 'Usá la edición del gasto asociado al evento.');
+    }
     expenseSchemaForPeriod(
       `${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, '0')}`,
     ).parse(input);
@@ -127,6 +156,17 @@ export async function expenseDelete(period: number, category: number, expense: n
     await openPeriod(period, db);
     await requireCategory(period, category, db);
     await requireExpense(category, expense, db);
+    if (
+      (await hasEventExpenses(db)) &&
+      (
+        await query(
+          'SELECT id FROM period_expenses WHERE id=? AND special_event_id IS NOT NULL',
+          [expense],
+          db,
+        )
+      ).length
+    )
+      throw new AppError(409, 'Los gastos asociados se anulan con motivo desde el evento.');
     await execute(
       'DELETE FROM period_expenses WHERE id=? AND category_id=?',
       [expense, category],

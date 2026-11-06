@@ -685,3 +685,9 @@ it.each([false, true])(
     expect(db.release).toHaveBeenCalledTimes(1);
   },
 );
+vi.mock('../server/event-expenses.js', async (original) => ({
+  ...(await original<typeof import('../server/event-expenses.js')>()),
+  hasEventExpenses: async () => false,
+}));
+
+vi.mock('../server/event-schema.js', () => ({ eventSchemaReady: async () => false }));

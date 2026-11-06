@@ -18,6 +18,7 @@ import { query, execute, peopleTransaction, transaction, type Connection } from 
 import { AppError, requireFound } from './errors.js';
 import { positiveId } from './services.js';
 import { openPeriod } from './scheduling.js';
+import { hasEventExpenses } from './event-expenses.js';
 
 import {
   requireRecurringSchema,
@@ -239,6 +240,19 @@ export async function recurringLink(
       )[0],
     );
     const expenses = await movements(category, db);
+    if (
+      (await hasEventExpenses(db)) &&
+      (
+        await query(
+          'SELECT id FROM period_expenses WHERE category_id=? AND special_event_id IS NOT NULL',
+          [category],
+          db,
+        )
+      ).length
+    )
+      throw conflict(
+        'La categoría conserva gastos de eventos y no puede convertirse en recurrente.',
+      );
     if (unlink) {
       if (row.recurring_concept_id !== recurring)
         throw conflict('El vínculo cambió; volvé a consultar.');

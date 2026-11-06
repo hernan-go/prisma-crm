@@ -20,6 +20,7 @@ import {
   Menu,
   X,
   BrainCircuit,
+  Ticket,
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Empty, PageTitle, useDisclosure } from './components';
@@ -30,8 +31,13 @@ import { Expenses } from './Expenses';
 import { ImportPeople } from './ImportPeople';
 import { Statistics } from './Statistics';
 import { Knowledge } from './Knowledge';
+import { SpecialEvents, SpecialEventPage } from './SpecialEvents';
 import './administrative.css';
-export const PeriodContext = createContext<{ period: number; periods: any[] }>({
+export const PeriodContext = createContext<{
+  period: number;
+  periods: any[];
+  selectPeriod?: (period: number) => void;
+}>({
   period: 0,
   periods: [],
 });
@@ -48,12 +54,14 @@ const nav = [
   ['/pagos', 'Cobros Período', Wallet],
   ['/pago-facilitadores', 'Pago Facilitadores', Coins],
   ['/publicidad', 'Gastos Período', Receipt],
+  ['/eventos', 'Eventos Especiales', Ticket],
   ['/estadisticas', 'Estadísticas', BarChart3],
   ['/know-how', 'Know-How IA', BrainCircuit],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
 
 const sectionDescriptions: Record<string, string> = {
+  '/eventos': 'Eventos, participantes y cobros del período seleccionado.',
   '/know-how': 'Documentos privados de esta instalación, independientes de los períodos.',
   '/personas': 'Un registro por persona, toda su historia en un lugar.',
   '/gestion': 'Personas incorporadas explícitamente al período seleccionado.',
@@ -128,7 +136,11 @@ function MobileHeader({
 }) {
   const { open, setOpen, root, trigger, id } = disclosure;
   const { period, periods } = usePeriod();
-  const sectionPath = pathname.startsWith('/personas/') ? '/personas' : pathname;
+  const sectionPath = pathname.startsWith('/personas/')
+    ? '/personas'
+    : pathname.startsWith('/eventos/')
+      ? '/eventos'
+      : pathname;
   const title =
     (sectionPath === '/know-how'
       ? 'Centro de Conocimiento Empresarial'
@@ -255,7 +267,7 @@ export default function App() {
     };
   }, []);
   return (
-    <PeriodContext.Provider value={{ period, periods: q.data || [] }}>
+    <PeriodContext.Provider value={{ period, periods: q.data || [], selectPeriod: setPeriod }}>
       <div
         className={`app ${collapsed ? 'collapsed' : ''} ${mobileMenu.open ? 'mobile-menu-open' : ''}`}
       >
@@ -294,7 +306,10 @@ export default function App() {
               <PeriodSelector
                 period={period}
                 periods={q.data || []}
-                onChange={setPeriod}
+                onChange={(value) => {
+                  setPeriod(value);
+                  if (location.pathname.startsWith('/eventos/')) navigate('/eventos');
+                }}
                 onCreate={() => setCreate(true)}
                 compactClosed
               />
@@ -310,7 +325,10 @@ export default function App() {
                 <PeriodSelector
                   period={period}
                   periods={q.data || []}
-                  onChange={setPeriod}
+                  onChange={(value) => {
+                    setPeriod(value);
+                    if (location.pathname.startsWith('/eventos/')) navigate('/eventos');
+                  }}
                   onCreate={() => setCreate(true)}
                 />
               )}
@@ -325,10 +343,13 @@ export default function App() {
                 '/pagos',
                 '/pago-facilitadores',
                 '/publicidad',
+                '/eventos',
                 '/importar',
                 '/importar-forms',
                 '/know-how',
-              ].includes(location.pathname) || location.pathname.startsWith('/personas/')
+              ].includes(location.pathname) ||
+              location.pathname.startsWith('/personas/') ||
+              location.pathname.startsWith('/eventos/')
                 ? 'administrative-page'
                 : undefined
             }
@@ -345,6 +366,8 @@ export default function App() {
               <Route path="/pagos" element={<Payments />} />
               <Route path="/pago-facilitadores" element={<FacilitatorPayments />} />
               <Route path="/publicidad" element={<Expenses />} />
+              <Route path="/eventos" element={<SpecialEvents />} />
+              <Route path="/eventos/:id" element={<SpecialEventPage />} />
               <Route path="/estadisticas" element={<Statistics />} />
               <Route path="/know-how" element={<Knowledge />} />
               <Route path="/configuracion" element={<Configuration />} />

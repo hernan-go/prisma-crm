@@ -331,3 +331,9 @@ it('respuestas tardías quedan en la clave de su período', async () => {
   stop();
   client.clear();
 });
+vi.mock('../server/event-expenses.js', async (original) => ({
+  ...(await original<typeof import('../server/event-expenses.js')>()),
+  hasEventExpenses: async () => false,
+}));
+
+vi.mock('../server/event-schema.js', () => ({ eventSchemaReady: async () => false }));

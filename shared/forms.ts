@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { days, personSchema, slotSchema, paymentSchema, money } from './domain.js';
+import {
+  days,
+  importPersonSchema as personSchema,
+  slotSchema,
+  paymentSchema,
+  money,
+} from './domain.js';
 export const normalizeLabel = (s: string) =>
   s
     .normalize('NFD')

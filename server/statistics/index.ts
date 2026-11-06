@@ -6,8 +6,12 @@ import { statisticsPeriodSchema } from '../../shared/statistics.js';
 import { Decimal } from 'decimal.js';
 import { calculateSummary, type BalanceRow } from './engine.js';
 import { inflationService } from './inflation.js';
+import { hasEventExpenses } from '../event-expenses.js';
+import { readEventEconomy } from '../event-economy.js';
+import { eventSchemaReady } from '../event-schema.js';
 
 export async function readSummaryInput(periodId: number, db: Connection) {
+  const integrated = await hasEventExpenses(db);
   const [row] = await query('SELECT id,year,month,status FROM periods WHERE id=?', [periodId], db);
   if (!row) throw new AppError(404, 'El período no existe.');
   const period = statisticsPeriodSchema.parse(row);
@@ -57,7 +61,7 @@ export async function readSummaryInput(periodId: number, db: Connection) {
   const expenses = await query<{ amount: string }>(
     `
     SELECT e.amount FROM period_expenses e JOIN period_expense_categories c ON c.id=e.category_id
-    WHERE c.period_id=?`,
+    WHERE c.period_id=? ${integrated ? 'AND e.voided_at IS NULL' : ''}`,
     [periodId],
     db,
   );
@@ -65,7 +69,10 @@ export async function readSummaryInput(periodId: number, db: Connection) {
 }
 
 export async function readSummary(periodId: number, db: Connection, asOf: string) {
-  return calculateSummary(await readSummaryInput(periodId, db), asOf);
+  const base = calculateSummary(await readSummaryInput(periodId, db), asOf);
+  if (!(await eventSchemaReady(db))) return base;
+  const events = await readEventEconomy(periodId, db);
+  return { ...base, empty: base.empty && events.events.length === 0, events };
 }
 
 export async function statisticsSummary(periodId: number) {
@@ -107,7 +114,7 @@ export async function statisticsExpenseBreakdown(periodId: number) {
        FROM period_expense_categories c
        JOIN period_expenses e ON e.category_id=c.id
        LEFT JOIN expense_recurring_concepts r ON r.id=c.recurring_concept_id
-       WHERE c.period_id=? GROUP BY c.id,c.name,r.id,r.name ORDER BY c.name,c.id`,
+       WHERE c.period_id=? ${(await hasEventExpenses(db)) ? 'AND e.voided_at IS NULL' : ''} GROUP BY c.id,c.name,r.id,r.name ORDER BY c.name,c.id`,
       [periodId],
       db,
     );

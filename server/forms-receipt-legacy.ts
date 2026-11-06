@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { money, paymentSchema, personSchema } from '../shared/domain.js';
+import { money, paymentSchema, importPersonSchema as personSchema } from '../shared/domain.js';
 import { formSelectionSchema } from '../shared/forms.js';
 
 // Receipt recognition only. Never use this schema to authorize new writes.

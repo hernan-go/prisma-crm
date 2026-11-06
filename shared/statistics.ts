@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { eventEconomySchema } from './event-economy.js';
 
 const count = z.number().int().nonnegative();
 export const exactAmount = z.string().regex(/^\d+\.\d{2}$/);
@@ -22,6 +23,7 @@ export const metricSchema = z.object({
 });
 export const statisticsSummarySchema = z.object({
   version: z.literal(1),
+  events: eventEconomySchema.optional(),
   period: statisticsPeriodSchema,
   as_of: z.iso.datetime(),
   empty: z.boolean(),

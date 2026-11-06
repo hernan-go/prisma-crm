@@ -105,15 +105,14 @@ it('conserva métricas y desgloses financieros recibidos, sin recalcular persona
     ),
   );
   for (const label of [
-    'Total inscriptos período',
-    'Inscripciones en actividades',
+    'Total inscriptos',
+    'TOTAL RECAUDADO',
     'Total a cobrar',
     'Total cobrado',
     'Carteras del mes',
     'Saldo a favor',
     '2 cuentas',
     '>35<',
-    '>60<',
     '1.127.000',
     '960.000',
     '167.000',
@@ -122,8 +121,8 @@ it('conserva métricas y desgloses financieros recibidos, sin recalcular persona
     '455.000',
   ])
     expect(html).toContain(label);
-  expect(html.indexOf('Carteras del mes')).toBeLessThan(html.indexOf('Saldos del mes'));
-  expect(html.indexOf('Saldos del mes')).toBeLessThan(html.indexOf('Inscripciones por actividad'));
+  expect(html).not.toContain('Inscripciones por actividad');
+  expect(html).not.toContain('EVENTOS ESPECIALES');
   expect(dashboardHelp[0]).toContain('tengan o no actividades');
   expect(dashboardHelp[1]).toContain('más de una vez');
 });
@@ -219,7 +218,7 @@ it('mantiene nombres visibles y enlace existente sin controles de despliegue en 
   expect(html).not.toContain('Programación semanal e inscripciones.');
   expect(html).toContain('dashboard-day-tile');
   expect(html).toContain('dashboard-clock');
-  expect(html).toContain('Programación de los');
+  expect(html).toContain('Programación ·');
   expect(html).not.toContain('Asistentes');
 });
 
@@ -247,4 +246,17 @@ it('aísla respuestas tardías al cambiar rápidamente de período', async () =>
   expect(observer.getCurrentResult().data?.enrollments).toBe(60);
   stop();
   client.clear();
+});
+
+it('ordena las personas por apellido y nombre en español', async () => {
+  const { comparePeriodPeople } = await import('../client/Management');
+  expect(
+    [
+      { apellido: 'Zeta', nombre: 'Ana' },
+      { apellido: 'Álvarez', nombre: 'Zoe' },
+      { apellido: 'Alvarez', nombre: 'Ana' },
+    ]
+      .sort(comparePeriodPeople)
+      .map((p) => p.nombre),
+  ).toEqual(['Ana', 'Zoe', 'Ana']);
 });

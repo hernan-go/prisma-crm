@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Wallet, Receipt, Coins, CircleDollarSign, Clock3, TrendingUp, Info } from 'lucide-react';
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
+import { formatMoney } from '../shared/domain';
 import { usePeriod, periodName } from './App';
 import { PageHeading, Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
 import {
@@ -17,6 +18,7 @@ import {
   type InflationResponse,
 } from '../shared/inflation';
 import './statistics.css';
+import './dashboard.css';
 import { expenseQueryOptions } from './statistics-expenses';
 import { statisticsSummaryQueryOptions } from './statistics-collections';
 import { StatisticsAccordion } from './StatisticsAccordion';
@@ -353,6 +355,30 @@ export function ExecutiveSummary({
   const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
   return (
     <>
+      {data.events && (
+        <section className="panel">
+          <h2>Ingresos por origen y Eventos Especiales</h2>
+          <p>
+            Los indicadores de cobranzas de talleres conservan su universo. Consolidado por período
+            económico, excluyendo inscripciones eliminadas y eventos cancelados.
+          </p>
+          <p>
+            Talleres: <b>{formatMoney(data.events.income.workshops)}</b> · Eventos:{' '}
+            <b>{formatMoney(data.events.income.events)}</b> · Total consolidado:{' '}
+            <b>{formatMoney(data.events.income.total)}</b>
+          </p>
+          <p>
+            Gastos vinculados a los eventos del período: {formatMoney(data.events.event_expenses)}.
+            Tras una reprogramación pueden estar registrados en otro mes de Gastos Período.
+            Resultado comercial directo de eventos vigentes:{' '}
+            {formatMoney(data.events.commercial_result)}.
+          </p>
+          <p className="muted">
+            Resultado estimado sobre gastos registrados; no representa beneficio neto ni dinero
+            disponible. Los cancelados se excluyen de las cifras comerciales.
+          </p>
+        </section>
+      )}
       {data.empty && (
         <Empty>
           Este período no tiene miembros, compromisos de honorarios ni gastos registrados.
@@ -500,6 +526,35 @@ export function ExecutiveSummary({
     </>
   );
 }
+function ActivityEnrollments({ period }: { period: number }) {
+  const q = useQuery({
+    queryKey: ['activity-enrollments', period],
+    queryFn: () =>
+      api<{ name: string; count: number }[]>(
+        '/statistics/activity-enrollments?period_id=' + period,
+      ),
+    enabled: !!period,
+  });
+  const maximum = Math.max(1, ...(q.data ?? []).map((a) => a.count));
+  return (
+    <section className="panel dashboard-chart">
+      <h2>Inscripciones por actividad</h2>
+      {q.error && <ErrorBox error={q.error} />} {q.isPending && <Loading />}
+      {q.data?.map((a, index) => (
+        <div className="activity-count" key={index}>
+          <div>
+            <span>{a.name}</span>
+            <b>{a.count}</b>
+          </div>
+          <div className="track" aria-hidden="true">
+            <i style={{ width: Math.max(0, (a.count / maximum) * 100) + '%' }} />
+          </div>
+        </div>
+      ))}
+      {q.data?.length === 0 && <Empty>Sin actividades en este período.</Empty>}
+    </section>
+  );
+}
 export function Statistics() {
   const { period, periods } = usePeriod();
   const [collectionsOpen, setCollectionsOpen] = useState(false);
@@ -531,6 +586,7 @@ export function Statistics() {
           </span>
         )}
       </PageHeading>
+      {!!period && <ActivityEnrollments period={period} />}
       {!period ? (
         <Empty>Creá un período para consultar sus estadísticas.</Empty>
       ) : summary.isError && !data ? (

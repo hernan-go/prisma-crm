@@ -24,7 +24,19 @@ export function expenseSchemaForPeriod(month: string) {
   });
 }
 
-export type Expense = z.infer<typeof expenseSchema> & { id: number; category_id: number };
+export const associatedExpenseSchema = expenseSchema.extend({
+  special_event_id: z.number().int().positive().nullable(),
+  category_id: z.number().int().positive(),
+  period_id: z.number().int().positive(),
+  request_id: z.uuid(),
+  expected_revision: z.number().int().positive(),
+});
+export type Expense = z.infer<typeof expenseSchema> & {
+  id: number;
+  category_id: number;
+  special_event_id?: number | null;
+  event_revision?: number;
+};
 export type ExpenseCategory = z.infer<typeof expenseCategorySchema> & {
   id: number;
   period_id: number;

@@ -467,3 +467,368 @@
     white-space: nowrap;
   }
 }
+
+.dashboard .dashboard-three-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.dashboard-three-stats .stat {
+  min-width: 0;
+  padding: 12px;
+}
+.dashboard-three-stats strong {
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.dashboard .dashboard-event-finance {
+  background: var(--color-surface);
+  border: 1px solid #896475;
+}
+.dashboard .dashboard-event-finance .stat {
+  background: var(--color-surface);
+  border-color: #896475;
+}
+.dashboard-event-finance h2,
+.dashboard-event-finance h3,
+.dashboard-event-finance .wallet-icon {
+  color: #f0ccd8;
+}
+.event-dashboard-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+.event-dashboard-selector select {
+  width: auto;
+  max-width: 100%;
+}
+.dashboard-total {
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .dashboard-three-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-three-stats .stat:last-child {
+    grid-column: 1/-1;
+  }
+}
+
+.dashboard .dashboard-total {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-accent);
+  padding: 16px;
+}
+.dashboard-total h2 {
+  margin: 0 0 5px;
+  font-size: 1rem;
+}
+.dashboard-total .dashboard-balance {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dashboard-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 18px;
+}
+.dashboard-days button {
+  flex: 1;
+  padding: 9px 6px;
+  font-size: 0.75rem;
+}
+.dashboard-days button[aria-pressed='true'] {
+  background: var(--surface-accent);
+  border-color: var(--color-primary);
+}
+.dashboard-event-finance > .section-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.dashboard-event-finance .event-dashboard-selector {
+  margin: 0;
+}
+.dashboard .dashboard-event-finance .dashboard-finances > .panel {
+  background: var(--color-surface);
+}
+@media (max-width: 700px) {
+  .dashboard .dashboard-total {
+    flex-wrap: wrap;
+  }
+  .dashboard-total .dashboard-balance {
+    font-size: 1.3rem;
+  }
+  .dashboard-days button {
+    flex: 1 0 28%;
+  }
+}
+@media (min-width: 701px) {
+  .dashboard-finances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.dashboard .dashboard-finances > .panel {
+  padding: 14px;
+}
+.dashboard-event-finance .wallet {
+  padding: 10px 0;
+}
+.dashboard-event-finance .wallet-icon {
+  padding: 6px;
+}
+
+/* Final spacing refinement, scoped to the existing Dashboard panels. */
+.dashboard-administration {
+  gap: 14px;
+}
+.dashboard-day-header {
+  margin-bottom: 12px;
+}
+.dashboard-day-tile,
+.dashboard-clock {
+  padding: 12px 16px;
+}
+.dashboard-day-tile h2 {
+  font-size: 20px;
+}
+.dashboard-clock time {
+  font-size: 32px;
+}
+.dashboard-days button[aria-pressed='true'] {
+  background: #71e1e8;
+  color: #000000;
+  border-color: #71e1e8;
+}
+.dashboard-days button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.dashboard .dashboard-workshops {
+  background: var(--surface-accent);
+  border-color: var(--border-accent);
+  padding: 16px;
+}
+.dashboard-workshops > h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.dashboard-workshops > .dashboard-finances {
+  margin-top: 12px;
+}
+.dashboard .dashboard-workshops .stat,
+.dashboard .dashboard-workshops .dashboard-finances > .panel {
+  background: var(--color-surface);
+}
+.dashboard .dashboard-metric-title {
+  min-height: 32px;
+}
+.dashboard .stat strong {
+  margin: 6px 0;
+  font-size: 26px;
+}
+.dashboard .dashboard-finances h2,
+.dashboard .dashboard-finances h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.dashboard .wallet,
+.dashboard-event-finance .wallet {
+  padding: 8px 0;
+  gap: 8px;
+}
+.dashboard .wallet small {
+  line-height: 1.45;
+}
+.dashboard .wallet-icon {
+  padding: 7px;
+}
+.dashboard .balance-panel .dashboard-balance {
+  margin: 6px 0;
+  font-size: 26px;
+}
+.dashboard .balance-panel p {
+  margin: 6px 0;
+}
+.dashboard .balance-panel small {
+  margin-bottom: 8px;
+}
+.dashboard .dashboard-three-stats {
+  margin: 10px 0;
+  gap: 10px;
+}
+.dashboard-event-finance > h3 {
+  margin: 8px 0;
+}
+.dashboard .dashboard-total {
+  padding: 12px 16px;
+}
+.dashboard-total .dashboard-balance {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+@media (min-width: 1201px) {
+  .dashboard {
+    --dashboard-top-height: 80px;
+  }
+  .dashboard-day-tile,
+  .dashboard-clock,
+  .dashboard .dashboard-total {
+    height: var(--dashboard-top-height);
+    min-block-size: 0;
+    box-sizing: border-box;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard .dashboard-workshops {
+    padding: 14px;
+  }
+  .dashboard .dashboard-total {
+    gap: 10px;
+  }
+  .dashboard-total > div {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Match the event panel's spacing to the workshop composition. */
+.dashboard .dashboard-event-finance {
+  padding: 16px;
+}
+.dashboard-event-finance > .section-heading {
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.dashboard-event-finance > .section-heading h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.dashboard-event-finance .event-dashboard-selector {
+  font-size: 12px;
+  gap: 6px;
+}
+.dashboard-event-finance .event-dashboard-selector select {
+  font-size: 12px;
+  padding: 6px 8px;
+  min-height: 34px;
+  max-width: 140px;
+  border-radius: 6px;
+}
+.dashboard-event-finance > .badge {
+  font-size: 11px;
+}
+.dashboard-event-finance > h3 {
+  font-size: 16px;
+  margin: 6px 0 10px;
+}
+.dashboard .dashboard-event-finance .dashboard-three-stats {
+  margin: 0 0 12px;
+  gap: 12px;
+}
+.dashboard .dashboard-event-finance .stat {
+  padding: 14px;
+  background: var(--color-surface);
+}
+.dashboard .dashboard-event-finance .dashboard-finances {
+  gap: 16px;
+}
+.dashboard .dashboard-event-finance .dashboard-finances > .panel {
+  background: var(--color-surface);
+}
+.dashboard .dashboard-event-finance {
+  background: #5b414e;
+}
+@media (min-width: 1201px) {
+  .dashboard-day-tile,
+  .dashboard-clock,
+  .dashboard .dashboard-total {
+    padding: 10px 14px;
+  }
+  .dashboard-day-tile h2 {
+    font-size: 17px;
+    line-height: 20px;
+  }
+  .dashboard-day-tile p {
+    line-height: 16px;
+  }
+  .dashboard-day-tile small {
+    line-height: 14px;
+    margin-top: 2px;
+  }
+  .dashboard-clock {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 2px 8px;
+    align-content: center;
+  }
+  .dashboard-clock .dashboard-weather {
+    display: contents;
+  }
+  .dashboard-clock .dashboard-weather-value {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .dashboard-clock .dashboard-weather-meta {
+    grid-column: 1/-1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    justify-content: space-between;
+  }
+  .dashboard-clock .dashboard-weather-location {
+    font-size: 10px;
+    line-height: 12px;
+  }
+  .dashboard-clock .dashboard-weather-condition {
+    font-size: 11px;
+    line-height: 13px;
+  }
+  .dashboard-clock .dashboard-weather-source {
+    font-size: 9px;
+    line-height: 12px;
+  }
+  .dashboard-clock .dashboard-weather-value {
+    gap: 4px;
+  }
+  .dashboard-clock .dashboard-weather-value strong {
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .dashboard-clock .dashboard-weather-value svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .dashboard-clock time {
+    font-size: 28px;
+  }
+  .dashboard-total h2 {
+    font-size: 14px;
+  }
+  .dashboard-total small {
+    font-size: 11px;
+  }
+  .dashboard-total .dashboard-balance {
+    font-size: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard .dashboard-event-finance {
+    padding: 14px;
+  }
+  .dashboard-event-finance .event-dashboard-selector select {
+    min-height: 44px;
+  }
+}

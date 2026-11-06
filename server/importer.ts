@@ -1,6 +1,11 @@
 import ExcelJS from 'exceljs';
 import Papa from 'papaparse';
-import { personSchema, normalizePhone, normalizeDni, type PersonInput } from '../shared/domain.js';
+import {
+  importPersonSchema as personSchema,
+  normalizePhone,
+  normalizeDni,
+  type PersonInput,
+} from '../shared/domain.js';
 import { AppError } from './errors.js';
 export const clean = (s: string) =>
   s
@@ -108,7 +113,9 @@ export function mapRow(values: string[], mapping: Record<string, number>) {
 }
 export function strongMatch(a: PersonInput, b: PersonInput) {
   return (
-    normalizePhone(a.telefono) === normalizePhone(b.telefono) ||
+    Boolean(
+      normalizePhone(a.telefono) && normalizePhone(a.telefono) === normalizePhone(b.telefono),
+    ) ||
     Boolean(normalizeDni(a.dni) && normalizeDni(a.dni) === normalizeDni(b.dni)) ||
     Boolean(a.email && a.email.toLowerCase() === b.email.toLowerCase())
   );

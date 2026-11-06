@@ -31,7 +31,15 @@ import { usePeriod, periodName } from './App';
 import { PersonMonth } from './Management';
 import { PeopleSkeletonRows } from './PeopleSkeleton';
 import './people.css';
-export function PersonForm({ person, close }: { person?: any; close: () => void }) {
+export function PersonForm({
+  person,
+  close,
+  onCreated,
+}: {
+  person?: any;
+  close: () => void;
+  onCreated?: (person: { id: number; nombre: string; apellido: string }) => void;
+}) {
   const defaults = person ? { ...person, activo: !!person.activo } : {};
   const {
     register,
@@ -58,7 +66,15 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
     }
   };
   const [allow, setAllow] = useState(false);
-  const m = useSave(person ? `/people/${person.id}` : '/people', person ? 'PUT' : 'POST', close);
+  const m = useSave(
+    person ? `/people/${person.id}` : '/people',
+    person ? 'PUT' : 'POST',
+    (result) => {
+      if (!person)
+        onCreated?.({ id: result.id, nombre: getValues().nombre, apellido: getValues().apellido });
+      close();
+    },
+  );
   const input = (key: string, label: string, type = 'text') => (
     <Field key={key} label={label} error={errors[key]?.message as string}>
       <input
@@ -77,11 +93,11 @@ export function PersonForm({ person, close }: { person?: any; close: () => void 
   return (
     <Modal title={person ? 'Editar persona' : 'Nueva persona'} close={close}>
       <form onSubmit={handleSubmit((values) => m.mutate({ ...values, allow_duplicate: allow }))}>
-        <p>Nombre, apellido y teléfono son obligatorios.</p>
+        <p>Nombre y apellido son obligatorios. El teléfono es opcional.</p>
         <div className="form-grid">
           {input('nombre', 'Nombre *')}
           {input('apellido', 'Apellido *')}
-          {input('telefono', 'Teléfono *', 'tel')}
+          {input('telefono', 'Teléfono', 'tel')}
           {input('dni', 'DNI')}
           {input('email', 'Email', 'email')}
           {input('direccion', 'Dirección')}

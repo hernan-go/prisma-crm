@@ -3,6 +3,10 @@ import { Skeleton, SkeletonRegion } from './Skeleton';
 export function DashboardFinanceSkeleton() {
   return (
     <SkeletonRegion label="Cargando resumen financiero…" className="dashboard-finance-loading">
+      <section className="panel loading-card" aria-hidden="true">
+        <Skeleton width="65%" height={20} />
+        <Skeleton width="55%" height={30} />
+      </section>
       <div className="stats dashboard-stats">
         {[0, 1, 2, 3].map((i) => (
           <article className="stat loading-card" key={i} aria-hidden="true">
@@ -21,12 +25,6 @@ export function DashboardFinanceSkeleton() {
           </section>
         ))}
       </div>
-      <section className="panel dashboard-chart loading-card" aria-hidden="true">
-        <Skeleton width="60%" height={20} />
-        {[80, 60, 40].map((width) => (
-          <Skeleton key={width} width={`${width}%`} height={18} />
-        ))}
-      </section>
     </SkeletonRegion>
   );
 }

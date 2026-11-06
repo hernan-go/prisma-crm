@@ -2,6 +2,7 @@ import { query, execute, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { openPeriod } from './scheduling.js';
 import { requireRecurringSchema } from './recurring-periods.js';
+import { periodHasEvents } from './event-period-guard.js';
 
 // All callers hold peopleTransaction: configuration, admissions and finance share
 // its cross-process lock. Locking reads also protect the rows being removed.
@@ -15,6 +16,11 @@ async function rejectReferences(
 }
 
 export async function requirePeriodWithoutBusinessData(period: number, db: Connection) {
+  if (await periodHasEvents(period, db))
+    throw new AppError(
+      409,
+      'El período conserva Eventos Especiales o sus antecedentes. No puede eliminarse.',
+    );
   await rejectReferences(
     db,
     'SELECT p.id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE m.period_id=?',

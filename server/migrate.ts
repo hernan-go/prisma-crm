@@ -41,13 +41,53 @@ export async function migrate(through?: string) {
             '013.sql detenida: existe tabla de propuestas sin registro. Inspeccionar aplicación parcial.',
           );
       }
+      if (name === '014.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='013.sql'",
+        );
+        if (!baseline.length) throw new Error('014.sql requiere 013.sql registrada.');
+        const [existing] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('special_events','event_participants','event_money_movements')",
+        );
+        if (existing.length)
+          throw new Error(
+            '014.sql detenida: existen tablas de Eventos sin registro. Inspeccionar aplicación parcial antes de continuar.',
+          );
+      }
       if (name === '012.sql') {
+        // Applied migration handling remains unchanged.
         const [existing] = await c.query<RowDataPacket[]>(
           "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('knowledge_categories','knowledge_documents','knowledge_document_versions','knowledge_library_state')",
         );
         if (existing.length)
           throw new Error(
             '012.sql detenida: existen estructuras documentales sin registro de migración. Inspeccionar la aplicación parcial antes de continuar. No se modificaron estas tablas.',
+          );
+      }
+      if (name === '015.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='014.sql'",
+        );
+        if (!baseline.length) throw new Error('015.sql requiere 014.sql registrada.');
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='period_expenses' AND COLUMN_NAME IN ('special_event_id','voided_at','void_reason')",
+        );
+        if (partial.length)
+          throw new Error(
+            '015.sql detenida: ampliación parcial de Gastos sin registro. Inspeccionar antes de continuar.',
+          );
+      }
+      if (name === '016.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='015.sql'",
+        );
+        if (!baseline.length) throw new Error('016.sql requiere 015.sql registrada.');
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND ((TABLE_NAME='special_events' AND COLUMN_NAME IN ('event_number','location')) OR (TABLE_NAME='periods' AND COLUMN_NAME IN ('event_sequence','event_delete_receipts')))",
+        );
+        if (partial.length)
+          throw new Error(
+            '016.sql detenida: ampliación parcial sin registro. Inspeccionar antes de continuar.',
           );
       }
       const sql = await readFile(resolve('server/migrations', name), 'utf8');

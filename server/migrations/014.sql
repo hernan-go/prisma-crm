@@ -1,0 +1,60 @@
+-- Stage 1 only. Additive, no seeds or changes to existing business rows.
+-- MySQL DDL commits implicitly. The runner rejects unregistered partial tables.
+CREATE TABLE special_events (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ period_id INT UNSIGNED NOT NULL,
+ name VARCHAR(200) NOT NULL, description TEXT NOT NULL,
+ date DATE NOT NULL, start_time CHAR(5) CHARACTER SET ascii NOT NULL,
+ end_time CHAR(5) CHARACTER SET ascii NOT NULL,
+ price DECIMAL(12,2) NOT NULL, capacity INT UNSIGNED NULL,
+ status VARCHAR(12) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'draft',
+ notes TEXT NOT NULL, revision INT UNSIGNED NOT NULL DEFAULT 1,
+ creation_request_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ creation_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ history JSON NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_event_creation(creation_request_id),
+ KEY ix_event_period(period_id,status,date),
+ CONSTRAINT fk_event_period FOREIGN KEY(period_id) REFERENCES periods(id) ON DELETE RESTRICT,
+ CONSTRAINT chk_event_name CHECK(CHAR_LENGTH(TRIM(name))>0),
+ CONSTRAINT chk_event_price CHECK(price>=0),
+ CONSTRAINT chk_event_capacity CHECK(capacity IS NULL OR capacity>0),
+ CONSTRAINT chk_event_revision CHECK(revision>=1),
+ CONSTRAINT chk_event_status CHECK(status IN ('draft','confirmed','held','cancelled')),
+ CONSTRAINT chk_event_times CHECK(start_time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]$' AND end_time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]$' AND end_time>start_time),
+ CONSTRAINT chk_event_history CHECK(JSON_TYPE(history)='ARRAY')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE event_participants (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ event_id INT UNSIGNED NOT NULL, person_id INT UNSIGNED NOT NULL,
+ price DECIMAL(12,2) NOT NULL, active BOOLEAN NOT NULL DEFAULT TRUE,
+ notes TEXT NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_event_person(event_id,person_id),
+ CONSTRAINT fk_event_participant_event FOREIGN KEY(event_id) REFERENCES special_events(id) ON DELETE RESTRICT,
+ CONSTRAINT fk_event_participant_person FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE RESTRICT,
+ CONSTRAINT chk_event_participant_price CHECK(price>=0),
+ CONSTRAINT chk_event_participant_active CHECK(active IN (0,1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE event_money_movements (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ participant_id INT UNSIGNED NOT NULL,
+ request_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ kind VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ date DATE NOT NULL, amount DECIMAL(12,2) NOT NULL,
+ recipient VARCHAR(6) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ method VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ notes TEXT NOT NULL, voided_at DATETIME(3) NULL, void_reason VARCHAR(2000) NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_event_movement_request(request_id),
+ KEY ix_event_movement_participant(participant_id,date),
+ KEY ix_event_movement_date(date),
+ CONSTRAINT fk_event_movement_participant FOREIGN KEY(participant_id) REFERENCES event_participants(id) ON DELETE RESTRICT,
+ CONSTRAINT chk_event_movement_kind CHECK(kind IN ('collection','refund')),
+ CONSTRAINT chk_event_movement_amount CHECK(amount>0),
+ CONSTRAINT chk_event_movement_recipient CHECK(recipient IN ('jesica','hernan')),
+ CONSTRAINT chk_event_movement_method CHECK(method IN ('cash','transfer')),
+ CONSTRAINT chk_event_movement_void CHECK((voided_at IS NULL AND void_reason IS NULL) OR (voided_at IS NOT NULL AND void_reason IS NOT NULL AND CHAR_LENGTH(TRIM(void_reason))>0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

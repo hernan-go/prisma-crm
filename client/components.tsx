@@ -253,14 +253,14 @@ export function ErrorBox({ error }: { error: unknown }) {
     </div>
   ) : null;
 }
-export function useSave(path: string, method: string, done: () => void) {
+export function useSave(path: string, method: string, done: (result: any) => void) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: unknown) => api(path, method, body),
-    onSuccess: () => {
+    onSuccess: (result) => {
       void qc.invalidateQueries();
       window.dispatchEvent(new CustomEvent('toast', { detail: 'Cambios guardados.' }));
-      done();
+      done(result);
     },
   });
 }

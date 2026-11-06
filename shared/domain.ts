@@ -15,15 +15,21 @@ export const money = z
   .string()
   .regex(/^\d{1,10}(\.\d{1,2})?$/, 'Ingresá un importe positivo con hasta dos decimales.');
 const text = z.string().trim().max(2000).default('');
+const requiredPhone = z
+  .string()
+  .trim()
+  .min(1, 'El teléfono es obligatorio.')
+  .max(60)
+  .refine((v) => v.replace(/\D/g, '').length >= 6, 'Ingresá al menos 6 dígitos.');
 export const personSchema = z.object({
   nombre: z.string().trim().min(1, 'El nombre es obligatorio.').max(100),
   apellido: z.string().trim().min(1, 'El apellido es obligatorio.').max(100),
   telefono: z
     .string()
     .trim()
-    .min(1, 'El teléfono es obligatorio.')
     .max(60)
-    .refine((v) => v.replace(/\D/g, '').length >= 6, 'Ingresá al menos 6 dígitos.'),
+    .refine((v) => v === '' || v.replace(/\D/g, '').length >= 6, 'Ingresá al menos 6 dígitos.')
+    .default(''),
   dni: z.string().trim().max(30).default(''),
   email: z.union([z.literal(''), z.email('Email inválido.')]).default(''),
   direccion: text,
@@ -34,6 +40,8 @@ export const personSchema = z.object({
   emergency_phone: text,
   emergency_notes: text,
 });
+// Import workflows retain their existing mandatory phone contract.
+export const importPersonSchema = personSchema.extend({ telefono: requiredPhone });
 export type PersonInput = z.infer<typeof personSchema>;
 export const periodSchema = z.object({
   year: z.number().int().min(2020).max(2100),

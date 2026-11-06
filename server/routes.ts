@@ -1,4 +1,7 @@
+import { eventSchemaReady } from './event-schema.js';
 import { createWeatherRouter } from './weather.js';
+import { specialEvents } from './special-events.js';
+import { readIncomeSources, readEventEconomy } from './event-economy.js';
 import { knowledge } from './knowledge.js';
 import { knowledgeProposals } from './knowledge-proposals.js';
 import { statistics } from './statistics/index.js';
@@ -11,7 +14,12 @@ import { openPeriod, periodCreate, periodEdit, deleteMovement } from './scheduli
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import { money, personSchema, normalizePhone, normalizeDni } from '../shared/domain.js';
+import {
+  money,
+  importPersonSchema as personSchema,
+  normalizePhone,
+  normalizeDni,
+} from '../shared/domain.js';
 import { query, execute, pool, peopleTransaction } from './db.js';
 import { AppError, requireFound } from './errors.js';
 import { accounts, enrollmentList, paymentSelect, duplicates, savePerson } from './repositories.js';
@@ -24,6 +32,7 @@ import {
 } from './memberships.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use('/special-events', specialEvents);
 api.use('/knowledge', knowledge);
 api.use('/knowledge/proposals', knowledgeProposals);
 api.use(statistics);
@@ -213,54 +222,58 @@ api.delete('/payments/:id', async (req, res) =>
 );
 api.get('/dashboard', async (req, res) => {
   const period = id(req.query.period_id);
-  const [enrollment] = await query(
-    'SELECT (SELECT COUNT(*) FROM enrollments WHERE period_id=?) enrollments,(SELECT COUNT(*) FROM period_memberships WHERE period_id=?) people',
-    [period, period],
+  const db = await pool.getConnection();
+  try {
+    await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+    await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+    const read = (sql: string, values: any[] = []) => query(sql, values, db);
+    const [enrollment] = await read(
+      'SELECT (SELECT COUNT(*) FROM enrollments WHERE period_id=?) enrollments,(SELECT COUNT(*) FROM period_memberships WHERE period_id=?) people',
+      [period, period],
+    );
+    const [totals] = await read(
+      'SELECT COALESCE(SUM(amount_due),0) due,SUM(amount_due IS NULL) undefined_accounts FROM monthly_accounts WHERE period_id=?',
+      [period],
+    );
+    const consolidation = await readIncomeSources(period, db);
+    const paid = {
+      paid: consolidation.income.workshops,
+      cash: consolidation.cash,
+      transfer: consolidation.transfer,
+    };
+    const wallets = consolidation.wallets;
+    const [pending] = await read(
+      'SELECT COALESCE(SUM(GREATEST(amount_due-paid,0)),0) pending,COALESCE(SUM(GREATEST(paid-amount_due,0)),0) credit FROM (SELECT m.amount_due,COALESCE(SUM(p.amount),0) paid FROM monthly_accounts m LEFT JOIN payments p ON p.account_id=m.id WHERE m.period_id=? GROUP BY m.id) balances',
+      [period],
+    );
+    const eventEconomy = (await eventSchemaReady(db))
+      ? await readEventEconomy(period, db)
+      : undefined;
+    await db.commit();
+    res.json({
+      ...enrollment,
+      ...totals,
+      ...paid,
+      ...pending,
+      events: eventEconomy?.events.filter((e) => e.status !== 'cancelled') ?? [],
+      wallets,
+      income_sources: consolidation.income,
+    });
+  } catch (error) {
+    await db.rollback();
+    throw error;
+  } finally {
+    db.release();
+  }
+});
+api.get('/statistics/activity-enrollments', async (req, res) => {
+  const period = id(req.query.period_id);
+  res.json(
+    await query(
+      'SELECT o.name,COUNT(DISTINCT e.person_id) count FROM period_activities o LEFT JOIN enrollments e ON e.activity_id=o.activity_id AND e.period_id=o.period_id WHERE o.period_id=? GROUP BY o.id ORDER BY count DESC,o.name',
+      [period],
+    ),
   );
-  const [totals] = await query(
-    'SELECT COALESCE(SUM(amount_due),0) due,SUM(amount_due IS NULL) undefined_accounts FROM monthly_accounts WHERE period_id=?',
-    [period],
-  );
-  const [paymentTotals] = await query(
-    `SELECT
-      COALESCE(SUM(p.amount),0) paid,
-      COALESCE(SUM(IF(p.method='cash',p.amount,0)),0) cash,
-      COALESCE(SUM(IF(p.method='transfer',p.amount,0)),0) transfer,
-      COALESCE(SUM(CASE WHEN p.recipient='jesica' AND p.method='cash' THEN p.amount ELSE 0 END),0) jesica_cash,
-      COALESCE(SUM(CASE WHEN p.recipient='jesica' AND p.method='transfer' THEN p.amount ELSE 0 END),0) jesica_transfer,
-      COALESCE(SUM(CASE WHEN p.recipient='hernan' AND p.method='cash' THEN p.amount ELSE 0 END),0) hernan_cash,
-      COALESCE(SUM(CASE WHEN p.recipient='hernan' AND p.method='transfer' THEN p.amount ELSE 0 END),0) hernan_transfer,
-      COALESCE(SUM(CASE WHEN p.recipient='jesica' THEN p.amount ELSE 0 END),0) jesica_total,
-      COALESCE(SUM(CASE WHEN p.recipient='hernan' THEN p.amount ELSE 0 END),0) hernan_total
-     FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE m.period_id=?`,
-    [period],
-  );
-  const paid = {
-    paid: paymentTotals.paid,
-    cash: paymentTotals.cash,
-    transfer: paymentTotals.transfer,
-  };
-  const wallets = {
-    jesica: {
-      cash: paymentTotals.jesica_cash,
-      transfer: paymentTotals.jesica_transfer,
-      total: paymentTotals.jesica_total,
-    },
-    hernan: {
-      cash: paymentTotals.hernan_cash,
-      transfer: paymentTotals.hernan_transfer,
-      total: paymentTotals.hernan_total,
-    },
-  };
-  const [pending] = await query(
-    'SELECT COALESCE(SUM(GREATEST(amount_due-paid,0)),0) pending,COALESCE(SUM(GREATEST(paid-amount_due,0)),0) credit FROM (SELECT m.amount_due,COALESCE(SUM(p.amount),0) paid FROM monthly_accounts m LEFT JOIN payments p ON p.account_id=m.id WHERE m.period_id=? GROUP BY m.id) balances',
-    [period],
-  );
-  const activities = await query(
-    'SELECT o.name,COUNT(DISTINCT e.person_id) count FROM period_activities o LEFT JOIN enrollments e ON e.activity_id=o.activity_id AND e.period_id=o.period_id WHERE o.period_id=? GROUP BY o.id ORDER BY count DESC,o.name',
-    [period],
-  );
-  res.json({ ...enrollment, ...totals, ...paid, ...pending, activities, wallets });
 });
 api.all(['/advertising', '/advertising/:id'], (_req, res) => {
   res

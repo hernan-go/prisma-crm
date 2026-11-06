@@ -32,9 +32,11 @@ describe('Personas y teléfonos', () => {
       ),
     ).toBe(true);
   });
-  it('exige nombre, apellido y teléfono', () => {
-    for (const key of Object.keys(person))
+  it('exige nombre y apellido; permite teléfono ausente sin aceptar uno inválido', () => {
+    for (const key of ['nombre', 'apellido'])
       expect(personSchema.safeParse({ ...person, [key]: '' }).success).toBe(false);
+    expect(personSchema.safeParse({ ...person, telefono: '' }).success).toBe(true);
+    expect(personSchema.safeParse({ ...person, telefono: '123' }).success).toBe(false);
   });
   it('preserva texto visible y normaliza Argentina', () => {
     expect(personSchema.parse({ ...person, telefono: '+54 9 341 1234567' }).telefono).toBe(
