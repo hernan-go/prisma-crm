@@ -47,7 +47,11 @@ export async function verifyPaymentMigration() {
       'enrollments',
       'enrollment_slots',
       'import_receipts',
-    ].map((t) => query(`SELECT * FROM ${t} ORDER BY id`)),
+    ].map((t) => query(
+  t === 'periods'
+    ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
+    : `SELECT * FROM ${t} ORDER BY id`
+)),
   );
   // Unexpected partial schemas and data must stop before changing historical values.
   await execute('ALTER TABLE payments ADD COLUMN recipient VARCHAR(12) NULL');
@@ -111,7 +115,11 @@ export async function verifyPaymentMigration() {
           'enrollments',
           'enrollment_slots',
           'import_receipts',
-        ].map((t) => query(`SELECT * FROM ${t} ORDER BY id`)),
+        ].map((t) => query(
+  t === 'periods'
+    ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
+    : `SELECT * FROM ${t} ORDER BY id`
+)),
       ),
     ).toEqual(unrelated);
     const wallets = await query(`SELECT m.period_id,

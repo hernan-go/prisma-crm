@@ -282,12 +282,12 @@ export function monthlyModelTests(agent: any, password: string) {
         (await agent.put(`/api/offerings/${first}`).send({ ...value, active: true })).status,
       ).toBe(200);
     });
-    it('dashboard conserva el nombre de la oferta histórica tras renombrar el catálogo', async () => {
-      const dashboard = (await agent.get(`/api/dashboard?period_id=${sep}`)).body;
-      expect(dashboard.activities.find((x: any) => x.name === 'Oferta intermitente QA').count).toBe(
+    it('estadísticas conserva el nombre de la oferta histórica tras renombrar el catálogo', async () => {
+      const activities = (await agent.get(`/api/statistics/activity-enrollments?period_id=${sep}`)).body;
+      expect(activities.find((x: any) => x.name === 'Oferta intermitente QA').count).toBe(
         2,
       );
-      expect(dashboard.activities.some((x: any) => x.name === 'Nombre futuro')).toBe(false);
+      expect(activities.some((x: any) => x.name === 'Nombre futuro')).toBe(false);
     });
     it('conserva horarios históricos deshabilitados al editar y bloquea nuevas admisiones', async () => {
       expect(
