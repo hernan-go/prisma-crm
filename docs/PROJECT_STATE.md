@@ -1,5 +1,13 @@
 # PRISMA CRM — Estado actual
 
+## Estado local — Iteración 10.2, corrección técnica previa a commits (06/11/2026)
+
+Implementación local en `codex/iteration-10-2-events-stage-1`, base `244f80c`, sin commits. Conserva etapas anteriores: numeración persistente, tres indicadores de evento, Carteras separadas, bajas sin restaurar pagos, cancelación transaccional con reclasificación de gastos y reapertura temporal explícitamente autorizada. MCP local en `codex/iteration-10-2-events`, base `cd2816b`, sin publicación. Los cinco hallazgos de auditoría están corregidos: activación común 014+015+016 con rechazo explícito de estados intermedios, cobros/reintegros consistentes API–MCP y registros excluidos diferenciados, fecha inicial argentina de Gastos, Skeleton de cuatro KPI y documentación consolidada.
+
+Validación actual: CRM 509 pruebas aprobadas, 212 omitidas; 24 financieras y cuatro de migraciones aprobadas separadamente en `prisma_qa_events_102_20261106`, creado vacío por el propietario y único destino de escritura autorizado para esta intervención. Las 184 integraciones generales restantes no se ejecutaron. MCP 44/44; typecheck/lint/build CRM y lint/build Site MCP aprobados. `014–016` inmutables, previamente aplicadas en prisma_test y ahora también en QA; no nuevas escrituras en prisma_test ni dev/demo/producción. QA conservado con 16 migraciones y sin fixtures de negocio. APTO CON OBSERVACIONES para preparar commits locales; aceptación manual y publicación pendientes.
+
+Pruebas, límites y revisión manual: [Iteración 10.2](iterations/2026-11-special-events-stage-3.md). Pendiente aceptación manual del propietario y publicación separadamente autorizada. No se modificaron dev/demo/producción; el estado productivo siguiente sigue vigente.
+
 ## Estado vigente — Iteración 10.1 cerrada en producción (02/11/2026)
 
 CRM publicado en ae3cea9eb81115f0edb5a665016fa1661e9e6b19; migraciones 001–013 aplicadas y registradas en producción según confirmación del propietario. Centro de Conocimiento real y propuestas operativos. Worker respaldado en c80fc8b61392bb3425cec187c0341e83ef80710b; Site privado versión 5, commit interno e57be72e758ad2ea2e8f0d1fa16aae2651b8d937. Lectura y propuestas usan credenciales independientes ya configuradas. La compilación oficial pendiente en Windows quedó completada en Work/Sites según informe aportado por el propietario.
@@ -285,3 +293,11 @@ Autorización posterior de Hernán completada el 2026-10-22. MySQL 8.4.11, host 
 Postflight: tabla/campos/FK/índices/CHECK correctos; 21 tablas originales de negocio con hashes idénticos. Publicidad ID 3 $50.000, Insumos ID 4 $40.000, diciembre 2026 total $90.000 intacto. Smoke HTTP autenticado de lectura: categorías, recurrentes, catálogo y Estadísticas responden 200; sesiones del smoke solo en memoria, sin cambios de admin_sessions. Catálogo vacío, sin configurar PRISMA ni crear movimientos. Backend restablecido en 3001 para UI localhost:5173. [Respaldo, SHA256, recuperación y evidencia](iterations/2026-10-recurring-expenses-implementation.md#aplicación-controlada-posterior-en-prisma_dev).
 
 No se modificaron prisma_test, prisma_demo ni producción en esta operación. Producción sigue en 001–009. Sin cambios de código, suites destructivas, commits, push, merge ni deploy. Próximo paso: revisión del propietario y autorización expresa para configurar los ocho conceptos, separada de la aplicación productiva.
+
+## Correcciones de aceptación manual — 05/11/2026
+
+Restaurados cuatro KPI de talleres con sus dos ayudas, Carteras del mes y Saldos del mes independientes, y composición original consultada en HEAD por ausencia de captura en el adjunto recibido. Total horizontal y bloque rosa con selector en encabezado y paneles independientes. Selector lunes–sábado reutiliza agenda cargada; domingo inicia lunes sin llamarlo hoy. Orden español por apellido/nombre limitado a Inscriptos Período y Cobros Período. Eventos: píldoras, encabezado compacto, selección de persona alineada, alta directa de cobro sin movimientos, baja sin campos de precio/condiciones, avisos económicos condicionales y cantidades activas/históricas explícitas.
+
+Backend financiero, Gastos y MCP sin cambios. Sin nuevas migraciones, consultas/escrituras DB ni creación/eliminación de períodos. No se repitió la integración que genera fixtures: 22/22 MySQL y 44/44 MCP son evidencia anterior, no validaciones nuevas. Reprogramación, reapertura temporal y consulta MCP siguen pendientes de aceptación manual con períodos preparados por el propietario. Incidencia de recurrentes de abril 2098 fuera de esta corrección.
+
+Revisión visual sintética nueva en escritorio, tablet y móvil: cuatro KPI, separación de paneles, cambio de día/evento conservando total, ocultamiento sin eventos, fondos sólidos y sin overflow. Comparación exacta contra captura productiva pendiente por falta del archivo. Para aceptación: iniciar local exclusivamente con DB_NAME=prisma_test, ingresar personalmente, comprobar días/KPI/ayudas y formularios con personas sintéticas existentes; no crear ni limpiar períodos masivamente. Sin commits, push, merge ni deploy.

@@ -24,7 +24,7 @@ Un período solo existe si fue creado explícitamente mediante la funcionalidad 
 
 ## D005 — Fecha de gasto
 
-La fecha de un gasto debe pertenecer exactamente al período seleccionado. Esto se valida en frontend y backend.
+La fecha de un gasto general debe pertenecer exactamente al período seleccionado. Esto se valida en frontend y backend. Excepción de Eventos Especiales (Iteración 10.2 local): al asociar un adicional, se imputa al período del evento y admite fecha efectiva anterior. Reprogramar no mueve gastos: conserva asociación y período contable original; la ficha informa esos gastos. Desvincular exige período de la fecha real y categoría compatible. Al cancelar, se reutiliza automáticamente la categoría adicional del mismo nombre en ese período, sin duplicar registros ni crear períodos/categorías. Si faltan, rollback completo. No se falsifican fechas.
 
 ## D006 — Gastos sin categorías por defecto
 
@@ -32,7 +32,7 @@ La fecha de un gasto debe pertenecer exactamente al período seleccionado. Esto 
 
 ## D007 — Gastos y cierre de período
 
-Un período cerrado es de solo lectura. Crear, editar o eliminar categorías/gastos requiere reabrir explícitamente el período.
+Un período cerrado es de solo lectura. Crear, editar o eliminar categorías/gastos requiere reabrir explícitamente el período. Excepción acotada autorizada en Iteración 10.2: cancelar un evento permite reabrir temporalmente los períodos cerrados afectados por el traslado de sus gastos, exclusivamente con autorización administrativa explícita para cada ID. Validación completa, bloqueo, reapertura, traslado y restauración del cierre ocurren en una transacción; un error revierte todo. La excepción no habilita otras escrituras.
 
 ## D008 — Publicidad histórica
 
@@ -213,3 +213,11 @@ Esta nota registra un hito posterior, sin introducir una decisión ni reescribir
 La conexión autorizada ChatGPT ↔ MCP privado ↔ API empresarial 2.0 de lectura está funcionando. Backend publicado en `448554fb38e65ac753161c83616594ccec832eac` en `hernan-go/prisma-crm`; Worker respaldado en el repositorio privado `hernan-go/prisma-mcp`, commit `25487c43778370fce101e24f697b011ff7201219`, tag `v1.0.0`. El propietario confirmó consulta real de octubre de 2026 desde Work y ChatGPT normal. Las 23 pruebas sintéticas del respaldo son evidencia separada; no se afirma conciliación contable con Dashboard ni un procedimiento independiente de redespliegue del mismo Site desde Codex ya comprobado.
 
 Se conservan P0 y la especificación del asistente comercial completo, todavía pendiente; Centro de Conocimiento real y simulaciones pendientes, con cinco documentos ficticios en la herramienta MCP de conocimiento. No hay API paga de modelos ni escritura operativa. Estadísticas tiene 3 de 6 gráficos principales publicados, dos acordeones independientes y Skeleton Loaders exclusivamente en Estadísticas. Google Login sigue aprobado y pendiente de implementación. La Iteración 9 continúa abierta; PRISMA es el emprendimiento usuario del sistema.
+
+## D025 — Eventos Especiales: recaudación comercial vigente (local, 05/11/2026)
+
+Catálogo común de Personas, precio sugerido y precio individual independiente, pagos múltiples con receptor/medio propios. Sin cupos, asistencia, circuito visible de reintegros ni cierre obligatorio. Carteras representan atribución comercial, no caja física: bajas con devolución administrativa excluyen cobros de su receptor y medio originales. Reincorporar recupera el precio individual y nunca restaura pagos excluidos. Corregir/eliminar cobros conserva evidencia e idempotencia. Los reintegros legacy se descuentan de los cobros originales en orden estable por ID, nunca de la cartera que devolvió; la corrección materializa esa deducción con originales en auditoría.
+
+Eliminar evento vacío es definitivo con recibo técnico; con actividad es cancelación lógica. Cancelados no computan en ingresos, obligaciones, participantes ni Carteras. Sus gastos reales se conservan generales según D005/D007. Numeración persistente por período, sin reutilizar números eliminados/cancelados/reprogramados. Reprogramar mantiene identidad y fechas reales de pagos, reimputa ingresos y obtiene el siguiente número del destino, sin mover gastos. Dashboard separa Talleres de un único evento seleccionado; el total superior suma todos los vigentes y no depende del selector. MCP mantiene agregados sin identidades ni movimientos individuales.
+
+Aclaración técnica del 06/11/2026, sin cambio de política comercial: `collections/refunds` del contrato CRM–MCP representan cobros/reintegros registrados vigentes elegibles antes de neteo; sus sumas coinciden con los agregados. Una baja administrativa no acredita devolución efectiva ni crea un reintegro. `recorded` distingue importes actuales conservados, anulados y excluidos; sus exclusiones administrativas son subconjunto de anulados, y no reconstruye valores anteriores a correcciones ni caja histórica. Originales conservados en auditoría. Pendiente individual limitado a cero y saldo global obligación menos recaudación son magnitudes distintas. Las definiciones completas y pruebas actuales están en [cierre técnico de Iteración 10.2](iterations/2026-11-special-events-stage-3.md). Esquemas intermedios 014/015 se rechazan explícitamente; no se presentan cifras parciales como válidas.
