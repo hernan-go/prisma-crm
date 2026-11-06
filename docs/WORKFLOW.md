@@ -216,7 +216,7 @@ Este control aplica cuando una iteración incorpora o modifica herramientas MCP.
 6. **Recuperación:** si el nuevo Worker está publicado y falla críticamente, evaluar redesplegar la versión anterior *verificada* del mismo Site, con autorización. Esto usa el entorno vigente; no revierte migraciones ni datos CRM. Registrar si la recuperación fue solamente identificada o efectivamente ensayada.
 7. **Cierre:** completar matriz de estados y límites, actualizar `PROJECT_STATE.md` y documento de iteración, y ajustar `ROADMAP.md` si corresponde. El cierre documental en `main` requiere revisión/acción expresa del propietario porque el push de CRM a `main` desencadena SiteGround, incluso para cambios solo Markdown.
 
-Referencia de 10.2: Site privado versión 6, despliegue `appgdep_6aee34f0885881919d6aa1374d1694d9`, quinta herramienta visible después de «Actualizar herramientas»; consulta `2026-11` exitosa sin eventos.
+Referencia de 10.2: Site privado versión 6, despliegue verificado como `succeeded`, quinta herramienta visible después de «Actualizar herramientas»; consulta `2026-11` exitosa sin eventos.
 
 ## 14. Diagnóstico Git: `M` sin diferencias de contenido
 
