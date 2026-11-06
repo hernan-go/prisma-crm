@@ -1,5 +1,11 @@
 # PRISMA CRM — Roadmap
 
+## Iteración 10.2 — cierre técnico productivo (06/11/2026)
+
+Eventos Especiales: CRM `92d97ed` desplegado en SiteGround; migraciones `014–016` verificadas en producción y 184 pruebas MySQL pendientes aprobadas. MCP privado versión 6 (`4350bcb`) desplegado y su catálogo actualizado en ChatGPT: cinco herramientas disponibles, incluida `consultar_eventos_especiales`; consulta real de noviembre 2026 correcta (sin eventos). Anomalía local de `remaining-skeletons.test.ts` resuelta sin modificar contenido. [Estado y límites](PROJECT_STATE.md#estado-vigente--iteración-102-cerrada-técnicamente-06112026) · [Evidencia del cierre](iterations/2026-11-special-events-stage-3.md).
+
+Permanecen como límites **no comprobados**: escrituras reales de Eventos en producción, ensayo de rollback del Site y auditoría integral de seguridad. No reabrir la implementación 10.2 ni reejecutar pruebas/migraciones solo para subsanar estados documentales antiguos. Las prioridades funcionales generales siguientes se mantienen; sus referencias antiguas a herramientas ficticias o entregas no desplegadas son antecedentes y quedan subordinadas al estado vigente anterior.
+
 ## Iteración 10.1 — completada (02/11/2026)
 
 Propuestas autorizadas ChatGPT → CRM, revisión administrativa, aprobación/rechazo y consulta de recibos operativos en producción; Site MCP privado versión 5. Migración 013 registrada. [Evidencia de cierre](iterations/2026-11-knowledge-proposals.md#cierre-productivo--02112026). Las referencias históricas a publicación pendiente de esta entrega quedan superadas. No se cierran ni reordenan las prioridades generales siguientes. prisma_demo conserva un pendiente ambiental de migración/revalidación, separado del circuito productivo.
