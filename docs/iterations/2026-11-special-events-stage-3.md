@@ -1,3 +1,29 @@
+# Iteración 10.2 — Eventos Especiales: cierre productivo (06/11/2026)
+
+## Resultado final verificado
+
+**Implementado y versionado:** CRM `hernan-go/prisma-crm` `92d97edea2a333782d469c8ff35fee995b5be29a` y MCP privado `hernan-go/prisma-mcp` `4350bcbf1ae1e5e99fc6bc5ad17c0d1850b8608f`; este último agrega `consultar_eventos_especiales` conservando las cuatro herramientas preexistentes.
+
+**Probado:** las 184 integraciones MySQL pendientes (26 + 158) resultaron aprobadas; otras verificaciones CRM/MCP, lint, typecheck y builds fueron realizadas antes del cierre, según registros de QA. No repetir la batería por una incidencia documental o del catálogo de ChatGPT. El resultado de QA no equivale a escritura productiva.
+
+**Desplegado CRM:** SiteGround completó publicación de `92d97ed` el 06/11/2026; revisión visual satisfactoria de módulos principales. MySQL productiva con `014.sql`, `015.sql` y `016.sql` aplicadas, verificadas y registradas (16 migraciones). Backup previo `PRISMA_PROD_PRE_10_2_2026-11-06.sql` con hash validado y restauración comprobada en BD local aislada; **no es respaldo posmigración ni rollback automático**.
+
+**Desplegado MCP:** Site privado existente «PRISMA — Análisis de Gestión» (project_id `appgprj_6ade63d3e6948191b5ed522945af814e`), versión 6, despliegue `appgdep_6aee34f0885881919d6aa1374d1694d9` `succeeded`. Conservados acceso exclusivo del propietario y secretos existentes; Work reportó una compilación y sin cambios de dependencias bloqueadas. Recurso recuperable: versión 5 `appgprj_6ade63d3e6948191b5ed522945af814e~appgver_9cce8b086e948191be6e05ab1866070a` (recuperación identificada, no ensayada).
+
+**Validado funcionalmente en ChatGPT:** tras publicar el Site, la sesión todavía exponía cuatro herramientas. En **Configuración → Complementos → PRISMA — Análisis de Gestión → Actualizar herramientas**, se actualizó el catálogo. Una nueva conversación encontró y ejecutó `consultar_eventos_especiales` para `2026-11`; respuesta real válida: período abierto, 0 eventos, cobros, reintegros, gastos y resultado comercial `$0,00`. Lecturas de estadísticas (35 personas, 58 inscripciones en noviembre) y Know-How (6 documentos activos) satisfactorias según Work. Las herramientas de propuestas siguieron disponibles sin enviar escrituras.
+
+**Incidencia secundaria resuelta:** `tests/remaining-skeletons.test.ts` mostraba ` M` sin diff. El blob del índice y el hash local eran `369d2e954255286d51ae6c7d73c6932b3e435276`. `ls-files --debug` registraba 9548 bytes y el archivo físico 9326; `core.autocrlf=true` generaba avisos LF→CRLF. La actualización puntual del índice con `-c core.autocrlf=false update-index -- tests/remaining-skeletons.test.ts` corrigió a 9326 bytes, dejó `git status --short` vacío y el diff staged vacío; no hubo cambios de contenido, commit ni ejecución adicional de pruebas. **No se determinó con certeza el mecanismo originario** de la discrepancia.
+
+### Límites y acciones futuras
+
+- **No comprobado:** escritura real de Eventos en producción, rollback ejecutado del Site, auditoría integral de seguridad, ni pruebas de recuperación posteriores al despliegue de 10.2. No convertir estos límites en «fallas» ni en pruebas supuestamente realizadas.
+- **No pendiente de la implementación 10.2:** repetir migraciones 014–016, 184 integraciones, builds ya concluidos o volver a publicar versión 6. Cualquier incidente nuevo debe evaluarse por su evidencia y alcance.
+- **Documentación:** cierre histórico a integrar de manera controlada; los documentos de estado, workflow y roadmap incluyen el procedimiento preventivo.
+
+**Nota de lectura:** el texto que sigue es el informe de **cierre técnico local previo a commits y producción**. Sus frases «NO DESPLEGADO», «184 pendientes» y sus SHA anteriores describen aquel corte histórico y **están sustituidas para el estado actual** por el cierre productivo precedente.
+
+---
+
 # Iteración 10.2 — Eventos Especiales: cierre técnico local
 
 Actualización 06/11/2026. CRM: `codex/iteration-10-2-events-stage-1`, HEAD `244f80c423ae99e51db069092e4828961fcd38e3`. MCP: `codex/iteration-10-2-events`, HEAD `cd2816b9e5f616162e08f58ee80bd3c3751bd0c9`. Implementación acumulada sin commits. **NO DESPLEGADO**. Este documento sustituye las instrucciones preliminares de las etapas 1–3; distingue evidencia actual, histórica y aceptación pendiente.
