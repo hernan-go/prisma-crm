@@ -1,5 +1,21 @@
 # PRISMA CRM — Estado actual
 
+## Estado vigente — Iteración 10.2 cerrada técnicamente (06/11/2026)
+
+**Fuente de verdad para 10.2.** Commit funcional de CRM desplegado: `92d97edea2a333782d469c8ff35fee995b5be29a` (`92d97ed`; `main` y `origin/main` en el momento del corte). Commits documentales posteriores pueden avanzar `main` sin cambiar este commit funcional de referencia. Despliegue SiteGround `COMPLETADO` el 06/11/2026; inspección visual satisfactoria de Dashboard, Eventos, Estadísticas, Personas, Cobros, Pago Facilitadores, Gastos, Know-How y Configuración. La inspección visual **no equivale** a prueba productiva de escrituras de Eventos.
+
+MySQL productiva: `014.sql`, `015.sql` y `016.sql` importadas y verificadas; 16 registros en `schema_migrations`. Respaldo anterior a las migraciones: hash verificado y restauración probada en una base local aislada; ubicación e identificación exacta conservadas fuera del repositorio público. No es una copia posterior a migración ni rollback automático.
+
+QA: 184 integraciones MySQL previamente pendientes aprobadas (26 + 158); resto de pruebas, lint, typecheck y build según evidencia previa de la iteración. No reejecutar migraciones ni suites históricas sin cambio técnico que lo justifique.
+
+MCP: `hernan-go/prisma-mcp` `main` `4350bcbf1ae1e5e99fc6bc5ad17c0d1850b8608f`. Site privado existente «PRISMA — Análisis de Gestión», **versión 6**, despliegue identificado y verificado como `succeeded` (identificadores operativos completos conservados en la documentación privada del MCP); cuatro herramientas anteriores conservadas y quinta `consultar_eventos_especiales` disponible tras usar **Actualizar herramientas** en la configuración del complemento de ChatGPT. Consulta real de Eventos de `2026-11` satisfactoria: cero eventos y montos cero; también se verificaron lecturas de estadísticas y Know-How. No se ejecutaron propuestas de escritura como prueba. Versión 5 recuperable según confirmación de Work, sin ensayo de rollback.
+
+Incidente Git local `tests/remaining-skeletons.test.ts`: resuelto sin cambios de contenido, commit ni tests adicionales. El índice registraba tamaño 9548 y el archivo medía 9326 bytes; `git diff --exit-code` y hashes filtrado/sin filtros coincidían con HEAD. Tras `git -c core.autocrlf=false update-index -- tests/remaining-skeletons.test.ts`, `git status --short` quedó vacío, diff staged vacío y tamaño del índice corregido a 9326. No atribuir a una única causa la discrepancia de metadatos más allá de la evidencia observada.
+
+**Alcance de cierre:** implementación, QA, migraciones productivas, despliegue CRM, despliegue MCP y lectura real de Eventos confirmados. No se comprobó una escritura real de Eventos en producción, una restauración del Site versión 5 ni una auditoría integral de seguridad. Esas limitaciones no se deben presentar como pruebas realizadas. Historial y evidencia ampliada: [cierre 10.2](iterations/2026-11-special-events-stage-3.md). Procedimiento preventivo: [workflow](WORKFLOW.md).
+
+**Los apartados siguientes son antecedentes históricos anteriores a este cierre y no describen el estado vigente de 10.2.**
+
 ## Estado local — Iteración 10.2, corrección técnica previa a commits (06/11/2026)
 
 Implementación local en `codex/iteration-10-2-events-stage-1`, base `244f80c`, sin commits. Conserva etapas anteriores: numeración persistente, tres indicadores de evento, Carteras separadas, bajas sin restaurar pagos, cancelación transaccional con reclasificación de gastos y reapertura temporal explícitamente autorizada. MCP local en `codex/iteration-10-2-events`, base `cd2816b`, sin publicación. Los cinco hallazgos de auditoría están corregidos: activación común 014+015+016 con rechazo explícito de estados intermedios, cobros/reintegros consistentes API–MCP y registros excluidos diferenciados, fecha inicial argentina de Gastos, Skeleton de cuatro KPI y documentación consolidada.
