@@ -204,6 +204,7 @@ Actualizar únicamente lo necesario:
 - documento de iteración → marcar completado o archivar.
 
 Evitar handoffs gigantes si estos documentos están al día.
+
 ## 13. Publicaciones coordinadas CRM ↔ MCP ↔ ChatGPT (lección 10.2)
 
 Este control aplica cuando una iteración incorpora o modifica herramientas MCP. No confundir los estados: **implementado** (código), **probado** (QA identificada), **desplegado CRM**, **desplegado Worker/Site**, **actualizado catálogo del complemento en ChatGPT** y **validado en consulta real**. Un commit de GitHub y un despliegue `succeeded` por sí solos no acreditan los últimos pasos.
