@@ -2,7 +2,7 @@
 
 ## Estado vigente — Iteración 10.2 cerrada técnicamente (06/11/2026)
 
-**Fuente de verdad para 10.2.** CRM `main` y `origin/main`: `92d97edea2a333782d469c8ff35fee995b5be29a` (`92d97ed`). Despliegue SiteGround `COMPLETADO` el 06/11/2026; inspección visual satisfactoria de Dashboard, Eventos, Estadísticas, Personas, Cobros, Pago Facilitadores, Gastos, Know-How y Configuración. La inspección visual **no equivale** a prueba productiva de escrituras de Eventos.
+**Fuente de verdad para 10.2.** Commit funcional de CRM desplegado: `92d97edea2a333782d469c8ff35fee995b5be29a` (`92d97ed`; `main` y `origin/main` en el momento del corte). Commits documentales posteriores pueden avanzar `main` sin cambiar este commit funcional de referencia. Despliegue SiteGround `COMPLETADO` el 06/11/2026; inspección visual satisfactoria de Dashboard, Eventos, Estadísticas, Personas, Cobros, Pago Facilitadores, Gastos, Know-How y Configuración. La inspección visual **no equivale** a prueba productiva de escrituras de Eventos.
 
 MySQL productiva: `014.sql`, `015.sql` y `016.sql` importadas y verificadas; 16 registros en `schema_migrations`. Respaldo anterior a las migraciones: hash verificado y restauración probada en una base local aislada; ubicación e identificación exacta conservadas fuera del repositorio público. No es una copia posterior a migración ni rollback automático.
 
