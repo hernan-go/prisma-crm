@@ -65,6 +65,8 @@ Fuente de verdad:
 
 ## 8. Validación estándar
 
+Antes de cualquier validación visual de frontend, Codex debe consultar y aplicar el protocolo «Validación visual de frontend con Codex» de `docs/WORKFLOW.md`, sección 7.
+
 Para cambios normales ejecutar:
 
 ```powershell

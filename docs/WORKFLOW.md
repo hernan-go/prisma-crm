@@ -132,7 +132,90 @@ Para login y validación visual del frontend usar `localhost`.
 
 Evitar `http://127.0.0.1:5173` para el frontend porque puede provocar rechazo por Origin/CORS.
 
-Si Vite utiliza otro puerto porque `5173` está ocupado, usar `localhost` con el puerto informado por Vite.
+No cambiar puertos silenciosamente si `5173` está ocupado: identificar el proceso y acordar un puerto alternativo si es necesario. En ese caso, usar `localhost` con el puerto explícitamente elegido y verificado.
+
+### Validación visual de frontend con Codex
+
+#### A. Aplicación obligatoria
+
+Aplicar este protocolo en trabajos de frontend, UX/UI, responsive, componentes interactivos y cualquier validación que requiera navegador. Ajustar las comprobaciones al alcance autorizado; una tarea exclusivamente documental no requiere iniciar servicios ni abrir el navegador.
+
+#### B. Identificar el entorno
+
+Determinar dónde se ejecutan el servidor y el navegador: equipo del propietario, sandbox, contenedor o entorno remoto. No asumir que comparten el mismo `localhost`. Distinguir fallas de conexión (servidor inaccesible), configuración del entorno (interfaz, puerto, resolución o aislamiento) y errores reales de la aplicación. Registrar evidencia antes de atribuir una causa.
+
+#### C. Iniciar y verificar el servidor
+
+Antes de abrir el navegador:
+
+1. Verificar si el servicio requerido ya está activo. Comprobar su proceso, dirección, interfaz de escucha y puerto; reutilizarlo si es válido.
+2. Si el puerto está ocupado, identificar qué proceso lo utiliza. No finalizar procesos ajenos ni cambiar puertos silenciosamente.
+3. Si falta el servicio, iniciar exclusivamente el necesario y mantener el proceso activo durante toda la prueba. Para fixtures aislados basta Vite; no iniciar Express ni MySQL innecesariamente.
+4. Verificar mediante HTTP que la URL exacta responde correctamente y corresponde a la página esperada; un `200` del fallback de la SPA no demuestra que exista una ruta QA.
+5. Solo después intentar abrir la página en el navegador y comprobar su conectividad desde ese entorno.
+
+Ejemplo de diagnóstico en PowerShell (no inicia ni finaliza procesos):
+
+```powershell
+$listeners = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
+$listeners | Select-Object LocalAddress, LocalPort, OwningProcess
+$listeners | ForEach-Object { Get-Process -Id $_.OwningProcess }
+```
+
+Si no hay un servidor válido, ejecutar desde la raíz del repositorio en una terminal que permanezca activa:
+
+```powershell
+npx vite --host 127.0.0.1 --port 5173 --strictPort
+```
+
+En otra terminal, comprobar la URL que se utilizará en el navegador; para Estadísticas QA:
+
+```powershell
+$qaUrl = 'http://localhost:5173/tests/browser/statistics.html'
+$response = Invoke-WebRequest -Uri $qaUrl -UseBasicParsing -TimeoutSec 5
+$response.StatusCode
+$response.Content
+```
+
+`localhost` puede resolver a IPv4 (`127.0.0.1`) o IPv6 (`::1`). Ante una falla, contrastar la dirección efectiva con la interfaz de escucha y probar HTTP contra la dirección explícita para diagnosticar. Ese diagnóstico no autoriza cambiar el origen de login: para la aplicación real se mantiene `localhost` por la configuración de Origin/CORS existente. Si las herramientas de diagnóstico no están disponibles, registrar la limitación.
+
+#### D. Elegir el entorno de prueba
+
+**QA visual sintética:** Estadísticas dispone de `http://localhost:5173/tests/browser/statistics.html`, con fixtures sintéticos y solicitudes interceptadas. No requiere MySQL ni backend operativo. Para otros módulos, identificar primero en el repositorio si existe una página QA apropiada; no inventar rutas. No usar datos personales ni información financiera real en fixtures o demostraciones.
+
+**Aplicación real:** cuando se necesite integración real, seguir el inicio normal con `private/run-dev.ps1` indicado arriba, respetando el alcance y las reglas de DB de este workflow. No sustituir una prueba funcional de integración por una prueba sintética; informar qué entorno y datos se utilizaron.
+
+#### E. Elegir el navegador de Codex
+
+Priorizar un navegador accesible desde el entorno donde se ejecuta el servidor y verificar conectividad antes de comenzar la prueba visual. Que la terminal acceda no demuestra que el navegador integrado pueda hacerlo: si solo falla este último, investigar primero una posible separación entre entornos.
+
+No repetir intentos idénticos sin nueva evidencia o un cambio justificado de las condiciones de conexión. No modificar firewall, CORS, políticas de seguridad, credenciales ni configuraciones globales para forzar acceso. Respetar los bloqueos de las herramientas de navegador; no eludirlos.
+
+#### F. Ejecutar la validación visual
+
+Según el alcance de la tarea, comprobar y registrar:
+
+- Escritorio, tablet y móvil, con dimensiones del viewport y distribución responsive; revisar desbordamientos y contenido recortado.
+- Navegación, botones, controles y componentes interactivos; cambio de período cuando corresponda.
+- Estados de carga, error, vacío y datos parciales, incluida la carga de gráficos cuando existan.
+- Consola JavaScript y solicitudes fallidas, si las herramientas permiten inspeccionarlas; indicar si no se pudieron revisar.
+- Contraste, navegación por teclado, foco visible, nombres y estados accesibles, y preferencia de movimiento reducido. Una revisión básica no equivale a una auditoría completa ni a una prueba con lector de pantalla.
+
+#### G. Manejar bloqueos y reproducir manualmente
+
+Si el navegador no conecta después de un diagnóstico razonable:
+
+1. Registrar la URL, entorno del servidor/navegador, respuesta HTTP y error observado; separar la causa conocida de las hipótesis.
+2. Detener los intentos repetitivos sin nueva información y completar las validaciones automatizadas disponibles dentro del alcance autorizado.
+3. Enumerar las verificaciones visuales pendientes y proporcionar instrucciones concretas para reproducirlas manualmente en Chrome o Edge.
+
+La reproducción manual debe indicar el servicio necesario, URL verificada, escenario y acciones con su resultado esperado. Para Estadísticas sintética, por ejemplo: reutilizar Vite válido o iniciarlo según C; abrir la URL QA en Chrome/Edge; usar F12 → barra de dispositivos para escritorio, tablet y móvil (por ejemplo, 1440×900, 768×1024 y 390×844); cambiar el período y probar los controles. Consultar los escenarios existentes en el fixture antes de indicar parámetros; revisar consola y red en DevTools. Para integración real, usar el inicio normal y la ruta real del módulo, sin sustituirla por la página QA.
+
+Nunca declarar una validación visual exitosa si no se ejecutó. Un servidor que responde HTTP o una suite automatizada aprobada no acreditan una inspección visual.
+
+#### H. Informe de cierre
+
+Distinguir expresamente las validaciones automatizadas aprobadas, las pruebas visuales efectivamente realizadas (entorno, tamaños y escenarios), las pendientes por limitaciones del entorno y los problemas reales detectados en la aplicación. No presentar una hipótesis de conectividad como un defecto confirmado del producto.
 
 ## 8. Cambios de DB
 
