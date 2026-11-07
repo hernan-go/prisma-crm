@@ -35,9 +35,9 @@ Nunca ejecutar tests destructivos contra `prisma_dev`, `prisma_demo` o producci�
 
 ## 4. Migraciones
 
-- Migraciones aplicadas y registradas en producción: `001.sql` a `013.sql`, según operaciones y verificaciones del propietario consolidadas el 02/11/2026. Codex no realizó una verificación productiva independiente.
+- Migraciones productivas registradas: `001.sql` a `016.sql`, según los cierres documentados de 10.1 y 10.2 y las verificaciones del propietario. Codex no realizó una nueva comprobación productiva independiente. Estado y límites: `docs/PROJECT_STATE.md`.
 - Las migraciones aplicadas son inmutables.
-- `009.sql` implementa receptor independiente de medio; `010–011` implementan Gastos Recurrentes e independencia mensual. Aplicadas en `prisma_test`, `prisma_dev` y producción. Iteración 8 publicada en `51e247e`, con build y smoke productivos aprobados por el propietario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. 012 implementa Know-How y 013 propuestas; ambas publicadas, también aplicadas en prisma_dev según el propietario. prisma_demo pendiente de migración/revalidación de 013. Próxima numeración: `014.sql`.
+- `009.sql` implementa receptor independiente de medio; `010–011` implementan Gastos Recurrentes e independencia mensual. Aplicadas en `prisma_test`, `prisma_dev` y producción. Iteración 8 publicada en `51e247e`, con build y smoke productivos aprobados por el propietario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. 012 implementa Know-How y 013 propuestas; ambas publicadas, también aplicadas en prisma_dev según el propietario. prisma_demo pendiente de migración/revalidación de 013. `014–016` implementan Eventos Especiales y están aplicadas/verificadas en producción según el cierre de 10.2. Antes de numerar una migración nueva, consultar `server/migrations/` y el estado vigente; no deducir la próxima numeración de antecedentes históricos.
 - Dinero: `DECIMAL(12,2)`, nunca `FLOAT`.
 
 ## 5. Períodos

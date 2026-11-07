@@ -2,7 +2,7 @@
 
 > **Prioridad: P0 — MÁXIMA (objetivo estratégico principal).**
 >
-> **Estado verificado al 06/11/2026:** conexión MCP privada publicada (Site versión 6, cinco herramientas), Centro de Conocimiento real con seis documentos activos en el corte y lectura de Eventos Especiales 10.2 exitosa. El asistente **ya permite asesoría comercial conversacional y escenarios hipotéticos** apoyados en información del CRM, Know-How y fuentes externas verificables por separado. **Pendientes:** validar integralmente este contrato P0 y decidir si hacen falta modelos deterministas/estructurados adicionales para simulaciones reproducibles y rentabilidad por actividad. No confundir posibilidad de cálculo en conversación con certificación financiera ni escritura operativa autorizada. [Seguimiento](https://github.com/hernan-go/prisma-crm/issues/2) · [Cierre 10.2](iterations/2026-11-special-events-stage-3.md).
+> **Estado verificado al 06/11/2026:** conexión MCP privada publicada (Site versión 6, cinco herramientas), Centro de Conocimiento real con seis documentos activos en el corte y lectura de Eventos Especiales 10.2 exitosa. El asistente **ya permite asesoría comercial conversacional y escenarios hipotéticos** apoyados en información del CRM, Know-How y fuentes externas verificables por separado. **Aceptación funcional consultiva:** issue #2 cerrada el 06/11/2026 según confirmación del propietario. No implica un motor de rentabilidad certificada, atribución financiera por actividad ni simulaciones deterministas automáticas; estos modelos estructurados no están implementados. No confundir posibilidad de cálculo en conversación con certificación financiera ni escritura operativa autorizada. [Seguimiento](https://github.com/hernan-go/prisma-crm/issues/2) · [Cierre 10.2](iterations/2026-11-special-events-stage-3.md).
 >
 > **Alcance del nombre:** PRISMA es el emprendimiento que utiliza el sistema de gestión, no el nombre comercial genérico del software.
 
@@ -96,7 +96,7 @@ Si faltan costos, honorarios, cupos o bases comparables, el asistente debe **dec
 - Las promociones, combinaciones y precios **varían por período** y pueden tener excepciones. Un borrador de tarifario (por ejemplo, noviembre de 2026) **no** constituye una regla aprobada ni un precio permanente.
 - Varias actividades u horarios pueden estar cubiertos por **un solo paquete/obligación económica**; no sumar automáticamente tarifas individuales para determinar precio del paquete.
 
-## 6. Prioridad de ejecución y etapas sugeridas
+## 6. Antecedente — prioridad de ejecución y etapas sugeridas
 
 **P0 / Prioridad máxima de producto: lograr una primera «carta» útil de planificación mensual, antes que multiplicar gráficos sin finalidad.**
 
@@ -108,7 +108,7 @@ Si faltan costos, honorarios, cupos o bases comparables, el asistente debe **dec
 
 **Fuera de alcance de la primera versión:** escritura autónoma en base de datos, cambios automáticos de tarifas, publicación de propuestas, gestión de asistencia individual, diagnóstico médico o inferencias automáticas sobre motivos de abandono. No se autoriza implementación con este documento.
 
-## 7. Criterios de aceptación funcional
+## 7. Criterios del contrato funcional original
 
 Un primer asistente cumplirá el objetivo solo si:
 
@@ -123,6 +123,6 @@ Un primer asistente cumplirá el objetivo solo si:
 
 Este archivo se propone como **fuente única de verdad funcional** para la prioridad P0 de planificación comercial con IA, ubicado en `docs/AI_COMMERCIAL_PLANNING.md`.
 
-`docs/ROADMAP.md` enlaza esta prioridad; `docs/PROJECT_STATE.md` distingue **conexión MCP/Know-How/Eventos operativa** de **aceptación integral del contrato P0 todavía pendiente**, sin duplicar esta especificación. Las decisiones D020–D024 se conservan como referencias y restricciones existentes, sin modificarlas por esta regularización.
+`docs/ROADMAP.md` enlaza esta prioridad; `docs/PROJECT_STATE.md` distingue **conexión MCP/Know-How/Eventos operativa** de **aceptación P0 en su alcance consultivo y modelos financieros avanzados no implementados**, sin duplicar esta especificación. Las decisiones D020–D024 se conservan como referencias y restricciones existentes, sin modificarlas por esta regularización.
 
-**Origen:** definición funcional de la Iteración 9 (octubre de 2026), ampliada por D024. El hito inicial del 27/10 (backend `448554f`, MCP `25487c4`, tag `v1.0.0`) se conserva como antecedente; el estado productivo vigente es el cierre 10.2 documentado arriba. Sin API paga de modelos ni escritura operativa económica. Los criterios de aceptación funcional originales siguen vigentes.
+**Origen:** definición funcional de la Iteración 9 (octubre de 2026), ampliada por D024. El hito inicial del 27/10 (backend `448554f`, MCP `25487c4`, tag `v1.0.0`) se conserva como antecedente; el estado productivo vigente se consulta en [PROJECT_STATE](PROJECT_STATE.md), incluido el cierre de Estadísticas v2. Sin API paga de modelos ni escritura operativa económica. Los criterios de aceptación funcional originales siguen vigentes.

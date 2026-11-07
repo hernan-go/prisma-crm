@@ -1,14 +1,16 @@
 # PRISMA CRM
 
-Administración interna de personas, inscripciones mensuales, talleres, pagos e inversión publicitaria. Aplicación React y API Express con MySQL. No usa PHP, microservicios ni Docker en producción.
+Administración interna de personas, inscripciones mensuales, talleres, pagos, gastos y eventos especiales. Aplicación React y API Express con MySQL. No usa PHP, microservicios ni Docker en producción.
 
 ## Estado y alcance
 
-Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; publicidad; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
+Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; Gastos Período con recurrentes e independencia mensual; Eventos Especiales; Estadísticas mensuales y anuales; Know-How empresarial con propuestas controladas; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
 
 Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro, roles, acceso de docentes, Inglés, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
 
-Modelo vigente y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
+Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). Google Login permanece pendiente; el asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
+
+Modelo de períodos y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
 
 Pago a facilitadores y migración 006: [docs/PAGO-FACILITADORES.md](docs/PAGO-FACILITADORES.md).
 
@@ -176,7 +178,7 @@ Parámetros preparados:
 
 El login propio protege `/api`, incluidas importaciones, salud y configuración. Protected URLs puede añadirse como segunda barrera, sin reemplazar la autenticación de la aplicación. Probar HTTPS, cookie Secure, rechazo de API sin sesión, logout y backups en hosting antes de datos reales.
 
-Repositorio privado: [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. SiteGround puede desplegar automáticamente pushes a una rama vinculada: no vincular ni habilitar ese flujo antes de la autorización de Hernán.
+Repositorio privado: [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. El push a `main` dispara despliegue en SiteGround y corresponde manualmente al propietario, después de su revisión y aprobación.
 
 ## Backups y restauración
 

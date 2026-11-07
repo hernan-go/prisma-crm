@@ -1,5 +1,10 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## Aclaración de vigencia — 07/11/2026
+
+Sin nuevas decisiones: los cortes fechados se conservan como antecedentes. D002 mantiene la inmutabilidad; producción tiene `001–016` según cierres documentados de 10.1/10.2, no una próxima numeración permanente. D013/D020 conservan reglas económicas, pero la navegación y pendientes gráficos antiguos fueron sustituidos por Estadísticas v2 mensual/anual publicada. D022–D024 cuentan con Know-How real, propuestas y MCP privado versión 6 operativos. La aceptación P0 consultiva (issue #2 cerrada el 06/11 según el propietario) no acredita rentabilidad certificada, atribución por actividad ni simulaciones deterministas. Google Login sigue pendiente. Fuentes: [estado operativo](PROJECT_STATE.md), [Iteración 11](iterations/2026-11-statistics-monthly-v2.md) y [contrato P0](AI_COMMERCIAL_PLANNING.md).
+
+
 ## Regla vigente — propuestas Know-How (cierre 02/11/2026)
 
 ChatGPT solo lee documentos activos y envía propuestas con autorización conversacional explícita declarada por el cliente. Esa declaración no acredita criptográficamente consentimiento. Una propuesta no cambia el documento; administración compartida revisa y decide desde CRM, sin atribución personal inventada. Aprobación actualiza contenido/versionado; rechazo preserva documento y retira texto propuesto. Base desactualizada bloquea aprobación, request_id protege idempotencia, credenciales de lectura/propuestas independientes y Site privado obligatorio. No existen herramientas MCP de aprobación/rechazo. Estas reglas consolidan el alcance aprobado de [Iteración 10.1](iterations/2026-11-knowledge-proposals.md), sin ampliar funciones.

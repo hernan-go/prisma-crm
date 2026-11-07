@@ -1,5 +1,12 @@
 # PRISMA CRM — Roadmap
 
+## Resumen vigente — 07/11/2026
+
+Estadísticas v2 mensual y anual publicada y aceptada; P0 aceptado en su alcance empresarial consultivo, con issue #2 cerrada el 06/11/2026 según confirmación del propietario. MCP privado versión 6, Know-How real/propuestas y Eventos operativos. [Estado productivo y límites](PROJECT_STATE.md).
+
+Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Permanecen pendientes Google Login, ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Las PWA para facilitadores y participantes son iniciativas futuras sin autorización de implementación. Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
+
+
 ## Iteración 10.2 — cierre técnico productivo (06/11/2026)
 
 Eventos Especiales: CRM `92d97ed` desplegado en SiteGround; migraciones `014–016` verificadas en producción y 184 pruebas MySQL pendientes aprobadas. MCP privado versión 6 (`4350bcb`) desplegado y su catálogo actualizado en ChatGPT: cinco herramientas disponibles, incluida `consultar_eventos_especiales`; consulta real de noviembre 2026 correcta (sin eventos). Anomalía local de `remaining-skeletons.test.ts` resuelta sin modificar contenido. [Estado y límites](PROJECT_STATE.md#estado-vigente--iteración-102-cerrada-técnicamente-06112026) · [Evidencia del cierre](iterations/2026-11-special-events-stage-3.md).
@@ -18,7 +25,7 @@ Actualización local 29/10: [Know-How IA, Entrega 1 y corrección de Facilitador
 
 Conexión de lectura completada el 27/10/2026: ChatGPT ↔ Site MCP privado ↔ API empresarial 2.0 desplegada en SiteGround, con consulta real de octubre de 2026 exitosa desde Work y ChatGPT normal, confirmada por el propietario. Backend publicado en `448554f`; Worker respaldado en el repositorio privado [hernan-go/prisma-mcp](https://github.com/hernan-go/prisma-mcp), commit `25487c43778370fce101e24f697b011ff7201219`, tag `v1.0.0`, con 23 pruebas sintéticas aprobadas. Sin API paga de modelos ni escritura operativa. D024 mantiene acceso empresarial completo y protección personal. [Estado y límites actuales](PROJECT_STATE.md#prioridad-estratégica-p0--planificación-comercial-con-ia); la [entrega de la API](iterations/2026-10-ai-read-context.md) se conserva como antecedente.
 
-El propietario aprobó la [especificación funcional de planificación comercial con IA](AI_COMMERCIAL_PLANNING.md) como objetivo estratégico principal: una primera carta útil de alternativas comerciales y eventos, con precios concretos, fundamentos económicos y conversación iterativa. **Estado actual:** conexión MCP, Centro de Conocimiento real y lectura de Eventos 10.2 implementados, publicados y consultados. El asesoramiento y las simulaciones hipotéticas ya son posibles en ChatGPT, con datos reales y supuestos explícitos; **siguen pendientes** la validación integral de criterios P0 y los modelos deterministas/estructurados necesarios para certificar rentabilidad o automatizar escenarios. Ver [issue #2](https://github.com/hernan-go/prisma-crm/issues/2).
+El propietario aprobó la [especificación funcional de planificación comercial con IA](AI_COMMERCIAL_PLANNING.md) como objetivo estratégico principal: una primera carta útil de alternativas comerciales y eventos, con precios concretos, fundamentos económicos y conversación iterativa. **Estado actual:** conexión MCP, Centro de Conocimiento real y lectura de Eventos 10.2 implementados, publicados y consultados. El asesoramiento y las simulaciones hipotéticas ya son posibles en ChatGPT, con datos reales y supuestos explícitos; **P0 aceptado en alcance consultivo**, con issue #2 cerrada el 06/11/2026 según el propietario. Los modelos deterministas/estructurados para certificar rentabilidad, atribuir ingresos/costos por actividad o automatizar escenarios no están implementados. Ver [issue #2](https://github.com/hernan-go/prisma-crm/issues/2).
 
 Esta prioridad conserva su orden y no amplía autorizaciones de implementación ni escritura operativa. D020–D024, la especificación funcional y el contenido empresarial privado fuera de Git siguen siendo referencias. La biblioteca empresarial ya está publicada y conectada al MCP; son **históricas** las menciones posteriores a su ausencia o a sus fixtures de 2026-10. Las extensiones pendientes de estadística, tarifas y simulación se evalúan por separado. Las referencias a «Iteración 9 abierta» describen cortes antiguos, no el cierre de 10.2.
 
@@ -105,30 +112,17 @@ Validación automática aprobada: typecheck, lint, 116 tests aprobados y 114 int
 
 Documento: `docs/iterations/2026-10-mobile-redesign.md`. Cierre posterior confirmado por el propietario: integrado, desplegado y aprobado en producción. También está desplegada y aprobada la eliminación de cuentas mensuales estrictamente vacías.
 
-## Prioridad 5 — Estadísticas
+## Prioridad 5 — Estadísticas: mensual y anual completadas
 
-Estadísticas v1 implementada: contratos, motor Decimal, endpoint agregado, seis tarjetas, IPC y desglose de gastos. Según operaciones y verificaciones del propietario confirmadas el 23/10/2026, publicada en `51e247e`, build y smoke productivos aprobados, con migraciones `001–011` aplicadas y registradas. Codex no realizó una comprobación productiva independiente. Detalle y criterios: [iteración 8 — diseño de Estadísticas](iterations/2026-10-statistics-design.md).
+Estadísticas v2 publicada en `77c451983167bdc008098654a9b4b8fad55ff1a0` y aceptada visualmente en producción por el propietario. Incluye seis KPI, cuatro paneles mensuales, Eventos y evolución anual de obligaciones/cobros, personas únicas, continuidad e incorporaciones. [Cierre productivo](PROJECT_STATE.md) · [Evidencia técnica](iterations/2026-11-statistics-monthly-v2.md).
 
-- Segunda entrega de Iteración 9 publicada en `b4b8408`: Cobranzas, refinamientos de seis KPI y acordeones independientes, conservando Gastos, Honorarios e identidad carbón/cian de `ab7e321`. GitHub verificado por Codex; build SiteGround `1792822475-rkhsme`, Exit Code `0` y revisión productiva satisfactoria de octubre/noviembre de 2026 confirmados por el propietario el 24/10/2026. [Cierre productivo](iterations/2026-10-statistics-design.md#cierre-productivo-de-la-segunda-entrega-de-iteración-9--2026-10-24). Los demás bloques siguen pendientes; la Iteración 9 no está finalizada. PRISMA es el emprendimiento cliente, no el nombre genérico del sistema de gestión.
-- Skeleton Loaders con Shimmer publicados inicialmente en Estadísticas en `0568623` y extendidos posteriormente a módulos de gestión. El incidente de metadatos en `tests/remaining-skeletons.test.ts` quedó resuelto sin cambios de contenido en 10.2. [Cierre histórico de Estadísticas](iterations/2026-10-statistics-design.md#cierre-productivo-de-skeleton-loaders-en-estadísticas--2026-10-24). No confundir el alcance inicial con el estado productivo actual.
-- Motor determinista reutilizable; Recharts 3.10.1 y react-is 19.3.0 publicados, con carga diferida de los gráficos.
-- Continuidad principal de personas con inscripción en meses consecutivos, diferenciada de membresías y asistencia.
-- Honorarios y gastos operativos separados. El propietario confirmó pagos a facilitadores exclusivamente en su módulo; no se presume duplicación efectiva.
-- Sin ganancia neta hasta aprobar el modelo contable.
-
-Secuencia de evolución aprobada, con implementación sujeta a autorización por alcance:
-
-1. Fase actual: Gastos por concepto, Honorarios por facilitador y Cobranzas publicados y aprobados en producción. Cobranzas conserva barra aplicado/pendiente de obligaciones definidas, porcentaje sobre base positiva o «No calculable» y créditos/indefinidos/cobertura separados de la pila, con agregados exactos del backend. Skeleton Loaders inicialmente publicados en Estadísticas y extendidos después a módulos de gestión. **Inscripciones por actividad en Estadísticas**, como gráfico primario, y los restantes análisis históricos continúan pendientes de entrega; completar por etapas con autorización específica.
-2. Fase posterior: comparaciones anuales y evolución mensual dentro del año, distinguiendo períodos ausentes, abiertos y cobertura incompleta.
-3. Fase futura: análisis histórico completo y rangos personalizados, series económicas nominales y ajustadas por IPC cuando existan datos suficientes. La consulta actual del último IPC y su fallback están implementados; persistencia y serie histórica requieren diseño específico.
-
-Mantener como diseños independientes el historial de bajas y motivos opcionales, su alcance y efectos operativos; y los modelos estructurados de tarifas, paquetes, promociones, atribución de ingresos, costos y capacidad para simulaciones auditables o rentabilidad. **Eventos Especiales 10.2 ya está publicado**; no confundir ese módulo operativo con modelado predictivo de escenarios. Asistencia continúa fuera del alcance de esta entrega estadística.
+La evolución anual ya no es pendiente. Análisis histórico completo con rangos personalizados, series ajustadas por IPC, flujo de caja y modelos económicos adicionales requieren diseños y autorizaciones separados. Último IPC oficial disponible no equivale a una serie histórica. Se conservan precisión, cobertura parcial, períodos inexistentes distintos de cero y honorarios separados de gastos; sin ganancia neta ni atribución automática por actividad.
 
 ### Integración analítica con IA — lectura conectada
 
 D020 registra la doble finalidad de Estadísticas: herramienta visual de gestión e infraestructura analítica para consultas autorizadas de ChatGPT u otros asistentes, compartiendo cálculos backend. No requiere mostrar en pantalla cada métrica consultable. La arquitectura API segura de lectura → complemento MCP privado → ChatGPT está desplegada y conectada desde el 27/10. D024 sustituye la supresión por acceso empresarial completo con protección de datos personales. Autenticación, permisos y trazabilidad obligatorios; desidentificar no garantiza anonimato.
 
-La interfaz Estadísticas no requiere por sí sola implementar Google. La autenticación con Google sigue pendiente con su alcance y prioridad existentes. La conexión MCP, el conocimiento empresarial real y Eventos están publicados. El asesor conversacional puede elaborar escenarios hipotéticos; **no** consta aceptación integral P0 ni un motor financiero estructurado. PDF/reportes conserva su posición posterior.
+La interfaz Estadísticas no requiere por sí sola implementar Google. La autenticación con Google sigue pendiente con su alcance y prioridad existentes. La conexión MCP, el conocimiento empresarial real y Eventos están publicados. El asesor conversacional puede elaborar escenarios hipotéticos; el alcance P0 consultivo está aceptado; no se implementó un motor financiero estructurado certificado. PDF/reportes conserva su posición posterior.
 
 ### Completado — Gastos recurrentes e independencia mensual
 
@@ -138,7 +132,7 @@ El propietario configuró por UI y amplió el catálogo productivo; no es una li
 
 Correcciones de importe y desglose de Estadísticas publicados con Iteración 8. La aprobación manual local previa de diciembre de 2026 se conserva con el alcance registrado en el [informe histórico](iterations/2026-10-recurring-period-independence.md); el cierre productivo posterior está en [PROJECT_STATE](PROJECT_STATE.md). No quedan migraciones ni despliegue pendientes de Iteración 8.
 
-### Selección analítica acordada — seis primarios y cinco secundarios opcionales
+### Antecedente histórico — selección analítica del 23/10/2026
 
 Clasificación confirmada por el propietario el 23/10/2026. Estado al 27/10: 3 de 6 gráficos principales publicados. Gastos, Honorarios y Cobranzas están publicados y validados por el propietario, según los cierres del 24/10/2026; los otros tres siguen pendientes. La clasificación no autoriza implementarlos todos ahora.
 
@@ -163,11 +157,11 @@ Mantener una sección atractiva, clara y compacta. La futura IA podrá consultar
 
 ## Evolución funcional — estrategia empresarial y asesor IA
 
-Orden de prioridad y dependencias registrado el 23/10/2026; **estados reconciliados al 06/11/2026** sin reordenar prioridades ni conceder nuevas autorizaciones. Existen resumen mensual, IPC de referencia, tres gráficos primarios y conexión MCP de cinco herramientas; Centro de Conocimiento D022 y módulo de Eventos 10.2 están publicados. La validación integral del asistente P0 y modelos económicos estructurados siguen pendientes. La tabla conserva su **orden de diseño histórico**, pero distingue los hitos operativos ya implementados.
+Orden de prioridad y dependencias registrado el 23/10/2026; **estados reconciliados al 07/11/2026** sin reordenar prioridades ni conceder nuevas autorizaciones. Estadísticas v2 mensual/anual, MCP de cinco herramientas, Know-How real y Eventos están publicados. El asesor P0 está aceptado en alcance consultivo; modelos financieros estructurados avanzados permanecen separados y no implementados. La tabla conserva su **orden de diseño histórico**, pero distingue los hitos operativos ya implementados.
 
 | Orden | Capacidad futura                                                 | Dependencias y límites                                                                                                                                                                                                         |
 | ----- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1     | Finalización de Estadísticas mensuales                           | Cobranzas y Skeleton Loaders publicados; extensión a otros módulos ya realizada. Inscripciones por actividad y restantes gráficos/análisis permanecen pendientes; preservar cobertura y precisión.               |
+| 1     | Finalización de Estadísticas mensuales                           | Mensual y anual publicadas y aceptadas en Iteración 11, incluida Inscripciones por actividad. Análisis adicionales requieren alcance propio; preservar cobertura y precisión.               |
 | 2     | Tarifas, planes y paquetes versionados                           | Definir vigencias, prestaciones incluidas e historial, sin sobrescribir acuerdos anteriores ni atribuir todo un paquete a cada taller.                                                                                         |
 | 3     | Promociones y descuentos contratados                             | Dependen de tarifas/planes versionados; definir condiciones, vigencia y contratación histórica.                                                                                                                                |
 | 4     | Eventos especiales                                               | **Módulo operativo 10.2 publicado**, con cobros, gastos y consulta MCP; sigue pendiente cualquier ampliación predictiva no aprobada. No inferir asistencia real desde inscripciones ni declarar probada una escritura productiva.                                                                              |
@@ -177,16 +171,14 @@ Orden de prioridad y dependencias registrado el 23/10/2026; **estados reconcilia
 | 8     | Base de Conocimiento Empresarial                                 | **Centro real D022 implementado, versionado, publicado y consultado por MCP** (seis documentos activos en el corte 05–06/11); mejoras adicionales de recuperación, retención o exportación se evalúan independientemente.                          |
 | 9     | Simulaciones financieras y comerciales                           | Requieren tarifas, promociones, honorarios dinámicos, costos atribuibles y capacidad definidos; explicitar supuestos, cobertura y riesgos.                                                                                     |
 | 10    | Comparaciones históricas ajustadas por IPC                       | Requieren series históricas suficientes, persistencia/serie IPC y metodología de ajuste aprobada; el último IPC disponible no sustituye una serie.                                                                             |
-| 11    | Integración segura del asesor IA con fuentes internas y externas | Lectura de indicadores, Know-How real y Eventos conectados mediante API y MCP privado; pendiente aceptación integral P0 y automatización estructurada adicional. Fuentes externas actuales pueden consultarse por separado, con verificación; conservar identidad, permisos, privacidad y límites. |
+| 11    | Integración segura del asesor IA con fuentes internas y externas | Lectura de indicadores, Know-How real y Eventos conectados mediante API y MCP privado; P0 consultivo aceptado el 06/11; automatización financiera estructurada adicional no implementada. Fuentes externas actuales pueden consultarse por separado, con verificación; conservar identidad, permisos, privacidad y límites. |
 
-Las necesidades empresariales podrán orientar diseños en paralelo sin eliminar dependencias ni ampliar autorizaciones. La evolución anual e histórica conserva la secuencia de Prioridad 5. Los documentos empresariales reales del Centro de Conocimiento residen en la instalación del CRM y **no** se sincronizan como contenido privado mediante Git; definir y comprobar respaldos independientes sin confundir versiones de contenido con respaldos restaurables.
+Las necesidades empresariales podrán orientar diseños en paralelo sin eliminar dependencias ni ampliar autorizaciones. La evolución anual está publicada; la histórica completa conserva su alcance separado de Prioridad 5. Los documentos empresariales reales del Centro de Conocimiento residen en la instalación del CRM y **no** se sincronizan como contenido privado mediante Git; definir y comprobar respaldos independientes sin confundir versiones de contenido con respaldos restaurables.
 
 ## Prioridad 6 — PDF / reportes
 
 Postergado deliberadamente hasta estabilizar los modelos financieros y Estadísticas.
 
-## Pendiente — Estadísticas anuales e históricas
+## Pendiente — Análisis histórico completo y modelos adicionales
 
-La secuencia temporal está definida en Prioridad 5. La vista mensual seguirá siendo la principal; las vistas anual e histórica deberán respetar períodos existentes, cobertura y suficiencia de series IPC. Resultados económicos y rentabilidad solo se incorporarán después de completar y aprobar las reglas contables y las limitaciones de honorarios de D021.
-
-Recharts ya está incorporado; su utilización para series anuales/históricas requiere diseño específico. Queda pendiente decidir entre un desplegable «Evolución histórica» o su integración en la categoría de evolución económica. Es exclusivamente un pendiente: no hay consultas históricas, filtros anuales, gráficos ni cambios DB implementados para esta ampliación.
+La vista anual está implementada y publicada en Iteración 11. Permanecen separados el análisis histórico completo con rangos personalizados, las series IPC históricas y los modelos de flujo de caja, utilidad neta y atribución financiera por actividad. Requieren definición y autorización propias; no convierten la vista anual entregada en pendiente. Respetar períodos existentes, cobertura, límites de D021 y suficiencia del historial.

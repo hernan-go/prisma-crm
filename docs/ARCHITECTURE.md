@@ -1,6 +1,17 @@
 # PRISMA CRM — Arquitectura
 
+## Arquitectura vigente — 07/11/2026
+
+CRM React/TypeScript → Node.js/Express → MySQL: monolito modular evolutivo. Know-How real con propuestas separadas del documento vigente y aprobación/rechazo administrativos; Eventos Especiales integrados. ChatGPT → MCP privado versión 6 con cinco herramientas → API empresarial segura: lecturas y propuestas documentales controladas, sin escritura económica autónoma. La quinta herramienta es `consultar_eventos_especiales`; consulta real y límites de producción/recuperación registrados en [PROJECT_STATE](PROJECT_STATE.md).
+
+Estadísticas v2 mensual y anual publicada: `GET /api/statistics/summary?period_id=<id>` y `GET /api/statistics/annual?year=AAAA`, bajo autenticación administrativa. El anual reutiliza el motor mensual Decimal, tres consultas agrupadas en snapshot consistente READ ONLY y agregados de inscripciones regulares sin Eventos. Dinero exacto en contratos; Number exclusivamente para geometría. Cuatro paneles mensuales, Eventos y cuatro gráficos anuales; dona individual de Honorarios conservada. [Contrato y evidencia](iterations/2026-11-statistics-monthly-v2.md).
+
+Google OAuth, multiempresa/SaaS y portales PWA no están implementados. P0 consultivo aceptado no significa rentabilidad certificada ni simulaciones deterministas automáticas. No hay nuevas migraciones ni cambios MCP por Iteración 11. Los apartados fechados de 10.1 y anteriores siguientes son antecedentes; sus versiones MCP, documentos ficticios y pendientes de publicación no describen el estado vigente.
+
+
 ## Circuito vigente de Know-How y propuestas — 02/11/2026
+
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
 
 ChatGPT → Site MCP privado versión 5 → API CRM. Cuatro herramientas: consultar_estadisticas_comerciales, consultar_conocimiento_empresarial, enviar_propuesta_conocimiento y consultar_estado_propuesta_conocimiento. Las lecturas documentales solo exponen documentos activos. Proponer guarda contenido separado del vigente; únicamente la administración compartida decide desde el CRM. La aprobación reutiliza el guardado/versionado en transacción; rechazo elimina el texto propuesto conservando recibo técnico. Revisión base y SHA-256 protegen la decisión; request_id asegura idempotencia durable. No hay herramientas MCP para aprobar/rechazar/publicar.
 
@@ -8,15 +19,21 @@ AI_READ_TOKEN/AI_READ_TOKEN_SHA256 y AI_PROPOSAL_TOKEN/AI_PROPOSAL_TOKEN_SHA256 
 
 ## Extensión local de conocimiento empresarial — 30/10/2026
 
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
+
 MySQL → `/api/integrations/ai/knowledge` → Worker MCP privado → ChatGPT. Listado de metadatos paginado y lectura individual del Markdown vigente, exclusivamente activo/no eliminado. Reutiliza seguridad del router empresarial, sin cambios al contrato estadístico 2.0 ni a D020–D024. [Contrato 1.0, límites y validación](iterations/2026-10-knowledge-mcp.md). Implementación local pendiente de publicación; los apartados anteriores de diseño conservados debajo son antecedentes.
 
 ## Know-How IA — implementación local, entrega 1
+
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
 
 `/know-how` y router administrativo `/api/knowledge`, bajo sesión existente. Markdown privado en MySQL mediante `knowledge_categories`, `knowledge_documents`, `knowledge_document_versions` y `knowledge_library_state`. Migración aditiva 012 validada solo en prisma_test, sin activación en desarrollo/producción. Biblioteca global por instalación, sin períodos ni multitenancy. Inicialización explícita/idempotente de cinco documentos pilares inactivos y genéricos, sin categorías obligatorias.
 
 Transacciones y bloqueo exclusivo del singleton documental; revisión esperada para conflictos. `revision` incluye activación, mientras `content_version` conserva únicamente cambios de contenido/título/categoría. No se depuran versiones. Vista previa restringida con react-markdown, sin HTML/imágenes; importación UTF-8 hasta 512 KiB, sin archivos persistentes en el servidor. Campos futuros de papelera/protección/retención sin comportamiento implementado. No hay conexión documental MCP, borrado, restauración ni respaldos integrales. [Detalle y límites](iterations/2026-10-knowledge-library.md). Los apartados conceptuales siguientes conservan el antecedente anterior a esta implementación local.
 
 ## Integración de lectura para asistente — desplegada y conectada
+
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
 
 Topología funcional al 27/10/2026, con consulta real de octubre confirmada por el propietario desde Work y ChatGPT normal:
 
@@ -227,6 +244,8 @@ La URL `/publicidad` se mantiene por ahora aunque la funcionalidad visible sea `
 
 ## Estadísticas — v1 publicada y capa analítica compartida
 
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
+
 La ruta `/estadisticas` presenta seis tarjetas con cobertura e IPC oficial con fallback explícito. `GET /api/statistics/summary?period_id=<id>` usa autenticación existente y devuelve agregados. Contratos Zod en `shared/statistics.ts`, motor Decimal en `server/statistics/engine.ts` y consultas en `server/statistics/index.ts`. La lectura usa REPEATABLE READ, WITH CONSISTENT SNAPSHOT, READ ONLY, sin bloqueo de personas ni escrituras. Período inexistente: 404; error de consulta: error HTTP, nunca cero. Publicación en `51e247e` y validación productiva confirmadas por el propietario el 23/10/2026; Codex verificó código local, sin nueva comprobación productiva.
 
 La Etapa 1 separa consultas/agregaciones, cálculos puros con Decimal.js (precisión local 40), contratos tipados con eje temporal/cobertura/fuente y presentación. Evitar sumas multiplicadas por joins y consultas que transporten fichas personales completas innecesariamente. El contrato debe distinguir cero, indefinido, ausencia de registros y error; las comparaciones no crean períodos. Las entregas gráficas de Iteración 9 publicaron Recharts 3.10.1 y react-is 19.3.0, compatibles con React instalado. `client/StatisticsExpenseChart.tsx` se carga al abrir el acordeón de Gastos; `client/statistics-expenses.ts` comparte consulta validada y caché por período con el modal existente. No modifica contratos, endpoints ni cálculos del backend. La conversión Number es exclusivamente geométrica; orden exacto por centavos enteros y valores string en tabla/tooltips. Reajuste posterior publicado: dos tiles iguales, barras y anillo de honorarios; este último consume fees_committed/fees_paid/fees_pending y fees_overpaid del resumen existente, sin nuevas consultas ni cálculos de saldos. Tres tramos normalizados contra el mismo comprometido conocido, no una suma de tres magnitudes. Solo representa proporciones con cobertura completa, base positiva y conciliación exacta; ante indefinidos, base cero o sobrepagos muestra contornos y valores exactos. Pagado vacío con cero movimientos se trata como cero registrado. Sin control Ver tabla: alternativa exclusiva para lectores de pantalla y navegación del gráfico. Gastos y Honorarios se publicaron en `ab7e321`; Cobranzas en `b4b8408`, con validación productiva del propietario. Estado al 27/10: 3 de 6 gráficos principales publicados y dos acordeones independientes, «Ingresos y cobranzas» y «Gastos operativos y honorarios», que conservan apertura al cambiar de mes. Skeleton Loaders publicados exclusivamente en Estadísticas en `0568623`; extensión a otros módulos pendiente.
@@ -240,6 +259,8 @@ Estado vigente D024 al 27/10: API empresarial 2.0 desplegada y conectada al MCP 
 Persistencia del IPC, historial de bajas y modelos de tarifas, paquetes, promociones, atribución y simulaciones requieren diseños específicos. Los siete bloques/acordeones exclusivos pertenecen al diseño histórico; la UI vigente tiene dos acordeones independientes. Pendientes los otros tres gráficos principales: Inscripciones por actividad, Continuidad de participantes y Evolución económica. Evolución prevista: mensual, anual y finalmente histórica con rangos e IPC cuando los datos sean suficientes. La conexión MCP de lectura está completada; el asistente comercial sigue pendiente. Indicadores v1, plan, límites y antecedentes: [diseño funcional de Estadísticas](iterations/2026-10-statistics-design.md).
 
 ## Conocimiento empresarial y asesor IA — diseño conceptual
+
+> Antecedente histórico. Sus estados y pendientes quedan subordinados al resumen vigente del 07/11/2026 al comienzo de este documento.
 
 D022 y D023 establecen tres fuentes complementarias para una futura consulta autorizada:
 

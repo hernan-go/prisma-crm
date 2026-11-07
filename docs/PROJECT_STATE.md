@@ -19,6 +19,10 @@ Límites deliberados: meses inexistentes no representan cero; las clasificacione
 
 Trazabilidad técnica y antecedentes: [Iteración 11](iterations/2026-11-statistics-monthly-v2.md). Sus menciones a commit, integración o despliegue pendientes describen el corte local anterior y quedan superadas por este cierre productivo. Se conservan debajo el antecedente 11.1 y el cierre técnico de 10.2.
 
+## Aceptación del asesor consultivo P0 — 06/11/2026
+
+Según confirmación del propietario en la consolidación del 07/11, la issue #2 fue cerrada por aceptación funcional del asesor empresarial en su alcance consultivo. MCP privado versión 6, Know-How real/propuestas y consulta de Eventos operativos. No implica rentabilidad certificada, atribución financiera por actividad ni simulaciones deterministas automáticas, que no están implementadas; sin escritura económica autónoma. [Contrato y límites](AI_COMMERCIAL_PLANNING.md). Las referencias posteriores a P0 todavía pendiente corresponden a cortes históricos anteriores.
+
 ## Antecedente histórico — Iteración 11.1: rediseño mensual local (07/11/2026)
 
 Implementación en `codex/iteration-11-1-statistics-monthly` sobre `3077d19`: seis KPI prioritarios, cuatro paneles mensuales y Eventos con detalle individual del contrato existente. Paneles visibles en escritorio/tablet y desplegables accesibles en móvil; paleta sobria limitada a Estadísticas. Sin cambios económicos, DB, migraciones ni MCP; sin commits ni publicación. Revisión visual pendiente por bloqueo de las herramientas de navegador. Alcance, decisiones sustituidas, QA y límites: [Iteración 11.1](iterations/2026-11-statistics-monthly-v2.md).
