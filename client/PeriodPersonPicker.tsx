@@ -1,3 +1,4 @@
+import { personName, comparePeople } from './person-presentation';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
@@ -52,19 +53,20 @@ export function PeriodPersonPicker({
           </small>
         )}
         {pending && <ListSkeleton label="Buscando personas…" />}
-        {data?.rows.map((p: any) => (
-          <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
-            <span>
-              <span className="participant-name">
-                {p.apellido}, {p.nombre}
+        {data?.rows
+          .slice()
+          .sort(comparePeople)
+          .map((p: any) => (
+            <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
+              <span>
+                <span className="participant-name">{personName(p)}</span>
+                <small>
+                  {p.public_id} · {p.telefono}
+                </small>
               </span>
-              <small>
-                {p.public_id} · {p.telefono}
-              </small>
-            </span>
-            <span>{excluded.includes(p.id) ? 'Ya incorporada' : 'Agregar al período'}</span>
-          </button>
-        ))}
+              <span>{excluded.includes(p.id) ? 'Ya incorporada' : 'Agregar al período'}</span>
+            </button>
+          ))}
         {!waiting && q.isSuccess && data.rows.length === 0 && (
           <Empty>No hay coincidencias. Creá la persona desde Personas.</Empty>
         )}

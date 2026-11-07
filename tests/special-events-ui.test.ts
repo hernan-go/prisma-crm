@@ -77,6 +77,33 @@ function renderDetail(status = 'open', event = sampleEvent) {
   return html;
 }
 describe('UI Eventos: datos reales y restricciones', () => {
+  it('ordena participantes activos por apellido y nombre sin modificar la respuesta ni movimientos', () => {
+    const names = [
+      { apellido: 'Zulu', nombre: 'Ana' },
+      { apellido: 'Álvarez', nombre: 'Zoe' },
+      { apellido: 'alvarez', nombre: 'Ana' },
+      { apellido: 'De la Cruz', nombre: 'Luz' },
+    ];
+    const event = {
+      ...sampleEvent,
+      active_count: names.length,
+      participants: names.map((name, index) => ({
+        ...sampleEvent.participants[0],
+        ...name,
+        id: index + 1,
+        person_id: index + 1,
+      })),
+    };
+    const before = structuredClone(event);
+    const html = renderDetail('open', event);
+    const table = html.split('<tbody>')[1].split('</tbody>')[0];
+    const expected = ['alvarez, Ana', 'Álvarez, Zoe', 'De la Cruz, Luz', 'Zulu, Ana'];
+    expected.forEach((name, index) => {
+      expect(table).toContain(name);
+      if (index) expect(table.indexOf(expected[index - 1])).toBeLessThan(table.indexOf(name));
+    });
+    expect(event).toEqual(before);
+  });
   it('muestra tres indicadores de recaudación sin mezclar gastos', () => {
     const html = renderToStaticMarkup(createElement(EventIndicators, { event: sampleEvent }));
     expect(html.match(/class="event-indicator"/g) || []).toHaveLength(3);

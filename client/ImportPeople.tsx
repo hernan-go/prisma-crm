@@ -1,3 +1,4 @@
+import { personName, comparePeople } from './person-presentation';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -284,11 +285,14 @@ export function ImportPeople() {
                           value={r.target_id}
                           onChange={(e) => update(index, { target_id: Number(e.target.value) })}
                         >
-                          {r.matches.map((p: any) => (
-                            <option key={p.id} value={p.id}>
-                              {p.public_id} {p.nombre} {p.apellido}
-                            </option>
-                          ))}
+                          {r.matches
+                            .slice()
+                            .sort(comparePeople)
+                            .map((p: any) => (
+                              <option key={p.id} value={p.id}>
+                                {p.public_id} {personName(p)}
+                              </option>
+                            ))}
                         </select>
                       </Field>
                     )}

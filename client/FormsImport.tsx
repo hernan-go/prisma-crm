@@ -1,3 +1,4 @@
+import { personName, comparePeople } from './person-presentation';
 import { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -270,21 +271,20 @@ export function FormsImport() {
                       apellidos compuestos.
                     </p>
                   )}
-                  {r.matches.map((p: any) => (
-                    <div className="info" key={p.id}>
-                      <b>PERSONA EXISTENTE</b>
-                      <p>
-                        {p.public_id}{' '}
-                        <span className="participant-name">
-                          {p.nombre} {p.apellido}
-                        </span>{' '}
-                        ·{' '}
-                        <Link target="_blank" to={`/personas/${p.id}`}>
-                          Ver persona
-                        </Link>
-                      </p>
-                    </div>
-                  ))}
+                  {r.matches
+                    .slice()
+                    .sort(comparePeople)
+                    .map((p: any) => (
+                      <div className="info" key={p.id}>
+                        <b>PERSONA EXISTENTE</b>
+                        <p>
+                          {p.public_id} <span className="participant-name">{personName(p)}</span> ·{' '}
+                          <Link target="_blank" to={`/personas/${p.id}`}>
+                            Ver persona
+                          </Link>
+                        </p>
+                      </div>
+                    ))}
                   {!!r.duplicate_lines.length && (
                     <p className="warning">
                       Coincide con otra respuesta: fila {r.duplicate_lines.join(', ')}. Omití el
@@ -334,11 +334,14 @@ export function FormsImport() {
                         value={r.target_id || 0}
                         onChange={(e) => update(i, { target_id: Number(e.target.value) })}
                       >
-                        {r.matches.map((p: any) => (
-                          <option key={p.id} value={p.id}>
-                            {p.public_id} {p.nombre} {p.apellido}
-                          </option>
-                        ))}
+                        {r.matches
+                          .slice()
+                          .sort(comparePeople)
+                          .map((p: any) => (
+                            <option key={p.id} value={p.id}>
+                              {p.public_id} {personName(p)}
+                            </option>
+                          ))}
                       </select>
                     </Field>
                   )}

@@ -1,3 +1,4 @@
+import { personName } from './person-presentation';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -112,7 +113,7 @@ function ScheduleCard({ schedule }: { schedule: AgendaSchedule }) {
             {schedule.people.map((p) => (
               <li key={p.person_id}>
                 <Link className="participant-name" to={`/personas/${p.person_id}`}>
-                  {p.nombre} {p.apellido}
+                  {personName(p)}
                 </Link>
               </li>
             ))}
