@@ -148,6 +148,16 @@ it('inicia desactivado con todas las cuentas en orden español y permite desacti
   expect(accountIds(toggle(true))).toEqual([6, 1]);
   expect(accountIds(toggle(false))).toEqual([2, 3, 4, 5, 6, 1]);
 });
+it('integración: Solo deudores conserva Apellido, Nombre y el desempate alfabético por nombre', () => {
+  render();
+  const html = toggle(true);
+  const table = html.split('<tbody>')[1].split('</tbody>')[0];
+  expect(accountIds(html)).toEqual([6, 1]);
+  expect(table).toContain('Zulu, Ana');
+  expect(table).toContain('Zulu, Zoe');
+  expect(table.indexOf('Zulu, Ana')).toBeLessThan(table.indexOf('Zulu, Zoe'));
+  expect(table).not.toContain('Álvarez, Ana');
+});
 it.each([
   ['indefinido', undefined],
   ['nulo', null],

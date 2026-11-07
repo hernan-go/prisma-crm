@@ -196,7 +196,7 @@ function renderDashboard(
   return html;
 }
 it('renderiza agenda aunque fallen las finanzas y viceversa', () => {
-  expect(renderDashboard({ financeError: true })).toContain('Persona Completa');
+  expect(renderDashboard({ financeError: true })).toContain('Completa, Persona');
   expect(renderDashboard({ financeError: true })).toContain('Error de finanzas');
   expect(renderDashboard({ agendaError: true })).toContain('Total cobrado');
   expect(renderDashboard({ agendaError: true })).toContain('Error de agenda');
@@ -210,7 +210,7 @@ it('expone carga y ausencia de período sin usar datos de otro mes', () => {
 });
 it('mantiene nombres visibles y enlace existente sin controles de despliegue en período cerrado', () => {
   const html = renderDashboard();
-  expect(html).toContain('Persona Completa');
+  expect(html).toContain('Completa, Persona');
   expect(html).toContain('href="/personas/7"');
   expect(html).toContain('class="dashboard-people"');
   expect(html).not.toContain('Ver personas inscriptas');

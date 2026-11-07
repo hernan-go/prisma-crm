@@ -1,3 +1,4 @@
+import { personName, comparePeople } from './person-presentation';
 import { useState, useRef, useSyncExternalStore, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -391,9 +392,7 @@ function AddParticipant({ event, close }: { event: SpecialEventDetail; close: ()
     >
       {selected ? (
         <div className="info event-selected-person">
-          <b>
-            {selected.apellido}, {selected.nombre}
-          </b>{' '}
+          <b>{personName(selected)}</b>{' '}
           <button type="button" onClick={() => setSelected(null)}>
             Cambiar persona
           </button>
@@ -404,30 +403,31 @@ function AddParticipant({ event, close }: { event: SpecialEventDetail; close: ()
           <QueryFeedback query={people} label="personas" />
           {people.isPending && <ListSkeleton label="Buscando personas…" />}
           <div className="pick-list event-person-results">
-            {people.data?.rows.map((person) => (
-              <button
-                key={person.id}
-                type="button"
-                disabled={event.participants.some((p) => p.person_id === person.id && p.active)}
-                onClick={() => {
-                  setSelected(person);
-                  const previous = event.participants.find((p) => p.person_id === person.id);
-                  setPrice(previous?.price ?? event.price);
-                  setNotes(previous?.notes ?? '');
-                }}
-              >
-                <span>
-                  {person.apellido}, {person.nombre}
-                </span>
-                <small>
-                  {event.participants.some((p) => p.person_id === person.id)
-                    ? event.participants.some((p) => p.person_id === person.id && p.active)
-                      ? 'Ya inscripta'
-                      : 'Reincorporar · pagos anteriores excluidos'
-                    : 'Seleccionar'}
-                </small>
-              </button>
-            ))}
+            {people.data?.rows
+              .slice()
+              .sort(comparePeople)
+              .map((person) => (
+                <button
+                  key={person.id}
+                  type="button"
+                  disabled={event.participants.some((p) => p.person_id === person.id && p.active)}
+                  onClick={() => {
+                    setSelected(person);
+                    const previous = event.participants.find((p) => p.person_id === person.id);
+                    setPrice(previous?.price ?? event.price);
+                    setNotes(previous?.notes ?? '');
+                  }}
+                >
+                  <span>{personName(person)}</span>
+                  <small>
+                    {event.participants.some((p) => p.person_id === person.id)
+                      ? event.participants.some((p) => p.person_id === person.id && p.active)
+                        ? 'Ya inscripta'
+                        : 'Reincorporar · pagos anteriores excluidos'
+                      : 'Seleccionar'}
+                  </small>
+                </button>
+              ))}
           </div>
           <button type="button" onClick={() => setCreating(true)}>
             <Plus size={16} /> Crear nueva persona
@@ -502,9 +502,7 @@ function ParticipantForm({
       })}
     >
       <p>
-        <b>
-          {person.apellido}, {person.nombre}
-        </b>
+        <b>{personName(person)}</b>
       </p>
       {!active && (
         <>
@@ -565,10 +563,7 @@ function MovementForm({
       })}
     >
       <p>
-        <b>
-          {person.apellido}, {person.nombre}
-        </b>{' '}
-        · Pendiente: {formatMoney(person.pending)}
+        <b>{personName(person)}</b> · Pendiente: {formatMoney(person.pending)}
       </p>
       <div className="form-grid">
         <Field label="Fecha efectiva">
@@ -805,7 +800,7 @@ function EventDetailPage({ id }: { id: number }) {
     );
   const writable =
     selected?.status === 'open' && period === event.period_id && !state.pending && !q.isFetching;
-  const people = event.participants.filter((p) => p.active);
+  const people = event.participants.filter((p) => p.active).sort(comparePeople);
   return (
     <div className="special-events">
       <PageHeading title="Eventos Especiales" description="Participantes y cobros del período.">
@@ -877,9 +872,7 @@ function EventDetailPage({ id }: { id: number }) {
             <tbody>
               {people.map((p) => (
                 <tr key={p.id}>
-                  <td data-label="Participante">
-                    {p.apellido}, {p.nombre}
-                  </td>
+                  <td data-label="Participante">{personName(p)}</td>
                   <td data-label="Precio individual">{formatMoney(p.price)}</td>
                   <td data-label="Cobrado">{formatMoney(p.paid)}</td>
                   <td data-label="Pendiente">{formatMoney(p.pending)}</td>
@@ -975,10 +968,7 @@ function EventDetailPage({ id }: { id: number }) {
         />
       )}
       {dialog?.kind === 'payments' && (
-        <Modal
-          title={'Cobros · ' + dialog.person.apellido + ', ' + dialog.person.nombre}
-          close={close}
-        >
+        <Modal title={'Cobros · ' + personName(dialog.person)} close={close}>
           <button
             className="primary"
             disabled={!writable}

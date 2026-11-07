@@ -1,3 +1,4 @@
+import { comparePeople } from './person-presentation';
 export const DASHBOARD_TIME_ZONE = 'America/Argentina/Cordoba';
 const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
@@ -62,10 +63,7 @@ export function dailySchedules(rows: AgendaSchedule[], period: number, day: numb
       ...s,
       instructors: [...new Map(s.instructors.map((i) => [i.id, i])).values()],
       people: [...new Map(s.people.map((p) => [p.person_id, p])).values()].sort(
-        (a, b) =>
-          a.apellido.localeCompare(b.apellido, 'es') ||
-          a.nombre.localeCompare(b.nombre, 'es') ||
-          a.person_id - b.person_id,
+        (a, b) => comparePeople(a, b) || a.person_id - b.person_id,
       ),
     }))
     .sort(

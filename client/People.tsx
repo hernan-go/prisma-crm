@@ -1,3 +1,4 @@
+import { personName, comparePeople } from './person-presentation';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { queryOptions, useQuery } from '@tanstack/react-query';
@@ -106,18 +107,18 @@ export function PersonForm({
         {matches.length > 0 && (
           <div className="info">
             <b>Posible duplicado</b>
-            {matches.map((p) => (
-              <p key={p.id}>
-                {p.public_id}{' '}
-                <span className="participant-name">
-                  {p.nombre} {p.apellido}
-                </span>{' '}
-                · Coincidencia: {p.reason} ·{' '}
-                <Link target="_blank" to={`/personas/${p.id}`}>
-                  Ver persona
-                </Link>
-              </p>
-            ))}
+            {matches
+              .slice()
+              .sort(comparePeople)
+              .map((p) => (
+                <p key={p.id}>
+                  {p.public_id} <span className="participant-name">{personName(p)}</span> ·
+                  Coincidencia: {p.reason} ·{' '}
+                  <Link target="_blank" to={`/personas/${p.id}`}>
+                    Ver persona
+                  </Link>
+                </p>
+              ))}
           </div>
         )}
         <Field label="Observaciones">
@@ -144,7 +145,9 @@ export function PersonForm({
           <div className="info">
             <p>
               {(m.error as any).details
-                ?.map((p: any) => `${p.public_id} ${p.nombre} ${p.apellido}`)
+                ?.slice()
+                .sort(comparePeople)
+                .map((p: any) => `${p.public_id} ${personName(p)}`)
                 .join(', ')}
             </p>
             <label className="check">
@@ -287,39 +290,40 @@ export function People() {
             </thead>
             <tbody>
               {loading && <PeopleSkeletonRows />}
-              {data?.rows.map((p: any) => (
-                <tr key={p.id}>
-                  <td>
-                    <Link
-                      className="person-link participant-name"
-                      to={`/personas/${p.id}`}
-                      title={`${p.apellido}, ${p.nombre}`}
-                    >
-                      <span>
-                        {p.apellido}, {p.nombre}
+              {data?.rows
+                .slice()
+                .sort(comparePeople)
+                .map((p: any) => (
+                  <tr key={p.id}>
+                    <td>
+                      <Link
+                        className="person-link participant-name"
+                        to={`/personas/${p.id}`}
+                        title={personName(p)}
+                      >
+                        <span>{personName(p)}</span>
+                      </Link>
+                    </td>
+                    <td className="person-id desktop-only">{p.public_id}</td>
+                    <td>{p.telefono}</td>
+                    <td className="desktop-only">{p.email || '—'}</td>
+                    <td className="desktop-only">
+                      <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
+                        {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
                       </span>
-                    </Link>
-                  </td>
-                  <td className="person-id desktop-only">{p.public_id}</td>
-                  <td>{p.telefono}</td>
-                  <td className="desktop-only">{p.email || '—'}</td>
-                  <td className="desktop-only">
-                    <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
-                      {p.emergency_phone ? 'Contacto cargado' : 'Sin contacto de emergencia'}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`chip people-status ${p.activo ? 'status-active' : 'status-archived'}`}
-                      role="img"
-                      aria-label={p.activo ? 'Activa' : 'Archivada'}
-                      title={p.activo ? 'Activa' : 'Archivada'}
-                    >
-                      <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>
+                      <span
+                        className={`chip people-status ${p.activo ? 'status-active' : 'status-archived'}`}
+                        role="img"
+                        aria-label={p.activo ? 'Activa' : 'Archivada'}
+                        title={p.activo ? 'Activa' : 'Archivada'}
+                      >
+                        <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
           {data && !q.isError && data.rows.length === 0 && (
@@ -369,19 +373,20 @@ export function PersonPicker({
       <SearchBox value={search} onChange={setSearch} />
       <ErrorBox error={q.error} />
       <div className="pick-list">
-        {q.data?.rows.map((p: any) => (
-          <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
-            <span>
-              <span className="participant-name">
-                {p.apellido}, {p.nombre}
+        {q.data?.rows
+          .slice()
+          .sort(comparePeople)
+          .map((p: any) => (
+            <button key={p.id} disabled={excluded.includes(p.id)} onClick={() => onSelect(p)}>
+              <span>
+                <span className="participant-name">{personName(p)}</span>
+                <small>
+                  {p.public_id} · {p.telefono}
+                </small>
               </span>
-              <small>
-                {p.public_id} · {p.telefono}
-              </small>
-            </span>
-            <span>{excluded.includes(p.id) ? 'Ya incorporada' : actionLabel}</span>
-          </button>
-        ))}
+              <span>{excluded.includes(p.id) ? 'Ya incorporada' : actionLabel}</span>
+            </button>
+          ))}
         {q.isPending && <Loading />}
         {q.data && !q.data.rows.length && (
           <Empty>No hay coincidencias. Creá la persona desde Personas.</Empty>
@@ -411,9 +416,7 @@ export function PersonDetail() {
               {p.activo ? 'Activa' : 'Archivada'}
             </span>
           </span>
-          <h1 className="participant-name">
-            {p.nombre} {p.apellido}
-          </h1>
+          <h1 className="participant-name">{personName(p)}</h1>
           <p>
             {p.telefono} {p.email && ` · ${p.email}`}
           </p>

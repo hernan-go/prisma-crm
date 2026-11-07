@@ -1,12 +1,5 @@
-export function comparePeriodPeople(
-  a: { apellido: string; nombre: string },
-  b: { apellido: string; nombre: string },
-) {
-  return (
-    a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' }) ||
-    a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
-  );
-}
+import { personName, comparePeople } from './person-presentation';
+export { comparePeople as comparePeriodPeople } from './person-presentation';
 export { Configuration } from './Configuration';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -102,7 +95,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
             <div className="selected-person">
               <div>
                 <Link className="participant-name" to={`/personas/${person.id}`}>
-                  {person.nombre} {person.apellido}
+                  {personName(person)}
                 </Link>
                 <small>
                   {person.public_id} · {person.telefono}
@@ -117,12 +110,12 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
               {members.isPending && <ListSkeleton label="Cargando personas inscriptas…" />}
               {members.data
                 ?.slice()
-                .sort(comparePeriodPeople)
+                .sort(comparePeople)
                 .map((p: any) => (
                   <div className="payment-row" key={p.membership_id}>
                     <div>
                       <Link className="participant-name" to={`/personas/${p.id}`}>
-                        {p.nombre} {p.apellido}
+                        {personName(p)}
                       </Link>
                       <small>
                         {p.activities || 'Sin actividades asignadas'}
@@ -219,13 +212,10 @@ function RemoveMembership({
         <Modal title="Quitar del período" close={() => setAsk(false)}>
           <p>
             Se quitará únicamente la pertenencia de{' '}
-            <span className="participant-name">
-              {person.nombre} {person.apellido}
-            </span>{' '}
-            a este período. La persona seguirá en BBDD. Si existe una cuenta mensual completamente
-            vacía (sin importe definido y sin pagos), se eliminará automáticamente. Si tiene
-            actividades, pagos o un importe a cobrar definido, incluido cero, la operación se
-            bloqueará.
+            <span className="participant-name">{personName(person)}</span> a este período. La
+            persona seguirá en BBDD. Si existe una cuenta mensual completamente vacía (sin importe
+            definido y sin pagos), se eliminará automáticamente. Si tiene actividades, pagos o un
+            importe a cobrar definido, incluido cero, la operación se bloqueará.
           </p>
           <ErrorBox error={remove.error} />
           <div className="actions">
@@ -537,9 +527,7 @@ function PaymentForm({
   const m = useSave(p.id ? `/payments/${p.id}` : '/payments', p.id ? 'PUT' : 'POST', close);
   return (
     <Modal title={p.id ? 'Editar pago' : 'Registrar pago'} close={close}>
-      <p className="participant-name">
-        {person.nombre} {person.apellido}
-      </p>
+      <p className="participant-name">{personName(person)}</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -706,17 +694,18 @@ function AgendaPeriod() {
               <p>
                 {g.instructor} · {g.people.length} asistentes
               </p>
-              {g.people.map((p: any) => (
-                <Link
-                  className="attendee participant-name"
-                  key={p.person_id}
-                  to={`/personas/${p.person_id}`}
-                >
-                  <span>
-                    {p.nombre} {p.apellido}
-                  </span>
-                </Link>
-              ))}
+              {g.people
+                .slice()
+                .sort(comparePeople)
+                .map((p: any) => (
+                  <Link
+                    className="attendee participant-name"
+                    key={p.person_id}
+                    to={`/personas/${p.person_id}`}
+                  >
+                    <span>{personName(p)}</span>
+                  </Link>
+                ))}
             </section>
           ))}
       </div>
@@ -739,7 +728,7 @@ function PaymentsPeriod() {
   const [edit, setEdit] = useState<any>();
   const visibleAccounts = q.data
     ?.filter((a: any) => !onlyDebtors || Number(a.balance) > 0)
-    .sort(comparePeriodPeople);
+    .sort(comparePeople);
   return (
     <>
       <Heading title="Cobros Período" sub="Cuentas mensuales, movimientos y carteras.">
@@ -806,11 +795,9 @@ function PaymentsPeriod() {
                   <Link
                     className="account-person-link participant-name"
                     to={`/personas/${a.person_id}`}
-                    title={`${a.nombre} ${a.apellido}`}
+                    title={personName(a)}
                   >
-                    <span>
-                      {a.nombre} {a.apellido}
-                    </span>
+                    <span>{personName(a)}</span>
                   </Link>
                 </td>
                 <td>{formatMoney(a.amount_due)}</td>
@@ -843,10 +830,8 @@ function PaymentsPeriod() {
           <div className="payment-row" key={p.id}>
             <div>
               <b>
-                <span className="participant-name">
-                  {p.nombre} {p.apellido}
-                </span>{' '}
-                · <span className="payment-amount">{formatMoney(p.amount)}</span>
+                <span className="participant-name">{personName(p)}</span> ·{' '}
+                <span className="payment-amount">{formatMoney(p.amount)}</span>
               </b>
               <small>
                 {formatDate(p.date)} · Receptor: {recipientLabel(p.recipient)} · Medio:{' '}
@@ -895,13 +880,14 @@ function PaymentMemberPicker({ onSelect }: { onSelect: (p: any) => void }) {
       <QueryFeedback query={q} label="personas del período" />
       {!!period && q.isPending && <ListSkeleton label="Cargando personas del período…" />}
       <div className="pick-list">
-        {q.data?.map((p: any) => (
-          <button key={p.membership_id} onClick={() => onSelect(p)}>
-            <span className="participant-name">
-              {p.apellido}, {p.nombre}
-            </span>
-          </button>
-        ))}
+        {q.data
+          ?.slice()
+          .sort(comparePeople)
+          .map((p: any) => (
+            <button key={p.membership_id} onClick={() => onSelect(p)}>
+              <span className="participant-name">{personName(p)}</span>
+            </button>
+          ))}
       </div>
       {q.data?.length === 0 && <Empty>No hay personas inscriptas en este período.</Empty>}
     </>
