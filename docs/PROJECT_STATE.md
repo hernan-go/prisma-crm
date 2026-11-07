@@ -1,12 +1,25 @@
 # PRISMA CRM — Estado actual
 
-## Iteración 11 — Estadísticas v2 mensual y anual local (07/11/2026)
+## Iteración 11 — Estadísticas v2 mensual y anual: publicada en producción (07/11/2026)
 
-Auditoría final focalizada: **APTO para commit funcional**, sin defectos detectados ni cambios funcionales adicionales. Revisión visual general aprobada por el propietario; se reutilizan las validaciones anteriores y se reejecutaron únicamente dos tests del panel de Eventos, aprobados. Commit documental local `e3a3bb292412a9918009c8d85734463ed4d1baf5`, limitado a AGENTS.md y WORKFLOW.md, con sintaxis PowerShell staged verificada. Código de Estadísticas todavía sin staging/commit funcional, sin integración a main ni despliegue. Las 213 omisiones conservan su condición; alcance y límites de cobertura en el [cierre de auditoría](iterations/2026-11-statistics-monthly-v2.md#auditoría-final-y-preparación-del-cierre--07112026). Las menciones siguientes a protocolo sin commit describen la implementación anterior a este cierre.
+Estadísticas v2 mensual y anual completada, con diseño definitivo y paleta sobria aprobados por el propietario. Resumen mensual con seis KPI, cuatro paneles principales y Eventos Especiales; evolución anual de obligaciones/cobros, participantes únicos, continuidad e incorporaciones/reincorporaciones. Endpoint autenticado y de solo lectura `GET /api/statistics/annual?year=AAAA`. Sin migraciones nuevas, modificaciones de esquema ni cambios de MCP.
 
-Continuación sobre `codex/iteration-11-1-statistics-monthly`, base `3077d19`: paleta definitiva y gráficos sólidos, seis KPI mensuales en tres columnas de escritorio, encabezado contextual Mensual/Anual y cuatro gráficos anuales con datos del backend. Nuevo endpoint administrativo de lectura `/api/statistics/annual`, mismo motor financiero mensual, snapshot consistente, períodos ausentes explícitos y clasificación de participantes con límites históricos. Sin cambios de esquema, fórmulas económicas, MCP ni producción. Typecheck/lint/build/diff-check aprobados; 582 pruebas generales aprobadas y 213 omitidas, 89 focalizadas aprobadas e integración nueva de solo lectura en prisma_test aprobada separadamente. QA visual sintética completada en escritorio, tablet y móvil, con cobertura, vacíos, errores, carga, cambio de período/año y teclado; sin errores de consola en la recarga final. Aceptación del propietario y despliegue pendientes. Protocolo de navegador preexistente preservado; sin nuevas operaciones de staging, commits ni publicación. [Estado, fuentes, pruebas y límites de Iteración 11](iterations/2026-11-statistics-monthly-v2.md). El apartado de 11.1 siguiente queda como antecedente.
+Commits integrados mediante fast-forward a `main` y publicados mediante push del propietario:
 
-## Iteración 11.1 — Rediseño mensual local (07/11/2026)
+- `e3a3bb292412a9918009c8d85734463ed4d1baf5` — `docs(workflow): document frontend visual testing procedure`.
+- `77c451983167bdc008098654a9b4b8fad55ff1a0` — `feat(statistics): complete monthly redesign and annual trends`.
+
+Validación local registrada: typecheck, lint y build aprobados; 582 pruebas aprobadas y 213 omitidas, que no equivalen a pruebas aprobadas. Integración focalizada de lectura en `prisma_test` aprobada. Auditoría final de economía, clasificación histórica y Eventos: **APTO**, según informe de Codex. QA visual sintética realizada en escritorio, tablet y móvil. No se repitieron pruebas ni auditorías técnicas en este cierre documental.
+
+GitHub Actions: workflow `Validate PRISMA CRM` del commit `77c4519`, ejecución [42353884056](https://github.com/hernan-go/prisma-crm/actions/runs/42353884056), resultado `success`, según la información aportada por el propietario; sin consulta independiente de Codex en este cierre.
+
+El propietario confirmó en el panel de SiteGround el despliegue Node.js de `77c4519` con estado **COMPLETADO**. También confirmó mediante capturas una **aceptación visual productiva satisfactoria del propietario**: resumen mensual de noviembre de 2026 con seis KPI, Cobranzas, Inscripciones, Gastos, Honorarios y Eventos; vista anual 2026 con los cuatro gráficos, información histórica real y tratamiento explícito de meses sin datos. Estas evidencias no acreditan pruebas productivas de escritura, auditoría exhaustiva de seguridad, recuperación ni verificaciones de otros módulos en este cierre.
+
+Límites deliberados: meses inexistentes no representan cero; las clasificaciones dependen del historial disponible; los períodos abiertos pueden cambiar y la evolución histórica no representa snapshots contables congelados al cierre. Flujo de caja, utilidad neta e histórico del IPC no forman parte de esta iteración. No son fallas ni pendientes que reabran el desarrollo.
+
+Trazabilidad técnica y antecedentes: [Iteración 11](iterations/2026-11-statistics-monthly-v2.md). Sus menciones a commit, integración o despliegue pendientes describen el corte local anterior y quedan superadas por este cierre productivo. Se conservan debajo el antecedente 11.1 y el cierre técnico de 10.2.
+
+## Antecedente histórico — Iteración 11.1: rediseño mensual local (07/11/2026)
 
 Implementación en `codex/iteration-11-1-statistics-monthly` sobre `3077d19`: seis KPI prioritarios, cuatro paneles mensuales y Eventos con detalle individual del contrato existente. Paneles visibles en escritorio/tablet y desplegables accesibles en móvil; paleta sobria limitada a Estadísticas. Sin cambios económicos, DB, migraciones ni MCP; sin commits ni publicación. Revisión visual pendiente por bloqueo de las herramientas de navegador. Alcance, decisiones sustituidas, QA y límites: [Iteración 11.1](iterations/2026-11-statistics-monthly-v2.md).
 
