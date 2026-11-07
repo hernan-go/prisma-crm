@@ -1,8 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { Wallet, Receipt, Coins, CircleDollarSign, Clock3, TrendingUp, Info } from 'lucide-react';
+import {
+  Wallet,
+  Receipt,
+  Coins,
+  CircleDollarSign,
+  Clock3,
+  TrendingUp,
+  Info,
+  Plus,
+} from 'lucide-react';
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
-import { formatMoney } from '../shared/domain';
+import { StatisticsEvents } from './StatisticsEvents';
 import { usePeriod, periodName } from './App';
 import { PageHeading, Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
 import {
@@ -23,14 +32,14 @@ import { expenseQueryOptions } from './statistics-expenses';
 import { statisticsSummaryQueryOptions } from './statistics-collections';
 import { StatisticsAccordion } from './StatisticsAccordion';
 import { SkeletonRegion } from './Skeleton';
-import {
-  StatisticsChartSkeleton,
-  StatisticsExpensesSkeleton,
-  StatisticsValueSkeleton,
-} from './StatisticsSkeleton';
+import { StatisticsChartSkeleton, StatisticsValueSkeleton } from './StatisticsSkeleton';
 
+const StatisticsAnnual = lazy(() => import('./StatisticsAnnual'));
 const StatisticsExpenseChart = lazy(() => import('./StatisticsExpenseChart'));
 const StatisticsCollectionsChart = lazy(() => import('./StatisticsCollectionsChart'));
+const StatisticsFeesChart = lazy(() =>
+  import('./StatisticsFeesChart').then((module) => ({ default: module.StatisticsFeesChart })),
+);
 
 export { statisticsKey } from './statistics-collections';
 export const inflationKey = ['statistics-inflation'] as const;
@@ -355,35 +364,6 @@ export function ExecutiveSummary({
   const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
   return (
     <>
-      {data.events && (
-        <section className="panel">
-          <h2>Ingresos por origen y Eventos Especiales</h2>
-          <p>
-            Los indicadores de cobranzas de talleres conservan su universo. Consolidado por período
-            económico, excluyendo inscripciones eliminadas y eventos cancelados.
-          </p>
-          <p>
-            Talleres: <b>{formatMoney(data.events.income.workshops)}</b> · Eventos:{' '}
-            <b>{formatMoney(data.events.income.events)}</b> · Total consolidado:{' '}
-            <b>{formatMoney(data.events.income.total)}</b>
-          </p>
-          <p>
-            Gastos vinculados a los eventos del período: {formatMoney(data.events.event_expenses)}.
-            Tras una reprogramación pueden estar registrados en otro mes de Gastos Período.
-            Resultado comercial directo de eventos vigentes:{' '}
-            {formatMoney(data.events.commercial_result)}.
-          </p>
-          <p className="muted">
-            Resultado estimado sobre gastos registrados; no representa beneficio neto ni dinero
-            disponible. Los cancelados se excluyen de las cifras comerciales.
-          </p>
-        </section>
-      )}
-      {data.empty && (
-        <Empty>
-          Este período no tiene miembros, compromisos de honorarios ni gastos registrados.
-        </Empty>
-      )}
       <div className="statistics-grid">
         <Card
           title="Total a cobrar"
@@ -513,6 +493,11 @@ export function ExecutiveSummary({
         </Card>
         <InflationTile data={inflation} error={inflationError} loading={inflationLoading} />
       </div>
+      {data.empty && (
+        <Empty>
+          Este período no tiene miembros, compromisos de honorarios ni gastos registrados.
+        </Empty>
+      )}
       <ExpenseBreakdown
         open={showExpenseBreakdown}
         close={() => setShowExpenseBreakdown(false)}
@@ -537,9 +522,24 @@ function ActivityEnrollments({ period }: { period: number }) {
   });
   const maximum = Math.max(1, ...(q.data ?? []).map((a) => a.count));
   return (
-    <section className="panel dashboard-chart">
-      <h2>Inscripciones por actividad</h2>
-      {q.error && <ErrorBox error={q.error} />} {q.isPending && <Loading />}
+    <section className="expense-analysis-tile statistics-enrollments">
+      <p className="statistics-panel-note">
+        Una persona puede inscribirse en varias actividades. No representa asistencia ni ocupación
+        de cupos.
+      </p>
+      {q.error && (
+        <div role="alert">
+          <ErrorBox error={q.error} />
+          <button type="button" onClick={() => void q.refetch()}>
+            Reintentar inscripciones
+          </button>
+        </div>
+      )}
+      {q.isPending && (
+        <SkeletonRegion label="Cargando inscripciones…">
+          <StatisticsValueSkeleton />
+        </SkeletonRegion>
+      )}
       {q.data?.map((a, index) => (
         <div className="activity-count" key={index}>
           <div>
@@ -556,17 +556,25 @@ function ActivityEnrollments({ period }: { period: number }) {
   );
 }
 export function Statistics() {
-  const { period, periods } = usePeriod();
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const { period, periods, selectPeriod, createPeriod } = usePeriod();
+  const [view, setView] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [collectionsOpen, setCollectionsOpen] = useState(true);
   const [expensesOpen, setExpensesOpen] = useState(false);
+  const [feesOpen, setFeesOpen] = useState(false);
+  const [enrollmentsOpen, setEnrollmentsOpen] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
   const selected = periods.find((p) => p.id === period);
+  const years = [...new Set<number>(periods.map((p) => Number(p.year)))].sort((a, b) => b - a);
+  const year = selectedYear ?? selected?.year ?? years[0] ?? new Date().getFullYear();
+  if (!years.includes(year)) years.push(year);
   const summary = useQuery({
     ...statisticsSummaryQueryOptions(period),
-    enabled: Boolean(period),
+    enabled: Boolean(period) && view === 'monthly',
   });
   const inflation = useQuery({
     queryKey: inflationKey,
-    enabled: Boolean(period),
+    enabled: Boolean(period) && view === 'monthly',
     staleTime: 60 * 60 * 1000,
     refetchInterval: 60 * 60 * 1000,
     queryFn: async () => inflationResponseSchema.parse(await api('/statistics/inflation')),
@@ -575,19 +583,86 @@ export function Statistics() {
   return (
     <section
       className="statistics-page"
-      aria-label={`Estadísticas de ${periodName(data?.period ?? selected)}`}
+      aria-label={
+        view === 'annual'
+          ? `Estadísticas anuales de ${year}`
+          : `Estadísticas de ${periodName(data?.period ?? selected)}`
+      }
     >
       <PageHeading title="Estadísticas" description={null} className="statistics-module-heading">
-        {period > 0 && (
-          <span className="statistics-status">
-            {(data?.period.status ?? selected?.status) === 'closed'
-              ? 'Período cerrado · consulta histórica'
-              : 'Período abierto · datos sujetos a cambios'}
-          </span>
-        )}
+        <div className="statistics-context-controls">
+          {view === 'monthly' ? (
+            <label>
+              Período
+              <select
+                aria-label="Período activo"
+                value={period}
+                onChange={(event) => selectPeriod?.(Number(event.target.value))}
+              >
+                <option value={0} disabled>
+                  Seleccionar período
+                </option>
+                {periods.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {periodName(p)}
+                    {p.status === 'closed' ? ' · Cerrado' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <label>
+              Año
+              <select
+                aria-label="Año de estadísticas"
+                value={year}
+                onChange={(event) => setSelectedYear(Number(event.target.value))}
+              >
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {view === 'monthly' && createPeriod && (
+            <button
+              type="button"
+              className="icon"
+              title="Crear nuevo período"
+              aria-label="Crear nuevo período"
+              onClick={createPeriod}
+            >
+              <Plus size={18} />
+            </button>
+          )}
+          {view === 'monthly' && period > 0 && (
+            <span className="statistics-status">
+              {(data?.period.status ?? selected?.status) === 'closed'
+                ? 'Período cerrado · consulta histórica'
+                : 'Período abierto · datos sujetos a cambios'}
+            </span>
+          )}
+        </div>
       </PageHeading>
-      {!!period && <ActivityEnrollments period={period} />}
-      {!period ? (
+      <div className="statistics-view-controls" role="group" aria-label="Vista de estadísticas">
+        <button type="button" aria-pressed={view === 'monthly'} onClick={() => setView('monthly')}>
+          Resumen mensual
+        </button>
+        <button type="button" aria-pressed={view === 'annual'} onClick={() => setView('annual')}>
+          Evolución anual
+        </button>
+      </div>
+      {view === 'annual' ? (
+        <Suspense
+          fallback={
+            <StatisticsChartSkeleton kind="collections" label="Cargando evolución anual…" />
+          }
+        >
+          <StatisticsAnnual key={year} year={year} />
+        </Suspense>
+      ) : !period ? (
         <Empty>Creá un período para consultar sus estadísticas.</Empty>
       ) : summary.isError && !data ? (
         <div role="alert">
@@ -650,13 +725,13 @@ export function Statistics() {
             </div>
           )}
           <section className="statistics-analysis" aria-label="Análisis del período">
-            <StatisticsAccordion
-              title="Ingresos y cobranzas"
-              icon={<Wallet size={21} aria-hidden="true" />}
-              open={collectionsOpen}
-              onToggle={() => setCollectionsOpen((value) => !value)}
-            >
-              <div className="expense-analysis-content">
+            <div className="statistics-monthly-grid">
+              <StatisticsAccordion
+                title="Ingresos y cobranzas"
+                icon={<Wallet size={18} />}
+                open={collectionsOpen}
+                onToggle={() => setCollectionsOpen((value) => !value)}
+              >
                 <Suspense fallback={<StatisticsChartSkeleton kind="collections" />}>
                   {data ? (
                     <StatisticsCollectionsChart key={period} summary={data} />
@@ -664,28 +739,63 @@ export function Statistics() {
                     <StatisticsChartSkeleton kind="collections" />
                   )}
                 </Suspense>
-              </div>
-            </StatisticsAccordion>
-            <StatisticsAccordion
-              title="Gastos operativos y honorarios"
-              icon={<Receipt size={21} aria-hidden="true" />}
-              open={expensesOpen}
-              onToggle={() => setExpensesOpen((value) => !value)}
-            >
-              <Suspense fallback={<StatisticsExpensesSkeleton />}>
-                {data ? (
-                  <StatisticsExpenseChart
-                    key={period}
-                    period={period}
-                    metric={data.metrics.expenses}
-                    summary={data}
-                    refreshSummary={() => void summary.refetch()}
-                  />
-                ) : (
-                  <StatisticsExpensesSkeleton />
-                )}
-              </Suspense>
-            </StatisticsAccordion>
+              </StatisticsAccordion>
+              <StatisticsAccordion
+                title="Inscripciones por actividad"
+                icon={<CircleDollarSign size={18} />}
+                open={enrollmentsOpen}
+                onToggle={() => setEnrollmentsOpen((value) => !value)}
+              >
+                <ActivityEnrollments key={period} period={period} />
+              </StatisticsAccordion>
+              <StatisticsAccordion
+                title="Gastos operativos"
+                icon={<Receipt size={18} />}
+                open={expensesOpen}
+                onToggle={() => setExpensesOpen((value) => !value)}
+              >
+                <Suspense fallback={<StatisticsChartSkeleton kind="expenses" />}>
+                  {data ? (
+                    <StatisticsExpenseChart
+                      key={period}
+                      period={period}
+                      metric={data.metrics.expenses}
+                      refreshSummary={() => void summary.refetch()}
+                    />
+                  ) : (
+                    <StatisticsChartSkeleton kind="expenses" />
+                  )}
+                </Suspense>
+              </StatisticsAccordion>
+              <StatisticsAccordion
+                title="Honorarios"
+                icon={<Coins size={18} />}
+                open={feesOpen}
+                onToggle={() => setFeesOpen((value) => !value)}
+              >
+                <Suspense fallback={<StatisticsChartSkeleton kind="fees" />}>
+                  {data ? (
+                    <StatisticsFeesChart
+                      key={period}
+                      summary={data}
+                      refreshSummary={() => void summary.refetch()}
+                    />
+                  ) : (
+                    <StatisticsChartSkeleton kind="fees" />
+                  )}
+                </Suspense>
+              </StatisticsAccordion>
+            </div>
+            {data?.events && (
+              <StatisticsAccordion
+                title="Ingresos por origen y Eventos Especiales"
+                icon={<Wallet size={18} />}
+                open={eventsOpen}
+                onToggle={() => setEventsOpen((value) => !value)}
+              >
+                <StatisticsEvents data={data.events} />
+              </StatisticsAccordion>
+            )}
           </section>
         </>
       )}

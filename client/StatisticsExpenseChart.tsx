@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import {
   Bar,
   BarChart,
@@ -13,14 +13,12 @@ import {
 import {
   statisticsMoney,
   type StatisticMetric,
-  type StatisticsSummary,
   type StatisticsExpenseBreakdown,
 } from '../shared/statistics';
 import { ErrorBox, Empty } from './components';
 import { StatisticsChartSkeleton } from './StatisticsSkeleton';
 import { expenseChartRows, expenseQueryOptions } from './statistics-expenses';
 import { StatisticsInfo } from './Statistics';
-import { StatisticsFeesChart } from './StatisticsFeesChart';
 
 const motionQuery = '(prefers-reduced-motion: reduce)';
 const subscribeMotion = (callback: () => void) => {
@@ -79,7 +77,6 @@ function ExpenseTooltip({
 
 export function ExpenseVisualization({ data }: { data: StatisticsExpenseBreakdown }) {
   const rows = expenseChartRows(data);
-  const id = useId().replace(/:/g, '');
   const [chartWidth, setChartWidth] = useState(0);
   const axisWidth =
     chartWidth >= 1000 ? 260 : chartWidth >= 600 ? 190 : chartWidth >= 450 ? 160 : 112;
@@ -93,7 +90,6 @@ export function ExpenseVisualization({ data }: { data: StatisticsExpenseBreakdow
       <div className="expense-chart-heading">
         <div>
           <p className="expense-chart-eyebrow">COMPOSICIÓN DEL MES</p>
-          <h3>¿Dónde se concentran los gastos?</h3>
         </div>
         <div className="expense-chart-tools">
           <ul className="expense-chart-legend" aria-label="Tipos de gasto">
@@ -133,18 +129,6 @@ export function ExpenseVisualization({ data }: { data: StatisticsExpenseBreakdow
                 margin={{ top: 8, right: 28, bottom: 8, left: 0 }}
                 barSize={18}
               >
-                <defs>
-                  <linearGradient id={`${id}-recurring`} x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#71E1E8" stopOpacity={0.46} />
-                    <stop offset="45%" stopColor="#71E1E8" stopOpacity={0.24} />
-                    <stop offset="100%" stopColor="#71E1E8" stopOpacity={0.04} />
-                  </linearGradient>
-                  <linearGradient id={`${id}-additional`} x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#A99BE4" stopOpacity={0.46} />
-                    <stop offset="45%" stopColor="#6452CE" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="#6452CE" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid horizontal={false} stroke="#FFFFFF0F" strokeDasharray="3 6" />
                 <XAxis
                   type="number"
@@ -187,7 +171,7 @@ export function ExpenseVisualization({ data }: { data: StatisticsExpenseBreakdow
                 />
                 <Tooltip
                   content={<ExpenseTooltip />}
-                  cursor={{ fill: '#71E1E8', fillOpacity: 0.05 }}
+                  cursor={{ fill: '#68C8D3', fillOpacity: 0.05 }}
                   isAnimationActive={!reducedMotion}
                   animationDuration={120}
                 />
@@ -202,8 +186,12 @@ export function ExpenseVisualization({ data }: { data: StatisticsExpenseBreakdow
                   {rows.map((row) => (
                     <Cell
                       key={row.category_id}
-                      fill={`url(#${id}-${row.kind === 'Recurrente' ? 'recurring' : 'additional'})`}
-                      stroke={row.kind === 'Recurrente' ? '#71E1E8' : '#A99BE4'}
+                      fill={
+                        row.kind === 'Recurrente'
+                          ? 'var(--statistics-cyan, #68C8D3)'
+                          : 'var(--statistics-neutral, #8D9CA5)'
+                      }
+                      stroke={row.kind === 'Recurrente' ? '#68C8D3' : '#8D9CA5'}
                       strokeOpacity={0.62}
                       strokeWidth={0.8}
                     />
@@ -261,65 +249,60 @@ export default function StatisticsExpenseChart({
   period,
   metric,
   refreshSummary,
-  summary,
 }: {
   period: number;
   metric: StatisticMetric;
-  summary: StatisticsSummary;
   refreshSummary: () => void;
 }) {
   const query = useQuery(expenseQueryOptions(period));
   const data = query.data?.period.id === period ? query.data : undefined;
   const reconciles = data?.total === metric.value && data?.movement_count === metric.universe;
   return (
-    <div className="expense-analysis-content">
-      <div className="statistics-analysis-grid">
-        {query.isPending ? (
-          <StatisticsChartSkeleton kind="expenses" />
-        ) : query.isError && !data ? (
-          <article className="expense-analysis-tile" role="alert">
-            <ErrorBox error={query.error} />
-            <button type="button" onClick={() => void query.refetch()}>
-              Reintentar gastos
-            </button>
-          </article>
-        ) : data ? (
-          <div className="expense-analysis-slot">
-            {(!reconciles || query.isFetching) && (
-              <div role="status" className="expense-analysis-warning">
-                {query.isFetching
-                  ? 'Actualizando gastos…'
-                  : 'El gráfico y el indicador corresponden a lecturas diferentes. Actualizá ambas consultas para conciliarlas.'}
-                {!query.isFetching && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void query.refetch();
-                      refreshSummary();
-                    }}
-                  >
-                    Actualizar lecturas
-                  </button>
-                )}
-              </div>
-            )}
-            <ExpenseVisualization data={data} />
-            {query.isError && (
-              <div role="alert">
-                <ErrorBox error={query.error} />
-                <button type="button" onClick={() => void query.refetch()}>
-                  Reintentar gastos
+    <div className="statistics-expense-panel">
+      {query.isPending ? (
+        <StatisticsChartSkeleton kind="expenses" />
+      ) : query.isError && !data ? (
+        <article className="expense-analysis-tile" role="alert">
+          <ErrorBox error={query.error} />
+          <button type="button" onClick={() => void query.refetch()}>
+            Reintentar gastos
+          </button>
+        </article>
+      ) : data ? (
+        <div className="expense-analysis-slot">
+          {(!reconciles || query.isFetching) && (
+            <div role="status" className="expense-analysis-warning">
+              {query.isFetching
+                ? 'Actualizando gastos…'
+                : 'El gráfico y el indicador corresponden a lecturas diferentes. Actualizá ambas consultas para conciliarlas.'}
+              {!query.isFetching && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void query.refetch();
+                    refreshSummary();
+                  }}
+                >
+                  Actualizar lecturas
                 </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <article className="expense-analysis-tile">
-            <Empty>Sin datos de gastos.</Empty>
-          </article>
-        )}
-        <StatisticsFeesChart summary={summary} refreshSummary={refreshSummary} />
-      </div>
+              )}
+            </div>
+          )}
+          <ExpenseVisualization data={data} />
+          {query.isError && (
+            <div role="alert">
+              <ErrorBox error={query.error} />
+              <button type="button" onClick={() => void query.refetch()}>
+                Reintentar gastos
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <article className="expense-analysis-tile">
+          <Empty>Sin datos de gastos.</Empty>
+        </article>
+      )}
     </div>
   );
 }

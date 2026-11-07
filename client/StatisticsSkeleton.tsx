@@ -9,7 +9,13 @@ export function StatisticsValueSkeleton() {
   );
 }
 
-export function StatisticsChartSkeleton({ kind }: { kind: 'collections' | 'expenses' | 'fees' }) {
+export function StatisticsChartSkeleton({
+  kind,
+  label: customLabel,
+}: {
+  kind: 'collections' | 'expenses' | 'fees';
+  label?: string;
+}) {
   const label = {
     collections: 'Cargando cobranzas…',
     expenses: 'Cargando gastos…',
@@ -17,7 +23,7 @@ export function StatisticsChartSkeleton({ kind }: { kind: 'collections' | 'expen
   }[kind];
   return (
     <article className={`expense-analysis-tile statistics-chart-skeleton skeleton-${kind}`}>
-      <SkeletonRegion label={label}>
+      <SkeletonRegion label={customLabel ?? label}>
         <div className="statistics-skeleton-heading">
           <Skeleton width="38%" height={10} />
           <Skeleton width="68%" height={24} />

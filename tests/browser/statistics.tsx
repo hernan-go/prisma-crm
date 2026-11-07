@@ -9,10 +9,14 @@ import type { StatisticsExpenseBreakdown } from '../../shared/statistics';
 import { feesFixture } from './statistics-fees-fixtures';
 import { collectionsFixture } from './statistics-collections-fixtures';
 import { useState } from 'react';
+import { Decimal } from 'decimal.js';
+import { calculateAnnual } from '../../server/statistics/annual-engine';
+import { eventsFixture } from './statistics-events-fixtures';
 
 const periods = [
   { id: 1, year: 2026, month: 10, status: 'open' as const },
   { id: 2, year: 2026, month: 9, status: 'closed' as const },
+  { id: 3, year: 2025, month: 12, status: 'closed' as const },
 ];
 const scenario = new URLSearchParams(location.search).get('expenses');
 const feesScenario = new URLSearchParams(location.search).get('fees');
@@ -52,6 +56,7 @@ function LoadingControls() {
         ['/api/facilitator-accounts:1', 'Liberar honorarios octubre'],
         ['/api/facilitator-accounts:2', 'Liberar honorarios septiembre'],
         ['/api/statistics/inflation:', 'Liberar IPC'],
+        ['/api/statistics/annual:', 'Liberar lectura anual'],
       ].map(([key, label]) => (
         <button key={key} onClick={() => waiting.get(key)?.()}>
           {label}
@@ -171,6 +176,36 @@ const expenseFixture = (period: (typeof periods)[number]): StatisticsExpenseBrea
     movement_count: empty ? 0 : 5,
   };
 };
+function monthlyInput(period: (typeof periods)[number]) {
+  return {
+    period,
+    members: collectionsScenario
+      ? collectionsFixture(collectionsScenario, period.id)
+      : [
+          { account_id: 1, amount_due: '1234567.89', paid: '900000.00', payment_count: 12 },
+          { account_id: 2, amount_due: '100.00', paid: '150.00', payment_count: 1 },
+          { account_id: null, amount_due: null, paid: '0.00', payment_count: 0 },
+        ],
+    fees: feesFixture(period.id, feesScenario).balances,
+    expenses:
+      scenario === 'mismatch'
+        ? [{ amount: '85000.50' }]
+        : scenario === 'empty' || period.id === 2
+          ? []
+          : scenario === 'many14' || scenario === 'many20'
+            ? [
+                ...expenseFixture(period).recurring.categories,
+                ...expenseFixture(period).additional.categories,
+              ]
+            : [
+                { amount: '600000.53' },
+                { amount: '250000.00' },
+                { amount: '12000.25' },
+                { amount: '18000.25' },
+                { amount: '18000.25' },
+              ],
+  };
+}
 window.fetch = async (input, init) => {
   if (init?.method && init.method !== 'GET') throw Error('QA: writes blocked');
   const url = new URL(String(input), location.href);
@@ -183,11 +218,57 @@ window.fetch = async (input, init) => {
       });
     });
   }
+  if (url.pathname === '/api/statistics/annual') {
+    const year = Number(url.searchParams.get('year'));
+    const annualScenario = new URLSearchParams(location.search).get('annual');
+    if (annualScenario === 'error')
+      return Response.json({ message: 'Lectura anual no disponible (QA)' }, { status: 503 });
+    const annualPeriods =
+      annualScenario === 'empty'
+        ? []
+        : annualScenario === 'few'
+          ? [periods[0]]
+          : [
+              ...periods,
+              { id: 10, year: 2026, month: 1, status: 'closed' as const },
+              { id: 11, year: 2026, month: 2, status: 'open' as const },
+            ];
+    return Response.json(
+      calculateAnnual(
+        year,
+        {
+          periods: annualPeriods,
+          members: annualPeriods.flatMap((p) =>
+            monthlyInput(p).members.map((r) => ({ ...r, period_id: p.id })),
+          ),
+          enrollments: annualPeriods.flatMap((p) =>
+            (p.id === 2 ? [] : [1, 2, ...(p.id === 1 ? [3] : [])]).map((person_id) => ({
+              person_id,
+              period_id: p.id,
+            })),
+          ),
+        },
+        '2026-11-07T12:00:00.000Z',
+      ),
+    );
+  }
   if (url.pathname === '/api/facilitator-accounts') {
     const period = Number(url.searchParams.get('period_id'));
     if (feesScenario === 'slow')
       await new Promise((resolve) => setTimeout(resolve, period === 1 ? 2500 : 50));
     return Response.json(feesFixture(period, feesScenario).accounts);
+  }
+  if (url.pathname === '/api/statistics/activity-enrollments') {
+    const empty = url.searchParams.get('period_id') === '2' || collectionsScenario === 'empty';
+    return Response.json(
+      empty
+        ? []
+        : [
+            { name: 'Memoria', count: 18 },
+            { name: 'Movimiento', count: 12 },
+            { name: 'Actividad con nombre extenso para revisar el ajuste responsive', count: 5 },
+          ],
+    );
   }
   if (url.pathname === '/api/periods') return Response.json(periods);
   if (url.pathname === '/api/statistics/expenses') {
@@ -224,40 +305,15 @@ window.fetch = async (input, init) => {
       await new Promise((resolve) => setTimeout(resolve, period.id === 1 ? 2500 : 50));
     if (collectionsScenario === 'error')
       return Response.json({ message: 'Cobranzas no disponibles (prueba)' }, { status: 503 });
-    const summary = calculateSummary(
-      {
-        period,
-        members: collectionsScenario
-          ? collectionsFixture(collectionsScenario, period.id)
-          : [
-              { account_id: 1, amount_due: '1234567.89', paid: '900000.00', payment_count: 12 },
-              { account_id: 2, amount_due: '100.00', paid: '150.00', payment_count: 1 },
-              { account_id: null, amount_due: null, paid: '0.00', payment_count: 0 },
-            ],
-        fees: feesFixture(period.id, feesScenario).balances,
-        expenses:
-          scenario === 'mismatch'
-            ? [{ amount: '85000.50' }]
-            : scenario === 'empty' || period.id === 2
-              ? []
-              : scenario === 'many14' || scenario === 'many20'
-                ? [
-                    ...expenseFixture(period).recurring.categories,
-                    ...expenseFixture(period).additional.categories,
-                  ]
-                : [
-                    { amount: '600000.53' },
-                    { amount: '250000.00' },
-                    { amount: '12000.25' },
-                    { amount: '18000.25' },
-                    { amount: '18000.25' },
-                  ],
-      },
-      '2026-10-22T15:00:00.000Z',
-    );
+    const summary = calculateSummary(monthlyInput(period), '2026-10-22T15:00:00.000Z');
     if (feesScenario === 'mismatch') summary.metrics.fees_paid.value = '0.01';
     if (collectionsScenario === 'mismatch') summary.collections!.applied_known = '0.01';
     if (collectionsScenario === 'legacy') delete summary.collections;
+    summary.events = eventsFixture(period, period.id === 2 || collectionsScenario === 'empty');
+    summary.events.income.workshops = summary.metrics.collected.value;
+    summary.events.income.total = new Decimal(summary.events.income.workshops)
+      .plus(summary.events.income.events)
+      .toFixed(2);
     return Response.json(summary);
   }
   throw Error(`Unexpected QA request: ${url.pathname}`);

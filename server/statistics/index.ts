@@ -9,6 +9,7 @@ import { inflationService } from './inflation.js';
 import { hasEventExpenses } from '../event-expenses.js';
 import { readEventEconomy } from '../event-economy.js';
 import { eventSchemaReady } from '../event-schema.js';
+import { statisticsAnnual } from './annual.js';
 
 export async function readSummaryInput(periodId: number, db: Connection) {
   const integrated = await hasEventExpenses(db);
@@ -144,6 +145,9 @@ export async function statisticsExpenseBreakdown(periodId: number) {
   }
 }
 export const statistics = Router();
+statistics.get('/statistics/annual', async (req, res) => {
+  res.json(await statisticsAnnual(req.query.year));
+});
 statistics.get('/statistics/inflation', async (_req, res) => {
   res.json(await inflationService.get());
 });

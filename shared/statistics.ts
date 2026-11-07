@@ -85,6 +85,34 @@ export type StatisticMetric = z.infer<typeof metricSchema>;
 export type StatisticsSummary = z.infer<typeof statisticsSummarySchema>;
 export type StatisticsExpenseBreakdown = z.infer<typeof statisticsExpenseBreakdownSchema>;
 
+export const statisticsYearSchema = z.coerce.number().int().min(1900).max(9999);
+export const statisticsAnnualSchema = z.object({
+  version: z.literal(1),
+  year: statisticsYearSchema,
+  as_of: z.iso.datetime(),
+  time_axis: z.literal('economic_period'),
+  history_start: z.string().nullable(),
+  warnings: z.array(z.string()),
+  months: z
+    .array(
+      z.object({
+        month: z.number().int().min(1).max(12),
+        period: statisticsPeriodSchema.nullable(),
+        due: metricSchema.nullable(),
+        collected: metricSchema.nullable(),
+        participants: count.nullable(),
+        has_records: z.boolean(),
+        continuity: z.object({ base: count, continued: count, not_continued: count }).nullable(),
+        continuity_reason: z
+          .enum(['missing_period', 'missing_previous', 'empty_previous'])
+          .nullable(),
+        entries: z.object({ new: count, rejoined: count, unclassified: count }).nullable(),
+      }),
+    )
+    .length(12),
+});
+export type StatisticsAnnual = z.infer<typeof statisticsAnnualSchema>;
+
 // Group the exact decimal string without converting money to a JS number.
 export function statisticsMoney(value: string) {
   const [whole, cents] = exactAmount.parse(value).split('.');

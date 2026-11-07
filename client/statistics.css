@@ -51,12 +51,12 @@
   min-height: 0;
 }
 .statistics-card h2 > span {
-  color: #71e1e8;
+  color: #68c8d3;
   display: flex;
   flex-shrink: 0;
 }
 .statistics-card .statistics-info > button {
-  color: #71e1e8;
+  color: #68c8d3;
   width: 26px;
   height: 26px;
   min-width: 26px;
@@ -192,63 +192,6 @@
   flex-direction: column;
   gap: 10px;
 }
-.statistics-accordion {
-  border: 1px solid #ff99cc22;
-  border-radius: 10px;
-  background: #ff99cc08;
-}
-.expense-accordion-heading {
-  margin: 0;
-}
-.expense-accordion-heading > button {
-  width: 100%;
-  min-height: 58px;
-  padding: 7px 22px;
-  display: flex;
-  justify-content: flex-start;
-  text-align: left;
-  border: 0;
-  border-radius: 9px;
-  background: #ff99cc33;
-  gap: 14px;
-}
-.expense-accordion-heading > button[aria-expanded='true'] {
-  border-radius: 9px 9px 0 0;
-}
-.expense-accordion-heading > button:hover {
-  background: #ff99cc40;
-}
-.expense-accordion-icon {
-  display: grid;
-  place-items: center;
-  color: #f1c8df;
-  flex-shrink: 0;
-}
-.expense-accordion-title {
-  display: block;
-  font-size: clamp(1.05rem, 1.8cqw, 1.5rem);
-  font-weight: 600;
-  line-height: 1.4;
-  color: #f9edf5;
-}
-.expense-accordion-toggle {
-  margin-left: auto;
-  font-size: 1.9rem;
-  font-weight: 300;
-  color: #f8e3ef;
-  line-height: 1;
-}
-.statistics-accordion-panel {
-  height: 0;
-  overflow: hidden;
-}
-.statistics-accordion-inner {
-  min-height: 0;
-  display: flow-root;
-}
-.statistics-accordion-panel[data-open='true'][data-transitioning='false'] {
-  overflow: visible;
-}
 .expense-analysis-content {
   padding: 14px;
 }
@@ -265,18 +208,18 @@
   min-height: 100%;
 }
 .expense-analysis-tile {
-  --chart-cyan: #71e1e8;
-  --chart-violet: #6452ce;
-  --chart-gold: #ecc682;
+  --chart-cyan: #68c8d3;
+  --chart-violet: #8d9ca5;
+  --chart-gold: #d0ac70;
   --chart-text: #fff;
-  --chart-muted: #b4bec5;
+  --chart-muted: #9fafb7;
   --chart-border: #ffffff14;
   --chart-panel: #1a2025;
   min-width: 0;
   padding: 22px;
   border: 1px solid var(--chart-border);
   border-radius: 7px;
-  background: #151a1c;
+  background: #151b1e;
   box-shadow:
     inset 0 1px 0 #ffffff04,
     0 6px 20px #00000014;
@@ -333,16 +276,10 @@
   border-radius: 2px;
 }
 .expense-dot-recurring {
-  background: linear-gradient(180deg, #71e1e875, #71e1e80a);
-  box-shadow:
-    inset 0 0 0 0.8px #71e1e89e,
-    0 0 5px #71e1e814;
+  background: var(--statistics-cyan, #68c8d3);
 }
 .expense-dot-additional {
-  background: linear-gradient(180deg, #a99be475, #6452ce0d);
-  box-shadow:
-    inset 0 0 0 0.8px #a99be49e,
-    0 0 5px #6452ce14;
+  background: var(--statistics-neutral, #8d9ca5);
 }
 .expense-chart-canvas {
   width: 100%;
@@ -350,10 +287,10 @@
 }
 .expense-chart-canvas .recharts-bar-rectangle,
 .fees-ring-glass-fill {
-  filter: drop-shadow(0 0 3px #71e1e814);
+  filter: none;
 }
 .expense-accordion-heading > button:focus-visible {
-  outline: 2px solid #f7b5d8;
+  outline: 2px solid #68c8d3;
   outline-offset: -3px;
   border-radius: 5px;
 }
@@ -368,12 +305,12 @@
 }
 .expense-analysis-tile .statistics-info > button:hover,
 .expense-analysis-tile .statistics-info > button[aria-expanded='true'] {
-  background: #71e1e810;
+  background: #68c8d310;
   color: var(--chart-cyan);
 }
 .expense-analysis-tile .statistics-info-panel {
   background: var(--chart-panel);
-  border-color: #71e1e833;
+  border-color: #68c8d333;
   color: var(--chart-text);
 }
 .expense-chart-tooltip {
@@ -381,7 +318,7 @@
   gap: 7px;
   padding: 16px 18px;
   max-width: min(300px, 70vw);
-  border: 1px solid #71e1e833;
+  border: 1px solid #68c8d333;
   border-radius: 10px;
   background: var(--chart-panel);
   box-shadow: 0 10px 26px #0006;
@@ -404,7 +341,7 @@
   color: var(--chart-cyan);
 }
 .expense-kind-additional {
-  color: #b5a9f0;
+  color: #8d9ca5;
 }
 .expense-chart-sr-only {
   position: absolute;
@@ -477,7 +414,7 @@
   min-width: 0;
 }
 .collections-canvas .recharts-surface:focus-visible {
-  outline: 2px solid #71e1e8;
+  outline: 2px solid #68c8d3;
   outline-offset: -3px;
   border-radius: 5px;
 }
@@ -530,10 +467,10 @@
   border-radius: 2px;
 }
 .collections-applied {
-  background: #71e1e8;
+  background: #68c8d3;
 }
 .collections-pending {
-  background: #ecc682;
+  background: #d0ac70;
 }
 .collections-coverage {
   margin: 2px 0 0;
@@ -608,7 +545,7 @@
   --statistics-accent: var(--color-violet);
 }
 .statistics-expenses {
-  --statistics-accent: #d19a9a;
+  --statistics-accent: var(--statistics-amber);
 }
 .statistics-inflation {
   --statistics-accent: var(--color-muted);
@@ -798,7 +735,7 @@
 }
 .fees-ring-legend button:hover,
 .fees-ring-legend button:focus-visible {
-  background: #71e1e80a;
+  background: #68c8d30a;
 }
 .fees-ring-legend button:focus-visible {
   outline: 2px solid var(--chart-cyan);
@@ -809,7 +746,7 @@
   height: 8px;
   border-radius: 2px;
   opacity: 0.7;
-  box-shadow: inset 0 1px 1px #ffffff66;
+  box-shadow: none;
 }
 .fees-ring-legend strong {
   font-variant-numeric: tabular-nums;
@@ -928,4 +865,494 @@
   .fees-layout .fees-ring-legend {
     align-self: start;
   }
+}
+
+/* Iteration 11.1: monthly panels, scoped to Statistics. */
+.statistics-page {
+  --color-accent: #68c8d3;
+  --color-violet: #8d9ca5;
+  --surface-accent: #222b30;
+  --border-accent: #3a4a50;
+}
+.statistics-page .statistics-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.statistics-page .statistics-card {
+  padding: 12px;
+  background: #222b30;
+  border-color: #3a4a50;
+}
+.statistics-page .statistics-card .statistics-value {
+  font-size: clamp(1rem, 2cqw, 1.6rem);
+}
+.statistics-page .statistics-card h2 {
+  font-size: 0.8rem;
+}
+.statistics-page .statistics-card h2 > span {
+  display: none;
+}
+.statistics-monthly-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.statistics-monthly-panel {
+  min-width: 0;
+  border: 1px solid #3a4a50;
+  border-radius: 10px;
+  background: #222b30;
+}
+.statistics-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  color: #e8f1f3;
+  font-size: 0.95rem;
+}
+.statistics-panel-heading > span {
+  display: flex;
+  color: #9fafb7;
+}
+.statistics-panel-heading button {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  min-height: 44px;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+.statistics-panel-heading button:focus-visible {
+  outline: 2px solid #68c8d3;
+  outline-offset: 3px;
+}
+.statistics-monthly-panel > [role='region']:not([hidden]) {
+  padding: 0 14px 14px;
+}
+.statistics-monthly-panel .expense-analysis-tile {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.statistics-monthly-panel .statistics-expense-panel {
+  min-width: 0;
+}
+.statistics-monthly-panel .expense-chart-heading {
+  margin-bottom: 10px;
+}
+.statistics-monthly-panel .expense-chart-heading h3 {
+  font-size: 1.1rem;
+}
+.statistics-page .fees-ring-glass-fill {
+  filter: none;
+}
+.statistics-panel-note {
+  font-size: 0.78rem;
+  color: #9fafb7;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+.statistics-enrollments h3 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+.statistics-enrollments .activity-count {
+  margin-top: 10px;
+}
+.statistics-enrollments .activity-count > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.statistics-enrollments .track {
+  height: 7px;
+  border-radius: 4px;
+  background: #34464d;
+  margin-top: 5px;
+}
+.statistics-enrollments .track i {
+  display: block;
+  height: 100%;
+  background: #68c8d3;
+  border-radius: inherit;
+  box-shadow: none;
+}
+.statistics-event-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+.statistics-event-totals > div {
+  background: #34464d;
+  border: 1px solid #3a4a50;
+  padding: 12px;
+  border-radius: 8px;
+  min-width: 0;
+}
+.statistics-events dt {
+  color: #9fafb7;
+  font-size: 0.75rem;
+}
+.statistics-events dd {
+  font-variant-numeric: tabular-nums;
+  margin: 5px 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.statistics-event-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.statistics-event-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  border-top: 1px solid #3a4a50;
+  padding: 12px 0;
+}
+.statistics-event-row h3 {
+  font-size: 0.88rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.statistics-event-row h3 small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #9fafb7;
+  font-weight: 400;
+}
+.statistics-event-row dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+@container (min-width: 620px) {
+  .statistics-monthly-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .statistics-page .statistics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .statistics-event-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .statistics-event-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}
+@container (min-width: 1050px) {
+  .statistics-event-totals {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .statistics-page .statistics-monthly-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .statistics-panel-heading {
+    padding: 5px 12px;
+  }
+}
+
+/* Approved v2 tokens. The route class never changes other modules. */
+.statistics-layout,
+.statistics-page {
+  --statistics-background: #151b1e;
+  --statistics-panel: #222b30;
+  --statistics-secondary: #34464d;
+  --statistics-cyan: #68c8d3;
+  --statistics-green: #51b79a;
+  --statistics-amber: #d0ac70;
+  --statistics-border: #3a4a50;
+  --statistics-text: #e8f1f3;
+  --statistics-muted: #9fafb7;
+  --statistics-neutral: #8d9ca5;
+  --color-text: var(--statistics-text);
+  --color-muted: var(--statistics-muted);
+  --color-accent: var(--statistics-cyan);
+  --color-violet: var(--statistics-neutral);
+  --color-surface: var(--statistics-panel);
+  --color-elevated: var(--statistics-panel);
+  --color-border: var(--statistics-border);
+  --color-hover: var(--statistics-secondary);
+  --surface-accent: var(--statistics-panel);
+  --border-accent: var(--statistics-border);
+  --chart-text: var(--statistics-text);
+  --chart-muted: var(--statistics-muted);
+  --chart-panel: var(--statistics-panel);
+  background: var(--statistics-background);
+  color: var(--statistics-text);
+}
+.statistics-layout .workspace,
+.statistics-layout main,
+.statistics-layout .desktop-header,
+.statistics-layout .mobile-header {
+  background: var(--statistics-background);
+}
+.statistics-page .expense-analysis-tile {
+  --chart-cyan: var(--statistics-cyan);
+  --chart-violet: var(--statistics-neutral);
+  --chart-gold: var(--statistics-amber);
+  --chart-text: var(--statistics-text);
+  --chart-muted: var(--statistics-muted);
+  --chart-border: var(--statistics-border);
+  --chart-panel: var(--statistics-panel);
+  box-shadow: none;
+}
+.statistics-page .statistics-module-heading {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.statistics-module-heading h1 {
+  font-size: 1.7rem;
+  letter-spacing: -0.025em;
+}
+.statistics-context-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.statistics-context-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.statistics-page select,
+.statistics-view-controls button {
+  background: var(--statistics-panel);
+  border: 1px solid var(--statistics-border);
+  color: var(--statistics-text);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.statistics-page select {
+  max-width: 100%;
+}
+.statistics-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--statistics-border);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+}
+.statistics-view-controls button {
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+.statistics-view-controls button[aria-pressed='true'] {
+  background: var(--statistics-secondary);
+  color: var(--statistics-cyan);
+  border-color: var(--statistics-cyan);
+}
+.statistics-page :is(button, select, input, summary, .statistics-table-scroll):focus-visible {
+  outline: 2px solid var(--statistics-cyan);
+  outline-offset: 3px;
+}
+.statistics-page input {
+  accent-color: var(--statistics-cyan);
+}
+.statistics-page .statistics-card {
+  min-height: 118px;
+  padding: 16px 18px;
+  background: var(--statistics-panel);
+  border-color: var(--statistics-border);
+  border-radius: 10px;
+}
+.statistics-page .statistics-grid {
+  gap: 12px;
+}
+.statistics-page .statistics-card h2 {
+  font-size: 0.9rem;
+  color: var(--statistics-muted);
+}
+.statistics-page .statistics-card .statistics-value {
+  font-size: clamp(1.2rem, 2.4cqw, 1.85rem);
+  margin-top: 8px;
+  font-weight: 700;
+}
+.statistics-page .statistics-card .statistics-coverage {
+  font-size: 0.75rem;
+}
+.statistics-page .statistics-card .statistics-info > button {
+  color: var(--statistics-muted);
+}
+.statistics-page .statistics-status {
+  background: var(--statistics-panel);
+  border: 1px solid var(--statistics-border);
+}
+.statistics-page .statistics-monthly-panel {
+  background: var(--statistics-panel);
+  border-color: var(--statistics-border);
+}
+.statistics-panel-heading {
+  font-size: 0.95rem;
+  padding: 15px 16px 10px;
+  color: var(--statistics-text);
+}
+.statistics-panel-heading > span:empty {
+  display: none;
+}
+.statistics-panel-heading > span {
+  color: var(--statistics-muted);
+}
+.statistics-page .expense-chart-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  text-transform: none;
+}
+.statistics-page .statistics-panel-note {
+  color: var(--statistics-muted);
+  font-size: 0.78rem;
+}
+.statistics-page .collections-percentage strong {
+  color: var(--statistics-cyan);
+}
+.statistics-page .collections-applied {
+  background: var(--statistics-green);
+}
+.statistics-page .collections-pending {
+  background: var(--statistics-neutral);
+}
+.statistics-page .statistics-event-totals > div {
+  background: var(--statistics-secondary);
+  border-color: var(--statistics-border);
+}
+.statistics-page .statistics-info-panel,
+.statistics-page .expense-chart-tooltip {
+  background: var(--statistics-panel);
+  border-color: var(--statistics-border);
+  box-shadow: none;
+}
+.statistics-page .fees-ring-legend button:hover {
+  background: var(--statistics-secondary);
+}
+.statistics-annual-canvas {
+  height: 250px;
+  min-width: 0;
+  margin: 12px 0;
+}
+.statistics-series-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.8rem;
+}
+.statistics-series-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+}
+.statistics-annual-table {
+  font-size: 0.75rem;
+  margin-top: 12px;
+}
+.statistics-annual-table summary {
+  min-height: 36px;
+  cursor: pointer;
+  color: var(--statistics-cyan);
+}
+.statistics-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.statistics-annual-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.statistics-annual-table :is(th, td) {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--statistics-border);
+  min-width: 85px;
+}
+.statistics-annual-table small {
+  display: block;
+  font-weight: 400;
+  color: var(--statistics-muted);
+}
+.statistics-annual-notes {
+  font-size: 0.78rem;
+  color: var(--statistics-muted);
+  line-height: 1.6;
+  margin-top: 20px;
+}
+@media (max-width: 640px) {
+  .statistics-context-controls {
+    width: 100%;
+  }
+  .statistics-context-controls label {
+    flex-wrap: wrap;
+  }
+  .statistics-context-controls .statistics-status {
+    font-size: 0.7rem;
+  }
+  .statistics-panel-heading {
+    padding: 5px 12px;
+  }
+  .statistics-page .statistics-card {
+    padding: 12px;
+    min-height: 110px;
+  }
+  .statistics-page .statistics-card h2 {
+    font-size: 0.78rem;
+  }
+  .statistics-annual-canvas {
+    height: 240px;
+  }
+}
+
+.statistics-monthly-grid {
+  align-items: stretch;
+}
+.statistics-page .collections-tile .expense-chart-heading {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+@container (max-width:400px) {
+  .statistics-page .collections-values,
+  .statistics-page .collections-values[data-extra-count] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .statistics-page .collections-values > div,
+  .statistics-page .collections-values > .collections-reference {
+    grid-column: auto;
+  }
+  .statistics-page .collections-values[data-extra-count='1'] > .collections-reference {
+    grid-column: 1 / -1;
+  }
+  .statistics-page .collections-values dd {
+    font-size: 0.85rem;
+  }
+}
+
+.app main .statistics-module-heading .page-heading-copy {
+  display: block;
+}
+.app main .statistics-module-heading .page-title {
+  display: flex;
 }

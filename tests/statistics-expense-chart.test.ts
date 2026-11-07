@@ -11,7 +11,6 @@ import StatisticsExpenseChart, {
   ExpenseVisualization,
   ExpenseChartInformation,
 } from '../client/StatisticsExpenseChart';
-import { calculateSummary } from '../server/statistics/engine';
 import type { StatisticMetric, StatisticsExpenseBreakdown } from '../shared/statistics';
 
 const period = { id: 1, year: 2026, month: 10, status: 'open' as const };
@@ -123,10 +122,6 @@ function renderPanel(state: 'loading' | 'error' | 'mismatch' | 'success') {
       { client },
       createElement(StatisticsExpenseChart, {
         period: 1,
-        summary: calculateSummary(
-          { period, members: [], fees: [], expenses: [] },
-          '2026-10-23T10:00:00.000Z',
-        ),
         metric: { ...metric, value: state === 'mismatch' ? '999.00' : data.total },
         refreshSummary: () => {},
       }),
@@ -138,7 +133,7 @@ function renderPanel(state: 'loading' | 'error' | 'mismatch' | 'success') {
 it('distingue carga, error y lecturas desactualizadas sin presentarlas como cero', () => {
   expect(renderPanel('loading')).toContain('Cargando');
   for (const state of ['loading', 'error', 'mismatch', 'success'] as const) {
-    expect(renderPanel(state).match(/<article class="expense-analysis-tile/g)).toHaveLength(2);
+    expect(renderPanel(state).match(/<article class="expense-analysis-tile/g)).toHaveLength(1);
   }
   const error = renderPanel('error');
   expect(error).toContain('Consulta fallida');

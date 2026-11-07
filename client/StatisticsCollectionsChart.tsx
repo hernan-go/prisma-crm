@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { statisticsMoney, type StatisticsSummary } from '../shared/statistics';
 import { Empty } from './components';
@@ -7,7 +6,6 @@ import { collectionsReconcile } from './statistics-collections';
 import { periodName } from './App';
 
 export default function StatisticsCollectionsChart({ summary }: { summary: StatisticsSummary }) {
-  const id = useId().replace(/:/g, '');
   const c = summary.collections;
   const m = summary.metrics;
   const period = periodName(summary.period);
@@ -36,8 +34,7 @@ export default function StatisticsCollectionsChart({ summary }: { summary: Stati
     <article className="expense-analysis-tile collections-tile">
       <div className="expense-chart-heading">
         <div>
-          <p className="expense-chart-eyebrow">INGRESOS DEL PERÍODO</p>
-          <h3>{title}</h3>
+          <p className="expense-chart-eyebrow">{title}</p>
         </div>
         <StatisticsInfo title="Cobros">
           <p>
@@ -91,18 +88,6 @@ export default function StatisticsCollectionsChart({ summary }: { summary: Stati
               aria-label="Cobrado y falta cobrar de los importes registrados; usar flechas para explorar"
               margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
             >
-              <defs>
-                {[
-                  ['applied', '#71E1E8'],
-                  ['pending', '#ECC682'],
-                ].map(([key, color]) => (
-                  <linearGradient key={key} id={`${id}-${key}`} x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity={0.46} />
-                    <stop offset="45%" stopColor={color} stopOpacity={0.24} />
-                    <stop offset="100%" stopColor={color} stopOpacity={0.06} />
-                  </linearGradient>
-                ))}
-              </defs>
               <XAxis type="number" hide domain={[0, Number(m.due.value)]} />
               <YAxis type="category" dataKey="name" hide />
               <Tooltip
@@ -124,8 +109,8 @@ export default function StatisticsCollectionsChart({ summary }: { summary: Stati
                 dataKey="applied"
                 name="Cobrado"
                 stackId="known"
-                fill={`url(#${id}-applied)`}
-                stroke="#71E1E8"
+                fill="var(--statistics-green, #51B79A)"
+                stroke="var(--statistics-green, #51B79A)"
                 strokeOpacity={0.62}
                 strokeWidth={0.8}
                 barSize={32}
@@ -135,8 +120,8 @@ export default function StatisticsCollectionsChart({ summary }: { summary: Stati
                 dataKey="pending"
                 name="Falta cobrar"
                 stackId="known"
-                fill={`url(#${id}-pending)`}
-                stroke="#ECC682"
+                fill="var(--statistics-neutral, #8D9CA5)"
+                stroke="var(--statistics-neutral, #8D9CA5)"
                 strokeOpacity={0.62}
                 strokeWidth={0.8}
                 barSize={32}

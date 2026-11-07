@@ -37,6 +37,7 @@ export const PeriodContext = createContext<{
   period: number;
   periods: any[];
   selectPeriod?: (period: number) => void;
+  createPeriod?: () => void;
 }>({
   period: 0,
   periods: [],
@@ -180,21 +181,11 @@ function MobileHeader({
           {open ? <X size={23} /> : <Menu size={23} />}
         </button>
       </div>
-      {sectionPath === '/estadisticas' ? (
-        <div className="mobile-statistics-heading">
-          <PageTitle title={title} />
-          {period > 0 && (
-            <span className="statistics-status">
-              {periods.find((p) => p.id === period)?.status === 'closed'
-                ? 'Período cerrado · consulta histórica'
-                : 'Período abierto · datos sujetos a cambios'}
-            </span>
-          )}
-        </div>
-      ) : (
-        <PageTitle title={title} description={description} />
-      )}
-      <div className="period-control mobile-period" hidden={open || sectionPath === '/know-how'}>
+      {sectionPath !== '/estadisticas' && <PageTitle title={title} description={description} />}
+      <div
+        className="period-control mobile-period"
+        hidden={open || sectionPath === '/know-how' || sectionPath === '/estadisticas'}
+      >
         {selector}
       </div>
       {open && (
@@ -267,9 +258,16 @@ export default function App() {
     };
   }, []);
   return (
-    <PeriodContext.Provider value={{ period, periods: q.data || [], selectPeriod: setPeriod }}>
+    <PeriodContext.Provider
+      value={{
+        period,
+        periods: q.data || [],
+        selectPeriod: setPeriod,
+        createPeriod: () => setCreate(true),
+      }}
+    >
       <div
-        className={`app ${collapsed ? 'collapsed' : ''} ${mobileMenu.open ? 'mobile-menu-open' : ''}`}
+        className={`app ${location.pathname === '/estadisticas' ? 'statistics-layout' : ''} ${collapsed ? 'collapsed' : ''} ${mobileMenu.open ? 'mobile-menu-open' : ''}`}
       >
         <aside>
           <div className="brand">
@@ -321,7 +319,7 @@ export default function App() {
             </div>
             <div className="period-control">
               <Logout />
-              {location.pathname !== '/know-how' && (
+              {location.pathname !== '/know-how' && location.pathname !== '/estadisticas' && (
                 <PeriodSelector
                   period={period}
                   periods={q.data || []}

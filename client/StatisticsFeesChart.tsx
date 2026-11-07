@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { statisticsMoney, type StatisticsSummary } from '../shared/statistics';
@@ -10,8 +10,8 @@ import {
   facilitatorQueryOptions,
   reconcileFacilitatorAccounts,
 } from './statistics-fees';
-// Approved palette plus lighter violet/cyan tints for additional facilitators.
-const colors = ['#71E1E8', '#6452CE', '#ECC682', '#FFFFFF', '#A99BE4', '#B8F0F4'];
+// Muted cyan, slate and semantic accents identify facilitators.
+const colors = ['#68C8D3', '#8D9CA5', '#D0AC70', '#51B79A', '#AAC5CC', '#B5BDB1'];
 export function StatisticsFeesChart({
   summary,
   refreshSummary,
@@ -19,7 +19,6 @@ export function StatisticsFeesChart({
   summary: StatisticsSummary;
   refreshSummary: () => void;
 }) {
-  const paintId = useId().replace(/:/g, '');
   const period = summary.period.id;
   const query = useQuery(facilitatorQueryOptions(period));
   const rows = facilitatorChartRows(query.data ?? []);
@@ -62,8 +61,7 @@ export function StatisticsFeesChart({
     <article className="expense-analysis-tile fees-analysis-tile">
       <div className="expense-chart-heading">
         <div>
-          <p className="expense-chart-eyebrow">PAGO DE FACILITADORES</p>
-          <h3>Honorarios del mes</h3>
+          <p className="expense-chart-eyebrow">PORCENTAJE PAGADO POR FACILITADOR</p>
         </div>
         <StatisticsInfo title="Honorarios del mes">
           <p>
@@ -119,24 +117,6 @@ export function StatisticsFeesChart({
             <div className="fees-ring-canvas" aria-hidden="true">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart accessibilityLayer={false}>
-                  <defs>
-                    {colors.map((color, index) => (
-                      <radialGradient
-                        key={color}
-                        id={`${paintId}-glass-${index}`}
-                        gradientUnits="userSpaceOnUse"
-                        cx="50%"
-                        cy="50%"
-                        r="50%"
-                      >
-                        <stop offset="0%" stopColor={color} stopOpacity={0} />
-                        <stop offset="68%" stopColor={color} stopOpacity={0.06} />
-                        <stop offset="78%" stopColor={color} stopOpacity={0.2} />
-                        <stop offset="90%" stopColor={color} stopOpacity={0.52} />
-                        <stop offset="100%" stopColor={color} stopOpacity={0.6} />
-                      </radialGradient>
-                    ))}
-                  </defs>
                   {rows.flatMap((row, index) => {
                     const start = 90 - (index * 360) / rows.length;
                     const span = 360 / rows.length - Math.min(9, 90 / rows.length);
@@ -172,7 +152,7 @@ export function StatisticsFeesChart({
                               key={row.id + 'fill'}
                               endAngle={start - span * row.fraction}
                               className="fees-ring-glass-fill"
-                              fill={`url(#${paintId}-glass-${index % colors.length})`}
+                              fill={color}
                               stroke={color}
                               strokeOpacity={0.8}
                               strokeWidth={0.8}

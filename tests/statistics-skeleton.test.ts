@@ -69,7 +69,8 @@ it('sin caché conserva seis KPI y cabeceras; no inventa cifras ni controles de 
   const html = render(client());
   expect(html.match(/<article class="statistics-card /g)).toHaveLength(6);
   expect(html).toContain('Ingresos y cobranzas');
-  expect(html).toContain('Gastos operativos y honorarios');
+  expect(html).toContain('Gastos operativos');
+  expect(html).toContain('Honorarios');
   expect(html).toContain('aria-busy="true"');
   expect(html).toContain('Cargando estadísticas');
   expect(html).not.toContain('$ ');
@@ -141,7 +142,6 @@ it('las consultas de gráficos muestran skeleton, vacío o error sin confundir e
         createElement(StatisticsExpenseChart, {
           period: 1,
           metric: summary().metrics.expenses,
-          summary: summary(),
           refreshSummary: () => {},
         }),
       ),
