@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   personSchema,
   slotSchema,
+  scheduleSchema,
   enrollmentSchema,
   paymentSchema,
   normalizePhone,
@@ -46,20 +47,57 @@ describe('Personas y teléfonos', () => {
   });
 });
 describe('Horarios y días', () => {
-  it('incluye intervalos de 30 minutos y extremos', () => {
-    expect(times).toHaveLength(23);
+  it('incluye 45 intervalos de 15 minutos entre 09:00 y 20:00, sin duplicados', () => {
+    expect(times).toHaveLength(45);
+    expect(new Set(times).size).toBe(45);
     expect(times[0]).toBe('09:00');
     expect(times.at(-1)).toBe('20:00');
+    const minutes = times.map((time) => {
+      const [hour, minute] = time.split(':').map(Number);
+      expect(time).toMatch(/^\d{2}:\d{2}$/);
+      return hour * 60 + minute;
+    });
+    expect(minutes.slice(1).every((minute, i) => minute - minutes[i] === 15)).toBe(true);
+  });
+  it.each([
+    ['18:15', '19:15'],
+    ['09:15', '09:45'],
+    ['19:45', '20:00'],
+    ['09:00', '09:15'],
+    ['09:00', '20:00'],
+    ...Array.from({ length: 22 }, (_, i) => {
+      const start = 9 * 60 + i * 30;
+      const time = (minute: number) =>
+        `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+      return [time(start), time(start + 30)];
+    }),
+  ])('acepta %s - %s en validaciones compartidas y Configuración', (start, end) => {
+    const slot = { day: 2, start, end };
+    expect(slotSchema.parse(slot)).toEqual(slot);
+    expect(scheduleSchema.safeParse({ ...slot, offering_id: 1, instructor_ids: [1] }).success).toBe(
+      true,
+    );
   });
   it.each([
     ['08:30', '10:00'],
-    ['10:15', '11:00'],
+    ['08:45', '09:15'],
+    ['10:10', '11:00'],
+    ['10:00', '11:20'],
+    ['9:15', '10:15'],
+    ['18:15', '18:15'],
+    ['19:15', '18:15'],
+    ['19:45', '20:15'],
+    ['20:15', '20:30'],
     ['10:00', '10:00'],
     ['12:00', '11:00'],
     ['19:30', '20:30'],
-  ])('rechaza %s - %s', (start, end) =>
-    expect(slotSchema.safeParse({ day: 2, start, end }).success).toBe(false),
-  );
+  ])('rechaza %s - %s', (start, end) => {
+    const slot = { day: 2, start, end };
+    expect(slotSchema.safeParse(slot).success).toBe(false);
+    expect(scheduleSchema.safeParse({ ...slot, offering_id: 1, instructor_ids: [1] }).success).toBe(
+      false,
+    );
+  });
   it('valida reglas configuradas', () => {
     expect(validateDays([{ day: 2 }, { day: 4 }], [2, 3, 4])).toBe(true);
     expect(validateDays([{ day: 1 }], [2, 3, 4])).toBe(false);
