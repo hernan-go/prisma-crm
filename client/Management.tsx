@@ -733,9 +733,13 @@ function PaymentsPeriod() {
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const q = useData('accounts', `/accounts?period_id=${period}`, !!period);
   const payments = useData('payments', `/payments?period_id=${period}`, !!period);
+  const [onlyDebtors, setOnlyDebtors] = useState(false);
   const [pick, setPick] = useState(false);
   const [person, setPerson] = useState<any>();
   const [edit, setEdit] = useState<any>();
+  const visibleAccounts = q.data
+    ?.filter((a: any) => !onlyDebtors || Number(a.balance) > 0)
+    .sort(comparePeriodPeople);
   return (
     <>
       <Heading title="Cobros Período" sub="Cuentas mensuales, movimientos y carteras.">
@@ -748,7 +752,17 @@ function PaymentsPeriod() {
         className="panel table-wrap accounts-table-panel"
         aria-busy={(!!period && q.isPending) || undefined}
       >
-        <h2>Cuentas del mes</h2>
+        <div className="section-heading">
+          <h2>Cuentas del mes</h2>
+          <label className="check" style={{ marginLeft: 'auto' }}>
+            <input
+              type="checkbox"
+              checked={onlyDebtors}
+              onChange={(ev) => setOnlyDebtors(ev.target.checked)}
+            />
+            Solo deudores
+          </label>
+        </div>
         <QueryFeedback query={q} label="cuentas" />
         {!!period && q.isPending && (
           <span className="skeleton-status" role="status">
@@ -786,40 +800,40 @@ function PaymentsPeriod() {
                   </td>
                 </tr>
               ))}
-            {q.data
-              ?.slice()
-              .sort(comparePeriodPeople)
-              .map((a: any) => (
-                <tr key={a.id}>
-                  <td>
-                    <Link
-                      className="account-person-link participant-name"
-                      to={`/personas/${a.person_id}`}
-                      title={`${a.nombre} ${a.apellido}`}
-                    >
-                      <span>
-                        {a.nombre} {a.apellido}
-                      </span>
-                    </Link>
-                  </td>
-                  <td>{formatMoney(a.amount_due)}</td>
-                  <td className="desktop-only">{formatMoney(a.paid)}</td>
-                  <td>
-                    <span
-                      className={`${Number(a.balance) > 0 ? 'debt-chip' : ''} account-balance ${a.balance === null ? 'balance-undefined' : Number(a.balance) === 0 ? 'balance-settled' : Number(a.balance) < 0 ? 'balance-credit' : ''}`}
-                    >
-                      {a.balance === null
-                        ? 'No definido'
-                        : Number(a.balance) < 0
-                          ? `${formatMoney(-Number(a.balance))} a favor`
-                          : formatMoney(a.balance)}
+            {visibleAccounts?.map((a: any) => (
+              <tr key={a.id}>
+                <td>
+                  <Link
+                    className="account-person-link participant-name"
+                    to={`/personas/${a.person_id}`}
+                    title={`${a.nombre} ${a.apellido}`}
+                  >
+                    <span>
+                      {a.nombre} {a.apellido}
                     </span>
-                  </td>
-                </tr>
-              ))}
+                  </Link>
+                </td>
+                <td>{formatMoney(a.amount_due)}</td>
+                <td className="desktop-only">{formatMoney(a.paid)}</td>
+                <td>
+                  <span
+                    className={`${Number(a.balance) > 0 ? 'debt-chip' : ''} account-balance ${a.balance === null ? 'balance-undefined' : Number(a.balance) === 0 ? 'balance-settled' : Number(a.balance) < 0 ? 'balance-credit' : ''}`}
+                  >
+                    {a.balance === null
+                      ? 'No definido'
+                      : Number(a.balance) < 0
+                        ? `${formatMoney(-Number(a.balance))} a favor`
+                        : formatMoney(a.balance)}
+                  </span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
         {q.isSuccess && q.data?.length === 0 && <Empty>Sin cuentas en este período.</Empty>}
+        {q.isSuccess && onlyDebtors && q.data?.length > 0 && visibleAccounts?.length === 0 && (
+          <Empty>No hay deudores en este período.</Empty>
+        )}
       </section>
       <section className="panel">
         <h2>Movimientos</h2>
