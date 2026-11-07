@@ -2,8 +2,9 @@ import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 export const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 export const times = Array.from(
-  { length: 23 },
-  (_, i) => `${String(9 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`,
+  { length: 45 },
+  (_, i) =>
+    `${String(9 + Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`,
 );
 export const normalizePhone = (s: string) =>
   s

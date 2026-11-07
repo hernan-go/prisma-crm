@@ -29,6 +29,34 @@ it('detecta conflicto personal aunque cambie el docente', () =>
   ).toContain('se superpone'));
 it('permite horarios consecutivos', () =>
   expect(scheduleConflict({ ...b, start: '11:00', end: '12:00' }, [b])).toBe(''));
+it('detecta superposición personal de 15 minutos con un horario de media hora', () => {
+  const old = { ...b, start: '18:00', end: '18:30' };
+  expect(
+    scheduleConflict({ ...b, schedule_id: 2, instructor_ids: [2], start: '18:15', end: '19:15' }, [
+      old,
+    ]),
+  ).toContain('se superpone');
+});
+it('detecta facilitador ocupado entre intervalos de 15 minutos', () => {
+  const old = { ...b, start: '18:15', end: '19:15' };
+  expect(
+    scheduleConflict({ ...b, person_id: 2, schedule_id: 2, start: '19:00', end: '19:30' }, [old]),
+  ).toContain('facilitador');
+});
+it('permite intervalos de 15 minutos consecutivos, otros días y facilitadores sin conflicto', () => {
+  const old = { ...b, start: '18:15', end: '19:15' };
+  for (const next of [
+    { ...b, start: '19:15', end: '19:30' },
+    { ...b, start: '18:00', end: '18:15' },
+    { ...b, day: 2, start: '18:15', end: '19:15' },
+    { ...b, person_id: 2, instructor_ids: [2], schedule_id: 2, start: '18:15', end: '19:15' },
+    { ...old, person_id: 2 },
+  ])
+    expect(scheduleConflict(next, [old])).toBe('');
+  expect(scheduleConflict({ ...old, person_id: 2, mode: 'individual' }, [old])).toContain(
+    'individual',
+  );
+});
 it('impide dos actividades del mismo docente', () =>
   expect(scheduleConflict({ ...b, person_id: 2, activity_id: 2, schedule_id: 2 }, [b])).toContain(
     'facilitador',
