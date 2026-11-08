@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -9,6 +9,11 @@ import {
   type AgendaSchedule,
 } from '../client/dashboard-model';
 import { FinancialSummary, dashboardHelp } from '../client/Dashboard';
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-09T15:00:00Z'));
+});
+afterEach(() => vi.useRealTimers());
 const schedule: AgendaSchedule = {
   id: 1,
   period_id: 4,
@@ -150,6 +155,8 @@ function renderDashboard(
     financeError?: boolean;
     agendaError?: boolean;
     loading?: boolean;
+    emptyAgenda?: boolean;
+    currentPeriod?: boolean;
   } = {},
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -158,13 +165,15 @@ function renderDashboard(
     client.setQueryData(['dashboard', period], financeFixture);
     client.setQueryData(
       ['agenda', period],
-      [
-        {
-          ...schedule,
-          day: dashboardDate(new Date()).day,
-          people: [{ person_id: 7, nombre: 'Persona', apellido: 'Completa' }],
-        },
-      ],
+      options.emptyAgenda
+        ? []
+        : [
+            {
+              ...schedule,
+              day: dashboardDate(new Date()).day,
+              people: [{ person_id: 7, nombre: 'Persona', apellido: 'Completa' }],
+            },
+          ],
     );
     if (options.financeError)
       client
@@ -186,7 +195,19 @@ function renderDashboard(
         { client },
         createElement(
           PeriodContext.Provider,
-          { value: { period, periods: [{ id: period, year: 2020, month: 9, status: 'closed' }] } },
+          {
+            value: {
+              period,
+              periods: [
+                {
+                  id: period,
+                  year: options.currentPeriod ? 2026 : 2020,
+                  month: options.currentPeriod ? 11 : 9,
+                  status: 'closed',
+                },
+              ],
+            },
+          },
           createElement(Dashboard),
         ),
       ),
@@ -221,6 +242,35 @@ it('mantiene nombres visibles y enlace existente sin controles de despliegue en 
   expect(html).toContain('Programación ·');
   expect(html).not.toContain('Asistentes');
 });
+
+it('domingo muestra sus actividades y fecha argentina coherente; selector incluye siete días', () => {
+  vi.setSystemTime(new Date('2026-11-08T15:00:00Z'));
+  const html = renderDashboard({ currentPeriod: true });
+  expect(html).toContain('Actividades de hoy · domingo');
+  expect(html).toContain('8 de noviembre de 2026');
+  expect(html).toContain('Completa, Persona');
+  expect(html).toMatch(/aria-pressed="true">DOMINGO/);
+  for (const day of ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'])
+    expect(html).toContain(day);
+});
+it('domingo vacío no adelanta a lunes; histórico conserva contexto del período', () => {
+  vi.setSystemTime(new Date('2026-11-08T15:00:00Z'));
+  expect(renderDashboard({ currentPeriod: true, emptyAgenda: true })).toContain(
+    'No hay actividades programadas para hoy',
+  );
+  const historical = renderDashboard({ emptyAgenda: true });
+  expect(historical).toContain('Programación · domingo');
+  expect(historical).toContain(
+    'No hay horarios habilitados para este día en el período seleccionado.',
+  );
+});
+it.each([9, 10, 11, 12, 13, 14])(
+  'conserva selección real y actividades el día %i de noviembre',
+  (day) => {
+    vi.setSystemTime(new Date(`2026-11-${day.toString().padStart(2, '0')}T15:00:00Z`));
+    expect(renderDashboard({ currentPeriod: true })).toContain('Completa, Persona');
+  },
+);
 
 import { QueryObserver } from '@tanstack/react-query';
 it('aísla respuestas tardías al cambiar rápidamente de período', async () => {

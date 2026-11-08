@@ -273,7 +273,7 @@ export function Dashboard() {
     enabled: !!period,
   });
   const [chosenDay, setChosenDay] = useState<number | null>(null);
-  const day = chosenDay ?? (date.day || 1);
+  const day = chosenDay ?? date.day;
   const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const schedules = dailySchedules(agenda.data || [], period, day);
   return (
@@ -316,14 +316,14 @@ export function Dashboard() {
             </div>
           </div>
           <div className="dashboard-days" role="group" aria-label="Día de programación">
-            {dayNames.slice(1).map((name, index) => (
+            {[1, 2, 3, 4, 5, 6, 0].map((weekday) => (
               <button
-                key={name}
+                key={weekday}
                 type="button"
-                aria-pressed={day === index + 1}
-                onClick={() => setChosenDay(index + 1)}
+                aria-pressed={day === weekday}
+                onClick={() => setChosenDay(weekday)}
               >
-                {name.toLocaleUpperCase('es')}
+                {dayNames[weekday].toLocaleUpperCase('es')}
               </button>
             ))}
           </div>
@@ -341,7 +341,11 @@ export function Dashboard() {
                   ))}
                   {!schedules.length && (
                     <Empty>
-                      No hay horarios habilitados para este día en el período seleccionado.
+                      {selected?.year === date.year &&
+                      selected?.month === date.month &&
+                      day === date.day
+                        ? 'No hay actividades programadas para hoy'
+                        : 'No hay horarios habilitados para este día en el período seleccionado.'}
                     </Empty>
                   )}
                 </>

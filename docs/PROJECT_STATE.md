@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## Corrección independiente — Dashboard domingo local (08/11/2026)
+
+Consolidada para commit local separado: domingo=0 se selecciona correctamente, selector de siete días y vacío del día actual explícito. Tests con reloj determinista y fixture visual sintético. Validación conjunta final ya realizada: 593 aprobadas, cero fallidas, 218 omitidas; 34 focalizadas aprobadas; typecheck/lint/build y diff-check aprobados. Selección manual lunes → domingo y vacío comprobados en navegador; validación visual completa de tablet/escritorio pendiente por escalado de la herramienta, no declarada realizada. Sin publicación. [Detalle y límites](iterations/2026-11-dashboard-sunday.md). Identidad está registrada separadamente en `2b0ddb8`.
+
 ## Iteración 12 — Etapa 1 local (08/11/2026)
 
 Fundamentos internos de identidad, roles y sesiones individuales consolidados para commit local en `codex/iteration-12-identity-foundations`, base `1d0d402`, sin publicación. 017 aditiva aplicada y probada exclusivamente en prisma_test; cinco tablas nuevas, login heredado intacto y ninguna ruta nueva. La suite prepara explícitamente 001–016 mediante el runner, sin depender de otras suites ni reinicializar datos. Typecheck/lint/build y diff-check aprobados; 16 pruebas focalizadas de identidad y compatibilidad aprobadas. Arranque desde MySQL completamente vacío pendiente por falta de destino limpio autorizado; no se presenta como probado. APTO CON OBSERVACIONES. Google Login, vinculación inicial, recuperación y transición pendientes de Etapa 2; PWA corresponde a 13. [Alcance, evidencia y límites](iterations/2026-11-identity-foundations.md).
