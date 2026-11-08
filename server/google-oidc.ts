@@ -93,14 +93,15 @@ export function createGoogleOidc(
     };
   };
   return {
-    async begin(context: OidcContext) {
+    async begin(context: OidcContext, browserCorrelation?: string) {
       try {
         const checked = contextSchema.parse(context);
         const id = randomUUID(),
           state = opaque(),
           nonce = opaque(),
           verifier = opaque(),
-          browserToken = opaque();
+          browserToken = browserCorrelation ?? opaque();
+        if (!validOpaque(browserToken)) throw oidcFailure();
         const stateHash = digest(state);
         // Bind ciphertext to immutable attempt/context/configuration, preventing DB row swaps.
         const associatedData = JSON.stringify([id, stateHash, configurationHash, checked]);

@@ -1,10 +1,11 @@
-// No default service, HTTP routes, verifier or privileged production adapter.
-// Composition root must supply real authorization and proof validation in 12.2.B.
+// No default service. B2 composes browser evidence and privileged CLI separately.
+// The composition root must supply authorization and transactional proof consumption.
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { execute, query, type Connection } from './db.js';
 import { identityMutation, lockInstitution, activeAdministrators } from './identity-policy.js';
 import { AppError } from './errors.js';
+import type { PoolConnection } from 'mysql2/promise';
 const uuid = z.string().uuid();
 const subjectSchema = z.string().regex(/^[\x21-\x7e]{1,255}$/);
 const lifetime = 15 * 60 * 1000;
@@ -14,10 +15,12 @@ export interface BindingAuthority {
   authorize(
     context: unknown,
     action: Action,
+    db: PoolConnection,
   ): Promise<{ kind: 'operator' } | { kind: 'admin'; userId: string }>;
   verifyCandidate(
     evidence: unknown,
     binding: { operationId: string; userId: string },
+    db: PoolConnection,
   ): Promise<{ provider: 'google'; subject: string }>;
 }
 interface Operation {
@@ -32,6 +35,8 @@ interface Operation {
   revoked_at: number | null;
 }
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
+export const candidateFingerprint = (operationId: string, userId: string, subject: string) =>
+  digest(JSON.stringify(['prisma-binding-v1', operationId, userId, subject]));
 async function audit(db: Connection, userId: string, actor: string | null, event: string) {
   await execute(
     'INSERT INTO identity_audit_events(user_id,actor_id,event) VALUES (?,?,?)',
@@ -56,12 +61,12 @@ async function revokeSessions(db: Connection, id: string) {
 }
 export function createBindingService(authority: BindingAuthority) {
   async function authorized(
-    db: Connection,
+    db: PoolConnection,
     context: unknown,
     action: Action,
     operatorOnly = false,
   ) {
-    const actor = await authority.authorize(context, action);
+    const actor = await authority.authorize(context, action, db);
     if (actor.kind === 'operator') return null;
     if (operatorOnly) throw new AppError(403, 'Requiere canal operativo privilegiado.');
     uuid.parse(actor.userId);
@@ -92,7 +97,7 @@ export function createBindingService(authority: BindingAuthority) {
     return op;
   }
   return {
-    async configure(context: unknown, ids: [string, string]) {
+    async configure(context: unknown, ids: [string, string], createInitial = false) {
       ids.forEach((id) => uuid.parse(id));
       if (ids[0] === ids[1]) throw new AppError(409, 'Se requieren dos identidades distintas.');
       await identityMutation(async (db) => {
@@ -100,6 +105,15 @@ export function createBindingService(authority: BindingAuthority) {
         await authorized(db, context, 'configure', true);
         if (s.initialized || s.admin_one !== null || s.admin_two !== null)
           throw new AppError(409, 'Inicialización ya configurada.');
+        if (createInitial)
+          for (const [index, id] of ids.entries()) {
+            await execute(
+              'INSERT INTO identity_users(id,display_name) VALUES (?,?)',
+              [id, index === 0 ? 'Jesica' : 'Hernán'],
+              db,
+            );
+            await audit(db, id, null, 'user.created');
+          }
         for (const id of ids) {
           const [u] = await query<{ status: string }>(
             'SELECT status FROM identity_users WHERE id=? FOR UPDATE',
@@ -166,10 +180,7 @@ export function createBindingService(authority: BindingAuthority) {
         .parse(code);
       // The adapter MUST validate cryptographic evidence and correlation, not
       // deserialize a subject supplied by an HTTP caller. There is no adapter here.
-      const proof = await authority.verifyCandidate(evidence, { operationId, userId });
-      z.literal('google').parse(proof.provider);
-      subjectSchema.parse(proof.subject);
-      await identityMutation(async (db) => {
+      return identityMutation(async (db) => {
         await state(db);
         const op = await operation(db, operationId, userId);
         if (
@@ -177,21 +188,44 @@ export function createBindingService(authority: BindingAuthority) {
           op.subject !== null
         )
           throw new AppError(409, 'Candidatura no disponible.');
-        await execute(
-          'UPDATE identity_binding_operations SET subject=?,candidate_at=? WHERE id=?',
-          [proof.subject, Date.now(), operationId],
+        const proof = await authority.verifyCandidate(evidence, { operationId, userId }, db);
+        z.literal('google').parse(proof.provider);
+        subjectSchema.parse(proof.subject);
+        const used = await query(
+          "SELECT user_id FROM identity_external_accounts WHERE provider='google' AND subject=? FOR UPDATE",
+          [proof.subject],
           db,
         );
+        if (used.length) throw new AppError(409, 'Candidatura no disponible.');
+        const changed = await execute(
+          `UPDATE identity_binding_operations SET subject=?,candidate_at=CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED)
+           WHERE id=? AND user_id=? AND subject IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+           AND expires_at>CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED)`,
+          [proof.subject, operationId, userId],
+          db,
+        );
+        if (changed.affectedRows !== 1) throw new AppError(409, 'Candidatura no disponible.');
         await audit(db, userId, null, 'binding.candidate');
+        return candidateFingerprint(operationId, userId, proof.subject);
       });
     },
-    async approve(context: unknown, operationId: string, userId: string) {
+    async approve(
+      context: unknown,
+      operationId: string,
+      userId: string,
+      expectedFingerprint?: string,
+    ) {
       await identityMutation(async (db) => {
         const s = await state(db),
           op = await operation(db, operationId, userId);
         const actor = await authorized(db, context, 'approve', op.purpose === 'initial');
         if (!op.subject || ![s.admin_one, s.admin_two].includes(userId))
           throw new AppError(409, 'Candidatura no disponible.');
+        if (
+          expectedFingerprint !== undefined &&
+          expectedFingerprint !== candidateFingerprint(operationId, userId, op.subject)
+        )
+          throw new AppError(409, 'La candidatura cambió.');
         if (op.purpose === 'initial' ? s.initialized : !s.initialized || actor === userId)
           throw new AppError(403, 'Aprobación no permitida.');
         if ((await currentSubject(db, userId)) !== op.expected_subject)

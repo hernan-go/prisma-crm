@@ -1,6 +1,6 @@
 # Iteración 12.2.B1 — núcleo Google OIDC persistente
 
-Implementación local sobre `7dd8234`, rama `codex/iteration-12-identity-foundations`, sin commit, push, merge ni despliegue. Sin Google Login funcional, rutas HTTP, UI, bootstrap operativo ni adaptadores de autoridad. El CRM conserva su autenticación heredada; B1 no crea usuarios, roles, vinculaciones ni sesiones institucionales.
+Consolidada localmente en `adf27d4` sobre `7dd8234`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. Este documento describe el corte B1; la evolución posterior está en [B2](2026-11-supervised-google-binding.md). Sin Google Login funcional, rutas HTTP, UI, bootstrap operativo ni adaptadores de autoridad. El CRM conserva su autenticación heredada; B1 no crea usuarios, roles, vinculaciones ni sesiones institucionales.
 
 ## Componentes y configuración privada
 

@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { api } from './routes.js';
 import { AppError } from './errors.js';
 import { authentication, type AuthOptions } from './auth.js';
+import { bindingRouter, bindingEnvironment, type BindingHttpOptions } from './binding-http.js';
 import { aiIntegration, type AiIntegrationOptions } from './integrations/ai-router.js';
 import {
   proposalIntegration,
@@ -16,11 +17,15 @@ export function createApp(
   authOptions: AuthOptions = {},
   aiOptions: AiIntegrationOptions = {},
   proposalOptions: ProposalIntegrationOptions = {},
+  bindingOptions: BindingHttpOptions | false | undefined = undefined,
 ) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
   app.use(helmet());
+  app.use(
+    bindingRouter(bindingOptions === false ? undefined : (bindingOptions ?? bindingEnvironment())),
+  );
   // Separate, terminal namespace: service credentials never reach administrative routes.
   // Mount before browser CORS/body parsing/session auth; this router owns safe errors.
   app.use('/api/integrations/ai', aiIntegration(aiOptions));

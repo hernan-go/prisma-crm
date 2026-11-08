@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { PoolConnection } from 'mysql2/promise';
 import { execute, query, transaction, type Connection } from './db.js';
 import { oidcFailure } from './oidc-crypto.js';
+import { lockInstitution } from './identity-policy.js';
 
 const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
@@ -139,8 +140,19 @@ export function mysqlOidcStore() {
       )
         throw oidcFailure();
       return transaction(async (db) => {
+        if (a.context.purpose === 'binding') {
+          if (!(await lockInstitution(db))) throw oidcFailure();
+        }
         const limit = await contextLimit(db, a.context),
           time = await now(db);
+        if (a.context.purpose === 'binding') {
+          await execute(
+            `UPDATE identity_oidc_attempts SET status='invalidated',invalidated_at=${clock},${wipe},${eraseProof}
+            WHERE browser_hash=? AND purpose='binding' AND status IN ('pending','claimed','verified')`,
+            [a.browserHash],
+            db,
+          );
+        }
         const expires = Math.min(time + 300000, limit);
         if (expires <= time) throw oidcFailure();
         await execute(

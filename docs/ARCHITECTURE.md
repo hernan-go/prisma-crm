@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Vinculación supervisada — 12.2.B2 local
+
+Router terminal B2 y página HTML independiente, sin login Google administrativo. Evidencia OIDC se consume en la misma PoolConnection que candidatura/auditoría; autoridad inicial y reemplazos por CLI TTY con confirmación de destino y huella revalidada bajo bloqueo. Bootstrap de dos UUID atómico y cierre persistente. Configuración opcional fail-closed sin afectar auth heredada. Mantenimiento temporal sin eliminar operaciones institucionales ni auditoría. 017–019 intactas; sin migración nueva. Pruebas sintéticas y QA visual locales; Google real y viabilidad operativa SiteGround pendientes. [Contratos y procedimiento](iterations/2026-11-supervised-google-binding.md).
+
 ## Núcleo Google OIDC — 12.2.B1 local
 
 Factory explícito sin rutas ni consumidor operativo. openid-client 6.8.9 con firma RS256/PKCE/state/nonce; AES-GCM para PKCE. 019 agrega intentos/evidencias con vigencia máxima inicial de cinco minutos, reclamación confirmada antes de red y consumo transaccional en conexión del futuro llamador. Sin usuarios/privilegios/sesiones nuevas, sin Google Login funcional; autenticación heredada intacta. [Contratos, pruebas y límites](iterations/2026-11-google-oidc-core.md).
