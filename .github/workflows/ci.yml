@@ -31,4 +31,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
-      - run: npm test
+      - name: Tests and integrations excluding institutional bindings
+        run: npm test -- --exclude tests/identity-bindings-db.test.ts
+      - name: Institutional binding integrations (isolated, required)
+        run: npx vitest run tests/identity-bindings-db.test.ts

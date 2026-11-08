@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## Iteración 12.2.A — operaciones internas locales
+
+Sobre 6641189, sin commit/publicación: vinculación y reemplazo supervisados, candidaturas de 15 minutos, cierre persistente del bootstrap y protección transaccional del último administrador. 018 aditiva aplicada solo en prisma_test; 017 intacta. Corregido consumo atómico con vencimiento por reloj MySQL; vinculaciones separadas obligatoriamente de la fase paralela en CI. Siete integraciones de vinculaciones y 16 previas aprobadas secuencialmente; general 593 aprobadas, cero fallidas, 225 omitidas; typecheck/lint/build y diff-check aprobados. Workflow nuevo comprobado estructuralmente, no ejecutado en GitHub Actions. Adaptadores reales de autorización, prueba Google y canal privilegiado de SiteGround pendientes; login heredado intacto. Ensayo MySQL vacío sigue pendiente. [Diseño, evidencia y límites](iterations/2026-11-identity-binding-operations.md).
+
 ## Corrección independiente — Dashboard domingo local (08/11/2026)
 
 Consolidada para commit local separado: domingo=0 se selecciona correctamente, selector de siete días y vacío del día actual explícito. Tests con reloj determinista y fixture visual sintético. Validación conjunta final ya realizada: 593 aprobadas, cero fallidas, 218 omitidas; 34 focalizadas aprobadas; typecheck/lint/build y diff-check aprobados. Selección manual lunes → domingo y vacío comprobados en navegador; validación visual completa de tablet/escritorio pendiente por escalado de la herramienta, no declarada realizada. Sin publicación. [Detalle y límites](iterations/2026-11-dashboard-sunday.md). Identidad está registrada separadamente en `2b0ddb8`.

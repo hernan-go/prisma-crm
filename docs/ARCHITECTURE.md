@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Operaciones internas de identidad — 12.2.A local
+
+Factory de vinculación sin adaptadores productivos ni rutas. 018 agrega singleton institucional y operaciones de vinculación con candidatura/expiración/consumo; aprobación, reemplazo, revocación y auditoría transaccionales. Bloqueo institucional compartido con mutaciones 12.1 protege el último admin habilitado y vinculado tras bootstrap. Login compartido y MCP intactos. [Contrato y límites](iterations/2026-11-identity-binding-operations.md).
+
 ## Fundamentos de identidad locales — 08/11/2026
 
 Módulo interno `server/identity.ts`, sin consumidores HTTP, con usuario UUID, identidad externa, roles múltiples y sesiones opacas revocables por aplicación. Migración 017: cinco tablas aditivas, aplicada solo en prisma_test. Mutaciones/auditoría transaccionales y serialización por usuario. No modifica auth heredada ni expone Google/PWA. Validación de proveedor, autorización del actor y protección del último administrador deberán completarse antes de conectar el módulo a accesos reales. [Diseño y límites de Etapa 1](iterations/2026-11-identity-foundations.md).

@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { execute, query, transaction, type Connection } from './db.js';
 import { AppError } from './errors.js';
+import { identityMutation, lockInstitution } from './identity-policy.js';
 
 const idSchema = z.string().uuid();
 const roleSchema = z.enum(['admin', 'facilitator', 'participant']);
@@ -97,7 +98,10 @@ export async function linkExternalIdentity(
   providerSchema.parse(provider);
   subjectSchema.parse(subject);
   try {
-    await transaction(async (db) => {
+    await identityMutation(async (db) => {
+      const institution = await lockInstitution(db);
+      if (institution && [institution.admin_one, institution.admin_two].includes(userId))
+        throw new AppError(409, 'Usá la operación supervisada de vinculación.');
       await lockedUser(userId, db);
       const [existing] = await query<{ user_id: string }>(
         'SELECT user_id FROM identity_external_accounts WHERE provider=? AND subject=?',
@@ -129,7 +133,20 @@ async function revokeAll(db: Connection, userId: string) {
 export async function setIdentityStatus(userId: string, status: Status, actor: string | null) {
   idSchema.parse(userId);
   statusSchema.parse(status);
-  await transaction(async (db) => {
+  await identityMutation(async (db) => {
+    const institution = await lockInstitution(db);
+    if (
+      status === 'enabled' &&
+      institution &&
+      [institution.admin_one, institution.admin_two].includes(userId)
+    ) {
+      const bound = await query(
+        "SELECT user_id FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
+        [userId],
+        db,
+      );
+      if (!bound.length) throw new AppError(409, 'Aprobación de vinculación pendiente.');
+    }
     const user = await lockedUser(userId, db);
     if (user.status === status) return;
     await execute('UPDATE identity_users SET status=? WHERE id=?', [status, userId], db);
@@ -146,7 +163,21 @@ export async function setIdentityRole(
   idSchema.parse(userId);
   roleSchema.parse(role);
   z.boolean().parse(granted);
-  await transaction(async (db) => {
+  await identityMutation(async (db) => {
+    const institution = await lockInstitution(db);
+    if (
+      granted &&
+      role === 'admin' &&
+      institution &&
+      [institution.admin_one, institution.admin_two].includes(userId)
+    ) {
+      const bound = await query(
+        "SELECT user_id FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
+        [userId],
+        db,
+      );
+      if (!bound.length) throw new AppError(409, 'Aprobación de vinculación pendiente.');
+    }
     const user = await lockedUser(userId, db);
     if (user.roles.includes(role) === granted) return;
     if (granted)
