@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Núcleo Google OIDC — 12.2.B1 local
+
+Factory explícito sin rutas ni consumidor operativo. openid-client 6.8.9 con firma RS256/PKCE/state/nonce; AES-GCM para PKCE. 019 agrega intentos/evidencias con vigencia máxima inicial de cinco minutos, reclamación confirmada antes de red y consumo transaccional en conexión del futuro llamador. Sin usuarios/privilegios/sesiones nuevas, sin Google Login funcional; autenticación heredada intacta. [Contratos, pruebas y límites](iterations/2026-11-google-oidc-core.md).
+
 ## Operaciones internas de identidad — 12.2.A local
 
 Factory de vinculación sin adaptadores productivos ni rutas. 018 agrega singleton institucional y operaciones de vinculación con candidatura/expiración/consumo; aprobación, reemplazo, revocación y auditoría transaccionales. Bloqueo institucional compartido con mutaciones 12.1 protege el último admin habilitado y vinculado tras bootstrap. Login compartido y MCP intactos. [Contrato y límites](iterations/2026-11-identity-binding-operations.md).
