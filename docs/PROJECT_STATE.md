@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## Iteración 12 — Etapa 1 local (08/11/2026)
+
+Fundamentos internos de identidad, roles y sesiones individuales consolidados para commit local en `codex/iteration-12-identity-foundations`, base `1d0d402`, sin publicación. 017 aditiva aplicada y probada exclusivamente en prisma_test; cinco tablas nuevas, login heredado intacto y ninguna ruta nueva. La suite prepara explícitamente 001–016 mediante el runner, sin depender de otras suites ni reinicializar datos. Typecheck/lint/build y diff-check aprobados; 16 pruebas focalizadas de identidad y compatibilidad aprobadas. Arranque desde MySQL completamente vacío pendiente por falta de destino limpio autorizado; no se presenta como probado. APTO CON OBSERVACIONES. Google Login, vinculación inicial, recuperación y transición pendientes de Etapa 2; PWA corresponde a 13. [Alcance, evidencia y límites](iterations/2026-11-identity-foundations.md).
+
 ## Iteración 11 — Estadísticas v2 mensual y anual: publicada en producción (07/11/2026)
 
 Estadísticas v2 mensual y anual completada, con diseño definitivo y paleta sobria aprobados por el propietario. Resumen mensual con seis KPI, cuatro paneles principales y Eventos Especiales; evolución anual de obligaciones/cobros, participantes únicos, continuidad e incorporaciones/reincorporaciones. Endpoint autenticado y de solo lectura `GET /api/statistics/annual?year=AAAA`. Sin migraciones nuevas, modificaciones de esquema ni cambios de MCP.

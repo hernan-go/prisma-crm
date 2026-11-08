@@ -30,6 +30,19 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '017.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='016.sql'",
+        );
+        if (!baseline.length) throw new Error('017.sql requiere 016.sql registrada.');
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('identity_users','identity_external_accounts','identity_user_roles','identity_sessions','identity_audit_events')",
+        );
+        if (partial.length)
+          throw new Error(
+            '017.sql detenida: esquema de identidad parcial o sin registro. Inspeccionar y recuperar manualmente antes de continuar.',
+          );
+      }
       // MySQL DDL commits implicitly: reject orphaned history before any 007 statement.
       if (name === '007.sql') await requireHistoricalExpensePeriods(c);
       if (name === '013.sql') {

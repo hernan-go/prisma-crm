@@ -1,5 +1,9 @@
 # PRISMA CRM — Arquitectura
 
+## Fundamentos de identidad locales — 08/11/2026
+
+Módulo interno `server/identity.ts`, sin consumidores HTTP, con usuario UUID, identidad externa, roles múltiples y sesiones opacas revocables por aplicación. Migración 017: cinco tablas aditivas, aplicada solo en prisma_test. Mutaciones/auditoría transaccionales y serialización por usuario. No modifica auth heredada ni expone Google/PWA. Validación de proveedor, autorización del actor y protección del último administrador deberán completarse antes de conectar el módulo a accesos reales. [Diseño y límites de Etapa 1](iterations/2026-11-identity-foundations.md).
+
 ## Arquitectura vigente — 07/11/2026
 
 CRM React/TypeScript → Node.js/Express → MySQL: monolito modular evolutivo. Know-How real con propuestas separadas del documento vigente y aprobación/rechazo administrativos; Eventos Especiales integrados. ChatGPT → MCP privado versión 6 con cinco herramientas → API empresarial segura: lecturas y propuestas documentales controladas, sin escritura económica autónoma. La quinta herramienta es `consultar_eventos_especiales`; consulta real y límites de producción/recuperación registrados en [PROJECT_STATE](PROJECT_STATE.md).
@@ -7,7 +11,6 @@ CRM React/TypeScript → Node.js/Express → MySQL: monolito modular evolutivo. 
 Estadísticas v2 mensual y anual publicada: `GET /api/statistics/summary?period_id=<id>` y `GET /api/statistics/annual?year=AAAA`, bajo autenticación administrativa. El anual reutiliza el motor mensual Decimal, tres consultas agrupadas en snapshot consistente READ ONLY y agregados de inscripciones regulares sin Eventos. Dinero exacto en contratos; Number exclusivamente para geometría. Cuatro paneles mensuales, Eventos y cuatro gráficos anuales; dona individual de Honorarios conservada. [Contrato y evidencia](iterations/2026-11-statistics-monthly-v2.md).
 
 Google OAuth, multiempresa/SaaS y portales PWA no están implementados. P0 consultivo aceptado no significa rentabilidad certificada ni simulaciones deterministas automáticas. No hay nuevas migraciones ni cambios MCP por Iteración 11. Los apartados fechados de 10.1 y anteriores siguientes son antecedentes; sus versiones MCP, documentos ficticios y pendientes de publicación no describen el estado vigente.
-
 
 ## Circuito vigente de Know-How y propuestas — 02/11/2026
 
