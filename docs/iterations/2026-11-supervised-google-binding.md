@@ -1,6 +1,6 @@
 # Iteración 12.2.B2 — vinculación Google supervisada
 
-Implementación local sobre `adf27d4`, rama `codex/iteration-12-identity-foundations`, sin staging, commit, push, merge ni despliegue. Núcleo y flujo HTTP/CLI implementados; prueba sintética y QA visual realizadas. **Aceptación con Google real pendiente** de los dos titulares y del operador. No hay login administrativo Google ni sesiones operativas nuevas. Auth heredada, economía, MCP y migraciones 017–019 intactos. Sin nuevas migraciones.
+Implementación local consolidada en el commit `e3779cb`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. La vinculación supervisada fue probada posteriormente con las cuentas Google reales de Jesica y Hernán en `prisma_test`, con aprobación de ambas identidades y cierre del bootstrap. No se implementó todavía el login administrativo Google ni se modificó la autenticación heredada. Sin nuevas migraciones.
 
 ## Composición y atomicidad
 
@@ -64,7 +64,7 @@ Cookie temporal de correlación prisma_binding y cookie prisma_binding_csrf, amb
 
 La correlación permanece estable dentro de un flujo temporal del navegador y se destruye al concluir/cancelar. Los intentos binding con el mismo browser_hash se reemplazan bajo bloqueo institucional en B1; incluso inicios concurrentes dejan uno activo durable. Las respuestas concurrentes pueden llevar al navegador a un intento ya reemplazado: se rechaza y se inicia otro, nunca se conceden privilegios. No se crean cookies administrativas ni se reutilizan las existentes.
 
-Parser URL-encoded de 4 KiB, cuatro parámetros, sin inflación. No-store, no-referrer, frame-ancestors none, form-action self, base-uri none, sin scripts/recursos externos. Código solo en POST; callback construido desde URI configurada, sin Host reenviado. Errores genéricos y sin logs de cuerpos/cookies/URLs OAuth. El error de un formulario conserva una vía de cancelación/reinicio.
+Parser URL-encoded de 4 KiB, cuatro parámetros, sin inflación. Cache-Control `no-store`, Referrer-Policy `same-origin`, CSP con `default-src 'none'`, `style-src 'unsafe-inline'`, `form-action 'self' https://accounts.google.com`, `frame-ancestors 'none'` y `base-uri 'none'`. Sin scripts ni recursos externos, excepto los estilos inline permitidos. Código privado enviado únicamente mediante POST; callback construido desde la URI configurada, sin utilizar el encabezado Host reenviado. Errores genéricos, sin registrar cuerpos, cookies ni URLs OAuth en logs. Los errores del formulario conservan una vía de cancelación o reinicio.
 
 Límites por proceso: 10 inicios/15 minutos por peer, cinco por operación, 50 inicios globales/15 minutos; 10 confirmaciones/cancelaciones por peer; 30 callbacks por peer; máximo dos canjes simultáneos. Se usa socket.remoteAddress y normalización IPv6, **no X-Forwarded-For ni req.ip derivada de trust proxy no verificado**. Si el hosting oculta/agrega peers, los usuarios comparten contador; no se afirma identificación individual real detrás del proxy. Los límites globales y de concurrencia permanecen como defensas. Contadores en memoria reinician y no se comparten entre procesos; consumo/replay sí dependen de MySQL. Verificar topología/protección perimetral antes de producción, sin debilitar reglas para conseguir IPs.
 
@@ -84,7 +84,7 @@ Primeras corridas: una expectativa HTTP antigua asumía legacy sin configurar, p
 
 QA visual sintética del renderizador real con tests/browser/binding-qa.ts: navegador integrado, inicio/confirmación/error/pendiente/deshabilitado, foco de teclado visible y submit sintético a error; sin overflow observado en confirmación móvil y deshabilitado escritorio. Viewports solicitados 1440×900 y 390×844; efectivos medidos 1143×714 y 309×670 por escalado del navegador. Consola sin errores/warnings capturados. No auditoría completa de accesibilidad/lector de pantalla. Screenshot local ignorada tmp/binding-mobile.png. Fixture sin DB/Google, servidor temporal detenido al finalizar. Conectividad inicial del sandbox falló (EACCES/timeout); el servidor en host respondió 200 y mostró HTML esperado antes de abrir navegador.
 
-## Ensayo humano pendiente y aceptación
+## Revisión de seguridad y procedimiento anterior al ensayo real (antecedente histórico)
 
 ### Revisión focalizada de seguridad posterior
 
@@ -109,3 +109,28 @@ No se probó Google real ni se crearon identidades empresariales reales. Para en
 5. Comprobar login/session/logout heredados, y que vincular no permite ingresar al CRM con Google. No borrar la institución por SQL para repetir el ensayo; prever fixtures/estado autorizado antes de empezar.
 
 Hasta completar ese ensayo, B2 está implementada y probada con proveedor sintético, **pendiente de aceptación funcional real**. SiteGround: verificar acceso operativo, Node compatible, artefacto CLI, configuración privada disponible, permisos DB y procedimiento excepcional de recuperación; no están comprobados ni resueltos automáticamente por esta CLI. body-parser continúa independiente y prioritario antes de publicación. B3/B4, PWA y despliegue excluidos. Se mantienen dos publicaciones productivas separadas y expresamente autorizadas.
+
+## Cierre de aceptación funcional local — 08/11/2026
+
+La vinculación supervisada Google de la Iteración 12.2.B2 fue completada satisfactoriamente en el entorno local `prisma_test`.
+
+- Jesica: autenticación real con Google, candidatura y aprobación supervisada completadas. Identidad habilitada y vinculada.
+- Hernán: autenticación real con Google, candidatura y aprobación supervisada completadas. Identidad habilitada y vinculada.
+- Bootstrap institucional cerrado: `initialized = 1`.
+- Ambas identidades: `google_bound = 1`.
+
+Durante el ensayo se detectaron y corrigieron tres problemas HTTP:
+
+1. `Referrer-Policy`: cambio de `no-referrer` a `same-origin`.
+2. CSP: autorización explícita de formularios hacia `https://accounts.google.com`.
+3. Patrón HTML del UUID: reemplazo por una expresión compatible con navegadores modernos.
+
+Se incorporaron dos pruebas de regresión HTTP independientes de MySQL, ambas aprobadas. Se actualizó también la expectativa de Referrer-Policy en la suite de integración existente, sin reejecutarla para preservar las identidades vinculadas.
+
+Validaciones finales aprobadas: typecheck, lint, build, dos regresiones HTTP y git diff --check sin errores. Advertencias conocidas de Zod/Rollup y finales de línea no bloqueantes.
+
+La aceptación funcional local de B2 está completada. Las correcciones HTTP posteriores al commit `e3779cb` aún requieren consolidación mediante un commit independiente.
+
+Limitaciones: no se realizó despliegue productivo, validación operativa en SiteGround, recuperación productiva ni nueva auditoría integral de seguridad. El login administrativo Google corresponde a B3. La corrección independiente de body-parser continúa pendiente antes de producción.
+
+Las referencias anteriores a Google real pendiente describen exclusivamente el estado histórico previo a este ensayo.

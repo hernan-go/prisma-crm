@@ -43,7 +43,7 @@ export function bindingPage(
   const cancel = `<form method="post" action="${cancelPath}">${hidden}<button class="secondary">Cancelar intento</button></form>`;
   const content =
     stage === 'start'
-      ? `<p>Ingresá la autorización recibida por un canal privado. Google comprobará el control de tu cuenta; la vinculación requiere aprobación supervisada.</p><form method="post" action="${startPath}">${hidden}<label>Identificador de operación<input name="operationId" required autocomplete="off" maxlength="36" pattern="[a-fA-F0-9-]{36}"></label>${code}<button>Continuar con Google</button></form>`
+      ? `<p>Ingresá la autorización recibida por un canal privado. Google comprobará el control de tu cuenta; la vinculación requiere aprobación supervisada.</p><form method="post" action="${startPath}">${hidden}<label>Identificador de operación<input name="operationId" required autocomplete="off" maxlength="36" pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"></label>${code}<button>Continuar con Google</button></form>`
       : stage === 'confirm'
         ? `<p>Google verificó la cuenta. Volvé a ingresar el código privado para presentar tu candidatura.</p><form method="post" action="${submitPath}">${hidden}${code}<button>Presentar candidatura</button></form>${cancel}`
         : stage === 'pending'
@@ -119,10 +119,10 @@ export function bindingRouter(options?: BindingHttpOptions) {
     }
     res.set({
       'Cache-Control': 'no-store',
-      'Referrer-Policy': 'no-referrer',
+      'Referrer-Policy': 'same-origin',
       'X-Frame-Options': 'DENY',
       'Content-Security-Policy':
-        "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+        "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",
     });
     if (!core) return res.status(503).type('html').send(html('', 'disabled'));
     initialize().then(

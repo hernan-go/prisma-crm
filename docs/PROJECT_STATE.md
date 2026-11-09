@@ -2,9 +2,15 @@
 
 ## Iteración 12.2.B2 — vinculación supervisada local
 
-Revisión focalizada posterior: corregida reserva tardía del límite de dos canjes (carrera antes de await); regresión con consultas bloqueadas y cobertura adicional de evidencia cruzada/duplicidad tardía al aprobar. Sin cambios de esquema ni autenticación heredada; tres regresiones de seguridad y nueve pruebas de compatibilidad aprobadas, 14 casos DB no seleccionados por filtro. Typecheck/lint/build/diff-check aprobados. Dictamen de revisión: APTO CON OBSERVACIONES para consolidación técnica posterior. No equivale a aceptación Google real ni a autorización de commit.
+Implementación local consolidada en el commit `e3779cb`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. Incluye vinculación supervisada Google OIDC, CLI administrativa, aprobación mediante huella, bootstrap institucional, controles CSRF, cookies, límites y mantenimiento. El cierre técnico original registró 95 pruebas focalizadas aprobadas.
 
-Implementación local sobre `adf27d4`, sin staging/commit/publicación: candidatura y consumo OIDC transaccionales, CLI privilegiada con huella, bootstrap de dos UUID, rutas/formulario B2, CSRF/cookies/límites y mantenimiento sin purga institucional. Sin login administrativo Google ni cambios al login compartido. Sin migraciones nuevas; 017–019 intactas. 95 pruebas focalizadas aprobadas, cero fallidas/omitidas en corridas finales; suites MySQL secuenciales solo en prisma_test. Typecheck/lint/build/diff-check aprobados; QA visual sintética y proxy local verificados. Aceptación Google real de los titulares y verificación operativa SiteGround pendientes. [Procedimiento, contratos y evidencia](iterations/2026-11-supervised-google-binding.md).
+Aceptación funcional local posterior con Google real completada en `prisma_test`: Jesica y Hernán realizaron individualmente la autenticación, presentaron sus candidaturas y fueron aprobados mediante el procedimiento supervisado. Ambas identidades quedaron habilitadas, con `google_bound = 1`, y el bootstrap se cerró con `initialized = 1`.
+
+Durante el ensayo se corrigieron tres problemas HTTP: `Referrer-Policy` cambiado a `same-origin`, CSP habilitada para formularios hacia `https://accounts.google.com` y patrón HTML UUID compatible con navegadores modernos. Se incorporaron dos pruebas de regresión independientes de MySQL, ambas aprobadas. La expectativa de la suite de integración existente fue actualizada, pero no se reejecutó para preservar las vinculaciones reales de `prisma_test`. Estas correcciones posteriores aún no tienen commit.
+
+Validaciones posteriores aprobadas: typecheck, lint, build y dos regresiones HTTP; `git diff --check` sin errores, con advertencias de finales de línea. No se realizaron nuevas pruebas integrales ni despliegues.
+
+B2 dispone de aceptación funcional local para las dos vinculaciones reales, pero no constituye una certificación integral de seguridad ni aceptación productiva. B3 (inicio de sesión Google y sesiones administrativas individuales), verificación operativa SiteGround y corrección independiente de body-parser permanecen pendientes. El login heredado continúa sin modificaciones.
 
 ## Iteración 12.2.B1 — núcleo Google OIDC local
 

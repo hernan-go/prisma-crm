@@ -456,7 +456,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       expect(String(start.headers['set-cookie'])).toContain('HttpOnly');
       expect(String(start.headers['set-cookie'])).toContain('SameSite=Lax');
       expect(start.headers['cache-control']).toBe('no-store');
-      expect(start.headers['referrer-policy']).toBe('no-referrer');
+      expect(start.headers['referrer-policy']).toBe('same-origin');
       for (let i = 0; i < 4; i++) {
         const page = await agent.get('/vincular-google');
         await agent
