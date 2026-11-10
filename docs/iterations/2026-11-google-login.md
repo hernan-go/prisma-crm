@@ -1,5 +1,17 @@
 # Iteración 12.2.B3 — login Google individual
 
+## Iteración 12.2 — aceptación funcional local aprobada (10/11/2026)
+
+El propietario confirmó en navegador real sobre prisma_test el ingreso Google de Hernán y Jesica con identidad correcta y Dashboard accesible. Ambos cerraron sesión y el acceso posterior al Dashboard quedó bloqueado. Dos cuentas Google no autorizadas fueron rechazadas. La corrección local devuelve HTTP 303 a /login?google=denied y presenta el mensaje comprensible, sin acceso administrativo. Esta evidencia corresponde a los recorridos informados por el propietario.
+
+020.sql fue aplicada y verificada exclusivamente en prisma_test, después de respaldo completo verificado por tamaño, salida exitosa y SHA-256. La restauración del respaldo no fue probada. Las identidades y vinculaciones institucionales permanecieron intactas y el acceso legacy se conserva. La revocación administrativa manual mediante CLI todavía no fue comprobada.
+
+Bloques 1–5 publicados en la rama codex/iteration-12-identity-foundations hasta b260677c8af903ad22ecb5a33d5fa3513b17dd1c. Actions #73 aprobó 729 pruebas sin MySQL y 251 integraciones MySQL. La corrección posterior de experiencia de rechazo tuvo 21 pruebas focalizadas aprobadas, typecheck, lint, build y diff-check correctos. En este cierre se actualiza documentación y se prepara un único commit de la corrección con su CI remota pendiente de verificar sobre el nuevo SHA. No se repiten suites locales ya aprobadas.
+
+**Aceptación funcional local aprobada.** Permanecen pendientes la comprobación manual de revocación administrativa, integración autorizada a main, respaldo/preflight y preparación de migraciones/configuración productivas, despliegue y aceptación productiva. Antes de habilitar producción se debe verificar allí el estado de migraciones e intentos históricos consumidos sin asociación. La retirada del acceso compartido requiere decisión expresa posterior. No se realizaron operaciones productivas en este cierre.
+
+Los apartados siguientes conservan antecedentes de implementación y validación. Sus menciones de aceptación local, migración 020 en prisma_test o pruebas de navegador pendientes quedan superadas únicamente por los resultados anteriores.
+
 ## Bloques 4 y 5 — entrega local 10/11/2026
 
 Base inicial verificada: rama `codex/iteration-12-identity-foundations`, HEAD `537c573cd5fc6d344427b6173ba1c3a5f893f43d`, sin cambios locales. El pedido confirma publicación de Bloques 1–3 y Actions #70, #71 y #72 aprobados; B3 cerró con 700 pruebas sin MySQL y 251 integraciones MySQL. Esa confirmación supera el estado histórico de publicación pendiente inferior. No se reiteraron auditorías, investigación de concurrencia ni integraciones cerradas.

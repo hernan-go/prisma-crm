@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   effects: [] as (() => any)[],
   mutations: [] as any[],
   navigate: vi.fn(),
+  location: { pathname: '/login', search: '' },
   cache: { cancelQueries: vi.fn(), removeQueries: vi.fn(), resetQueries: vi.fn() },
 }));
 vi.mock('react', async (original) => ({
@@ -29,7 +30,10 @@ vi.mock('react', async (original) => ({
     h.effects.push(effect);
   },
 }));
-vi.mock('react-router-dom', () => ({ useNavigate: () => h.navigate }));
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => h.navigate,
+  useLocation: () => h.location,
+}));
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => h.query,
   useQueryClient: () => h.cache,
@@ -74,6 +78,7 @@ function find(node: ReactNode, predicate: (node: any) => boolean): any {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  h.location.search = '';
   h.states = [];
   h.effects = [];
   h.mutations = [];
@@ -249,4 +254,12 @@ it('reports unavailable login when an advertised Google method has no CSRF and l
     googleLogin: { available: true },
   });
   expect(render()).toContain('no está disponible');
+});
+it('shows the fixed accessible Google denial notice only for the public code', () => {
+  h.location.search = '?google=denied';
+  expect(render()).toContain(
+    '<p role="alert">No tenés acceso habilitado a PRISMA con esta cuenta. Intentá con tu cuenta autorizada.</p>',
+  );
+  h.location.search = '?google=unexpected';
+  expect(render()).not.toContain('No tenés acceso habilitado');
 });

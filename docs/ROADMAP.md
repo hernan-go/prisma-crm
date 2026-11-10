@@ -76,9 +76,9 @@ Completada, publicada y validada visualmente en producción, según confirmació
 
 Validación local de cierre: typecheck, lint, 169 pruebas, build y diff check aprobados; 157 integraciones DB omitidas. Sin migraciones SQL nuevas. Codex no realizó verificaciones productivas adicionales ni auditorías de datos. [Registro de cierre e historial](iterations/2026-10-maintenance.md). La siguiente iteración funcional no reabre la iteración 7.
 
-## Implementación local; habilitación pendiente — Autenticación con Google
+## Aceptación local aprobada; producción pendiente — Autenticación con Google
 
-Decisión de producto confirmada por el propietario. Al 10/11/2026, fundamentos y backend B1–B3 publicados con CI aprobado según su confirmación; recuperación administrativa B4 e interfaz Google B5 implementadas localmente, pendientes de revisión/commit. No equivale a habilitación ni despliegue productivo. [Estado y pasos operativos](iterations/2026-11-google-login.md#bloques-4-y-5--entrega-local-10112026).
+Decisión de producto confirmada por el propietario. Al 10/11/2026, fundamentos y backend B1–B3 publicados con CI aprobado según su confirmación; recuperación administrativa B4 e interfaz Google B5 publicadas con Actions #73 aprobada. Ingreso y logout de Hernán y Jesica, bloqueo posterior al logout y rechazo de dos cuentas no autorizadas aceptados por el propietario en navegador local. Corrección de experiencia de rechazo incluida en el cierre local. No equivale a habilitación ni despliegue productivo. [Estado y pasos operativos](iterations/2026-11-google-login.md#bloques-4-y-5--entrega-local-10112026).
 
 Alcance vigente:
 
@@ -90,7 +90,7 @@ Alcance vigente:
 - Evitar servicios pagos de autenticación cuando exista una implementación directa adecuada sin tarifa adicional.
 - Mantener el sistema específico de PRISMA, sin convertirlo en un SaaS multiempresa.
 
-Pendientes: preparar/aplicar controladamente 020 y comprobar intentos históricos sin asociación en el entorno elegido; configuración/habilitación efectiva; aceptación visual y pruebas reales de Hernán y Jesica; retirada del acceso compartido e integración/despliegue autorizados. No se implementa Google para facilitadores en esta entrega ni se decide su mecanismo futuro.
+020 aplicada y verificada exclusivamente en prisma_test, con respaldo previo y vínculos intactos. Pendientes: revocación administrativa manual, integración autorizada a main, preparación de migraciones/configuración productivas, despliegue y aceptación productiva. Retirada del acceso compartido por decisión posterior expresa. No se implementa Google para facilitadores en esta entrega ni se decide su mecanismo futuro.
 
 ## Pendiente — Definición del resultado económico mensual
 

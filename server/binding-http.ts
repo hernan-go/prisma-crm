@@ -1,4 +1,5 @@
 import { Router, urlencoded, type Request, type Response } from 'express';
+import { AppError } from './errors.js';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import { z } from 'zod';
@@ -79,6 +80,13 @@ export function bindingRouter(options?: BindingHttpOptions) {
         'No se pudo completar el acceso con Google. Cerrá la sesión anterior e iniciá un intento nuevo.',
     });
   // A presented authority always requires explicit logout before method switching.
+  const callbackFailure = (res: Response, status = 400) =>
+    res
+      .status(status)
+      .type('html')
+      .send(
+        '<!doctype html><html lang="es"><meta charset="utf-8"><title>Ingreso a PRISMA</title><main><p>No se pudo completar el acceso con Google.</p><a href="/login">Volver al ingreso</a></main></html>',
+      );
   const hasAdministrativeCookie = (req: Request) =>
     (req.headers.cookie || '')
       .split(';')
@@ -368,7 +376,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
       const ref = refCookie(req, login ? loginPrefix : prefix);
       if (persisted.id !== ref.id || persisted.browser_hash !== digest(ref.browserToken))
         throw Error();
-      if (login && hasAdministrativeCookie(req)) return loginFailure(res, 409);
+      if (login && hasAdministrativeCookie(req)) return callbackFailure(res, 409);
       const attempt = login
         ? { context: { purpose: 'login' as const } }
         : await bindingAttempt(ref.id, ref.browserToken, states[0]);
@@ -380,7 +388,16 @@ export function bindingRouter(options?: BindingHttpOptions) {
       if (login) {
         const session = await completeGoogleLogin(
           core!.evidenceReference(ref.id, ref.browserToken, attempt.context),
-        );
+        ).catch((error: unknown) => {
+          if (error instanceof AppError && error.status === 403) return undefined;
+          throw error;
+        });
+        if (!session) {
+          res.clearCookie(loginPrefix, cookieOptions);
+          res.clearCookie(loginPrefix + '_csrf', cookieOptions);
+          res.set('Referrer-Policy', 'no-referrer');
+          return res.redirect(303, '/login?google=denied');
+        }
         res.cookie(secure ? '__Host-prisma_identity' : 'prisma_identity', session.token, {
           httpOnly: true,
           secure,
@@ -397,7 +414,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
       if (login) {
         res.clearCookie(loginPrefix, cookieOptions);
         res.clearCookie(loginPrefix + '_csrf', cookieOptions);
-        return loginFailure(res);
+        return callbackFailure(res);
       }
       res
         .status(400)

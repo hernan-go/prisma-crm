@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { useQuery, useQueryClient, useMutation, type QueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, type AuthSession } from './api';
 import { Field, ErrorBox, Loading } from './components';
 
@@ -27,6 +27,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const q = useQuery(authQuery);
+  const location = useLocation();
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<number | null>(null);
   const m = useMutation({
@@ -68,8 +69,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     };
   }, [qc, navigate, q.refetch]);
   useEffect(() => {
-    if (q.data && !q.data.authenticated) navigate('/login', { replace: true });
-  }, [q.data, navigate]);
+    if (location.pathname !== '/login' && q.data && !q.data.authenticated)
+      navigate('/login', { replace: true });
+  }, [q.data, navigate, location.pathname]);
   const blocked =
     failure ??
     (q.error
@@ -99,6 +101,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
           </div>
         </div>
         <h1>Acceso administrativo</h1>
+        {location.pathname === '/login' &&
+          new URLSearchParams(location.search).get('google') === 'denied' && (
+            <p role="alert">
+              No tenés acceso habilitado a PRISMA con esta cuenta. Intentá con tu cuenta autorizada.
+            </p>
+          )}
         {blocked ? (
           <div className="auth-options">
             <p role="alert">{authMessage(blocked)}</p>
