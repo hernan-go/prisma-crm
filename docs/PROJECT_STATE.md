@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## 12.2.B3 — Bloque 2 local (10/11/2026)
+
+Transporte HTTP optativo y callback compartido binding/login implementados en working tree. CSRF de login obtenido mediante extensión compatible de sesión; cookie individual solo después del commit de Bloque 1. Cookies administrativas presentadas bloquean cambio de método hasta Bloque 3. Login individual aún sin guard/logout integrado. Bloque 1 publicado en 5d85c64 y Actions #70 aprobado. Validación Bloque 2: 37/37 MySQL descartable, cero omitidas; sin MySQL 684 aprobadas/275 omitidas; typecheck/lint/build/diff-check aprobados. Instancias temporales eliminadas, bases conservadas intactas. Contratos, configuración y límites en [B3](iterations/2026-11-google-login.md). Sin commit/publicación del Bloque 2.
+
 ## 12.2.B3 — Bloque 1 local (10/11/2026)
 
 Núcleo interno pendiente de commit. completeGoogleLogin recibe la referencia de evidencia de B1 y revalida el vínculo supervisado, estado y rol bajo bloqueo institucional. Consumo, sesión CRM de ocho horas absolutas y auditoría comparten transacción. Transporte, guard, CLI y frontend quedan pendientes. Se mantiene la convivencia con el acceso compartido hasta B4. Sin publicación.

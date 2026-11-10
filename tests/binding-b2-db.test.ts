@@ -1,6 +1,6 @@
 import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import request from 'supertest';
 import * as db from '../server/db';
 import { migrate } from '../server/migrate';
@@ -127,6 +127,243 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       ids = [randomUUID(), randomUUID()];
       await operator.prepare(ids);
       owned = true;
+    });
+    describe('B3 HTTP login', () => {
+      async function flow(production = false, bindingEnabled = true) {
+        const google = simulatedGoogle();
+        const agent = request.agent(
+          createApp(
+            { store: memorySessions() },
+            {},
+            {},
+            {
+              google: production
+                ? { ...options, redirectUri: 'https://crm.example/api/auth/google/callback' }
+                : options,
+              csrfKey: 'cd'.repeat(32),
+              database: disposableDatabase(),
+              transport: google.transport,
+              loginEnabled: true,
+              bindingEnabled,
+            },
+          ),
+        );
+        const session = await agent.get('/api/auth/session').expect(200);
+        return { google, agent, csrf: session.body.googleLogin.csrf, session };
+      }
+      async function start(f: Awaited<ReturnType<typeof flow>>) {
+        const response = await f.agent
+          .post('/api/auth/google/login/start')
+          .set('Origin', origin)
+          .type('form')
+          .send({ csrf: f.csrf })
+          .expect(303);
+        return new URL(
+          f.google.use(response.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
+        );
+      }
+      it('dispatches login after commit, issues only HttpOnly session cookie and rejects replay', async () => {
+        await linked();
+        const f = await flow(false, false);
+        const callback = await start(f);
+        const result = await f.agent.get(callback.pathname + callback.search).expect(303);
+        expect(result.headers.location).toBe('/');
+        const sessionCookie = (result.headers['set-cookie'] as unknown as string[]).find((c) =>
+          c.startsWith('prisma_identity='),
+        )!;
+        expect(sessionCookie).toContain('HttpOnly');
+        expect(sessionCookie).toContain('SameSite=Strict');
+        const token = sessionCookie.split(';')[0].split('=')[1];
+        expect(result.text).not.toContain(token);
+        expect(await identity.authenticateIdentitySession(token, 'crm')).toMatchObject({
+          id: ids[0],
+        });
+        await f.agent.get(callback.pathname + callback.search).expect(400);
+        expect(
+          await db.query('SELECT token_hash FROM identity_sessions WHERE user_id=?', [ids[0]]),
+        ).toHaveLength(1);
+      });
+      it('rejects Origin, CSRF and browser-selected purpose without starting OIDC', async () => {
+        const f = await flow();
+        const path = '/api/auth/google/login/start';
+        await f.agent.post(path).type('form').send({ csrf: f.csrf }).expect(403);
+        await f.agent
+          .post(path)
+          .set('Origin', 'https://evil.invalid')
+          .type('form')
+          .send({ csrf: f.csrf })
+          .expect(403);
+        await f.agent
+          .post(path)
+          .set('Origin', origin)
+          .type('form')
+          .send({ csrf: '00'.repeat(32) })
+          .expect(403);
+        await f.agent
+          .post(path)
+          .set('Origin', origin)
+          .type('form')
+          .send({ csrf: f.csrf, purpose: 'binding' })
+          .expect(400);
+        await f.agent.get(path).expect(405);
+      });
+      it.each(['prisma_admin', 'prisma_identity'])(
+        'blocks switching with presented %s at start and callback',
+        async (name) => {
+          await linked();
+          const f = await flow();
+          await f.agent
+            .post('/api/auth/google/login/start')
+            .set('Cookie', name + '=' + 'a'.repeat(64))
+            .set('Origin', origin)
+            .type('form')
+            .send({ csrf: f.csrf })
+            .expect(409);
+          const callback = await start(f);
+          await f.agent
+            .get(callback.pathname + callback.search)
+            .set('Cookie', name + '=' + 'a'.repeat(64))
+            .expect(409);
+          expect(
+            await db.query('SELECT token_hash FROM identity_sessions WHERE user_id=?', [ids[0]]),
+          ).toHaveLength(0);
+        },
+      );
+      it('concurrent callbacks have one winner', async () => {
+        await linked();
+        const f = await flow();
+        const callback = await start(f);
+        const responses = await Promise.all([
+          f.agent.get(callback.pathname + callback.search),
+          f.agent.get(callback.pathname + callback.search),
+        ]);
+        expect(responses.filter((r) => r.status === 303)).toHaveLength(1);
+        expect(responses.filter((r) => r.status === 400)).toHaveLength(1);
+      });
+      it('keeps binding and login attempts independent in the same browser', async () => {
+        await linked();
+        const f = await flow();
+        const issued = await operator.issue(ids[0], 'replace');
+        const page = await f.agent.get('/vincular-google');
+        const binding = await f.agent
+          .post('/api/auth/google/binding/start')
+          .set('Origin', origin)
+          .type('form')
+          .send({ operationId: issued.operationId, code: issued.code, csrf: csrf(page.text) })
+          .expect(303);
+        const bindingCallback = new URL(
+          f.google.use(binding.headers.location, { claims: { sub: 'replacement' } }),
+        );
+        await f.agent
+          .get(bindingCallback.pathname + bindingCallback.search)
+          .expect(303)
+          .expect('Location', '/vincular-google');
+        const loginCallback = await start(f);
+        await f.agent
+          .get(loginCallback.pathname + loginCallback.search)
+          .expect(303)
+          .expect('Location', '/');
+        expect(
+          (
+            await db.query(
+              "SELECT status FROM identity_oidc_attempts WHERE purpose='binding' AND user_id=?",
+              [ids[0]],
+            )
+          ).some((row) => row.status === 'verified'),
+        ).toBe(true);
+      });
+      it.each(['nonce', 'provider', 'expired', 'browser', 'state'])(
+        'rejects %s before issuing a session',
+        async (mode) => {
+          await linked();
+          const f = await flow();
+          const started = await f.agent
+            .post('/api/auth/google/login/start')
+            .set('Origin', origin)
+            .type('form')
+            .send({ csrf: f.csrf })
+            .expect(303);
+          const callback = new URL(
+            f.google.use(started.headers.location, {
+              fail: mode === 'provider',
+              claims: {
+                sub: 'synthetic-' + ids[0],
+                ...(mode === 'nonce' ? { nonce: 'wrong' } : {}),
+              },
+            }),
+          );
+          if (mode === 'expired')
+            await db.execute(
+              'UPDATE identity_oidc_attempts SET created_at=created_at-300001,expires_at=expires_at-300001 WHERE state_hash=?',
+              [createHash('sha256').update(callback.searchParams.get('state')!).digest('hex')],
+            );
+          if (mode === 'state') callback.searchParams.set('state', 'a'.repeat(43));
+          const caller = mode === 'browser' ? (await flow()).agent : f.agent;
+          const call = caller.get(callback.pathname + callback.search);
+          if (mode === 'browser')
+            call.set('Cookie', 'prisma_login=' + randomUUID() + '.' + 'a'.repeat(43));
+          const result = await call.expect(400);
+          expect(String(result.headers['set-cookie'] || '')).not.toContain('prisma_identity=');
+          expect(
+            await db.query('SELECT token_hash FROM identity_sessions WHERE user_id=?', [ids[0]]),
+          ).toHaveLength(0);
+        },
+      );
+      it('uses Host-prefixed Secure cookies for login in production', async () => {
+        await linked();
+        const old = process.env.NODE_ENV;
+        try {
+          process.env.NODE_ENV = 'production';
+          const google = simulatedGoogle('https://crm.example/api/auth/google/callback');
+          const app = createApp(
+            { store: memorySessions() },
+            {},
+            {},
+            {
+              google: { ...options, redirectUri: 'https://crm.example/api/auth/google/callback' },
+              csrfKey: 'cd'.repeat(32),
+              database: disposableDatabase(),
+              transport: google.transport,
+              loginEnabled: true,
+            },
+          );
+          const session = await request(app).get('/api/auth/session');
+          const csrfCookie = String(session.headers['set-cookie'][0]).split(';')[0];
+          const started = await request(app)
+            .post('/api/auth/google/login/start')
+            .set('Cookie', csrfCookie)
+            .set('Origin', 'https://crm.example')
+            .type('form')
+            .send({ csrf: session.body.googleLogin.csrf })
+            .expect(303);
+          const correlation = String(started.headers['set-cookie'][0]);
+          expect(correlation).toContain('__Host-prisma_login=');
+          expect(correlation).toContain('Secure');
+          expect(correlation).toContain('SameSite=Lax');
+          const callback = new URL(
+            google.use(started.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
+          );
+          const result = await request(app)
+            .get(callback.pathname + callback.search)
+            .set('Cookie', correlation.split(';')[0])
+            .expect(303);
+          expect(String(result.headers['set-cookie'])).toContain('__Host-prisma_identity=');
+          expect(String(result.headers['set-cookie'])).toContain('Secure; SameSite=Strict');
+        } finally {
+          process.env.NODE_ENV = old;
+        }
+      });
+      it('fails closed on database failure without changing legacy session response', async () => {
+        const f = await flow();
+        const callback = await start(f);
+        const spy = vi.spyOn(db, 'query').mockRejectedValue(new Error('synthetic database outage'));
+        const result = await f.agent.get(callback.pathname + callback.search).expect(400);
+        expect(result.text).not.toContain('synthetic database outage');
+        expect(String(result.headers['set-cookie'] || '')).not.toContain('prisma_identity=');
+        spy.mockRestore();
+        expect(f.session.body.authenticated).toBe(false);
+        expect(typeof f.session.body.configured).toBe('boolean');
+      });
     });
     describe('B3 transactional login', () => {
       async function proof(sub = 'synthetic-' + ids[0]) {

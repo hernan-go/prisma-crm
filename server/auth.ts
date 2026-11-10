@@ -87,7 +87,11 @@ export function authentication(options: AuthOptions = {}) {
   router.get('/session', async (req, res) => {
     const authenticated = await valid(req);
     if (authenticated) observeProxy(req);
-    res.json({ authenticated, configured });
+    res.json({
+      authenticated,
+      configured,
+      ...(res.locals.googleLogin ? { googleLogin: res.locals.googleLogin } : {}),
+    });
   });
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,

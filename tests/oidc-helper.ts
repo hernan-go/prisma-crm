@@ -20,7 +20,7 @@ const jwk = {
   use: 'sig',
 };
 const encoded = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
-export function simulatedGoogle() {
+export function simulatedGoogle(redirectUri = developmentCallback) {
   let auth: URL;
   let overrides: Record<string, unknown> = {};
   let algorithm = 'RS256';
@@ -45,10 +45,7 @@ export function simulatedGoogle() {
       auth.searchParams.get('code_challenge')
     )
       return Response.json({ error: 'invalid_grant' }, { status: 400 });
-    if (
-      body.get('redirect_uri') !== developmentCallback ||
-      body.get('grant_type') !== 'authorization_code'
-    )
+    if (body.get('redirect_uri') !== redirectUri || body.get('grant_type') !== 'authorization_code')
       throw Error('Bad grant');
     const now = Math.floor(Date.now() / 1000);
     const claims = {

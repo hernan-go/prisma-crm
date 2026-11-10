@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { createGoogleOidc, type GoogleOidcOptions } from './google-oidc.js';
 import type { CustomFetch } from 'openid-client';
 import { mysqlOidcStore } from './oidc-store.js';
-import { opaque, validOpaque } from './oidc-crypto.js';
+import { digest, opaque, validOpaque } from './oidc-crypto.js';
+import { query as databaseQuery } from './db.js';
+import { completeGoogleLogin } from './identity.js';
 import {
   bindingAttempt,
   bindingContext,
@@ -15,6 +17,8 @@ import {
 } from './binding-operations.js';
 
 export interface BindingHttpOptions {
+  loginEnabled?: boolean;
+  bindingEnabled?: boolean;
   google: GoogleOidcOptions;
   csrfKey: string;
   database: string;
@@ -25,7 +29,8 @@ const submitPath = '/api/auth/google/binding/submit';
 const cancelPath = '/api/auth/google/binding/cancel';
 const callbackPath = '/api/auth/google/callback';
 const pagePath = '/vincular-google';
-const paths = [startPath, submitPath, cancelPath, callbackPath, pagePath];
+const loginPath = '/api/auth/google/login/start';
+const paths = [loginPath, startPath, submitPath, cancelPath, callbackPath, pagePath];
 const generic =
   'No se pudo completar la vinculación. Comprobá la autorización o iniciá un intento nuevo.';
 const escape = (s: string) =>
@@ -67,6 +72,17 @@ export function bindingRouter(options?: BindingHttpOptions) {
     core = undefined;
   }
   const secure = process.env.NODE_ENV === 'production';
+  const loginPrefix = secure ? '__Host-prisma_login' : 'prisma_login';
+  const loginFailure = (res: Response, status = 400) =>
+    res.status(status).json({
+      message:
+        'No se pudo completar el acceso con Google. Cerrá la sesión anterior e iniciá un intento nuevo.',
+    });
+  // Block method/account switching until Block 3 provides authenticated revocation.
+  const hasAdministrativeCookie = (req: Request) =>
+    (req.headers.cookie || '')
+      .split(';')
+      .some((value) => /^(?:__Host-)?prisma_(?:admin|identity)=/.test(value.trim()));
   const prefix = secure ? '__Host-prisma_binding' : 'prisma_binding';
   const cookieOptions = {
     httpOnly: true,
@@ -82,9 +98,9 @@ export function bindingRouter(options?: BindingHttpOptions) {
       .filter((x) => x.startsWith(name + '='));
     return values.length === 1 ? values[0].slice(name.length + 1) : undefined;
   };
-  const csrfFor = (secret: string) =>
+  const csrfFor = (secret: string, purpose = 'binding') =>
     createHmac('sha256', Buffer.from(options!.csrfKey, 'hex'))
-      .update('binding-csrf-v1:' + secret)
+      .update(purpose + '-csrf-v1:' + secret)
       .digest('hex');
   const token = (req: Request, res: Response) => {
     let secret = cookie(req, prefix + '_csrf');
@@ -94,8 +110,8 @@ export function bindingRouter(options?: BindingHttpOptions) {
     }
     return csrfFor(secret);
   };
-  const refCookie = (req: Request) => {
-    const raw = cookie(req, prefix);
+  const refCookie = (req: Request, name = prefix) => {
+    const raw = cookie(req, name);
     if (!raw || !/^[a-f0-9-]{36}\.[A-Za-z0-9_-]{43}$/.test(raw)) throw Error();
     const [id, browserToken] = raw.split('.');
     return { id, browserToken };
@@ -110,6 +126,23 @@ export function bindingRouter(options?: BindingHttpOptions) {
       await bindingPreflight(options!.database);
       await bindingMaintenance();
     })());
+  router.get('/api/auth/session', async (req, res, next) => {
+    if (options?.loginEnabled) res.locals.googleLogin = { available: false };
+    if (core && options?.loginEnabled) {
+      try {
+        await initialize();
+        let secret = cookie(req, loginPrefix + '_csrf');
+        if (!secret || !validOpaque(secret)) {
+          secret = opaque();
+          res.cookie(loginPrefix + '_csrf', secret, cookieOptions);
+        }
+        res.locals.googleLogin = { available: true, csrf: csrfFor(secret, 'login') };
+      } catch {
+        /* Legacy availability is independent. */
+      }
+    }
+    next();
+  });
   router.use((req, res, next) => {
     if (!paths.includes(req.path)) {
       const path = req.path.toLowerCase();
@@ -124,6 +157,9 @@ export function bindingRouter(options?: BindingHttpOptions) {
       'Content-Security-Policy':
         "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",
     });
+    if (req.path === loginPath && (!core || !options?.loginEnabled)) return loginFailure(res, 503);
+    if (req.path !== callbackPath && req.path !== loginPath && options?.bindingEnabled === false)
+      return res.status(503).type('html').send(html('', 'disabled'));
     if (!core) return res.status(503).type('html').send(html('', 'disabled'));
     initialize().then(
       () => next(),
@@ -148,7 +184,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
     handler: (_req, res) => res.status(429).type('html').send(html('', 'error')),
   });
   router.use(
-    [startPath, submitPath, cancelPath],
+    [loginPath, startPath, submitPath, cancelPath],
     urlencoded({ extended: false, limit: '4kb', inflate: false, parameterLimit: 4 }),
   );
   router.use([startPath, submitPath, cancelPath], (req, res, next) => {
@@ -232,16 +268,45 @@ export function bindingRouter(options?: BindingHttpOptions) {
         .send(html(token(req, res), 'error'));
     }
   });
+  router.post(loginPath, limit(10), globalStarts, async (req, res) => {
+    try {
+      if (hasAdministrativeCookie(req)) return loginFailure(res, 409);
+      if (
+        req.get('origin') !== origin ||
+        (req.get('sec-fetch-site') && req.get('sec-fetch-site') !== 'same-origin')
+      )
+        return loginFailure(res, 403);
+      const body = z
+        .object({ csrf: z.string().regex(/^[a-f0-9]{64}$/) })
+        .strict()
+        .parse(req.body);
+      const secret = cookie(req, loginPrefix + '_csrf');
+      if (
+        !secret ||
+        !validOpaque(secret) ||
+        !timingSafeEqual(
+          Buffer.from(body.csrf, 'hex'),
+          Buffer.from(csrfFor(secret, 'login'), 'hex'),
+        )
+      )
+        return loginFailure(res, 403);
+      const started = await core!.begin({ purpose: 'login' });
+      res.cookie(loginPrefix, started.attemptId + '.' + started.browserToken, cookieOptions);
+      res.redirect(303, started.authorizationUrl);
+    } catch {
+      loginFailure(res);
+    }
+  });
   let exchanging = 0;
   router.get(callbackPath, limit(30), async (req, res) => {
     let active = false;
+    let login = false;
     try {
       if (exchanging >= 2)
         return res
           .status(429)
           .type('html')
           .send(html(token(req, res), 'error'));
-      const ref = refCookie(req);
       const separator = req.originalUrl.indexOf('?');
       const query = separator < 0 ? '' : req.originalUrl.slice(separator + 1);
       if (query.length > 8192) throw Error();
@@ -252,14 +317,52 @@ export function bindingRouter(options?: BindingHttpOptions) {
       // must not all pass the availability check and later exceed the exchange cap.
       exchanging++;
       active = true;
-      const attempt = await bindingAttempt(ref.id, ref.browserToken, states[0]);
+      const [persisted] = await databaseQuery<{
+        id: string;
+        browser_hash: string;
+        purpose: string;
+      }>(
+        "SELECT id,browser_hash,purpose FROM identity_oidc_attempts WHERE state_hash=? AND application='crm' AND provider='google'",
+        [digest(states[0])],
+      );
+      if (!persisted || !['binding', 'login'].includes(persisted.purpose)) throw Error();
+      login = persisted.purpose === 'login';
+      if ((login && !options?.loginEnabled) || (!login && options?.bindingEnabled === false))
+        throw Error();
+      const ref = refCookie(req, login ? loginPrefix : prefix);
+      if (persisted.id !== ref.id || persisted.browser_hash !== digest(ref.browserToken))
+        throw Error();
+      if (login && hasAdministrativeCookie(req)) return loginFailure(res, 409);
+      const attempt = login
+        ? { context: { purpose: 'login' as const } }
+        : await bindingAttempt(ref.id, ref.browserToken, states[0]);
       await core!.complete(
         options!.google.redirectUri + '?' + query,
         ref.browserToken,
         attempt.context,
       );
+      if (login) {
+        const session = await completeGoogleLogin(
+          core!.evidenceReference(ref.id, ref.browserToken, attempt.context),
+        );
+        res.cookie(secure ? '__Host-prisma_identity' : 'prisma_identity', session.token, {
+          httpOnly: true,
+          secure,
+          path: '/',
+          sameSite: 'strict',
+          maxAge: Math.max(0, session.expiresAt - Date.now()),
+        });
+        res.clearCookie(loginPrefix, cookieOptions);
+        res.clearCookie(loginPrefix + '_csrf', cookieOptions);
+        return res.redirect(303, '/');
+      }
       res.redirect(303, pagePath);
     } catch {
+      if (login) {
+        res.clearCookie(loginPrefix, cookieOptions);
+        res.clearCookie(loginPrefix + '_csrf', cookieOptions);
+        return loginFailure(res);
+      }
       res
         .status(400)
         .type('html')
@@ -319,8 +422,11 @@ export function bindingRouter(options?: BindingHttpOptions) {
 }
 export function bindingEnvironment(): BindingHttpOptions | undefined {
   try {
-    if (process.env.BINDING_ENABLED !== 'true') return undefined;
+    if (process.env.BINDING_ENABLED !== 'true' && process.env.GOOGLE_LOGIN_ENABLED !== 'true')
+      return undefined;
     return {
+      loginEnabled: process.env.GOOGLE_LOGIN_ENABLED === 'true',
+      bindingEnabled: process.env.BINDING_ENABLED === 'true',
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -336,7 +442,8 @@ export function bindingEnvironment(): BindingHttpOptions | undefined {
   }
 }
 export function startBindingMaintenance() {
-  if (process.env.BINDING_ENABLED !== 'true') return () => {};
+  if (process.env.BINDING_ENABLED !== 'true' && process.env.GOOGLE_LOGIN_ENABLED !== 'true')
+    return () => {};
   let running = false;
   const run = async () => {
     if (running) return;
