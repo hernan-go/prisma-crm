@@ -1,5 +1,11 @@
 # PRISMA CRM — Estado actual
 
+## SEC-01 — parser HTTP corregido localmente (10/11/2026)
+
+Corrección independiente implementada y validada, sin commit ni publicación, sobre `b5040171f222f5bc8bce86eb88818b311877cae4`. Express 5.2.1 incorpora ahora `body-parser@2.4.0` mediante actualización transitiva puntual del lockfile; `qs` pasa a 6.17.1 para satisfacer el nuevo requisito. Sin cambios en package.json, middleware ni contratos HTTP. El aviso GHSA-27r3-jxmh-p828 confirma 2.4.0 como corregida.
+
+Typecheck, lint y build aprobados; suite sin MySQL: 684 aprobadas y 255 omitidas, incluidas diez regresiones HTTP nuevas. Prueba coordinada de bytes tardíos tras finalizar el decoder aprobada. Las bases conservadas, B2/B3/B4 y el Paso 3C no se modificaron; GitHub Actions y producción no se validaron en esta intervención. Detalle, límites y tratamiento HTTP previo de errores en [SEC-01](iterations/2026-11-sec-01-http-parser.md). Las menciones anteriores a body-parser pendiente quedan superadas exclusivamente para esta corrección local; su publicación continúa pendiente.
+
 ## Paso 3C — protección de integraciones (10/11/2026)
 
 Implementado en working tree local, sin commit ni publicación: acreditación central de conexiones MySQL de Vitest, destino CI efímero explícito y protección de limpieza QA. La revisión final detectó concurrencia entre reset, migraciones y lecturas en la fase general: corregida mediante matriz secuencial con servicio MySQL nuevo por suite y baseline sintético propio para Estadísticas anual. Las cuatro bases locales se conservan, incluida prisma_test con las vinculaciones reales de Hernán y Jesica. Las menciones históricas a prisma_test como descartable no autorizan nuevas corridas. Procedimiento único: [WORKFLOW §6](WORKFLOW.md#6-tests-db).
