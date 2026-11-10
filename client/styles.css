@@ -1168,6 +1168,22 @@ summary .chip {
 .login-card button {
   width: 100%;
 }
+.login-card .auth-options {
+  display: grid;
+  gap: 12px;
+}
+.legacy-login {
+  border-top: 1px solid var(--color-divider);
+  margin-top: 24px;
+  padding-top: 16px;
+}
+.legacy-login h2 {
+  font-size: 1rem;
+}
+.auth-session .session-name {
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+}
 @media (max-width: 700px) {
   .period-control {
     flex-wrap: wrap;

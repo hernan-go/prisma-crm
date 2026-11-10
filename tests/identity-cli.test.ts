@@ -8,17 +8,19 @@ const mocks = vi.hoisted(() => ({
   inspect: vi.fn(),
   approve: vi.fn(),
   issue: vi.fn(),
+  revokeSessions: vi.fn(),
 }));
 vi.mock('node:readline/promises', () => ({
   createInterface: () => ({ question: mocks.question, close: mocks.close }),
 }));
 vi.mock('../server/binding-operations', () => ({ operatorBindings: () => mocks }));
+vi.mock('../server/identity', () => ({ revokeIdentitySessions: mocks.revokeSessions }));
 import { runIdentityCli } from '../server/identity-cli';
 const inputDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
 const outputDescriptor = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
 const previousDatabase = process.env.DB_NAME;
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mocks.preflight.mockResolvedValue({ database: 'prisma_test' });
   process.env.DB_NAME = 'prisma_test';
   Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
@@ -71,3 +73,67 @@ it('never issues an authorization after preflight failure', async () => {
   await expect(runIdentityCli(['issue', 'prisma_test', 'uuid', 'initial'])).rejects.toThrow();
   expect(mocks.issue).not.toHaveBeenCalled();
 });
+
+const userId = '14b609bf-95b3-4aa1-8134-b06cc56b36e1';
+it('revokes only the confirmed user, rechecks destination and safely permits repetition', async () => {
+  mocks.question.mockResolvedValue(`CONFIRM prisma_test revoke-sessions ${userId}`);
+  await runIdentityCli(['revoke-sessions', 'prisma_test', userId]);
+  await runIdentityCli(['revoke-sessions', 'prisma_test', userId]);
+  expect(mocks.revokeSessions.mock.calls).toEqual([
+    [userId, null],
+    [userId, null],
+  ]);
+  expect(mocks.preflight).toHaveBeenCalledTimes(4);
+  expect(console.log).toHaveBeenCalledWith('Individual sessions revoked for the confirmed user.');
+  expect(mocks.close).toHaveBeenCalledTimes(2);
+});
+it.each(['no', 'CONFIRM prisma_test revoke-sessions', `CONFIRM wrong revoke-sessions ${userId}`])(
+  'refuses incomplete or incorrect recovery confirmation: %s',
+  async (answer) => {
+    mocks.question.mockResolvedValueOnce(answer);
+    await expect(runIdentityCli(['revoke-sessions', 'prisma_test', userId])).rejects.toThrow(
+      'Cancelled',
+    );
+    expect(mocks.revokeSessions).not.toHaveBeenCalled();
+    expect(mocks.close).toHaveBeenCalled();
+  },
+);
+it.each([[], ['invalid'], [userId, 'extra']])(
+  'rejects invalid recovery arguments %j',
+  async (...values) => {
+    await expect(runIdentityCli(['revoke-sessions', 'prisma_test', ...values])).rejects.toThrow();
+    expect(mocks.revokeSessions).not.toHaveBeenCalled();
+    expect(mocks.question).not.toHaveBeenCalled();
+  },
+);
+it('refuses recovery without terminal authority or explicit matching destination', async () => {
+  for (const args of [['revoke-sessions'], ['revoke-sessions', 'wrong', userId]]) {
+    await expect(runIdentityCli(args)).rejects.toThrow();
+  }
+  Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+  await expect(runIdentityCli(['revoke-sessions', 'prisma_test', userId])).rejects.toThrow();
+  expect(mocks.preflight).not.toHaveBeenCalled();
+  expect(mocks.revokeSessions).not.toHaveBeenCalled();
+});
+it('does not revoke when the verified destination changes while awaiting confirmation', async () => {
+  mocks.question.mockResolvedValueOnce(`CONFIRM prisma_test revoke-sessions ${userId}`);
+  mocks.preflight
+    .mockResolvedValueOnce({ database: 'prisma_test' })
+    .mockRejectedValueOnce(Error('Wrong database'));
+  await expect(runIdentityCli(['revoke-sessions', 'prisma_test', userId])).rejects.toThrow(
+    'Wrong database',
+  );
+  expect(mocks.revokeSessions).not.toHaveBeenCalled();
+});
+it.each(['Identidad inexistente.', 'MySQL unavailable'])(
+  'reports no recovery success after %s',
+  async (message) => {
+    mocks.question.mockResolvedValueOnce(`CONFIRM prisma_test revoke-sessions ${userId}`);
+    mocks.revokeSessions.mockRejectedValueOnce(Error(message));
+    await expect(runIdentityCli(['revoke-sessions', 'prisma_test', userId])).rejects.toThrow(
+      message,
+    );
+    expect(console.log).not.toHaveBeenCalled();
+    expect(mocks.close).toHaveBeenCalled();
+  },
+);

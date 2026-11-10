@@ -7,6 +7,16 @@ export class ApiError extends Error {
     super(message);
   }
 }
+export interface AuthSession {
+  authenticated: boolean;
+  configured: boolean;
+  method?: 'identity' | 'legacy' | null;
+  identity?: { userId: string; displayName: string; roles: string[] } | null;
+  expiresAt?: number | null;
+  status?: 'authenticated' | 'anonymous' | 'invalid' | 'conflict' | 'unavailable';
+  legacy?: { available: boolean };
+  googleLogin?: { available: boolean; csrf?: string };
+}
 export function download(content: string, filename: string) {
   const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
   const link = document.createElement('a');
@@ -23,8 +33,16 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
     body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
   });
   const data = await r.json();
-  if (r.status === 401 && !path.startsWith('/auth/'))
+  if (typeof window !== 'undefined' && r.status === 401 && !path.startsWith('/auth/'))
     window.dispatchEvent(new Event('session-expired'));
+  // A business conflict/outage is not necessarily an authentication failure.
+  // Ask the gate to verify /auth/session before changing access methods.
+  if (
+    typeof window !== 'undefined' &&
+    (r.status === 409 || r.status === 503) &&
+    !path.startsWith('/auth/')
+  )
+    window.dispatchEvent(new Event('session-check'));
   if (!r.ok)
     throw new ApiError(
       data.message || 'No se pudo completar la operación.',

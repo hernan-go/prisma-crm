@@ -76,21 +76,21 @@ Completada, publicada y validada visualmente en producción, según confirmació
 
 Validación local de cierre: typecheck, lint, 169 pruebas, build y diff check aprobados; 157 integraciones DB omitidas. Sin migraciones SQL nuevas. Codex no realizó verificaciones productivas adicionales ni auditorías de datos. [Registro de cierre e historial](iterations/2026-10-maintenance.md). La siguiente iteración funcional no reabre la iteración 7.
 
-## Pendiente de desarrollo — Autenticación con Google
+## Implementación local; habilitación pendiente — Autenticación con Google
 
-Decisión de producto confirmada expresamente por el propietario: PRISMA CRM incorporará inicio de sesión mediante una cuenta de Google. Es una funcionalidad decidida y pendiente de desarrollo, no una posibilidad opcional.
+Decisión de producto confirmada por el propietario. Al 10/11/2026, fundamentos y backend B1–B3 publicados con CI aprobado según su confirmación; recuperación administrativa B4 e interfaz Google B5 implementadas localmente, pendientes de revisión/commit. No equivale a habilitación ni despliegue productivo. [Estado y pasos operativos](iterations/2026-11-google-login.md#bloques-4-y-5--entrega-local-10112026).
 
-Alcance preliminar:
+Alcance vigente:
 
 - Inicio de sesión mediante Google.
 - OAuth 2.0 y OpenID Connect.
 - Acceso restringido a usuarios expresamente autorizados.
 - Verificación segura de identidad y sesiones.
-- Evaluación del reemplazo o convivencia temporal con la contraseña administrativa actual.
+- Convivencia temporal explícita con la contraseña compartida y retirada posterior autorizada.
 - Evitar servicios pagos de autenticación cuando exista una implementación directa adecuada sin tarifa adicional.
 - Mantener el sistema específico de PRISMA, sin convertirlo en un SaaS multiempresa.
 
-El diseño técnico definitivo todavía debe realizarse. No están decididos la arquitectura, el esquema de usuarios, el mecanismo de sesiones ni posibles migraciones. No se implementa autenticación en este cierre documental ni se modifica la autenticación actual.
+Pendientes: preparar/aplicar controladamente 020 y comprobar intentos históricos sin asociación en el entorno elegido; configuración/habilitación efectiva; aceptación visual y pruebas reales de Hernán y Jesica; retirada del acceso compartido e integración/despliegue autorizados. No se implementa Google para facilitadores en esta entrega ni se decide su mecanismo futuro.
 
 ## Pendiente — Definición del resultado económico mensual
 

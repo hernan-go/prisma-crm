@@ -1,6 +1,61 @@
 # Iteración 12.2.B3 — login Google individual
 
-## Corrección definitiva de logout — 10/11/2026
+## Bloques 4 y 5 — entrega local 10/11/2026
+
+Base inicial verificada: rama `codex/iteration-12-identity-foundations`, HEAD `537c573cd5fc6d344427b6173ba1c3a5f893f43d`, sin cambios locales. El pedido confirma publicación de Bloques 1–3 y Actions #70, #71 y #72 aprobados; B3 cerró con 700 pruebas sin MySQL y 251 integraciones MySQL. Esa confirmación supera el estado histórico de publicación pendiente inferior. No se reiteraron auditorías, investigación de concurrencia ni integraciones cerradas.
+
+Plan aplicado en esta sesión: (1) ampliar únicamente `server/identity-cli.ts` con confirmación específica y pruebas de recuperación; (2) integrar Google/sesión/logout en `client/Auth.tsx`, contrato tipado y eventos en `client/api.ts`, estilos acotados y pruebas sintéticas; (3) actualizar estos documentos, ejecutar controles y revisar el diff. Sin archivos adicionales de planificación, nuevas capas, endpoints, migraciones o dependencias.
+
+### Bloque 4 — recuperación administrativa
+
+Comando operativo, **solo después de autorizar el destino real**:
+
+```powershell
+npm run identity:admin -- revoke-sessions <base_verificada> <UUID_usuario>
+```
+
+`DB_NAME` debe coincidir con la base escrita en el comando. La CLI conserva el preflight existente que coteja `SELECT DATABASE()`, migraciones 017–019 y estructura de identidad; no exige Google habilitado ni 020 para revocar. Requiere stdin y stdout TTY, acceso privilegiado al proceso/DB y esta frase exacta, sin opciones no interactivas:
+
+```text
+CONFIRM <base_verificada> revoke-sessions <UUID_usuario>
+```
+
+Valida aridad/UUID y vuelve a verificar la conexión después de la confirmación. Llama `revokeIdentitySessions(userId, null)` sin otro servicio: usuario existente bajo bloqueo, todas sus sesiones individuales revocadas y evento `sessions.revoked` en la misma transacción. `actor_id=NULL` representa la operación local privilegiada, sin atribuir identidad del sistema operativo no verificada. Repetir conserva la revocación y registra el nuevo acto; no cambia otras identidades ni vínculos Google. La salida de este comando solo confirma éxito después del commit y no contiene tokens, hashes ni secretos. Un error de existencia/preflight/DB no produce confirmación de éxito; el entrypoint mantiene su error público genérico y código de salida 1.
+
+Pruebas CLI: comando válido/repetición, confirmación incorrecta o incompleta, UUID/aridad, terminal no interactiva, destino omitido/distinto, cambio de destino mientras se confirma, inexistencia y fallo DB simulado. Se usa un doble del servicio ya probado en B3; **no es una nueva ejecución MySQL de revocación**. El contrato individual/masivo y la auditoría siguen en el servicio preexistente sin modificaciones; no se reabren sus pruebas cerradas. No se ejecutó el comando sobre datos reales.
+
+El acceso compartido permanece durante la transición. Revocar sesiones individuales no impide nuevos logins de un usuario habilitado ni invalida la contraseña compartida: ante compromiso de credenciales/vínculo se necesita la operación supervisada correspondiente. No se presenta la permanencia de legacy como recuperación definitiva ni se lo retira automáticamente.
+
+### Bloque 5 — interfaz de autenticación
+
+Google se muestra solo si `/api/auth/session` entrega `googleLogin.available=true` y CSRF. El formulario tiene `method=post`, `action=/api/auth/google/login/start` y campo oculto `csrf`; no intercepta submit ni usa fetch para iniciar OAuth. Conserva POST/Origin/CSRF/303/callback/cookies del backend sin modificaciones. La sesión `authenticated=true` permite entrar también con `configured=false` (solo indica configuración legacy). El nombre de identidad aparece junto a logout, tanto en sidebar como en menú móvil mediante el componente compartido existente.
+
+La contraseña queda en un formulario separado rotulado «Acceso compartido temporal», cuando el servidor informa configuración legacy disponible. Un fallo Google no inicia legacy automáticamente. Credencial inválida, 401 y conflicto 409 ofrecen verificación/logout antes de mostrar métodos; 503 o fallo de consulta muestra indisponibilidad y reintento. Un 409/503 de una operación de negocio pide consultar sesión: si sigue válida se mantiene el acceso; no se interpreta ese código aislado como conflicto de autoridades. Un error de reconsulta no permite usar datos autenticados anteriores como autoridad. El 401 de contraseña incorrecta conserva la corrección del formulario legacy y borra la contraseña.
+
+Login legacy y logout exitosos cancelan consultas, retiran caché privada y reinician la consulta de autenticación. Logout falla visible y no declara cierre ni limpia caché si el backend rechaza la revocación. No hay tokens de sesión en el frontend, almacenamiento local de credenciales, nuevos endpoints ni cambios en roles, vinculación supervisada, correlación B3 o vencimiento absoluto de ocho horas. Estilos usan los colores y la estructura actuales, con nombres largos ajustables y controles HTML accesibles.
+
+Pruebas de renderizado y handlers: disponibilidad Google/CSRF, contrato nativo del formulario, identidad válida/nombre sin legacy obligatorio, compatibilidad legacy, 401/409/503, errores de negocio con sesión válida, login explícito y limpieza de contraseña, logout exitoso/fallido y reinicio de caché. Los hooks React/TanStack se simulan: cubren ramas/contratos, **no acreditan montaje en navegador, envío HTTP real, redirección Google ni efectos completos del caché real**.
+
+### Validación y límites
+
+Pruebas focalizadas previas al formato: **33 aprobadas, cero fallidas**, 15 CLI y 18 interfaz. Se observaron fallos antes de implementar los requisitos nuevos y el borde sin CSRF. La primera suite completa detectó una regresión de renderizado SSR (`window` ausente al emitir el nuevo evento 503); corregida con detección de entorno antes de eventos, sin alterar la prueba existente.
+
+Controles finales después de formato: **typecheck, lint, build y diff-check aprobados**; suite completa sin MySQL **729 aprobadas, cero fallidas y 305 omitidas** (54 archivos aprobados, 15 omitidos). Las omisiones no son aceptación DB. Avisos conocidos Rollup/Zod y conversión LF→CRLF, sin cambiar configuración Git. Revisión independiente del diff B4/B5 sin defectos materiales confirmados; remarca el límite de hooks simulados. No se ejecutan integraciones MySQL nuevas porque los cambios solo componen servicios/contratos existentes; no se crea infraestructura ni se aplican migraciones. No se accede a bases conservadas ni producción. El EPERM inicial de caché Vitest en sandbox requirió ejecución autorizada fuera del sandbox mediante `test:unit`, con todas las flags MySQL deshabilitadas por el runner.
+
+**Dictamen: APTO para revisión y eventual commit local; PENDIENTE para aceptación visual/Google real y habilitación operativa.** Ocho archivos modificados y uno nuevo (`tests/auth-ui.test.tsx`); índice vacío, HEAD intacto. Sin staging, commits, push, merge, PR ni despliegue. Se revirtió únicamente el reformateo ajeno al alcance que Prettier había introducido en la tabla histórica del roadmap.
+
+**Aceptación visual real pendiente**, conforme al alcance solicitado y WORKFLOW §7: no se inició backend, MySQL ni navegador contra datos conservados. Cuando exista entorno habilitado, revisar escritorio 1440×900, tablet 768×1024 y móvil 390×844, teclado/foco/etiquetas, nombre largo, carga, error, Google disponible/no disponible, sesión vencida, conflicto y cierre/reintento; inspeccionar consola/red. Estas comprobaciones no quedan sustituidas por SSR ni por build.
+
+### Primera prueba manual con Google — autorización posterior necesaria
+
+1. Elegir y autorizar expresamente el entorno/DB. No usar una suite destructiva en las cuatro bases conservadas. Preparar respaldo/preflight y aplicar `020.sql` de manera controlada según WORKFLOW §8, verificando registro y estructura. 017–019 son inmutables; no repetir bootstrap ni modificar las vinculaciones reales.
+2. Verificar con lectura autorizada si existen intentos login consumidos sin `issued_session_hash`; preparar transición explícita si aparecen. No reconstruir asociaciones por inferencia ni asumir ausencia por las pruebas sintéticas.
+3. Revisar privadamente configuración Google/OIDC existente, URI exacta de callback y origen permitido. `BINDING_DB_NAME` debe corresponder al destino y estar listo el esquema; verificar claves OIDC y `BINDING_CSRF_KEY` sin imprimir valores. Activar `GOOGLE_LOGIN_ENABLED=true` en el entorno elegido; es independiente de `BINDING_ENABLED`. No se configuraron credenciales en esta sesión.
+4. Seguir WORKFLOW §7: comprobar procesos/puertos, iniciar solo servicios necesarios con el launcher local autorizado y verificar HTTP antes de abrir `http://localhost:5173/login`. No cambiar puertos/origen silenciosamente. No arrancar el launcher habitual antes de autorizar la DB que utiliza.
+5. Con navegador sin sesión administrativa previa, ingresar mediante el botón Google con Hernán y después con Jesica. Comprobar POST con CSRF y 303, nombre correcto, rutas administrativas y logout; confirmar que una ruta protegida ya no autoriza tras salir. Si aparece conflicto, usar logout antes de seleccionar método; si falla, reintentar sin asumir éxito. Verificar convivencia legacy mediante acción explícita, sin fallback.
+6. Revisar el diff y autorizar commit/integración posteriores; retirar después el acceso compartido por decisión expresa y coordinar despliegue. Esta entrega no autoriza producción ni pruebas reales en bases conservadas. Facilitadores fuera de alcance, sin descartar una ampliación posterior con permisos propios.
+
+## Antecedente — corrección definitiva de logout — 10/11/2026
 
 Autorización de continuidad del trabajo `PRISMA_2026-11-10_0142_ITER-12.2.B3_Login-Google`: implementar exclusivamente la relación persistente aprobada y cerrar la aceptación local. Se preservaron los cambios previos, rama y HEAD `cdacb5235c4bac321b099a63be61aee7395e10e5`. Los diagnósticos NO APTO inferiores son antecedentes superados para las sesiones emitidas con la nueva asociación.
 

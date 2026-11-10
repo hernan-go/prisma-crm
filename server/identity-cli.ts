@@ -4,6 +4,8 @@ import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 import { pool } from './db.js';
 import { operatorBindings } from './binding-operations.js';
+import { revokeIdentitySessions } from './identity.js';
+import { z } from 'zod';
 
 export async function runIdentityCli(args: string[]) {
   // No commands accepted over HTTP. OS access to this process and DB is the authority.
@@ -19,12 +21,23 @@ export async function runIdentityCli(args: string[]) {
   const operator = operatorBindings(database);
   await operator.preflight();
   const terminal = createInterface({ input: process.stdin, output: process.stdout });
-  const confirm = async (label: string) => {
-    const phrase = `CONFIRM ${database} ${command}`;
+  const confirm = async (label: string, userId?: string) => {
+    const phrase = `CONFIRM ${database} ${command}${userId ? ` ${userId}` : ''}`;
     if ((await terminal.question(`${label}\nType ${phrase}: `)) !== phrase)
       throw Error('Cancelled.');
   };
   try {
+    if (command === 'revoke-sessions') {
+      if (values.length !== 1) throw Error('Expected one user UUID.');
+      const userId = z.string().uuid().parse(values[0]);
+      await confirm(`Revoke ALL individual sessions for user ${userId} in ${database}?`, userId);
+      // Recheck after human input. The service verifies existence under lock and
+      // commits revocation and sessions.revoked audit together (NULL = operator).
+      await operator.preflight();
+      await revokeIdentitySessions(userId, null);
+      console.log('Individual sessions revoked for the confirmed user.');
+      return;
+    }
     if (command === 'preflight') {
       console.log({ database, schema: '017–019 ready' });
       return;
@@ -85,7 +98,7 @@ export async function runIdentityCli(args: string[]) {
       return;
     }
     throw Error(
-      'Commands: preflight, status, prepare, configure, issue, inspect, approve, revoke, maintain.',
+      'Commands: preflight, status, prepare, configure, issue, inspect, approve, revoke, revoke-sessions, maintain.',
     );
   } finally {
     terminal.close();
