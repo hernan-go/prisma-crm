@@ -1,5 +1,11 @@
 # PRISMA CRM — Estado actual
 
+## 12.2.B3 — Bloque 1 local (10/11/2026)
+
+Núcleo interno pendiente de commit. completeGoogleLogin recibe la referencia de evidencia de B1 y revalida el vínculo supervisado, estado y rol bajo bloqueo institucional. Consumo, sesión CRM de ocho horas absolutas y auditoría comparten transacción. Transporte, guard, CLI y frontend quedan pendientes. Se mantiene la convivencia con el acceso compartido hasta B4. Sin publicación.
+
+Aceptación MySQL del Bloque 1 completada el 10/11/2026: `tests/binding-b2-db.test.ts`, 24 aprobadas, cero fallidas y cero omitidas, incluidos los siete casos nuevos. Instancia independiente MySQL 8.4.11, puerto temporal 58811, esquema `prisma_disposable_b3`, UUID `9c0d4224-dcd2-11f1-ba93-ec4c8cf2114b`, marcador Paso 3C y usuario limitado al esquema. Migraciones 001–019 y fixtures exclusivamente sintéticos. Pasaron emisión única concurrente/hash/TTL, rechazo de subject desconocido/propósito cruzado/vencimiento, rollback de inserción de sesión y auditoría, y carreras con suspensión/retiro de rol/reemplazo. Proceso detenido y datadir temporal eliminado al terminar. Sin cambios de código durante la aceptación ni acceso a bases conservadas. No equivale a CI remoto aprobado. Remoto consultado: main en 77c451983167bdc008098654a9b4b8fad55ff1a0; rama de trabajo aún ausente. El workflow local ejecutará los siete casos en su entrada B2; la configuración externa de despliegue SiteGround requiere confirmación del propietario antes de publicar la rama.
+
 ## SEC-01 — parser HTTP corregido localmente (10/11/2026)
 
 Corrección independiente implementada y validada, sin commit ni publicación, sobre `b5040171f222f5bc8bce86eb88818b311877cae4`. Express 5.2.1 incorpora ahora `body-parser@2.4.0` mediante actualización transitiva puntual del lockfile; `qs` pasa a 6.17.1 para satisfacer el nuevo requisito. Sin cambios en package.json, middleware ni contratos HTTP. El aviso GHSA-27r3-jxmh-p828 confirma 2.4.0 como corregida.

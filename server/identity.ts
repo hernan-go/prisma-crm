@@ -3,6 +3,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { execute, query, transaction, type Connection } from './db.js';
+import { mysqlOidcStore, type EvidenceReference } from './oidc-store.js';
 import { AppError } from './errors.js';
 import { identityMutation, lockInstitution } from './identity-policy.js';
 
@@ -197,6 +198,53 @@ export async function setIdentityRole(
     await audit(db, userId, actor, (granted ? 'role.granted.' : 'role.revoked.') + role);
   });
 }
+async function insertSession(db: Connection, userId: string, application: string, ttlMs: number) {
+  const token = randomBytes(32).toString('hex');
+  const created = Number(
+      (
+        await query(
+          'SELECT CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED) AS now',
+          [],
+          db,
+        )
+      )[0].now,
+    ),
+    expires = created + ttlMs;
+  await execute(
+    'INSERT INTO identity_sessions(token_hash,user_id,application,created_at,expires_at) VALUES (?,?,?,?,?)',
+    [sessionDigest(token), userId, application, created, expires],
+    db,
+  );
+  await audit(db, userId, userId, 'session.created');
+  return { token, expiresAt: expires };
+}
+/** Internal callback consumer. Only persisted, verified login evidence authorizes issuance. */
+export async function completeGoogleLogin(reference: EvidenceReference) {
+  const deny = () => new AppError(403, 'Acceso no habilitado.');
+  if (reference?.context?.purpose !== 'login') throw deny();
+  return transaction(async (db) => {
+    const institution = await lockInstitution(db);
+    if (!institution?.initialized) throw deny();
+    // Snapshot lookup is only a hint. Recheck the account under the institutional/user locks.
+    const [hint] = await query<{ user_id: string }>(
+      "SELECT e.user_id FROM identity_oidc_attempts a JOIN identity_external_accounts e ON e.provider=a.provider AND e.subject=a.subject WHERE a.id=? AND a.status='verified' AND a.purpose='login' AND a.application='crm' AND a.provider='google'",
+      [reference.id],
+      db,
+    );
+    if (!hint || ![institution.admin_one, institution.admin_two].includes(hint.user_id))
+      throw deny();
+    const user = await lockedUser(hint.user_id, db);
+    if (!permits(user, 'admin')) throw deny();
+    const [account] = await query<{ subject: string }>(
+      "SELECT subject FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
+      [user.id],
+      db,
+    );
+    const proof = await mysqlOidcStore().consumeEvidence(db, reference);
+    if (!account || account.subject !== proof.subject) throw deny();
+    return insertSession(db, user.id, 'crm', 8 * 60 * 60 * 1000);
+  });
+}
 export async function createIdentitySession(userId: string, application: string, ttlMs: number) {
   idSchema.parse(userId);
   applicationSchema.parse(application);
@@ -204,16 +252,7 @@ export async function createIdentitySession(userId: string, application: string,
   return transaction(async (db) => {
     const user = await lockedUser(userId, db);
     if (!permits(user, 'admin')) throw new AppError(403, 'Acceso no habilitado.');
-    const token = randomBytes(32).toString('hex');
-    const created = Date.now(),
-      expires = created + ttlMs;
-    await execute(
-      'INSERT INTO identity_sessions(token_hash,user_id,application,created_at,expires_at) VALUES (?,?,?,?,?)',
-      [sessionDigest(token), userId, application, created, expires],
-      db,
-    );
-    await audit(db, userId, userId, 'session.created');
-    return { token, expiresAt: expires };
+    return insertSession(db, userId, application, ttlMs);
   });
 }
 export async function authenticateIdentitySession(
@@ -230,17 +269,12 @@ export async function authenticateIdentitySession(
   if (!hint) return undefined;
   return transaction(async (db) => {
     const user = await lockedUser(hint.user_id, db);
-    const [session] = await query<{ expires_at: number; revoked_at: number | null }>(
-      'SELECT expires_at,revoked_at FROM identity_sessions WHERE token_hash=? AND user_id=? AND application=? FOR UPDATE',
+    const [session] = await query<{ live: number; revoked_at: number | null }>(
+      'SELECT expires_at>CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED) AS live,revoked_at FROM identity_sessions WHERE token_hash=? AND user_id=? AND application=? FOR UPDATE',
       [hash, user.id, application],
       db,
     );
-    if (
-      !session ||
-      session.revoked_at !== null ||
-      Number(session.expires_at) <= Date.now() ||
-      !permits(user, 'admin')
-    )
+    if (!session || session.revoked_at !== null || !session.live || !permits(user, 'admin'))
       return undefined;
     return user;
   });

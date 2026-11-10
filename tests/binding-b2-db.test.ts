@@ -128,6 +128,94 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       await operator.prepare(ids);
       owned = true;
     });
+    describe('B3 transactional login', () => {
+      async function proof(sub = 'synthetic-' + ids[0]) {
+        const google = simulatedGoogle();
+        const core = createGoogleOidc(options, mysqlOidcStore(), google.transport);
+        const context = { purpose: 'login' as const };
+        const a = await core.begin(context);
+        await core.complete(
+          google.use(a.authorizationUrl, { claims: { sub, email: 'same@example.invalid' } }),
+          a.browserToken,
+          context,
+        );
+        return core.evidenceReference(a.attemptId, a.browserToken, context);
+      }
+      async function sessions() {
+        return db.query('SELECT * FROM identity_sessions WHERE user_id=?', [ids[0]]);
+      }
+      it('issues once across concurrent consumers, persists digest and fixed expiry', async () => {
+        await linked();
+        const ref = await proof();
+        const results = await Promise.allSettled([
+          identity.completeGoogleLogin(ref),
+          identity.completeGoogleLogin(ref),
+        ]);
+        const wins = results.filter((r) => r.status === 'fulfilled');
+        expect(wins).toHaveLength(1);
+        const { token, expiresAt } = wins[0].value;
+        expect(token).toMatch(/^[a-f0-9]{64}$/);
+        const rows = await sessions();
+        expect(rows).toHaveLength(1);
+        expect(rows[0].token_hash).toBe(identity.sessionDigest(token));
+        expect(Number(rows[0].expires_at)).toBe(expiresAt);
+        expect(expiresAt - Number(rows[0].created_at)).toBe(28800000);
+        expect(await identity.authenticateIdentitySession(token, 'other')).toBeUndefined();
+        await expect(identity.completeGoogleLogin(ref)).rejects.toThrow();
+      });
+      it('rejects unbound subject with identical email, wrong purpose and expired evidence', async () => {
+        await linked();
+        const ref = await proof();
+        await expect(identity.completeGoogleLogin(await proof('unknown'))).rejects.toThrow();
+        const binding = await direct(ids[0], 'replace', 'replacement');
+        await expect(identity.completeGoogleLogin(binding.reference)).rejects.toThrow();
+        await db.execute(
+          'UPDATE identity_oidc_attempts SET created_at=created_at-300001,expires_at=expires_at-300001 WHERE id=?',
+          [ref.id],
+        );
+        await expect(identity.completeGoogleLogin(ref)).rejects.toThrow();
+        expect(await sessions()).toHaveLength(0);
+      });
+      it.each(['identity_sessions', 'identity_audit_events'])(
+        'rolls back failed insert into %s',
+        async (table) => {
+          await linked();
+          const ref = await proof();
+          const original = db.execute;
+          const spy = vi.spyOn(db, 'execute').mockImplementation((sql, args, c) => {
+            if (sql.includes('INSERT INTO ' + table)) throw Error('synthetic failure');
+            return original(sql, args, c);
+          });
+          await expect(identity.completeGoogleLogin(ref)).rejects.toThrow();
+          spy.mockRestore();
+          expect(await sessions()).toHaveLength(0);
+          expect(
+            (await db.query('SELECT status FROM identity_oidc_attempts WHERE id=?', [ref.id]))[0]
+              .status,
+          ).toBe('verified');
+          await identity.completeGoogleLogin(ref);
+        },
+      );
+      it.each(['suspend', 'role', 'replace'])('serializes login with %s', async (action) => {
+        await linked();
+        const ref = await proof();
+        const change =
+          action === 'replace' ? await candidate(ids[0], 'replace', 'replacement') : undefined;
+        const [login] = await Promise.all([
+          Promise.allSettled([identity.completeGoogleLogin(ref)]),
+          change
+            ? operator.approve(change.issued.operationId, ids[0], change.fingerprint)
+            : action === 'role'
+              ? identity.setIdentityRole(ids[0], 'admin', false, null)
+              : identity.setIdentityStatus(ids[0], 'disabled', null),
+        ]);
+        if (login[0].status === 'fulfilled')
+          expect(
+            await identity.authenticateIdentitySession(login[0].value.token, 'crm'),
+          ).toBeUndefined();
+        await expect(identity.completeGoogleLogin(await proof())).rejects.toThrow();
+      });
+    });
     it('preflights destination, prepares only two disabled identities and closes bootstrap persistently after two approvals', async () => {
       await expect(
         operatorBindings('different_database').prepare([randomUUID(), randomUUID()]),
