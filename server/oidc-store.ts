@@ -306,16 +306,36 @@ export function mysqlOidcStore() {
     // purged 24 hours past expiry WHEN invoked. No institutional/audit data is deleted.
     async cleanup() {
       await transaction(async (db) => {
+        const associated =
+          (await query("SELECT name FROM schema_migrations WHERE name='020.sql'", [], db)).length >
+          0;
+        if (associated) await lockInstitution(db);
+        // Current reads before touching attempts: serialize issuance and acquire
+        // session locks before attempt locks, as reauthentication already does.
+        const live = associated
+          ? await query<{ token_hash: string }>(
+              `SELECT token_hash FROM identity_sessions WHERE application='crm' AND revoked_at IS NULL AND expires_at>${clock} ORDER BY token_hash FOR UPDATE`,
+              [],
+              db,
+            )
+          : [];
         await execute(
           `UPDATE identity_oidc_attempts SET status='invalidated',invalidated_at=${clock},${wipe},${eraseProof}
           WHERE expires_at<=${clock} AND status IN ('pending','claimed','verified')`,
           [],
           db,
         );
+        // Preserve B1/B2 on 019-only installations. A mapped login attempt must
+        // survive for as long as the emitted session could still authorize.
         await execute(
           `DELETE FROM identity_oidc_attempts WHERE expires_at<${clock}-86400000
-          AND status IN ('consumed','invalidated')`,
-          [],
+          AND status IN ('consumed','invalidated')` +
+            (associated && live.length
+              ? `
+          AND (issued_session_hash IS NULL OR issued_session_hash NOT IN (${live.map(() => '?').join(',')}))
+          AND NOT (purpose='login' AND status='consumed' AND issued_session_hash IS NULL)`
+              : ''),
+          live.map((session) => session.token_hash),
           db,
         );
       });

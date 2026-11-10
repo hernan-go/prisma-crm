@@ -7,7 +7,7 @@ import type { CustomFetch } from 'openid-client';
 import { mysqlOidcStore } from './oidc-store.js';
 import { digest, opaque, validOpaque } from './oidc-crypto.js';
 import { query as databaseQuery } from './db.js';
-import { completeGoogleLogin } from './identity.js';
+import { completeGoogleLogin, cancelPresentedGoogleLogin } from './identity.js';
 import {
   bindingAttempt,
   bindingContext,
@@ -78,7 +78,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
       message:
         'No se pudo completar el acceso con Google. Cerrá la sesión anterior e iniciá un intento nuevo.',
     });
-  // Block method/account switching until Block 3 provides authenticated revocation.
+  // A presented authority always requires explicit logout before method switching.
   const hasAdministrativeCookie = (req: Request) =>
     (req.headers.cookie || '')
       .split(';')
@@ -91,12 +91,15 @@ export function bindingRouter(options?: BindingHttpOptions) {
     path: '/',
     maxAge: 300000,
   };
-  const cookie = (req: Request, name: string) => {
-    const values = (req.headers.cookie || '')
+  const cookieValues = (req: Request, name: string) =>
+    (req.headers.cookie || '')
       .split(';')
       .map((x) => x.trim())
-      .filter((x) => x.startsWith(name + '='));
-    return values.length === 1 ? values[0].slice(name.length + 1) : undefined;
+      .filter((x) => x.startsWith(name + '='))
+      .map((x) => x.slice(name.length + 1));
+  const cookie = (req: Request, name: string) => {
+    const values = cookieValues(req, name);
+    return values.length === 1 ? values[0] : undefined;
   };
   const csrfFor = (secret: string, purpose = 'binding') =>
     createHmac('sha256', Buffer.from(options!.csrfKey, 'hex'))
@@ -124,6 +127,13 @@ export function bindingRouter(options?: BindingHttpOptions) {
   const initialize = () =>
     (ready ??= (async () => {
       await bindingPreflight(options!.database);
+      if (options?.loginEnabled) {
+        const migrations = await databaseQuery(
+          "SELECT name FROM schema_migrations WHERE name='020.sql'",
+        );
+        if (migrations.length !== 1) throw Error('Login schema unavailable');
+        await databaseQuery('SELECT issued_session_hash FROM identity_oidc_attempts LIMIT 0');
+      }
       await bindingMaintenance();
     })());
   router.get('/api/auth/session', async (req, res, next) => {
@@ -141,6 +151,32 @@ export function bindingRouter(options?: BindingHttpOptions) {
         /* Legacy availability is independent. */
       }
     }
+    next();
+  });
+  router.post('/api/auth/logout', (req, res, next) => {
+    // Only prepare the operation here. Auth invokes it AFTER the app's Origin
+    // checks, together with revocation of the presented administrative sessions.
+    const presented = cookieValues(req, loginPrefix);
+    if (options?.loginEnabled && presented.length) {
+      res.locals.cancelGoogleLogin = async () => {
+        const results = await Promise.allSettled(
+          presented.map(async (raw) => {
+            if (!/^[a-f0-9-]{36}\.[A-Za-z0-9_-]{43}$/.test(raw)) return;
+            if (!core) throw Error('Login unavailable');
+            const [id, browserToken] = raw.split('.');
+            await cancelPresentedGoogleLogin(
+              core.evidenceReference(id, browserToken, { purpose: 'login' }),
+            );
+          }),
+        );
+        if (results.some((result) => result.status === 'rejected'))
+          throw Error('Login cancellation failed');
+      };
+    }
+    res.locals.clearGoogleLogin = () => {
+      res.clearCookie(loginPrefix, cookieOptions);
+      res.clearCookie(loginPrefix + '_csrf', cookieOptions);
+    };
     next();
   });
   router.use((req, res, next) => {

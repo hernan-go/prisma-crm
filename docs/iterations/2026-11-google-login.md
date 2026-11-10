@@ -1,5 +1,135 @@
 # Iteración 12.2.B3 — login Google individual
 
+## Corrección definitiva de logout — 10/11/2026
+
+Autorización de continuidad del trabajo `PRISMA_2026-11-10_0142_ITER-12.2.B3_Login-Google`: implementar exclusivamente la relación persistente aprobada y cerrar la aceptación local. Se preservaron los cambios previos, rama y HEAD `cdacb5235c4bac321b099a63be61aee7395e10e5`. Los diagnósticos NO APTO inferiores son antecedentes superados para las sesiones emitidas con la nueva asociación.
+
+### Implementación e integridad
+
+`020.sql`, primera numeración libre comprobada, agrega `issued_session_hash CHAR(64) ascii_bin NULL`, UNIQUE, FK a `identity_sessions.token_hash` con ON DELETE RESTRICT y CHECK que permite asociación solo para login consumido. No agrega tablas ni secretos ni modifica 017–019. El migrador exige 019 y rechaza columna existente sin registro antes de DDL; replay registrado se omite. Probados unicidad, FK, bloqueo de borrado de sesión referenciada, replay, rechazo de parcial y conservación de un intento sintético anterior a 020 sin inferir asociación. MySQL DDL no se presenta como rollback transaccional.
+
+`completeGoogleLogin()` mantiene las validaciones aprobadas y agrega la escritura del hash de sesión al intento consumido dentro de su misma transacción. La sesión sigue siendo aleatoria, con ocho horas absolutas y hash persistido. Fallar la escritura o afectar cero filas revierte evidencia, sesión y auditoría. Google se consulta fuera de esos bloqueos.
+
+`cancelPresentedGoogleLogin()` valida ID, hash del secreto de navegador y propósito/aplicación/proveedor persistidos. La revocación no depende del clientId/redirectUri actual; las verificaciones de configuración del callback y autenticación no se relajan. Bajo institución → intento, invalida evidencia pendiente/claimed/verified o recupera la asociación consumida. Libera esos locks antes de resolver propietario y revocar con usuario → sesión y auditoría. La asociación es terminal/inmutable para el servicio, por lo que la separación de transacciones no permite una segunda emisión. El helper solo termina después del commit de revocación; el endpoint existente espera además todas las revocaciones administrativas presentadas.
+
+Logout procesa todas las correlaciones temporales presentadas, incluidas cookies duplicadas; no selecciona un valor arbitrario ni omite cancelación por ambigüedad. Intenta todas y devuelve fallo cerrado si alguna operación requerida falla. Los parsers de inicio/callback/binding siguen rechazando la ambigüedad como antes. Tras éxito se borran cookies administrativas y temporales con sus atributos originales. Un callback tardío puede entregar una cookie, pero su token ya está revocado y el guard lo rechaza antes de cualquier nuevo logout.
+
+### Retención y registros anteriores
+
+Con 020, cleanup toma el bloqueo institucional y lee sesiones CRM vivas mediante lectura actual FOR UPDATE, ordenada por hash, antes de escribir intentos. Conserva asociaciones hacia sesiones no revocadas ni vencidas aunque el intento haya superado las 24 horas de retención. Mantiene el intervalo original para intentos elegibles y permite borrar la asociación cuando su sesión ya es inutilizable; no borra sesiones, usuarios ni auditoría. Las instalaciones 019 conservan el comportamiento B1/B2 anterior. No se altera la política de otras funcionalidades.
+
+Un login consumido anterior con hash NULL continúa fallando cerrado, incluso si se revoca también una identidad presentada: no puede afirmarse que sea la misma sesión. Cleanup conserva esos intentos antiguos mientras exista cualquier sesión CRM viva; el bloqueo institucional serializa esta decisión con emisión, y solo los purga por la retención habitual cuando ya no queda sesión CRM viva. No se atribuye un propietario ni se revocan sesiones ajenas por inferencia.
+
+La evidencia disponible confirma vinculaciones reales B2 y pruebas sintéticas descartables, pero no prueba ausencia de intentos login consumidos en bases conservadas. No se consultaron esas bases. **Antes de habilitación operativa:** comprobar el estado real y preparar una transición explícita si existen registros sin asociación; no interpretar esta aceptación como migración aplicada ni compatibilidad histórica automática. No hay backfill, migración ni modificación de datos reales en esta intervención.
+
+Google OAuth sigue restringido exclusivamente a los UUID de administradores institucionales autorizados, Hernán y Jesica. No se implementa OAuth de facilitadores ni se decide su mecanismo de acceso futuro.
+
+### Pruebas y evidencia
+
+RED previo a implementación: 54 aprobadas y **3 fallidas esperadas**, que exigían logout exitoso con cookie consumida y revocación antes de entregar la respuesta de callback. La primera corrección pasó 63/63 B2/B3 y 13/13 OIDC. Revisión focalizada de la corrección detectó dos bordes del mismo flujo: configuración OAuth rotada y cookies temporales duplicadas. Se reprodujeron ambos con dos pruebas fallidas y se corrigieron sin nueva arquitectura. Resultados finales por suite, sin sumar corridas repetidas:
+
+| Suite                   | Aprobadas | Fallidas | Omitidas | Esquema                           | Puerto | UUID                                   |
+| ----------------------- | --------: | -------: | -------: | --------------------------------- | -----: | -------------------------------------- |
+| `binding-b2-db.test.ts` |        67 |        0 |        0 | `prisma_disposable_b3_df414dc6df` |  62829 | `e556a7b9-dce5-11f1-a911-ec4c8cf2114b` |
+| `oidc-db.test.ts`       |        13 |        0 |        0 | `prisma_disposable_b3_c90974f9c6` |  51805 | `40cb67a0-dce5-11f1-8ab1-ec4c8cf2114b` |
+| `identity-db.test.ts`   |         5 |        0 |        0 | `prisma_disposable_b3_4ff4c3c334` |  64846 | `effa183d-dce5-11f1-81b2-ec4c8cf2114b` |
+| **Total**               |    **85** |    **0** |    **0** |                                   |        |                                        |
+
+Los 67 incluyen las regresiones directamente afectadas B1/B2/B3 y diez casos nuevos de asociación/rollback/integridad/retención/históricos/fallo de revocación/configuración rotada/duplicación. Las tres reproducciones anteriores se reutilizaron con el resultado corregido, no se duplicaron. La carrera posterior al commit comprueba token revocado y guard 401 inmediatamente después del callback tardío, antes de reintentar logout. Se conservan los casos de ambas autoridades, MySQL indisponible, fallo parcial y ausencia de fallback; no se repitieron suites ajenas al cambio.
+
+MySQL 8.4.11 instalado, instancias vacías nuevas con `--no-defaults`, bind127.0.0.1, puertos distintos de 3306 y datadir propio por corrida. UUID obtenido del auto.cnf conocido y cotejado con servidor/datadir/puerto/PID antes de aprovisionar. Usuario b3_qa limitado al esquema, SHOW GRANTS verificado (USAGE global y ALL únicamente en su esquema), marcador de una fila y token aleatorio nuevo por instancia. Autorización Paso 3C y flags solo en procesos hijos, con guardas activas en la configuración estándar Vitest. Migraciones/baselines únicamente en destinos acreditados; OIDC comprobó además compatibilidad 019 y fundamentos 017. Ningún acceso a producción ni a las cuatro bases conservadas. Cada instancia se detuvo y eliminó en finally junto con credenciales y marcador; evidencia sin secretos queda fuera del repositorio.
+
+Controles finales tras formato aprobados: typecheck, lint, build y diff-check; suite sin MySQL **700 aprobadas, cero fallidas y 305 omitidas** (incluye 67 B2/B3 omitidas solo en esa modalidad, ejecutadas realmente por separado). Avisos conocidos de Rollup/Zod y finales de línea. Inspección final: cero procesos MySQL propios y cero datadirs temporales remanentes; script efímero eliminado, credenciales/variables de procesos terminados, sin autorización persistida. Nueve archivos modificados y dos nuevos en el conjunto local B3, sin staging y con HEAD inicial intacto.
+
+**Dictamen APTO para revisión final y eventual commit posterior**, con migración operativa, verificación de registros antiguos y navegador/Google reales pendientes antes de habilitación. No hay staging, commits, pushes, PR, merges, workflows ni despliegues; no se avanza a Bloques 4/5.
+
+## Antecedente — Bloque 3: guard, sesiones y logout local
+
+Trabajo `PRISMA_2026-11-10_0142_ITER-12.2.B3_Login-Google`. Base comprobada: `codex/iteration-12-identity-foundations`, `cdacb5235c4bac321b099a63be61aee7395e10e5`, sin cambios iniciales. El propietario confirma publicación de Bloques 1/2 y Actions #70/#71 aprobados; las referencias inferiores a publicación pendiente son antecedentes. No se repitieron auditorías, respaldos ni comprobaciones remotas cerradas.
+
+Plan acotado ejecutado: (1) pruebas HTTP de autoridad/precedencia/logout; (2) integración del guard con la validación institucional existente; (3) revocación por credencial y coordinación del intento Google presentado; (4) pruebas DB preparadas para la entrada B2 de CI, documentación y controles locales. No se agregan migraciones, dependencias, CLI, frontend ni workflows. No hay staging, commits, pushes, PR, merges ni despliegues autorizados.
+
+### Principal y validación
+
+`res.locals.principal` se construye únicamente tras autenticar: `{ kind: 'identity', userId, displayName, roles }` o `{ kind: 'legacy' }`. El guard recibe la activación explícita de Google Login de la misma configuración que el transporte; no depende de que preflight haya logrado contactar MySQL. La cookie individual usa el nombre local `prisma_identity` o productivo `__Host-prisma_identity`.
+
+`authenticateIdentitySession(token, 'crm', { requireInstitution: true })` comprueba hash SHA-256, aplicación, vigencia por reloj MySQL, revocación, usuario habilitado, rol admin, bootstrap cerrado, pertenencia a los dos UUID institucionales y vínculo Google vigente. Orden: institución → usuario/roles → vínculo → sesión, con lecturas actuales bajo bloqueo y sin caché. El contrato interno de fundamentos sin la opción conserva compatibilidad con 017; ningún acceso HTTP usa ese modo. Reemplazar o retirar el vínculo mediante los servicios institucionales revoca las sesiones anteriores en la misma transacción. No se autoriza por email ni datos aportados por el cliente.
+
+Solo identidad: autoriza sin configuración legacy. Identidad inválida: 401, sin fallback. Ambas cookies administrativas: 409, independientemente de su validez, sin seleccionar autoridad. Sin identidad: legacy temporal. Fallo DB: 503 cerrado, sin sustitución de autoridad. Google deshabilitado: contrato de sesión legacy anterior conservado y el guard ignora la cookie individual; logout sigue revocando una credencial individual presentada, incluso con login deshabilitado.
+
+### Estado de sesión compatible
+
+`GET /api/auth/session`, siempre `Cache-Control: no-store`:
+
+| Campo              | Semántica                                                                                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authenticated`    | Booleano de acceso vigente por la autoridad resuelta; falso también ante conflicto o indisponibilidad. Antes solo podía ser legacy.                |
+| `configured`       | Mantiene el significado anterior: hash y secreto legacy configurados. Puede ser falso con identidad autenticada.                                   |
+| `googleLogin`      | Extensión de Bloque 2 sin cambios: disponibilidad independiente del transporte y CSRF cuando corresponde. Solo se agrega con activación explícita. |
+| `method`           | Solo con login individual habilitado: `identity`, `legacy` o `null`.                                                                               |
+| `identity`         | Solo con login individual habilitado: `{ userId, displayName, roles }` o `null`; nunca token/hash/subject/email.                                   |
+| `expiresAt`        | Solo con login individual habilitado: vencimiento absoluto individual en milisegundos Unix o `null`; no renueva la sesión.                         |
+| `legacy.available` | Solo con login individual habilitado: configuración legacy válida; no certifica disponibilidad de MySQL.                                           |
+| `status`           | Solo con login individual habilitado: `authenticated`, `anonymous`, `invalid`, `conflict` o `unavailable`.                                         |
+
+La consulta de sesión devuelve 200 para anónimo o credencial inválida, 409 para conflicto y 503 para indisponibilidad al verificar credenciales/configuración requerida. Una instalación sin configuración legacy y sin credencial individual permanece anónima con `configured=false`. Errores no exponen detalles internos. El guard administrativo devuelve 401/409/503 según corresponda.
+
+### Logout y concurrencia
+
+`POST /api/auth/logout` pasa por las restricciones Origin/Fetch Metadata existentes antes de revocar. Resuelve el propietario de la sesión individual mediante su hash en el servidor y reutiliza `revokeIdentitySession`, incluyendo credenciales vencidas/revocadas. No recibe userId del cliente. Intenta todas las revocaciones presentadas, incluso cuando falla otra. Credencial malformada/inexistente no crea sesión ni requiere inventar un propietario. Repetir la revocación de una sesión ya revocada no la resucita.
+
+Tras éxito de todas las operaciones, elimina cookies administrativas con Path=/, HttpOnly y SameSite=Strict, Secure y __Host- en producción; también temporales de login con SameSite=Lax. Un fallo produce 503 sin éxito ni borrado de cookies, para permitir reintentar. Las revocaciones exitosas previas permanecen efectivas: no hay transacción distribuida entre autoridades y no se promete rollback conjunto.
+
+Legacy rechaza 409 si la petición presenta cookie individual o intento Google en curso. El inicio/callback Google conservan el rechazo de cualquier cookie administrativa. Si dos inicios ya salieron sin observar la cookie del otro, las cookies resultantes entran en conflicto y el guard deniega hasta logout; no se elige una autoridad por orden de llegada.
+
+Logout invalida el intento Google presentado con bloqueo institución → intento. El callback hace la consulta a Google fuera de locks y luego consume bajo bloqueo institucional: si gana logout, la evidencia no puede emitir sesión. Si gana el consumo, logout falla cerrado para que se reintente después de recibir las cookies del callback. **Este mecanismo tiene un bloqueo reproducido que impide el cierre técnico:** una cookie temporal consumida retenida hace fallar repetidamente logout aunque se presente y revoque una identidad válida. No se acepta esperar su vencimiento como solución; diagnóstico y alternativa estructural en el apartado de aceptación siguiente. No se afirma cancelación de respuestas HTTP ya en vuelo.
+
+Una petición autorizada antes de logout/revocación puede terminar; las posteriores vuelven a validar. Se conserva el límite transaccional documentado en Etapa 1, sin mantener bloqueos durante la ejecución completa de rutas operativas. La contraseña compartida permite nuevas sesiones legacy: **la convivencia temporal no proporciona revocación individual completa**. Retirada/operación administrativa pertenecen a B4; frontend y aceptación real de navegador a Bloque 5. No se avanza automáticamente.
+
+### Antecedente — validación inicial del Bloque 3
+
+Pruebas HTTP nuevas: 15 aprobadas, cero fallidas/omitidas en la suite completa. Cubren identidad sin legacy, conflictos, no fallback, indisponibilidad, logout/repetición/fallo parcial, Origin, cookies productivas, credenciales legacy duplicadas y revocación residual con login deshabilitado. Se observaron fallos antes de implementar guard/logout y el caso de duplicación; corregido el paso accidental de índice/array desde `map` al revocador. Typecheck detectó el tipo incorrecto de cabecera Set-Cookie en tests; corregido usando conversión explícita.
+
+Se agregan 17 casos MySQL a `binding-b2-db.test.ts`, sin nueva entrada CI: vínculo/estado/rol/bootstrap/UUID institucional/aplicación/expiración/revocación/token, logout verificable y replay, reemplazo y acceso concurrentes, cancelación de evidencia y carreras HTTP callback/logout controladas por barreras. **No ejecutados** por ausencia de destino descartable acreditado. No se creó infraestructura, no se ejecutaron migraciones ni se accedió a las cuatro bases conservadas. Ninguna evidencia anterior de MySQL se presenta como aceptación de estos cambios.
+
+Revisión focalizada del diff mediante `requesting-code-review`: sin defectos críticos/importantes confirmados en autorización o serialización. Se atendió el hueco de cobertura agregando carreras HTTP callback/logout deterministas (aún pendientes de MySQL). La observación de cookie temporal consumida retenida queda documentada arriba. Decisión explícita: logout intenta revocar la identidad residual incluso con login deshabilitado; si falla esa autoridad devuelve 503, porque declarar éxito dejaría una credencial reutilizable al reactivar Google. La compatibilidad de guard/session legacy sin credencial individual se conserva. Pendientes menores de cobertura: múltiples cookies individuales y fallo legacy con revocación individual exitosa.
+
+Typecheck, lint y build aprobados; suite completa sin MySQL: **699 aprobadas, cero fallidas, 292 omitidas** (17 nuevas MySQL incluidas entre las omitidas). Avisos conocidos de Rollup/Zod y finales de línea; sin dependencias nuevas. La primera ejecución de Vitest no pudo iniciar por EPERM en caché temporal del sandbox; se repitió fuera del sandbox con autorización, siempre mediante `test:unit` que deshabilita acceso MySQL.
+
+Dictamen **PENDIENTE** para aceptación del bloque, commit y CI remoto por integración MySQL no ejecutada. El código queda disponible para revisión local, sin staging ni commits, sobre el mismo HEAD inicial. Navegador real, Google real y frontend de Bloque 5 permanecen pendientes; no se declara login B3 íntegramente aceptado.
+
+### Aceptación MySQL y cierre de cobertura — 10/11/2026
+
+Continuación autorizada sobre el mismo HEAD y los ocho archivos de Bloque 3 ya existentes, sin staging. Se conservaron todos los cambios previos. En esta aceptación solo se modificaron los dos archivos de pruebas y estos dos documentos; no se rehízo implementación ni se modificaron políticas, servicios, esquemas, migraciones o workflows.
+
+Se utilizó el binario MySQL **8.4.11** instalado, `--no-defaults`, bind local y puerto distinto de 3306, datadir nuevo por suite y sin registros conservados. El aprovisionamiento comprobó datadir efectivo, puerto, UUID leído del `auto.cnf` de la instancia conocida y propiedad del proceso Windows antes de crear esquema/usuario/marcador. Cuenta de pruebas `b3_qa@127.0.0.1`: solo USAGE global y ALL en su esquema temporal; SHOW GRANTS verificado. Token aleatorio nuevo de 32 bytes, marcador de una fila y `ALLOW_DESTRUCTIVE_DB_TESTS=destroy-disposable-only` entregados exclusivamente al proceso hijo. Las guardas existentes acreditaron cada conexión; no se deshabilitaron ni se usó configuración alternativa de Vitest. No se escribieron secretos ni autorización en `.env`.
+
+Cada suite se ejecutó sola con `--no-file-parallelism --hookTimeout=30000`, baseline propio y una instancia nueva. Resultados finales:
+
+| Suite                          | Aprobadas | Fallidas | Omitidas | Esquema                           | Puerto | UUID                                   |
+| ------------------------------ | --------: | -------: | -------: | --------------------------------- | -----: | -------------------------------------- |
+| `binding-b2-db.test.ts`        |        57 |        0 |        0 | `prisma_disposable_b3_88c3b69572` |  55922 | `b9ccf0fa-dce0-11f1-aa99-ec4c8cf2114b` |
+| `identity-db.test.ts`          |         5 |        0 |        0 | `prisma_disposable_b3_5f32c73c3c` |  64893 | `795aab34-dce0-11f1-893a-ec4c8cf2114b` |
+| `identity-bindings-db.test.ts` |         7 |        0 |        0 | `prisma_disposable_b3_ea5f00850d` |  64908 | `7e8b9b95-dce0-11f1-a649-ec4c8cf2114b` |
+| `oidc-db.test.ts`              |        13 |        0 |        0 | `prisma_disposable_b3_bdabc21d67` |  64918 | `84583de0-dce0-11f1-a19f-ec4c8cf2114b` |
+| **Total final**                |    **82** |    **0** |    **0** |                                   |        |                                        |
+
+B2/B3 incluye los **17 pendientes aprobados**, 37 regresiones existentes y tres casos nuevos: duplicación individual, fallo parcial legacy y reproducción diagnóstica de correlación consumida. Las carreras HTTP callback/logout incluidas entre los 17 pasaron en ambos órdenes controlados. Una corrida previa B2/B3 de 56/56 fue seguida por otra instancia nueva para incorporar la reproducción final (no se suma dos veces al total final). Las demás suites no se repitieron después de su aprobación. El primer intento de infraestructura no abrió conexiones de pruebas ni ejecutó casos: root local rechazaba TCP bajo skip-name-resolve; se corrigió el aprovisionamiento de acceso local únicamente en la siguiente instancia nueva. La instancia fallida y las exitosas se detuvieron y sus directorios se eliminaron, incluidas credenciales/marcadores/certificados temporales. Variables solo de procesos hijos ya terminados. No hubo conexión al servicio en 3306 ni a producción ni modificación de las cuatro bases conservadas.
+
+**Caso A:** dos cookies individuales válidas de usuarios distintos producen 401, sin elegir un valor ni llamar al autenticador en la prueba HTTP aislada. Con cookie legacy adicional, 409. Logout revoca ambas sesiones individuales; su reutilización falla. Prueba HTTP aislada y prueba MySQL aprobadas.
+
+**Caso B:** barrera de prueba espera la revocación individual MySQL real antes de fallar el borrado legacy. Se observa 503 sin Set-Cookie, identidad ya inutilizable, ambas autoridades todavía en conflicto (sin fallback), legacy aún vigente por separado y reintento que revoca legacy, borra cookies y deja ambas credenciales inutilizables. No se simula una transacción distribuida ni se revierte la revocación individual exitosa. Prueba MySQL aprobada.
+
+**Cookie OAuth consumida — bloqueo confirmado:** se conserva la correlación emitida al iniciar Google, se completa callback real del transporte sintético y se verifica acceso con la identidad emitida. Logout con identidad más correlación retenida devuelve 503; el token individual queda revocado. El segundo logout con las mismas cookies vuelve a devolver 503. Al retirar la correlación temporal del encabezado, el cierre devuelve 200. Esta última acción es diagnóstico del bloqueo, no una solución recomendada ni aceptación funcional. La prueba declara expresamente que reproduce un defecto de disponibilidad; no exige 200 al código actual ni convierte el bloqueo en criterio aprobado. En navegación normal el callback borra la correlación, y las carreras con eliminación normal pasaron, pero eso no elimina el caso retenido.
+
+La causa es la falta de vínculo persistido intento→sesión: `consumeEvidence` borra subject/prueba, los intentos login deben conservar `user_id` e `initiator_session_hash` nulos por CHECK, y `identity_sessions` no guarda el intento de origen. No es seguro deducir propiedad por reloj/email/orden de llegada ni asumir que otra sesión presentada pertenece a ese intento. Ignorar la correlación consumida podría responder éxito dejando utilizable la sesión emitida por un callback todavía en vuelo. No se introducen cachés en memoria ni se reutilizan campos OIDC/auditoría con otra semántica.
+
+Alternativa para autorización posterior: diseñar una relación persistente única entre intento de login y hash de sesión emitida, registrada en la misma transacción de consumo/emisión. Logout podría así revocar la sesión exacta incluso antes de que llegue su Set-Cookie; un callback tardío solo podría entregar una credencial ya revocada. Requiere diseño de esquema/migración aditiva y revisar el orden de bloqueos; **no se implementó ni se numeró migración**. La limitación no se acepta por su plazo corto.
+
+Suite completa sin MySQL: **700 aprobadas, cero fallidas, 295 omitidas**. Incluye 16 HTTP de identidad; las 57 B2/B3 MySQL omitidas en esa modalidad sí se ejecutaron por separado, como indica la tabla. Las demás omisiones no se presentan como aprobadas. Controles finales tras formato: typecheck, lint, build y diff-check aprobados; avisos conocidos de Rollup/Zod y finales de línea. Inspección final de infraestructura: cero procesos MySQL propios y cero directorios `prisma-b3-accept-*` remanentes. El script efímero de aprovisionamiento también se eliminó; se conservaron solamente logs y evidencia sin credenciales fuera del repositorio.
+
+Dictamen **NO APTO para cierre técnico del Bloque 3, commit y publicación controlada**, pese a las suites verdes: el bloqueo funcional está demostrado y su alternativa requiere ampliación estructural no autorizada. El diff queda disponible para revisión. Google/navegador reales y frontend de Bloque 5 pendientes; convivencia con contraseña compartida y revocación no retroactiva de peticiones ya autorizadas mantienen los límites documentados. No se avanza a Bloques 4/5 ni se hacen operaciones Git de escritura.
+
 ## Bloque 1 publicado
 
 Commit `5d85c649c406c61d4b9f868a572d246e65250f35` en `codex/iteration-12-identity-foundations`. Actions #70 aprobado: verify 684 aprobadas/262 omitidas y seis integraciones 208 aprobadas sin omisiones. Núcleo `completeGoogleLogin` transaccional, ocho horas absolutas y hash SHA-256. No desplegado.

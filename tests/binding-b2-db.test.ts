@@ -101,6 +101,11 @@ afterEach(async () => {
   for (const id of ids)
     await db.execute('DELETE FROM identity_oidc_attempts WHERE user_id=?', [id]);
   for (const id of ids)
+    await db.execute(
+      'DELETE FROM identity_oidc_attempts WHERE issued_session_hash IN (SELECT token_hash FROM identity_sessions WHERE user_id=?)',
+      [id],
+    );
+  for (const id of ids)
     await db.execute('DELETE FROM identity_binding_operations WHERE user_id=?', [id]);
   for (const id of ids)
     await db.execute('DELETE FROM identity_audit_events WHERE user_id=? OR actor_id=?', [id, id]);
@@ -119,6 +124,28 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       expect(['127.0.0.1', 'localhost', '::1']).toContain(process.env.DB_HOST || '127.0.0.1');
       expect((await db.query('SELECT DATABASE() name'))[0].name).toBe(disposableDatabase());
       await migrate('019.sql');
+      const legacy = randomUUID();
+      await db.execute(
+        "INSERT INTO identity_oidc_attempts(id,provider,purpose,application,configuration_hash,state_hash,browser_hash,status,created_at,expires_at,claimed_at,verified_at,consumed_at) VALUES (?,'google','login','crm',?,?,?,'consumed',UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000,UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000+300000,UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000,UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000,UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000)",
+        [
+          legacy,
+          ...['config', 'state', 'browser'].map((label) =>
+            createHash('sha256')
+              .update(label + legacy)
+              .digest('hex'),
+          ),
+        ],
+      );
+      const before = (
+        await db.query('SELECT * FROM identity_oidc_attempts WHERE id=?', [legacy])
+      )[0];
+      await migrate('020.sql');
+      const after = (
+        await db.query('SELECT * FROM identity_oidc_attempts WHERE id=?', [legacy])
+      )[0];
+      expect(after).toMatchObject(before);
+      expect(after.issued_session_hash).toBeNull();
+      await db.execute('DELETE FROM identity_oidc_attempts WHERE id=?', [legacy]);
       const [s] = await db.query('SELECT * FROM identity_institution WHERE id=1');
       if (s.initialized || s.admin_one || s.admin_two)
         throw Error('Refusing to reset existing institution');
@@ -128,28 +155,257 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       await operator.prepare(ids);
       owned = true;
     });
+    describe('Block 3 institutional guard and logout', () => {
+      async function session() {
+        await linked();
+        const issued = await identity.createIdentitySession(ids[0], 'crm', 60000);
+        const app = createApp(
+          { hash: '', secret: '', store: memorySessions(), identityEnabled: true },
+          {},
+          {},
+          false,
+        );
+        return { issued, app, cookie: 'prisma_identity=' + issued.token };
+      }
+      it('authorizes a bound institutional admin without legacy configuration, then revokes only the presented session', async () => {
+        const f = await session();
+        const other = await identity.createIdentitySession(ids[0], 'crm', 60000);
+        const status = await request(f.app)
+          .get('/api/auth/session')
+          .set('Cookie', f.cookie)
+          .expect(200);
+        expect(status.body).toMatchObject({
+          authenticated: true,
+          configured: false,
+          method: 'identity',
+          identity: { userId: ids[0], roles: ['admin'] },
+          expiresAt: f.issued.expiresAt,
+        });
+        await request(f.app).get('/api/missing').set('Cookie', f.cookie).expect(404);
+        for (let i = 0; i < 2; i++)
+          await request(f.app).post('/api/auth/logout').set('Cookie', f.cookie).expect(200);
+        await request(f.app).get('/api/missing').set('Cookie', f.cookie).expect(401);
+        expect(
+          await identity.authenticateIdentitySession(other.token, 'crm', {
+            requireInstitution: true,
+          }),
+        ).toBeDefined();
+        expect(
+          (
+            await db.query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [
+              identity.sessionDigest(f.issued.token),
+            ])
+          )[0].revoked_at,
+        ).not.toBeNull();
+      });
+      it.each([
+        'expired',
+        'revoked',
+        'disabled',
+        'role',
+        'unbound',
+        'application',
+        'unknown',
+        'malformed',
+        'bootstrap',
+        'outsider',
+        'incomplete',
+      ])('rejects %s on the next request', async (mode) => {
+        const f = await session();
+        const hash = identity.sessionDigest(f.issued.token);
+        if (mode === 'expired')
+          await db.execute(
+            'UPDATE identity_sessions SET created_at=created_at-60001,expires_at=expires_at-60001 WHERE token_hash=?',
+            [hash],
+          );
+        if (mode === 'revoked') await identity.revokePresentedIdentitySession(f.issued.token);
+        if (mode === 'disabled') await identity.setIdentityStatus(ids[0], 'disabled', null);
+        if (mode === 'role') await identity.setIdentityRole(ids[0], 'admin', false, null);
+        // Synthetic fixture corruption tests revalidation independently of service revocation.
+        if (mode === 'unbound')
+          await db.execute(
+            "DELETE FROM identity_external_accounts WHERE user_id=? AND provider='google'",
+            [ids[0]],
+          );
+        if (mode === 'application')
+          await db.execute("UPDATE identity_sessions SET application='pwa' WHERE token_hash=?", [
+            hash,
+          ]);
+        if (mode === 'bootstrap')
+          await db.execute('UPDATE identity_institution SET initialized=FALSE WHERE id=1');
+        if (mode === 'outsider')
+          await db.execute('UPDATE identity_institution SET admin_one=NULL WHERE id=1');
+        if (mode === 'incomplete')
+          await db.execute('UPDATE identity_institution SET admin_two=NULL WHERE id=1');
+        try {
+          const cookie =
+            mode === 'unknown'
+              ? 'prisma_identity=' + 'f'.repeat(64)
+              : mode === 'malformed'
+                ? 'prisma_identity=bad'
+                : f.cookie;
+          await request(f.app).get('/api/missing').set('Cookie', cookie).expect(401);
+        } finally {
+          if (mode === 'outsider')
+            await db.execute('UPDATE identity_institution SET admin_one=? WHERE id=1', [ids[0]]);
+          if (mode === 'incomplete')
+            await db.execute('UPDATE identity_institution SET admin_two=? WHERE id=1', [ids[1]]);
+        }
+      });
+      it('replacement revokes old sessions and concurrent authorization/revocation cannot resurrect them', async () => {
+        const f = await session();
+        const replacement = await candidate(ids[0], 'replace', 'synthetic-replaced');
+        await Promise.all([
+          identity.authenticateIdentitySession(f.issued.token, 'crm', { requireInstitution: true }),
+          operator.approve(replacement.issued.operationId, ids[0], replacement.fingerprint),
+        ]);
+        expect(
+          await identity.authenticateIdentitySession(f.issued.token, 'crm', {
+            requireInstitution: true,
+          }),
+        ).toBeUndefined();
+        await request(f.app).get('/api/missing').set('Cookie', f.cookie).expect(401);
+      });
+      it('logout serializes with access and the final state is revoked', async () => {
+        const f = await session();
+        const responses = await Promise.all([
+          request(f.app).get('/api/missing').set('Cookie', f.cookie),
+          request(f.app).post('/api/auth/logout').set('Cookie', f.cookie),
+        ]);
+        expect([401, 404]).toContain(responses[0].status);
+        expect(responses[1].status).toBe(200);
+        await request(f.app).get('/api/missing').set('Cookie', f.cookie).expect(401);
+      });
+      it('duplicate individual cookies are ambiguous, coexistence with legacy conflicts, logout revokes both', async () => {
+        const f = await session();
+        const second = await identity.createIdentitySession(ids[1], 'crm', 60000);
+        const cookies = [f.cookie, 'prisma_identity=' + second.token];
+        await request(f.app).get('/api/missing').set('Cookie', cookies).expect(401);
+        await request(f.app)
+          .get('/api/missing')
+          .set('Cookie', [...cookies, 'prisma_admin=bad'])
+          .expect(409);
+        await request(f.app).post('/api/auth/logout').set('Cookie', cookies).expect(200);
+        for (const token of [f.issued.token, second.token])
+          expect(
+            await identity.authenticateIdentitySession(token, 'crm', { requireInstitution: true }),
+          ).toBeUndefined();
+      });
+      it('individual revocation survives a subsequent legacy failure; retry safely completes logout', async () => {
+        const f = await session();
+        const credentials = await testCredentials();
+        const storage = memorySessions();
+        let completed!: () => void;
+        const revoked = new Promise<void>((resolve) => {
+          completed = resolve;
+        });
+        const original = identity.revokePresentedIdentitySession;
+        vi.spyOn(identity, 'revokePresentedIdentitySession').mockImplementation(async (token) => {
+          await original(token);
+          completed();
+        });
+        let fail = true;
+        const app = createApp(
+          {
+            ...credentials,
+            identityEnabled: true,
+            store: {
+              ...storage,
+              async delete(key) {
+                if (fail) {
+                  await revoked;
+                  fail = false;
+                  throw Error('Synthetic legacy revocation failure');
+                }
+                await storage.delete(key);
+              },
+            },
+          },
+          {},
+          {},
+          false,
+        );
+        const login = await request(app)
+          .post('/api/auth/login')
+          .send({ password: credentials.password })
+          .expect(200);
+        const legacy = login.headers['set-cookie'][0].split(';')[0];
+        const cookies = [f.cookie, legacy];
+        const failed = await request(app)
+          .post('/api/auth/logout')
+          .set('Cookie', cookies)
+          .expect(503);
+        expect(failed.headers['set-cookie']).toBeUndefined();
+        expect(
+          await identity.authenticateIdentitySession(f.issued.token, 'crm', {
+            requireInstitution: true,
+          }),
+        ).toBeUndefined();
+        await request(app).get('/api/missing').set('Cookie', cookies).expect(409);
+        await request(app).get('/api/missing').set('Cookie', f.cookie).expect(401);
+        await request(app).get('/api/missing').set('Cookie', legacy).expect(404);
+        const retried = await request(app)
+          .post('/api/auth/logout')
+          .set('Cookie', cookies)
+          .expect(200);
+        expect(String(retried.headers['set-cookie'])).toContain('prisma_identity=;');
+        expect(String(retried.headers['set-cookie'])).toContain('prisma_admin=;');
+        await request(app).get('/api/missing').set('Cookie', legacy).expect(401);
+        await request(app).get('/api/missing').set('Cookie', f.cookie).expect(401);
+      });
+      it('logout invalidates pending Google evidence and revokes the session of a consumed attempt', async () => {
+        await linked();
+        const google = simulatedGoogle();
+        const core = createGoogleOidc(options, mysqlOidcStore(), google.transport);
+        const pending = await core.begin({ purpose: 'login' });
+        const reference = core.evidenceReference(pending.attemptId, pending.browserToken, {
+          purpose: 'login',
+        });
+        await identity.cancelPresentedGoogleLogin(reference);
+        await identity.cancelPresentedGoogleLogin(reference);
+        await expect(
+          core.complete(google.use(pending.authorizationUrl), pending.browserToken, {
+            purpose: 'login',
+          }),
+        ).rejects.toThrow();
+        const issued = await core.begin({ purpose: 'login' });
+        await core.complete(
+          google.use(issued.authorizationUrl, { claims: { sub: 'synthetic-' + ids[0] } }),
+          issued.browserToken,
+          { purpose: 'login' },
+        );
+        const consumed = core.evidenceReference(issued.attemptId, issued.browserToken, {
+          purpose: 'login',
+        });
+        const issuedSession = await identity.completeGoogleLogin(consumed);
+        await identity.cancelPresentedGoogleLogin(consumed);
+        await identity.cancelPresentedGoogleLogin(consumed);
+        expect(
+          await identity.authenticateIdentitySession(issuedSession.token, 'crm'),
+        ).toBeUndefined();
+      });
+    });
     describe('B3 HTTP login', () => {
       async function flow(production = false, bindingEnabled = true) {
         const google = simulatedGoogle();
-        const agent = request.agent(
-          createApp(
-            { store: memorySessions() },
-            {},
-            {},
-            {
-              google: production
-                ? { ...options, redirectUri: 'https://crm.example/api/auth/google/callback' }
-                : options,
-              csrfKey: 'cd'.repeat(32),
-              database: disposableDatabase(),
-              transport: google.transport,
-              loginEnabled: true,
-              bindingEnabled,
-            },
-          ),
+        const app = createApp(
+          { store: memorySessions() },
+          {},
+          {},
+          {
+            google: production
+              ? { ...options, redirectUri: 'https://crm.example/api/auth/google/callback' }
+              : options,
+            csrfKey: 'cd'.repeat(32),
+            database: disposableDatabase(),
+            transport: google.transport,
+            loginEnabled: true,
+            bindingEnabled,
+          },
         );
+        const agent = request.agent(app);
         const session = await agent.get('/api/auth/session').expect(200);
-        return { google, agent, csrf: session.body.googleLogin.csrf, session };
+        return { google, agent, app, csrf: session.body.googleLogin.csrf, session };
       }
       async function start(f: Awaited<ReturnType<typeof flow>>) {
         const response = await f.agent
@@ -162,6 +418,227 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           f.google.use(response.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
         );
       }
+      it.each(['rotated configuration', 'duplicate correlation'])(
+        'logout correlation remains effective with %s',
+        async (mode) => {
+          await linked();
+          const values: { cookie: string; token: string }[] = [];
+          let target: ReturnType<typeof createApp> | undefined;
+          for (let i = 0; i < (mode === 'duplicate correlation' ? 2 : 1); i++) {
+            const f = await flow();
+            target = f.app;
+            const started = await f.agent
+              .post('/api/auth/google/login/start')
+              .set('Origin', origin)
+              .type('form')
+              .send({ csrf: f.csrf })
+              .expect(303);
+            const cookie = (started.headers['set-cookie'] as unknown as string[])
+              .find((value) => value.startsWith('prisma_login='))!
+              .split(';')[0];
+            const url = new URL(
+              f.google.use(started.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
+            );
+            const callback = await f.agent.get(url.pathname + url.search).expect(303);
+            const identityCookie = (callback.headers['set-cookie'] as unknown as string[]).find(
+              (value) => value.startsWith('prisma_identity='),
+            )!;
+            values.push({ cookie, token: identityCookie.split(';')[0].split('=')[1] });
+          }
+          const unrelated = await identity.createIdentitySession(ids[0], 'crm', 60000);
+          if (mode === 'rotated configuration')
+            target = createApp(
+              { store: memorySessions() },
+              {},
+              {},
+              {
+                google: { ...options, clientId: 'rotated.apps.googleusercontent.com' },
+                csrfKey: 'cd'.repeat(32),
+                database: disposableDatabase(),
+                loginEnabled: true,
+              },
+            );
+          await request(target!)
+            .post('/api/auth/logout')
+            .set(
+              'Cookie',
+              values.map((value) => value.cookie),
+            )
+            .expect(200);
+          for (const value of values)
+            expect(await identity.authenticateIdentitySession(value.token, 'crm')).toBeUndefined();
+          expect(await identity.authenticateIdentitySession(unrelated.token, 'crm')).toBeDefined();
+        },
+      );
+      it.each(['revocation failure', 'unassociated historical attempt'])(
+        'fails logout closed for %s without erasing the retry credential',
+        async (mode) => {
+          await linked();
+          const f = await flow();
+          const started = await f.agent
+            .post('/api/auth/google/login/start')
+            .set('Origin', origin)
+            .type('form')
+            .send({ csrf: f.csrf })
+            .expect(303);
+          const correlation = (started.headers['set-cookie'] as unknown as string[])
+            .find((value) => value.startsWith('prisma_login='))!
+            .split(';')[0];
+          const url = new URL(
+            f.google.use(started.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
+          );
+          const callback = await f.agent.get(url.pathname + url.search).expect(303);
+          const cookie = (callback.headers['set-cookie'] as unknown as string[])
+            .find((value) => value.startsWith('prisma_identity='))!
+            .split(';')[0];
+          const token = cookie.split('=')[1];
+          if (mode === 'unassociated historical attempt') {
+            await db.execute(
+              'UPDATE identity_oidc_attempts SET issued_session_hash=NULL WHERE issued_session_hash=?',
+              [identity.sessionDigest(token)],
+            );
+          }
+          const original = db.execute;
+          const spy =
+            mode === 'revocation failure'
+              ? vi.spyOn(db, 'execute').mockImplementation((sql, args, connection) => {
+                  if (sql.startsWith('UPDATE identity_sessions SET revoked_at='))
+                    throw Error('Synthetic revocation outage');
+                  return original(sql, args, connection);
+                })
+              : undefined;
+          const response = await request(f.app)
+            .post('/api/auth/logout')
+            .set('Cookie', correlation)
+            .expect(503);
+          expect(response.headers['set-cookie']).toBeUndefined();
+          spy?.mockRestore();
+          expect(await identity.authenticateIdentitySession(token, 'crm')).toBeDefined();
+          if (mode === 'revocation failure') {
+            await request(f.app).post('/api/auth/logout').set('Cookie', correlation).expect(200);
+            expect(await identity.authenticateIdentitySession(token, 'crm')).toBeUndefined();
+          } else {
+            // Even revoking a presented identity cannot reconstruct the missing
+            // historical association; no inferred mapping or false success.
+            await request(f.app)
+              .post('/api/auth/logout')
+              .set('Cookie', [cookie, correlation])
+              .expect(503);
+            expect(await identity.authenticateIdentitySession(token, 'crm')).toBeUndefined();
+          }
+        },
+      );
+      it('logs out with retained consumed correlation and a valid session, including repeated logout', async () => {
+        await linked();
+        const f = await flow();
+        const started = await f.agent
+          .post('/api/auth/google/login/start')
+          .set('Origin', origin)
+          .type('form')
+          .send({ csrf: f.csrf })
+          .expect(303);
+        const correlation = (started.headers['set-cookie'] as unknown as string[])
+          .find((value) => value.startsWith('prisma_login='))!
+          .split(';')[0];
+        const url = new URL(
+          f.google.use(started.headers.location, { claims: { sub: 'synthetic-' + ids[0] } }),
+        );
+        const callback = await f.agent.get(url.pathname + url.search).expect(303);
+        const cookie = (callback.headers['set-cookie'] as unknown as string[])
+          .find((value) => value.startsWith('prisma_identity='))!
+          .split(';')[0];
+        const token = cookie.split('=')[1];
+        await request(f.app).get('/api/missing').set('Cookie', cookie).expect(404);
+        for (let retry = 0; retry < 2; retry++) {
+          const closed = await request(f.app)
+            .post('/api/auth/logout')
+            .set('Cookie', [cookie, correlation])
+            .expect(200);
+          expect(String(closed.headers['set-cookie'])).toContain('prisma_identity=;');
+          expect(String(closed.headers['set-cookie'])).toContain('prisma_login=;');
+          expect(
+            await identity.authenticateIdentitySession(token, 'crm', { requireInstitution: true }),
+          ).toBeUndefined();
+        }
+        await request(f.app).post('/api/auth/logout').set('Cookie', cookie).expect(200);
+      });
+      it('logout wins while the callback is waiting for Google and prevents issuance', async () => {
+        await linked();
+        const f = await flow();
+        let entered!: () => void, release!: () => void;
+        const reached = new Promise<void>((resolve) => {
+          entered = resolve;
+        });
+        const paused = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const started = await f.agent
+          .post('/api/auth/google/login/start')
+          .set('Origin', origin)
+          .type('form')
+          .send({ csrf: f.csrf })
+          .expect(303);
+        const url = new URL(
+          f.google.use(started.headers.location, {
+            claims: { sub: 'synthetic-' + ids[0] },
+            beforeToken: async () => {
+              entered();
+              await paused;
+            },
+          }),
+        );
+        const callback = f.agent.get(url.pathname + url.search).then((response) => response);
+        try {
+          await reached;
+          await f.agent.post('/api/auth/logout').expect(200);
+        } finally {
+          release();
+        }
+        expect((await callback).status).toBe(400);
+        expect(
+          await db.query('SELECT token_hash FROM identity_sessions WHERE user_id=?', [ids[0]]),
+        ).toHaveLength(0);
+      });
+      it('logs out after issuance commits while the callback response is pending; its late cookie cannot authorize', async () => {
+        await linked();
+        const f = await flow();
+        let entered!: () => void, release!: () => void;
+        const reached = new Promise<void>((resolve) => {
+          entered = resolve;
+        });
+        const paused = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const complete = identity.completeGoogleLogin;
+        vi.spyOn(identity, 'completeGoogleLogin').mockImplementation(async (reference) => {
+          const issued = await complete(reference);
+          entered();
+          await paused;
+          return issued;
+        });
+        const url = await start(f);
+        const callback = f.agent.get(url.pathname + url.search).then((response) => response);
+        try {
+          await reached;
+          await f.agent.post('/api/auth/logout').expect(200);
+        } finally {
+          release();
+        }
+        const response = await callback;
+        expect(response.status).toBe(303);
+        const cookie = (response.headers['set-cookie'] as unknown as string[]).find((value) =>
+          value.startsWith('prisma_identity='),
+        )!;
+        const token = cookie.split(';')[0].split('=')[1];
+        expect(
+          await identity.authenticateIdentitySession(token, 'crm', { requireInstitution: true }),
+        ).toBeUndefined();
+        await f.agent.get('/api/missing').expect(401);
+        await f.agent.post('/api/auth/logout').expect(200);
+        expect(
+          await identity.authenticateIdentitySession(token, 'crm', { requireInstitution: true }),
+        ).toBeUndefined();
+      });
       it('dispatches login after commit, issues only HttpOnly session cookie and rejects replay', async () => {
         await linked();
         const f = await flow(false, false);
@@ -395,6 +872,13 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
         const rows = await sessions();
         expect(rows).toHaveLength(1);
         expect(rows[0].token_hash).toBe(identity.sessionDigest(token));
+        expect(
+          (
+            await db.query('SELECT issued_session_hash FROM identity_oidc_attempts WHERE id=?', [
+              ref.id,
+            ])
+          )[0].issued_session_hash,
+        ).toBe(identity.sessionDigest(token));
         expect(Number(rows[0].expires_at)).toBe(expiresAt);
         expect(expiresAt - Number(rows[0].created_at)).toBe(28800000);
         expect(await identity.authenticateIdentitySession(token, 'other')).toBeUndefined();
@@ -433,6 +917,133 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           await identity.completeGoogleLogin(ref);
         },
       );
+      it.each(['throw', 'zero'])(
+        'rolls back evidence, session and audit if association fails: %s',
+        async (mode) => {
+          await linked();
+          const ref = await proof();
+          const before = await db.query(
+            "SELECT id FROM identity_audit_events WHERE user_id=? AND event='session.created'",
+            [ids[0]],
+          );
+          const original = db.execute;
+          const spy = vi.spyOn(db, 'execute').mockImplementation((sql, args, connection) => {
+            if (sql.includes('SET issued_session_hash=')) {
+              if (mode === 'throw') throw Error('Synthetic association write failure');
+              return Promise.resolve({ affectedRows: 0 } as Awaited<ReturnType<typeof db.execute>>);
+            }
+            return original(sql, args, connection);
+          });
+          await expect(identity.completeGoogleLogin(ref)).rejects.toThrow();
+          spy.mockRestore();
+          expect(await sessions()).toHaveLength(0);
+          expect(
+            (
+              await db.query(
+                'SELECT status,issued_session_hash FROM identity_oidc_attempts WHERE id=?',
+                [ref.id],
+              )
+            )[0],
+          ).toMatchObject({ status: 'verified', issued_session_hash: null });
+          expect(
+            await db.query(
+              "SELECT id FROM identity_audit_events WHERE user_id=? AND event='session.created'",
+              [ids[0]],
+            ),
+          ).toEqual(before);
+          await identity.completeGoogleLogin(ref);
+        },
+      );
+      it('enforces unique/FK association, specific revocation and migration replay/partial protection', async () => {
+        await linked();
+        const a = await proof(),
+          b = await proof();
+        const first = await identity.completeGoogleLogin(a),
+          second = await identity.completeGoogleLogin(b);
+        const firstHash = identity.sessionDigest(first.token);
+        await expect(
+          db.execute('UPDATE identity_oidc_attempts SET issued_session_hash=? WHERE id=?', [
+            firstHash,
+            b.id,
+          ]),
+        ).rejects.toThrow();
+        await expect(
+          db.execute('UPDATE identity_oidc_attempts SET issued_session_hash=? WHERE id=?', [
+            'e'.repeat(64),
+            b.id,
+          ]),
+        ).rejects.toThrow();
+        await expect(
+          db.execute('DELETE FROM identity_sessions WHERE token_hash=?', [firstHash]),
+        ).rejects.toThrow();
+        await identity.cancelPresentedGoogleLogin(a);
+        expect(await identity.authenticateIdentitySession(first.token, 'crm')).toBeUndefined();
+        expect(await identity.authenticateIdentitySession(second.token, 'crm')).toBeDefined();
+        const before = await db.query(
+          'SELECT issued_session_hash FROM identity_oidc_attempts WHERE id=?',
+          [a.id],
+        );
+        await migrate('020.sql');
+        expect(
+          await db.query('SELECT issued_session_hash FROM identity_oidc_attempts WHERE id=?', [
+            a.id,
+          ]),
+        ).toEqual(before);
+        await db.execute("DELETE FROM schema_migrations WHERE name='020.sql'");
+        try {
+          await expect(migrate('020.sql')).rejects.toThrow('parcial');
+        } finally {
+          await db.execute("INSERT INTO schema_migrations(name) VALUES ('020.sql')");
+        }
+      });
+      it.each(['revoked', 'expired'])(
+        'retains a live session association beyond attempt retention, then cleans when %s',
+        async (mode) => {
+          await linked();
+          const ref = await proof();
+          const session = await identity.completeGoogleLogin(ref);
+          await db.execute(
+            'UPDATE identity_oidc_attempts SET created_at=created_at-90000000,expires_at=expires_at-90000000 WHERE id=?',
+            [ref.id],
+          );
+          await mysqlOidcStore().cleanup();
+          expect(
+            await db.query('SELECT id FROM identity_oidc_attempts WHERE id=?', [ref.id]),
+          ).toHaveLength(1);
+          if (mode === 'revoked') await identity.cancelPresentedGoogleLogin(ref);
+          else
+            await db.execute(
+              'UPDATE identity_sessions SET created_at=created_at-28800001,expires_at=expires_at-28800001 WHERE token_hash=?',
+              [identity.sessionDigest(session.token)],
+            );
+          await mysqlOidcStore().cleanup();
+          expect(
+            await db.query('SELECT id FROM identity_oidc_attempts WHERE id=?', [ref.id]),
+          ).toHaveLength(0);
+          await identity.cancelPresentedGoogleLogin(ref);
+          expect(await identity.authenticateIdentitySession(session.token, 'crm')).toBeUndefined();
+        },
+      );
+      it('does not infer or silently purge an old unassociated consumed attempt while a CRM session is live', async () => {
+        await linked();
+        const ref = await proof();
+        const session = await identity.completeGoogleLogin(ref);
+        await db.execute(
+          'UPDATE identity_oidc_attempts SET issued_session_hash=NULL,created_at=created_at-90000000,expires_at=expires_at-90000000 WHERE id=?',
+          [ref.id],
+        );
+        await expect(identity.cancelPresentedGoogleLogin(ref)).rejects.toThrow('sin asociación');
+        await mysqlOidcStore().cleanup();
+        expect(
+          await db.query('SELECT id FROM identity_oidc_attempts WHERE id=?', [ref.id]),
+        ).toHaveLength(1);
+        expect(await identity.authenticateIdentitySession(session.token, 'crm')).toBeDefined();
+        await identity.revokePresentedIdentitySession(session.token);
+        await mysqlOidcStore().cleanup();
+        expect(
+          await db.query('SELECT id FROM identity_oidc_attempts WHERE id=?', [ref.id]),
+        ).toHaveLength(0);
+      });
       it.each(['suspend', 'role', 'replace'])('serializes login with %s', async (action) => {
         await linked();
         const ref = await proof();

@@ -242,7 +242,14 @@ export async function completeGoogleLogin(reference: EvidenceReference) {
     );
     const proof = await mysqlOidcStore().consumeEvidence(db, reference);
     if (!account || account.subject !== proof.subject) throw deny();
-    return insertSession(db, user.id, 'crm', 8 * 60 * 60 * 1000);
+    const session = await insertSession(db, user.id, 'crm', 8 * 60 * 60 * 1000);
+    const associated = await execute(
+      "UPDATE identity_oidc_attempts SET issued_session_hash=? WHERE id=? AND status='consumed' AND purpose='login' AND issued_session_hash IS NULL",
+      [sessionDigest(session.token), reference.id],
+      db,
+    );
+    if (associated.affectedRows !== 1) throw deny();
+    return session;
   });
 }
 export async function createIdentitySession(userId: string, application: string, ttlMs: number) {
@@ -258,7 +265,8 @@ export async function createIdentitySession(userId: string, application: string,
 export async function authenticateIdentitySession(
   token: string,
   application: string,
-): Promise<InstitutionalUser | undefined> {
+  options: { requireInstitution?: boolean } = {},
+): Promise<(InstitutionalUser & { expiresAt: number }) | undefined> {
   const hash = sessionDigest(token);
   if (!hash || !applicationSchema.safeParse(application).success) return undefined;
   // Lookup is only a hint. Recheck under the common user lock with a current read.
@@ -268,16 +276,83 @@ export async function authenticateIdentitySession(
   );
   if (!hint) return undefined;
   return transaction(async (db) => {
+    const institution = await lockInstitution(db);
+    if (
+      options.requireInstitution &&
+      (!institution?.initialized ||
+        !institution.admin_one ||
+        !institution.admin_two ||
+        institution.admin_one === institution.admin_two ||
+        ![institution.admin_one, institution.admin_two].includes(hint.user_id))
+    )
+      return undefined;
     const user = await lockedUser(hint.user_id, db);
-    const [session] = await query<{ live: number; revoked_at: number | null }>(
-      'SELECT expires_at>CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED) AS live,revoked_at FROM identity_sessions WHERE token_hash=? AND user_id=? AND application=? FOR UPDATE',
+    if (options.requireInstitution) {
+      const accounts = await query(
+        "SELECT subject FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
+        [user.id],
+        db,
+      );
+      if (!accounts.length) return undefined;
+    }
+    const [session] = await query<{ live: number; revoked_at: number | null; expires_at: number }>(
+      'SELECT expires_at,expires_at>CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED) AS live,revoked_at FROM identity_sessions WHERE token_hash=? AND user_id=? AND application=? FOR UPDATE',
       [hash, user.id, application],
       db,
     );
     if (!session || session.revoked_at !== null || !session.live || !permits(user, 'admin'))
       return undefined;
-    return user;
+    return { ...user, expiresAt: Number(session.expires_at) };
   });
+}
+/** Resolve ownership from the opaque credential, including expired/revoked sessions. */
+export async function revokePresentedIdentitySession(token: string) {
+  const hash = sessionDigest(token);
+  if (!hash) return;
+  await revokeIssuedSession(hash);
+}
+// The hash is obtained only from a server digest or a validated persisted attempt.
+// Resolve ownership without requiring the session to remain enabled/live.
+async function revokeIssuedSession(hash: string) {
+  const [session] = await query<{ user_id: string }>(
+    "SELECT user_id FROM identity_sessions WHERE token_hash=? AND application='crm'",
+    [hash],
+  );
+  if (session) await revokeSessionHash(session.user_id, hash, session.user_id);
+}
+/** Serialize logout with evidence consumption, without holding locks across Google. */
+export async function cancelPresentedGoogleLogin(reference: EvidenceReference) {
+  if (reference.context.purpose !== 'login') throw new AppError(409, 'Intento de acceso inválido.');
+  idSchema.parse(reference.id);
+  const issuedHash = await transaction(async (db) => {
+    await lockInstitution(db);
+    const [attempt] = await query<{ status: string; issued_session_hash: string | null }>(
+      // Revocation validates the persisted browser credential, not current OIDC
+      // client settings: rotation must not strand a session already issued.
+      "SELECT status,issued_session_hash FROM identity_oidc_attempts WHERE id=? AND browser_hash=? AND purpose='login' AND application='crm' AND provider='google' FOR UPDATE",
+      [reference.id, reference.browserHash],
+      db,
+    );
+    if (!attempt) return;
+    if (attempt.status === 'consumed') {
+      // Legacy consumed evidence cannot be correlated safely by inference.
+      if (!attempt.issued_session_hash)
+        throw new AppError(
+          409,
+          'Acceso anterior sin asociación de sesión. Requiere revisión operativa.',
+        );
+      return attempt.issued_session_hash;
+    }
+    await execute(
+      "UPDATE identity_oidc_attempts SET status='invalidated',invalidated_at=CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED),nonce=NULL,pkce_key_id=NULL,pkce_encrypted=NULL,subject=NULL,token_issued_at=NULL,token_expires_at=NULL,authentication_time=NULL WHERE id=? AND status IN ('pending','claimed','verified')",
+      [reference.id],
+      db,
+    );
+  });
+  // Release institution/attempt locks before acquiring user/session locks. A
+  // consumed attempt is terminal and its association cannot be changed by this
+  // service. Logout waits for the specific revocation to commit before success.
+  if (issuedHash) await revokeIssuedSession(issuedHash);
 }
 export async function revokeIdentitySessions(userId: string, actor: string | null) {
   idSchema.parse(userId);
@@ -291,6 +366,9 @@ export async function revokeIdentitySession(userId: string, token: string, actor
   idSchema.parse(userId);
   const hash = sessionDigest(token);
   if (!hash) return;
+  await revokeSessionHash(userId, hash, actor);
+}
+async function revokeSessionHash(userId: string, hash: string, actor: string | null) {
   await transaction(async (db) => {
     await lockedUser(userId, db);
     const result = await execute(

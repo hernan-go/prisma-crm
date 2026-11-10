@@ -30,6 +30,19 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '020.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='019.sql'",
+        );
+        if (!baseline.length) throw new Error('020.sql requiere 019.sql registrada.');
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='identity_oidc_attempts' AND COLUMN_NAME='issued_session_hash'",
+        );
+        if (partial.length)
+          throw new Error(
+            '020.sql detenida: asociación parcial o sin registro. Inspeccionar antes de recuperar.',
+          );
+      }
       if (name === '019.sql') {
         const [baseline] = await c.execute<RowDataPacket[]>(
           "SELECT name FROM schema_migrations WHERE name='018.sql'",

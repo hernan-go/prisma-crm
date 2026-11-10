@@ -23,9 +23,8 @@ export function createApp(
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
   app.use(helmet());
-  app.use(
-    bindingRouter(bindingOptions === false ? undefined : (bindingOptions ?? bindingEnvironment())),
-  );
+  const binding = bindingOptions === false ? undefined : (bindingOptions ?? bindingEnvironment());
+  app.use(bindingRouter(binding));
   // Separate, terminal namespace: service credentials never reach administrative routes.
   // Mount before browser CORS/body parsing/session auth; this router owns safe errors.
   app.use('/api/integrations/ai', aiIntegration(aiOptions));
@@ -54,7 +53,10 @@ export function createApp(
     }
     next();
   });
-  const auth = authentication(authOptions);
+  const auth = authentication({
+    ...authOptions,
+    identityEnabled: authOptions.identityEnabled ?? binding?.loginEnabled ?? false,
+  });
   app.use('/api/auth', auth.router);
   app.use('/api', auth.guard);
   app.use('/api', api);
