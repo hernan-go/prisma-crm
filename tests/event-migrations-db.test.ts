@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { pool, query, execute } from '../server/db';
@@ -5,18 +6,19 @@ import { migrate } from '../server/migrate';
 import { createApp } from '../server/app';
 import { memorySessions, testCredentials } from './auth-helper';
 import { readEventEconomy } from '../server/event-economy';
-const qa = 'prisma_qa_events_102_20261106';
+const qa = process.env.DB_NAME || '';
 const enabled = process.env.RUN_EVENT_MIGRATION_QA === 'true';
 let agent: ReturnType<typeof request.agent>;
 let period: number;
 afterAll(() => pool.end());
 describe.skipIf(!enabled)('Migraciones reales aisladas de Eventos', () => {
   beforeAll(async () => {
-    if (process.env.DB_NAME !== qa || process.env.DB_HOST !== '127.0.0.1')
+    if (process.env.DB_NAME !== disposableDatabase() || process.env.DB_HOST !== '127.0.0.1')
       throw Error('Solo QA explícita local');
     const [actual] = await query('SELECT DATABASE() db,CURRENT_USER() user,@@port port');
-    expect(actual).toMatchObject({ db: qa, user: 'prisma_local@127.0.0.1', port: 3306 });
-    expect(await query('SHOW TABLES')).toHaveLength(0);
+    expect(actual).toMatchObject({ db: qa });
+    // A fresh schema contains only the external accreditation marker.
+    expect(await query('SHOW TABLES')).toHaveLength(1);
     const credentials = await testCredentials();
     agent = request.agent(createApp({ ...credentials, store: memorySessions() }));
     expect(

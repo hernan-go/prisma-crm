@@ -1,5 +1,7 @@
 # Iteración 12.2.A — Vinculación y operaciones seguras
 
+> Vigencia operativa — 10/11/2026: las corridas y comandos con `prisma_test` o la QA de Eventos que siguen son antecedentes históricos, no instrucciones de ejecución actuales. Ambas bases se conservan. Para toda integración nueva aplicar [WORKFLOW §6](../WORKFLOW.md#6-tests-db). No reinicializar el bootstrap ni las vinculaciones reales.
+
 Implementada localmente sobre 6641189, rama codex/iteration-12-identity-foundations. Consolidada en `7dd8234`; sin publicación. El alcance siguiente corresponde al corte 12.2.A; el núcleo OIDC posterior se documenta en [12.2.B1](2026-11-google-oidc-core.md). Iteración 12 abierta. Login compartido, frontend, sesiones heredadas y MCP intactos. No OAuth, biblioteca OIDC, credenciales reales ni nuevas rutas. Ningún consumidor productivo importa el nuevo servicio.
 
 ## Persistencia

@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
@@ -16,7 +17,7 @@ import * as identity from '../server/identity';
 import * as bindingOperations from '../server/binding-operations';
 import { options, simulatedGoogle } from './oidc-helper';
 import { memorySessions, testCredentials } from './auth-helper';
-const operator = operatorBindings('prisma_test');
+const operator = operatorBindings(process.env.DB_NAME || '');
 let ids: [string, string];
 let owned = false;
 const csrf = (html: string) => html.match(/name="csrf" value="([a-f0-9]{64})"/)![1];
@@ -69,7 +70,7 @@ async function appFlow() {
       {
         google: options,
         csrfKey: 'cd'.repeat(32),
-        database: 'prisma_test',
+        database: disposableDatabase(),
         transport: google.transport,
       },
     ),
@@ -114,9 +115,9 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
   'Supervised binding B2 synthetic prisma_test, isolated',
   () => {
     beforeAll(async () => {
-      expect(process.env.DB_NAME).toBe('prisma_test');
+      expect(process.env.DB_NAME).toBe(disposableDatabase());
       expect(['127.0.0.1', 'localhost', '::1']).toContain(process.env.DB_HOST || '127.0.0.1');
-      expect((await db.query('SELECT DATABASE() name'))[0].name).toBe('prisma_test');
+      expect((await db.query('SELECT DATABASE() name'))[0].name).toBe(disposableDatabase());
       await migrate('019.sql');
       const [s] = await db.query('SELECT * FROM identity_institution WHERE id=1');
       if (s.initialized || s.admin_one || s.admin_two)
@@ -141,7 +142,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       await operator.approve(first.issued.operationId, ids[0], first.fingerprint);
       // A new operator instance completes the second identity after interruption/restart.
       const second = await candidate(ids[1]);
-      const restarted = operatorBindings('prisma_test');
+      const restarted = operatorBindings(disposableDatabase());
       await restarted.approve(second.issued.operationId, ids[1], second.fingerprint);
       expect(
         (await restarted.status()).every((row) => row.initialized === 1 && row.google_bound === 1),
@@ -406,7 +407,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           {},
           {},
           {},
-          { google: options, csrfKey: 'cd'.repeat(32), database: 'prisma_test' },
+          { google: options, csrfKey: 'cd'.repeat(32), database: disposableDatabase() },
         ),
       );
       await other.get(callback.pathname + callback.search).expect(400);
@@ -480,7 +481,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           {},
           {},
           {},
-          { google: options, csrfKey: 'cd'.repeat(32), database: 'prisma_test' },
+          { google: options, csrfKey: 'cd'.repeat(32), database: disposableDatabase() },
         ),
       );
       for (let i = 0; i < 11; i++) {
@@ -513,7 +514,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
         {
           google: options,
           csrfKey: 'cd'.repeat(32),
-          database: 'prisma_test',
+          database: disposableDatabase(),
           transport: async (url, init) => {
             if (url.toString().includes('/token')) {
               const provider = providers.get(
@@ -597,7 +598,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           {
             google: { ...options, redirectUri: 'https://example.invalid/api/auth/google/callback' },
             csrfKey: 'cd'.repeat(32),
-            database: 'prisma_test',
+            database: disposableDatabase(),
           },
         );
         const response = await request(app).get('/vincular-google').expect(200);

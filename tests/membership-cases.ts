@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { query, execute, pool } from '../server/db.js';
 import { migrate } from '../server/migrate.js';
@@ -6,10 +7,10 @@ import * as database from '../server/db.js';
 
 export async function verifyMembershipMigration() {
   if (
-    process.env.DB_NAME !== 'prisma_test' ||
-    (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+    process.env.DB_NAME !== disposableDatabase() ||
+    (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
   )
-    throw new Error('Only prisma_test');
+    throw new Error('Only accredited disposable DB');
   const global = await personSave({
     nombre: 'Global',
     apellido: 'Migración QA',
@@ -583,14 +584,12 @@ export function membershipTests(agent: any, password: string) {
         }
         const write =
           kind === 'enrollment'
-            ? agent
-                .post('/api/enrollments')
-                .send({
-                  person_id: fresh,
-                  period_id: destination,
-                  activity_id: activity,
-                  schedule_ids: [scheduleId],
-                })
+            ? agent.post('/api/enrollments').send({
+                person_id: fresh,
+                period_id: destination,
+                activity_id: activity,
+                schedule_ids: [scheduleId],
+              })
             : kind === 'payment'
               ? agent.post('/api/payments').send(payBody(fresh, destination))
               : setDue(fresh, '0', destination);

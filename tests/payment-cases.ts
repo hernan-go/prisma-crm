@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import { Decimal } from 'decimal.js';
@@ -6,10 +7,10 @@ import { migrate } from '../server/migrate.js';
 
 export async function verifyPaymentMigration() {
   if (
-    process.env.DB_NAME !== 'prisma_test' ||
-    (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+    process.env.DB_NAME !== disposableDatabase() ||
+    (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
   )
-    throw new Error('Only prisma_test');
+    throw new Error('Only accredited disposable DB');
   const [closed] = await query("SELECT id FROM periods WHERE status='closed' LIMIT 1");
   const [existing] = await query('SELECT person_id FROM monthly_accounts LIMIT 1');
   await execute('INSERT INTO period_memberships(person_id,period_id) VALUES (?,?)', [
@@ -47,11 +48,13 @@ export async function verifyPaymentMigration() {
       'enrollments',
       'enrollment_slots',
       'import_receipts',
-    ].map((t) => query(
-  t === 'periods'
-    ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
-    : `SELECT * FROM ${t} ORDER BY id`
-)),
+    ].map((t) =>
+      query(
+        t === 'periods'
+          ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
+          : `SELECT * FROM ${t} ORDER BY id`,
+      ),
+    ),
   );
   // Unexpected partial schemas and data must stop before changing historical values.
   await execute('ALTER TABLE payments ADD COLUMN recipient VARCHAR(12) NULL');
@@ -115,11 +118,13 @@ export async function verifyPaymentMigration() {
           'enrollments',
           'enrollment_slots',
           'import_receipts',
-        ].map((t) => query(
-  t === 'periods'
-    ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
-    : `SELECT * FROM ${t} ORDER BY id`
-)),
+        ].map((t) =>
+          query(
+            t === 'periods'
+              ? 'SELECT id,year,month,status,created_at FROM periods ORDER BY id'
+              : `SELECT * FROM ${t} ORDER BY id`,
+          ),
+        ),
       ),
     ).toEqual(unrelated);
     const wallets = await query(`SELECT m.period_id,

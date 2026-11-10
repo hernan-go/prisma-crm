@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import * as db from '../server/db';
@@ -48,9 +49,9 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
   'Binding operations prisma_test synthetic only',
   () => {
     beforeAll(async () => {
-      expect(process.env.DB_NAME).toBe('prisma_test');
+      expect(process.env.DB_NAME).toBe(disposableDatabase());
       expect(['127.0.0.1', 'localhost', '::1']).toContain(process.env.DB_HOST || '127.0.0.1');
-      expect((await db.query('SELECT DATABASE() name'))[0].name).toBe('prisma_test');
+      expect((await db.query('SELECT DATABASE() name'))[0].name).toBe(disposableDatabase());
       await migrate('018.sql');
       const [s] = await db.query('SELECT * FROM identity_institution WHERE id=1');
       if (s.initialized || s.admin_one || s.admin_two)

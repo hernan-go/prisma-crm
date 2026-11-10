@@ -42,6 +42,6 @@ En esta ronda 005 se ejecutó únicamente sobre `prisma_test`; no se migró la b
 
 ## Pruebas
 
-La suite MySQL requiere `RUN_DB_TESTS=true` y `DB_NAME=prisma_test`; verifica también el nombre de la conexión antes de recrear sus tablas. Fixtures sintéticos exclusivamente de tests, separados del seed. Cubre migración 004→005 y reejecución del runner, conservación financiera y de sesión, ofertas independientes, cero/tres facilitadores, grupos, individuales, conflictos, historial, eliminación segura, Agenda, Dashboard e importación con rollback.
+Vigencia 10/11/2026: la suite MySQL requiere un destino descartable acreditado según [WORKFLOW §6](WORKFLOW.md#6-tests-db); prisma_test local está protegida. Fixtures sintéticos exclusivamente de tests, separados del seed. Cubre migración 004→005 y reejecución del runner, conservación financiera y de sesión, ofertas independientes, cero/tres facilitadores, grupos, individuales, conflictos, historial, eliminación segura, Agenda, Dashboard e importación con rollback.
 
 Ver el informe de ejecución más reciente en `QA.md`. No se hicieron commits, push ni cambios de producción en esta ronda.

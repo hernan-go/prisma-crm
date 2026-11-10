@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import {
   expenseTests,
   expenseMigrationFixture,
@@ -44,8 +45,8 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
   let pid: number, period: number, activity: number, enrollment: number, payment: number;
   const person = { nombre: 'Persona Ficticia', apellido: 'Prueba QA', telefono: '0000001234' };
   beforeAll(async () => {
-    if (process.env.DB_NAME !== 'prisma_test')
-      throw new Error('Las pruebas requieren DB_NAME=prisma_test.');
+    if (process.env.DB_NAME !== disposableDatabase())
+      throw new Error('Las pruebas requieren una DB descartable acreditada.');
     await resetTestSchema();
     await migrate('004.sql');
     await legacyFixture();
@@ -507,27 +508,27 @@ describe.skipIf(!enabled)('Integración MySQL real: recorrido completo', () => {
     const before = (await query('SELECT COUNT(*) n FROM activities'))[0].n;
     const plan = await cleanupPlan();
     expect(plan.candidates.some((c) => c.table === 'people' && c.id === id)).toBe(true);
-    expect((await applyCleanup(plan, 'prisma_test')).deleted).toBe(0);
+    expect((await applyCleanup(plan, disposableDatabase())).deleted).toBe(0);
     const candidate = plan.candidates.find((c) => c.table === 'people' && c.id === id)!;
     candidate.reviewed = true;
     await execute('UPDATE people SET observaciones=? WHERE id=?', [
       'Cambiado después del plan',
       id,
     ]);
-    await expect(applyCleanup(plan, 'prisma_test')).rejects.toThrow('cambiaron');
+    await expect(applyCleanup(plan, disposableDatabase())).rejects.toThrow('cambiaron');
     const qaPeriod = (await agent.post('/api/periods').send({ year: 2029, month: 2 })).body.id;
     const qaMember = (
       await agent.post(`/api/periods/${qaPeriod}/memberships`).send({ person_id: id })
     ).body.id;
     const protectedPlan = await cleanupPlan();
     protectedPlan.candidates.find((c) => c.table === 'people' && c.id === id)!.reviewed = true;
-    await expect(applyCleanup(protectedPlan, 'prisma_test')).rejects.toThrow('pertenencia');
+    await expect(applyCleanup(protectedPlan, disposableDatabase())).rejects.toThrow('pertenencia');
     expect((await agent.delete(`/api/periods/${qaPeriod}/memberships/${qaMember}`)).status).toBe(
       200,
     );
     const fresh = await cleanupPlan();
     fresh.candidates.find((c) => c.table === 'people' && c.id === id)!.reviewed = true;
-    expect((await applyCleanup(fresh, 'prisma_test')).deleted).toBe(1);
+    expect((await applyCleanup(fresh, disposableDatabase())).deleted).toBe(1);
     expect((await query('SELECT COUNT(*) n FROM activities'))[0].n).toBe(before);
   });
   it('DNI normalizado funciona en búsqueda, aviso y validación final', async () => {

@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, expect, it } from 'vitest';
 import { pool, query, execute } from '../server/db';
 import {
@@ -43,11 +44,11 @@ it.skipIf(!enabled)(
   'MySQL: catálogo, históricos, edición, concurrencia, integridad y Estadísticas',
   async () => {
     if (
-      process.env.DB_NAME !== 'prisma_test' ||
+      process.env.DB_NAME !== disposableDatabase() ||
       !['127.0.0.1', 'localhost'].includes(process.env.DB_HOST || '127.0.0.1')
     )
-      throw Error('Solo prisma_test local');
-    expect((await query('SELECT DATABASE() db'))[0].db).toBe('prisma_test');
+      throw Error('Solo DB descartable acreditada');
+    expect((await query('SELECT DATABASE() db'))[0].db).toBe(disposableDatabase());
     expect(await query("SELECT name FROM schema_migrations WHERE name='010.sql'")).toHaveLength(1);
     // Fail before any writes if there is an existing catalogue: never erase installation config.
     expect(await recurringCatalogue()).toHaveLength(0);

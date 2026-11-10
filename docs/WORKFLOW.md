@@ -82,7 +82,7 @@ Después de terminar todas las ediciones de una iteración y antes de las valida
 ```powershell
 npm run typecheck
 npm run lint
-npm test
+npm run test:unit
 npm run build
 git diff --check
 ```
@@ -96,17 +96,47 @@ git status
 
 ## 6. Tests DB
 
-Únicamente contra `prisma_test`:
+Fuente operativa principal desde el 10/11/2026. Los comandos históricos con prisma_test como descartable quedan retirados.
 
-```powershell
-$env:RUN_DB_TESTS='true'
-$env:DB_NAME='prisma_test'
-npm test
-Remove-Item Env:RUN_DB_TESTS
-Remove-Item Env:DB_NAME
-```
+### Bases conservadas y validación sin MySQL
 
-Nunca contra `prisma_dev`, `prisma_demo` o producción.
+Las cuatro bases locales en 3306 se preservan: `prisma_dev` (desarrollo), `prisma_demo` (demostración), `prisma_test` (incluye las vinculaciones reales de Hernán y Jesica) y `prisma_qa_events_102_20261106` (QA histórica). Ninguna admite suites destructivas, replay de migraciones ni limpieza QA automática. Producción queda excluida. No reinicializar la institución real para probar bootstrap.
+
+Para validaciones normales usar `npm run test:unit`: desactiva todas las flags DB conocidas y la autorización destructiva en un proceso hijo, aunque estuvieran heredadas o en .env. `npm test` conserva los opt-ins explícitos, pero todo acceso real a MySQL en Vitest pasa por la guarda del driver: query/execute del pool, conexiones de transacciones, migraciones, rutas HTTP y teardown. Sin autorización falla antes de abrir una conexión. No usar configuraciones alternativas de Vitest ni desactivar su setup de seguridad.
+
+### Destino temporal autorizado
+
+Crear infraestructura requiere autorización separada; el Paso 3C no la crea. Usar una instancia MySQL temporal independiente, vacía, sin acceso a datos conservados, con usuario limitado al esquema temporal (sin grants globales ni permisos sobre otras bases). La guarda no audita grants: ese aislamiento corresponde a la preparación; CI lo establece mediante el servicio y MYSQL_USER. No copiar identidades reales ni respaldos operativos al destino.
+
+La preparación externa a los tests debe:
+
+1. Crear un esquema `prisma_disposable_<identificador>` (sufijo minúsculo alfanumérico/guion bajo, 1–40 caracteres).
+2. Leer `SELECT @@server_uuid` desde la instancia temporal conocida y conservarlo como TEST_DB_SERVER_UUID. No obtenerlo automáticamente de una conexión arbitraria al iniciar los tests.
+3. Generar un token aleatorio de 32 bytes, hex minúsculo, nuevo por entorno. Crear en el esquema `prisma_test_disposable_marker (token CHAR(64) NOT NULL, server_uuid CHAR(36) NOT NULL)` e insertar exactamente una fila con token y UUID. No es una migración del CRM; no crear este marcador en bases conservadas.
+4. Configurar privadamente DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, TEST_DB_SERVER_UUID, TEST_DB_DISPOSABLE_TOKEN y `ALLOW_DESTRUCTIVE_DB_TESTS=destroy-disposable-only` para el proceso de prueba. No guardar esa autorización en el .env habitual ni heredar esos valores al desarrollo.
+
+La guarda rechaza nombres protegidos (también mayúsculas) y nombres fuera del prefijo descartable; exige autorización y acreditación completas. Cada adquisición comprueba DATABASE(), @@server_uuid y el marcador en esa misma conexión antes de entregarla al código que escribe. No cachea autorizaciones entre adquisiciones. Tabla ausente, permisos insuficientes o falta de coincidencia exacta abortan; nunca crea el marcador ni repara la acreditación. Un error destruye esa conexión. Previene errores operativos; no es una barrera frente a código malicioso con credenciales MySQL privilegiadas.
+
+La ejecución de CI tiene dos fases: primero `verify` ejecuta lint, build y `npm run test:unit` sin MySQL. Solo después de su éxito, `integrations` ejecuta una matriz de seis suites con `max-parallel: 1` y `fail-fast: false`. Cada entrada recibe un **servicio MySQL nuevo**, con su propio esquema, usuario, UUID y marcador. No se comparte el estado de una entrada con otra. GitHub no garantiza el orden entre entradas de la matriz y el procedimiento no depende de él.
+
+| Suite                        | Baseline propio sobre el esquema nuevo acreditado                                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| integration.test.ts          | Solo marcador; prepara el recorrido de migraciones desde 001 y sus fixtures históricos                                                                                              |
+| identity-db.test.ts          | Su beforeAll prepara 001–016 y luego prueba 017                                                                                                                                     |
+| statistics-annual-db.test.ts | Exige solo marcador, aplica 001–019 y crea dos meses sintéticos con membresías, inscripciones, cuentas y cobros; después compara lecturas anual/mensual en snapshot de solo lectura |
+| identity-bindings-db.test.ts | Su beforeAll prepara 001–018; exige institución vacía                                                                                                                               |
+| oidc-db.test.ts              | Su beforeAll prepara 001–018 y luego prueba 019                                                                                                                                     |
+| binding-b2-db.test.ts        | Su beforeAll prepara 001–019; exige institución vacía                                                                                                                               |
+
+Cada entrada invoca exactamente un archivo con `npx vitest run --no-file-parallelism --hookTimeout=30000 "${{ matrix.suite }}"`. El hookTimeout admite la preparación desde cero. Para una ejecución manual autorizada, usar ese comando sustituyendo la expresión de GitHub por una única ruta de la tabla y configurar `RUN_DB_TESTS=true` junto a la acreditación. Cada suite requiere un entorno temporal nuevo e independiente preparado según esta sección; no ejecutar la siguiente sobre el estado dejado por la anterior. No usar `npm test` general con RUN_DB_TESTS habilitado sobre un esquema compartido.
+
+Ejecutar bootstrap en procesos secuenciales, solo con institución vacía sintética. No activar conjuntamente suites que resetean esquema o esperan otra línea base. Las flags RUN_KNOWLEDGE_DB_TESTS, RUN_KNOWLEDGE_PROPOSALS_DB_TESTS, RUN_RECURRING_DB_TESTS, RUN_RECURRING_PERIOD_DB_TESTS, RUN_RECURRING_MIGRATION_REPLAY_TESTS, RUN_RECURRING_REMOVAL_DB_TESTS, RUN_EVENT_DB_TESTS, RUN_EVENT_MIGRATION_QA, RUN_STATISTICS_DB_TESTS, RUN_AI_KNOWLEDGE_DB_TESTS y RUN_AI_READ_DB_TESTS no sustituyen la acreditación. Preparar su baseline según la suite: Eventos de migraciones exige solo el marcador; otras requieren migraciones previas. No reutilizar una base parcialmente modificada entre escenarios incompatibles. Cerrar el terminal temporal al finalizar para no conservar flags ni autorización.
+
+### CI efímero y herramientas manuales
+
+GitHub Actions usa exclusivamente un servicio MySQL 8.4 nuevo por entrada de matriz, esquema prisma_disposable_ci y usuario prisma_ci limitado a ese esquema. El nombre se repite en instancias independientes; no identifica una base compartida entre suites. Un paso docker exec sobre el ID de cada servicio crea el marcador, genera un token nuevo y entrega UUID/token/autorización al job antes de su única suite. CI=true y GITHUB_ACTIONS=true no autorizan nada. Se mantienen las seis suites MySQL antes habilitadas y las pruebas sin DB; las suites optativas mantienen sus flags anteriores. La ejecución real debe comprobarse remotamente después de una publicación autorizada; el análisis local no la acredita.
+
+`qa:cleanup --apply` y `applyCleanup` exigen la misma acreditación, además de plan revisado, confirmación de DB y huellas previas. Generar planes sigue sin borrar. `setup-local-db.ts` está retirado: aborta antes de conectarse y no rota usuarios ni crea bases. `db:migrate` sigue siendo una herramienta manual de migración controlada, no una autorización para tests ni para reinicializar bases; dentro de Vitest está cubierta por la guarda. `db:seed` no escribe datos. No ejecutar SQL de respaldos ni restauraciones como preparación sobre las bases conservadas.
 
 ## 7. Desarrollo local
 
@@ -223,7 +253,7 @@ Para toda iteración que requiera esquema:
 
 1. diseñar primero;
 2. usar una migración nueva;
-3. probar sobre `prisma_test`;
+3. probar sobre un destino descartable acreditado según la sección 6;
 4. revisar reintentos/idempotencia cuando aplique;
 5. prueba local sobre `prisma_dev` solo como migración controlada, nunca como suite destructiva;
 6. backup de producción;
@@ -297,7 +327,7 @@ Este control aplica cuando una iteración incorpora o modifica herramientas MCP.
 3. **Site MCP existente:** en Work/Sites, verificar versión activa, estado y audiencia privada, configuración y versión anterior recuperable. Contrastar las fuentes del repositorio interno del Site con `prisma-site/` del commit GitHub y detenerse ante diferencias no previstas. Los SHA de GitHub y Sites pueden ser distintos. Reutilizar dependencias válidas, respetar lockfile, una compilación por artefacto cuando sea suficiente y publicación privada autorizada. No cambiar secretos, permisos ni otros Sites por conveniencia.
 4. **Despliegue:** registrar versión, ID y estado `succeeded`. Verificar que herramientas previas y nuevas estén definidas, sin efectuar escrituras de negocio como smoke test. **Paso explícito adicional: Configuración → Complementos → PRISMA — Análisis de Gestión → Administrar aplicación → Actualizar herramientas.** Si ChatGPT aún ofrece el catálogo anterior, actualizar herramientas y abrir una conversación nueva antes de diagnosticar una falla del Worker; no desplegar otra vez por ese síntoma aislado.
 5. **Validación funcional:** utilizar la herramienta MCP nueva y consultas reales de solo lectura. Distinguir respuesta válida con lista vacía/cero de herramienta ausente, `401`, error de transporte o contrato. Para Eventos, ausencia de registros no prueba un fallo ni autoriza inventar eventos.
-6. **Recuperación:** si el nuevo Worker está publicado y falla críticamente, evaluar redesplegar la versión anterior *verificada* del mismo Site, con autorización. Esto usa el entorno vigente; no revierte migraciones ni datos CRM. Registrar si la recuperación fue solamente identificada o efectivamente ensayada.
+6. **Recuperación:** si el nuevo Worker está publicado y falla críticamente, evaluar redesplegar la versión anterior _verificada_ del mismo Site, con autorización. Esto usa el entorno vigente; no revierte migraciones ni datos CRM. Registrar si la recuperación fue solamente identificada o efectivamente ensayada.
 7. **Cierre:** completar matriz de estados y límites, actualizar `PROJECT_STATE.md` y documento de iteración, y ajustar `ROADMAP.md` si corresponde. El cierre documental en `main` requiere revisión/acción expresa del propietario porque el push de CRM a `main` desencadena SiteGround, incluso para cambios solo Markdown.
 
 Referencia de 10.2: Site privado versión 6, despliegue verificado como `succeeded`, quinta herramienta visible después de «Actualizar herramientas»; consulta `2026-11` exitosa sin eventos.
@@ -330,4 +360,3 @@ git -C "C:\dev\personal\prisma-crm" diff --cached --exit-code -- tests/remaining
 ```
 
 `update-index -- <archivo>` **modifica el índice**, y podría stagear cambios si los hashes no coincidieran: **no es un paso rutinario**. En el incidente confirmado, índice 9548 bytes / archivo 9326 bytes, hash coincidente, `status` limpio tras la operación. La advertencia de conversión LF→CRLF con `core.autocrlf=true` fue una pista, no prueba concluyente de origen; no configurar políticas de EOL a nivel repositorio sin analizar impacto y aprobarlo.
-

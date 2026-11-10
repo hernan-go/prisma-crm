@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { execute, query } from '../server/db.js';
 import * as database from '../server/db.js';
@@ -49,10 +50,10 @@ export function clonePeriodTests(agent: any, password: string) {
     beforeAll(async () => {
       if (
         process.env.RUN_DB_TESTS !== 'true' ||
-        process.env.DB_NAME !== 'prisma_test' ||
-        (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+        process.env.DB_NAME !== disposableDatabase() ||
+        (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
       )
-        throw new Error('Only prisma_test');
+        throw new Error('Only accredited disposable DB');
       expect((await agent.post('/api/auth/login').send({ password })).status).toBe(200);
       // Insert a later date first so chronological order differs from ID order.
       source = await post('/periods', { year: 2045, month: 10 });

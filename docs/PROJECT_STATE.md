@@ -1,5 +1,11 @@
 # PRISMA CRM — Estado actual
 
+## Paso 3C — protección de integraciones (10/11/2026)
+
+Implementado en working tree local, sin commit ni publicación: acreditación central de conexiones MySQL de Vitest, destino CI efímero explícito y protección de limpieza QA. La revisión final detectó concurrencia entre reset, migraciones y lecturas en la fase general: corregida mediante matriz secuencial con servicio MySQL nuevo por suite y baseline sintético propio para Estadísticas anual. Las cuatro bases locales se conservan, incluida prisma_test con las vinculaciones reales de Hernán y Jesica. Las menciones históricas a prisma_test como descartable no autorizan nuevas corridas. Procedimiento único: [WORKFLOW §6](WORKFLOW.md#6-tests-db).
+
+No se conectó a MySQL ni se ejecutaron migraciones, suites destructivas, respaldos o restauraciones en esta intervención. B3/B4 y autenticación heredada permanecen fuera del cambio. Corrección final validada: typecheck/lint/build/diff-check aprobados; suite sin MySQL 674 aprobadas/255 omitidas, focalizada 35 aprobadas (26 guardas anteriores y 9 nuevas). Dictamen para commit local: APTO CON OBSERVACIONES, por ejecución remota pendiente. Evidencias en el [informe técnico e inventario](iterations/2026-11-db-test-safety.md). Las pruebas locales no equivalen a integración real de GitHub Actions/MySQL.
+
 ## Iteración 12.2.B2 — vinculación supervisada local
 
 Implementación local consolidada en el commit `e3779cb`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. Incluye vinculación supervisada Google OIDC, CLI administrativa, aprobación mediante huella, bootstrap institucional, controles CSRF, cookies, límites y mantenimiento. El cierre técnico original registró 95 pruebas focalizadas aprobadas.

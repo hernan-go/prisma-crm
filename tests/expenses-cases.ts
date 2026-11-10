@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { execute, query } from '../server/db.js';
 import { migrate } from '../server/migrate.js';
@@ -5,10 +6,10 @@ import { migrate } from '../server/migrate.js';
 async function requireExpenseTestDatabase() {
   if (
     process.env.RUN_DB_TESTS !== 'true' ||
-    process.env.DB_NAME !== 'prisma_test' ||
-    (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+    process.env.DB_NAME !== disposableDatabase() ||
+    (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
   )
-    throw new Error('Only prisma_test');
+    throw new Error('Only accredited disposable DB');
 }
 export async function expenseMigrationFixture() {
   await requireExpenseTestDatabase();

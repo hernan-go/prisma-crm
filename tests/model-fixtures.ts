@@ -1,12 +1,13 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { query, execute } from '../server/db.js';
 // These fixtures are restricted to the disposable integration database, never production seeds.
 export async function resetTestSchema() {
   if (
     process.env.RUN_DB_TESTS !== 'true' ||
-    process.env.DB_NAME !== 'prisma_test' ||
-    (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+    process.env.DB_NAME !== disposableDatabase() ||
+    (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
   )
-    throw new Error('Only prisma_test');
+    throw new Error('Only accredited disposable DB');
   for (const t of [
     'event_money_movements',
     'event_participants',
@@ -55,7 +56,8 @@ const configs: [string, string, number[]][] = [
   ['Gimnasia y Fortalecimiento Corporal', 'Simón', [5]],
 ];
 export async function legacyFixture(migration = true) {
-  if (process.env.DB_NAME !== 'prisma_test') throw new Error('Only prisma_test');
+  if (process.env.DB_NAME !== disposableDatabase())
+    throw new Error('Only accredited disposable DB');
   if (migration) {
     const teacher = (
       await execute("INSERT INTO instructors(name) VALUES ('Facilitador migración')")

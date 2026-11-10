@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../server/app.js';
@@ -87,14 +88,12 @@ export function configurationDeletionTests() {
       return { p, membership, enrollment };
     };
     const account = async (c: Config) => {
-      const r = await agent
-        .put('/api/facilitator-accounts')
-        .send({
-          offering_id: c.offering,
-          instructor_id: c.teacher,
-          amount_due: null,
-          notes: 'Conservar snapshot',
-        });
+      const r = await agent.put('/api/facilitator-accounts').send({
+        offering_id: c.offering,
+        instructor_id: c.teacher,
+        amount_due: null,
+        notes: 'Conservar snapshot',
+      });
       expect(r.status).toBe(200);
       return r.body.id as number;
     };
@@ -120,10 +119,10 @@ export function configurationDeletionTests() {
     beforeAll(async () => {
       if (
         process.env.RUN_DB_TESTS !== 'true' ||
-        process.env.DB_NAME !== 'prisma_test' ||
-        (await query('SELECT DATABASE() name'))[0].name !== 'prisma_test'
+        process.env.DB_NAME !== disposableDatabase() ||
+        (await query('SELECT DATABASE() name'))[0].name !== disposableDatabase()
       )
-        throw new Error('Only prisma_test');
+        throw new Error('Only accredited disposable DB');
       credentials = await testCredentials();
     });
     beforeEach(async () => {
@@ -423,7 +422,7 @@ export function configurationDeletionTests() {
       plan.candidates.find(
         (cand) => cand.table === 'instructors' && cand.id === c.teacher,
       )!.reviewed = true;
-      expect((await applyCleanup(plan, 'prisma_test')).deleted).toBe(1);
+      expect((await applyCleanup(plan, disposableDatabase())).deleted).toBe(1);
       expect(
         await query('SELECT id FROM activity_schedules WHERE id=?', [c.schedule]),
       ).toHaveLength(1);
@@ -437,7 +436,7 @@ export function configurationDeletionTests() {
         (cand) => cand.table === 'instructors' && cand.id === c.teacher,
       )!.reviewed = true;
       const before = await snapshot();
-      await expect(applyCleanup(plan, 'prisma_test')).rejects.toThrow('utilizados');
+      await expect(applyCleanup(plan, disposableDatabase())).rejects.toThrow('utilizados');
       expect(await snapshot()).toEqual(before);
     });
     it.each([
@@ -465,15 +464,13 @@ export function configurationDeletionTests() {
       if (kind === 'period_membership')
         write = agent.post(`/api/periods/${c.pr}/memberships`).send({ person_id: p });
       else if (kind === 'instructor_assignment')
-        write = agent
-          .put(`/api/schedules/${c.schedule}`)
-          .send({
-            offering_id: c.offering,
-            day: 1,
-            start: '10:00',
-            end: '11:00',
-            instructor_ids: [c.teacher],
-          });
+        write = agent.put(`/api/schedules/${c.schedule}`).send({
+          offering_id: c.offering,
+          day: 1,
+          start: '10:00',
+          end: '11:00',
+          instructor_ids: [c.teacher],
+        });
       else if (kind === 'instructor_account')
         write = agent
           .put('/api/facilitator-accounts')

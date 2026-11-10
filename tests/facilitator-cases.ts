@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { execute, query } from '../server/db.js';
 
@@ -18,7 +19,8 @@ export function facilitatorTests(agent: any, password: string) {
     const pay = (amount: string) =>
       agent.post(path()).send({ date: '2027-02-03', amount, notes: 'Adelanto' });
     beforeAll(async () => {
-      if (process.env.DB_NAME !== 'prisma_test') throw new Error('Only prisma_test');
+      if (process.env.DB_NAME !== disposableDatabase())
+        throw new Error('Only accredited disposable DB');
       expect((await agent.post('/api/auth/login').send({ password })).status).toBe(200);
       period = (await execute('INSERT INTO periods(year,month) VALUES (2025,1)')).insertId;
       const created = await agent.post('/api/instructors').send({ name: 'Lucía', surname: 'QA' });

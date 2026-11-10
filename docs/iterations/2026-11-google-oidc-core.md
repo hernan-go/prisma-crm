@@ -1,5 +1,7 @@
 # Iteración 12.2.B1 — núcleo Google OIDC persistente
 
+> Vigencia operativa — 10/11/2026: las corridas y comandos con `prisma_test` o la QA de Eventos que siguen son antecedentes históricos, no instrucciones de ejecución actuales. Ambas bases se conservan. Para toda integración nueva aplicar [WORKFLOW §6](../WORKFLOW.md#6-tests-db). No reinicializar el bootstrap ni las vinculaciones reales.
+
 Consolidada localmente en `adf27d4` sobre `7dd8234`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. Este documento describe el corte B1; la evolución posterior está en [B2](2026-11-supervised-google-binding.md). Sin Google Login funcional, rutas HTTP, UI, bootstrap operativo ni adaptadores de autoridad. El CRM conserva su autenticación heredada; B1 no crea usuarios, roles, vinculaciones ni sesiones institucionales.
 
 ## Componentes y configuración privada

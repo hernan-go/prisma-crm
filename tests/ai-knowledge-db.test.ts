@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { pool } from '../server/db';
@@ -9,15 +10,15 @@ describe.skipIf(process.env.RUN_AI_KNOWLEDGE_DB_TESTS !== 'true')(
   () => {
     it('filters active/deleted rows, reads current revisions, paginates and rolls fixtures back', async () => {
       if (
-        process.env.DB_NAME !== 'prisma_test' ||
+        process.env.DB_NAME !== disposableDatabase() ||
         !['localhost', '127.0.0.1'].includes(process.env.DB_HOST || '127.0.0.1')
       )
-        throw Error('Only local prisma_test');
+        throw Error('Only accredited disposable DB');
       const db = await pool.getConnection();
       let started = false;
       try {
         const [rows] = await db.query('SELECT DATABASE() db');
-        expect((rows as { db: string }[])[0].db).toBe('prisma_test');
+        expect((rows as { db: string }[])[0].db).toBe(disposableDatabase());
         await db.beginTransaction();
         started = true;
         const prefix = `synthetic-${randomUUID()}`;

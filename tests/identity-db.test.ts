@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -30,11 +31,11 @@ async function admin() {
 }
 describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('Identity MySQL prisma_test', () => {
   beforeAll(async () => {
-    expect(process.env.DB_NAME).toBe('prisma_test');
+    expect(process.env.DB_NAME).toBe(disposableDatabase());
     expect(['127.0.0.1', 'localhost', '::1']).toContain(process.env.DB_HOST || '127.0.0.1');
-    expect((await query('SELECT DATABASE() name'))[0].name).toBe('prisma_test');
+    expect((await query('SELECT DATABASE() name'))[0].name).toBe(disposableDatabase());
     // Prepare prerequisites ourselves under the runner's existing migration lock.
-    // Safe on fresh CI and on an existing prisma_test; no reset or fixture deletion.
+    // Only an accredited disposable destination; no reset or fixture deletion.
     await migrate('016.sql');
     expect((await query("SELECT name FROM schema_migrations WHERE name='016.sql'")).length).toBe(1);
     const legacy = await query('SELECT * FROM admin_sessions ORDER BY token_hash');

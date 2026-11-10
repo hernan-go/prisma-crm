@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { pool, query, execute } from '../server/db';
@@ -10,15 +11,15 @@ it.skipIf(!enabled)(
   'MySQL: aislamiento económico, históricos, joins y reconciliación; rollback de fixtures',
   async () => {
     if (
-      process.env.DB_NAME !== 'prisma_test' ||
+      process.env.DB_NAME !== disposableDatabase() ||
       !['127.0.0.1', 'localhost'].includes(process.env.DB_HOST || '127.0.0.1')
     )
-      throw Error('Solo prisma_test local');
+      throw Error('Solo DB descartable acreditada');
     const db = await pool.getConnection();
     let started = false;
     try {
       const [destination] = await query<{ db: string }>('SELECT DATABASE() db', [], db);
-      if (destination.db !== 'prisma_test') throw Error('Destino inseguro');
+      if (destination.db !== disposableDatabase()) throw Error('Destino inseguro');
       // No migrations, DDL, truncates or changes to existing business rows.
       await db.beginTransaction();
       started = true;

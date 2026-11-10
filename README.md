@@ -83,7 +83,8 @@ MySQL Community Server 8.4.11 funciona como servicio Windows `MySQL84`, en `127.
 
 - `prisma_dev`: desarrollo normal.
 - `prisma_demo`: demos y datos ficticios.
-- `prisma_test`: única base permitida para pruebas de integración destructivas.
+- `prisma_test`: base conservada con vinculaciones administrativas reales.
+- `prisma_qa_events_102_20261106`: QA histórica conservada.
 
 Con el servicio activo, iniciar el proyecto desde PowerShell con el script correspondiente:
 
@@ -93,7 +94,7 @@ Con el servicio activo, iniciar el proyecto desde PowerShell con el script corre
 .\private\run-demo.ps1
 ```
 
-Los scripts privados seleccionan la base correspondiente; las credenciales permanecen exclusivamente en la configuración local excluida de Git. `scripts/setup-local-db.ts` es una utilidad histórica para la instancia portátil, no un paso del arranque vigente ni de producción. Las pruebas generan fixtures exclusivamente en la base descartable `prisma_test`; nunca ejecutarlas contra `prisma_dev`, `prisma_demo` o producción, ni copiar la base de pruebas al entorno operativo.
+Los scripts privados seleccionan la base correspondiente; las credenciales permanecen en configuración local excluida de Git. `scripts/setup-local-db.ts` está retirado y aborta sin conectarse. Las cuatro bases locales se conservan. Integraciones destructivas únicamente en destinos acreditados según [WORKFLOW §6](docs/WORKFLOW.md#6-tests-db).
 
 ## Variables de entorno
 
@@ -117,22 +118,12 @@ No prefijar secretos con `VITE_`, no copiarlos al frontend ni subir `.env` a Git
 ```sh
 npm run typecheck
 npm run lint
-npm test
+npm run test:unit
 npm run build
 npm start
 ```
 
-`npm test` ejecuta las pruebas sin DB y omite explícitamente integración si no se habilita. Para ejecutar todas contra una base descartable `prisma_test`, configurar las credenciales de esa base y:
-
-```powershell
-$env:RUN_DB_TESTS='true'
-$env:DB_NAME='prisma_test'
-npm test
-Remove-Item Env:RUN_DB_TESTS
-Remove-Item Env:DB_NAME
-```
-
-En Linux/macOS: `RUN_DB_TESTS=true DB_NAME=prisma_test npm test`. **La suite borra las tablas de prisma_test. Nunca apuntarla a datos reales.** El nombre se valida antes de borrar. Ver [docs/QA.md](docs/QA.md) para evidencias y checklist de producción.
+`npm run test:unit` desactiva todas las flags DB conocidas y la autorización destructiva, incluso heredadas; no abre MySQL. `npm test` conserva los opt-ins de integración, sujetos a la guarda central obligatoria de Vitest. Procedimiento único para destinos descartables y CI: [WORKFLOW §6](docs/WORKFLOW.md#6-tests-db). Evidencias históricas: [QA](docs/QA.md).
 
 ## Importación y migración del Excel existente
 

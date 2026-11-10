@@ -1,5 +1,7 @@
 # Iteración 12.2.B2 — vinculación Google supervisada
 
+> Vigencia operativa — 10/11/2026: las corridas y comandos con `prisma_test` o la QA de Eventos que siguen son antecedentes históricos, no instrucciones de ejecución actuales. Ambas bases se conservan. Para toda integración nueva aplicar [WORKFLOW §6](../WORKFLOW.md#6-tests-db). No reinicializar el bootstrap ni las vinculaciones reales.
+
 Implementación local consolidada en el commit `e3779cb`, rama `codex/iteration-12-identity-foundations`, sin push, merge ni despliegue. La vinculación supervisada fue probada posteriormente con las cuentas Google reales de Jesica y Hernán en `prisma_test`, con aprobación de ambas identidades y cierre del bootstrap. No se implementó todavía el login administrativo Google ni se modificó la autenticación heredada. Sin nuevas migraciones.
 
 ## Composición y atomicidad

@@ -28,16 +28,17 @@ Leer además cuando corresponda:
 ## 3. Bases de datos locales
 
 - `prisma_dev` → desarrollo normal.
-- `prisma_test` → única DB permitida para tests de integración/destructivos.
+- `prisma_test` → base conservada con vinculaciones reales; nunca descartable.
+- `prisma_qa_events_102_20261106` → QA conservada; no reinicializar.
 - `prisma_demo` → capturas, demo y datos ficticios.
 
-Nunca ejecutar tests destructivos contra `prisma_dev`, `prisma_demo` o producción.
+Las cuatro bases locales y producción quedan excluidas de pruebas destructivas. Fuente operativa única: [WORKFLOW, sección 6](docs/WORKFLOW.md#6-tests-db).
 
 ## 4. Migraciones
 
 - Migraciones productivas registradas: `001.sql` a `016.sql`, según los cierres documentados de 10.1 y 10.2 y las verificaciones del propietario. Codex no realizó una nueva comprobación productiva independiente. Estado y límites: `docs/PROJECT_STATE.md`.
 - Las migraciones aplicadas son inmutables.
-- `009.sql` implementa receptor independiente de medio; `010–011` implementan Gastos Recurrentes e independencia mensual. Aplicadas en `prisma_test`, `prisma_dev` y producción. Iteración 8 publicada en `51e247e`, con build y smoke productivos aprobados por el propietario. Pruebas destructivas y de recuperación exclusivamente en `prisma_test`. 012 implementa Know-How y 013 propuestas; ambas publicadas, también aplicadas en prisma_dev según el propietario. prisma_demo pendiente de migración/revalidación de 013. `014–016` implementan Eventos Especiales y están aplicadas/verificadas en producción según el cierre de 10.2. Antes de numerar una migración nueva, consultar `server/migrations/` y el estado vigente; no deducir la próxima numeración de antecedentes históricos.
+- `009.sql` implementa receptor independiente de medio; `010–011` implementan Gastos Recurrentes e independencia mensual. Aplicadas en `prisma_test`, `prisma_dev` y producción. Iteración 8 publicada en `51e247e`, con build y smoke productivos aprobados por el propietario. Los ensayos históricos en `prisma_test` no autorizan nuevas pruebas destructivas; ver WORKFLOW §6. 012 implementa Know-How y 013 propuestas; ambas publicadas, también aplicadas en prisma_dev según el propietario. prisma_demo pendiente de migración/revalidación de 013. `014–016` implementan Eventos Especiales y están aplicadas/verificadas en producción según el cierre de 10.2. Antes de numerar una migración nueva, consultar `server/migrations/` y el estado vigente; no deducir la próxima numeración de antecedentes históricos.
 - Dinero: `DECIMAL(12,2)`, nunca `FLOAT`.
 
 ## 5. Períodos
@@ -72,20 +73,12 @@ Para cambios normales ejecutar:
 ```powershell
 npm run typecheck
 npm run lint
-npm test
+npm run test:unit
 npm run build
 git diff --check
 ```
 
-Integración DB únicamente contra `prisma_test`:
-
-```powershell
-$env:RUN_DB_TESTS='true'
-$env:DB_NAME='prisma_test'
-npm test
-Remove-Item Env:RUN_DB_TESTS
-Remove-Item Env:DB_NAME
-```
+Integración DB: seguir exclusivamente [WORKFLOW, sección 6](docs/WORKFLOW.md#6-tests-db). Para validar sin MySQL usar `npm run test:unit`.
 
 ## 9. Alcance
 

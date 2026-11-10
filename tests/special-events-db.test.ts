@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import request from 'supertest';
@@ -41,7 +42,7 @@ import {
 } from '../server/special-events';
 
 const enabled = process.env.RUN_EVENT_DB_TESTS === 'true';
-const qaDatabase = 'prisma_qa_events_102_20261106';
+const qaDatabase = process.env.DB_NAME || '';
 const eventIds: number[] = [],
   personIds: number[] = [],
   periodIds: number[] = [];
@@ -150,14 +151,12 @@ afterAll(async () => {
 describe.skipIf(!enabled)('Eventos: integración aislada en QA local', () => {
   beforeAll(async () => {
     if (
-      process.env.DB_NAME !== qaDatabase ||
+      process.env.DB_NAME !== disposableDatabase() ||
       !['127.0.0.1', 'localhost'].includes(process.env.DB_HOST || '127.0.0.1')
     )
       throw Error('Only explicitly authorized local QA');
     expect((await query('SELECT DATABASE() db,CURRENT_USER() user,@@port port'))[0]).toMatchObject({
       db: qaDatabase,
-      user: 'prisma_local@127.0.0.1',
-      port: 3306,
     });
     const baseline = await query<{ name: string }>(
       "SELECT name FROM schema_migrations WHERE name<='013.sql' ORDER BY name",

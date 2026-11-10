@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, expect, it } from 'vitest';
 import request from 'supertest';
 import { pool, query, execute } from '../server/db';
@@ -14,11 +15,11 @@ it.skipIf(!enabled)(
   'MySQL prisma_test: quitar importe solo del movimiento confirmado y conciliar Estadísticas',
   async () => {
     if (
-      process.env.DB_NAME !== 'prisma_test' ||
+      process.env.DB_NAME !== disposableDatabase() ||
       !['127.0.0.1', 'localhost'].includes(process.env.DB_HOST || '127.0.0.1')
     )
-      throw Error('Solo se permite prisma_test local');
-    expect((await query<{ db: string }>('SELECT DATABASE() db'))[0].db).toBe('prisma_test');
+      throw Error('Solo se permite una DB descartable acreditada');
+    expect((await query<{ db: string }>('SELECT DATABASE() db'))[0].db).toBe(disposableDatabase());
     expect(await query("SELECT name FROM schema_migrations WHERE name='010.sql'")).toHaveLength(1);
 
     const [free] = await query<{ year: number }>(

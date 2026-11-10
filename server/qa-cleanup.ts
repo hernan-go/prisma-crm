@@ -3,6 +3,10 @@ import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { z } from 'zod';
 import { AppError } from './errors.js';
 import { deleteCatalogInDB } from './configuration-deletion.js';
+import {
+  assertDisposableConnection,
+  requireDestructiveAuthorization,
+} from './disposable-database.js';
 const personNames = [
   'QA Ficticia Noviembre',
   'Ficticia Importada CSV',
@@ -116,6 +120,7 @@ export async function cleanupPlan() {
   });
 }
 export async function applyCleanup(input: unknown, database: string) {
+  requireDestructiveAuthorization();
   const plan = z
     .object({
       database: z.string(),
@@ -132,6 +137,7 @@ export async function applyCleanup(input: unknown, database: string) {
   if (plan.database !== database)
     throw new AppError(422, 'La base confirmada no coincide con el plan.');
   return peopleTransaction(async (db) => {
+    await assertDisposableConnection((sql) => query(sql, [], db));
     const [base] = await query('SELECT DATABASE() name', [], db);
     if (base.name !== database)
       throw new AppError(422, 'La conexión no coincide con la base confirmada.');

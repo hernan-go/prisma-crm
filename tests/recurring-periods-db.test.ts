@@ -1,3 +1,4 @@
+import { disposableDatabase } from '../server/disposable-database';
 import { afterAll, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import request from 'supertest';
@@ -18,11 +19,11 @@ const enabled = process.env.RUN_RECURRING_PERIOD_DB_TESTS === 'true';
 afterAll(() => pool.end());
 async function safe() {
   if (
-    process.env.DB_NAME !== 'prisma_test' ||
+    process.env.DB_NAME !== disposableDatabase() ||
     !['127.0.0.1', 'localhost'].includes(process.env.DB_HOST || '127.0.0.1')
   )
-    throw Error('Only local prisma_test');
-  expect((await query('SELECT DATABASE() db'))[0].db).toBe('prisma_test');
+    throw Error('Only accredited disposable DB');
+  expect((await query('SELECT DATABASE() db'))[0].db).toBe(disposableDatabase());
   expect(await query("SELECT name FROM schema_migrations WHERE name='011.sql'")).toHaveLength(1);
 }
 const expected = (e: any) => ({

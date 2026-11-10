@@ -1,5 +1,7 @@
 # Iteración 12 — Etapa 1: fundamentos de identidad institucional
 
+> Vigencia operativa — 10/11/2026: las corridas y comandos con `prisma_test` o la QA de Eventos que siguen son antecedentes históricos, no instrucciones de ejecución actuales. Ambas bases se conservan. Para toda integración nueva aplicar [WORKFLOW §6](../WORKFLOW.md#6-tests-db). No reinicializar el bootstrap ni las vinculaciones reales.
+
 Estado: implementada y comprobada localmente el 08/11/2026, consolidada en `2b0ddb8`, sin publicación. Los pendientes de este corte tienen seguimiento posterior en [12.2.A](2026-11-identity-binding-operations.md) y [12.2.B1](2026-11-google-oidc-core.md). Iteración 12 abierta. Rama `codex/iteration-12-identity-foundations`, base `1d0d402`; conserva `452b334` y `1d0d402`.
 
 ## Alcance y arquitectura

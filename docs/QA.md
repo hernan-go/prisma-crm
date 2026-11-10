@@ -1,5 +1,7 @@
 # Cierre del modelo mensual — 27/09/2026
 
+> Vigencia operativa — 10/11/2026: las corridas y comandos con `prisma_test` o la QA de Eventos que siguen son antecedentes históricos, no instrucciones de ejecución actuales. Ambas bases se conservan. Para toda integración nueva aplicar [WORKFLOW §6](WORKFLOW.md#6-tests-db). No reinicializar el bootstrap ni las vinculaciones reales.
+
 Continuación sobre los cambios existentes, sin reiniciar arquitectura. HEAD permanece en b3b3d60e9f7d06b69ce4b69c3d58ff89af1cff2a. Sin commit, push, GitHub ni acceso a producción.
 
 | Comprobación final                             | Resultado                                             |
