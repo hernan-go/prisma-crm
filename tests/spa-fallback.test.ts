@@ -54,6 +54,16 @@ function fixture(directory: string) {
 }
 
 describe.each(['normal', '.nodeapp'])('SPA deployment in %s', (directory) => {
+  it('serves /login with a referrer policy compatible with same-origin form POSTs', async () => {
+    await request(fixture(directory))
+      .get('/login')
+      .expect(200)
+      .expect('Content-Type', /text\/html/)
+      .expect('Referrer-Policy', 'same-origin')
+      .expect('Content-Security-Policy', /form-action 'self'/)
+      .expect('X-Content-Type-Options', 'nosniff');
+  });
+
   it.each(['get', 'head'] as const)('%s serves documents and existing assets', async (method) => {
     const app = fixture(directory);
     for (const path of [

@@ -1,5 +1,13 @@
 # Iteración 12.2.B3 — login Google individual
 
+## Corrección local de la cabecera de /login (11/11/2026)
+
+El propietario confirmó el despliegue previo, las migraciones 017–020 y las dos vinculaciones productivas. Informó que Chrome enviaba `Origin: null` al iniciar Google Login y recibía 403. Base de la corrección local verificada contra GitHub main: `d79c1becef4ffd93c6696de1c8e6b1f6fc43501a`.
+
+La prueba de `GET /login` reprodujo la cabecera `no-referrer` en las estructuras normal y `.nodeapp`. Helmet ahora establece `same-origin` por defecto. Se conservan la CSP, el POST nativo y los controles de origen, cookie y CSRF. Las rutas de vinculación y callback conservan sus políticas explícitas.
+
+Validación local: 38/38 pruebas focalizadas de SPA, HTTP de Google Login, autenticación y formulario aprobadas. Con proveedor simulado, origen HTTPS exacto y CSRF válido producen 303; origen externo o literal `null` producen 403, CSRF ausente 400 e incorrecto 403. Typecheck, lint, build y diff-check aprobados. Sin operaciones MySQL ni nuevas vinculaciones. La publicación de esta corrección y su comprobación en Chrome contra producción quedan pendientes de autorización.
+
 ## Iteración 12.2 — aceptación funcional local aprobada (10/11/2026)
 
 El propietario confirmó en navegador real sobre prisma_test el ingreso Google de Hernán y Jesica con identidad correcta y Dashboard accesible. Ambos cerraron sesión y el acceso posterior al Dashboard quedó bloqueado. Dos cuentas Google no autorizadas fueron rechazadas. La corrección local devuelve HTTP 303 a /login?google=denied y presenta el mensaje comprensible, sin acceso administrativo. Esta evidencia corresponde a los recorridos informados por el propietario.

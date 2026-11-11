@@ -22,7 +22,7 @@ export function createApp(
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
-  app.use(helmet());
+  app.use(helmet({ referrerPolicy: { policy: 'same-origin' } }));
   const binding = bindingOptions === false ? undefined : (bindingOptions ?? bindingEnvironment());
   app.use(bindingRouter(binding));
   // Separate, terminal namespace: service credentials never reach administrative routes.

@@ -14,9 +14,57 @@ vi.mock('../server/binding-operations', () => ({
   bindingMaintenance: vi.fn(),
 }));
 vi.mock('../server/identity', () => ({ completeGoogleLogin: vi.fn() }));
+const { begin } = vi.hoisted(() => ({ begin: vi.fn() }));
 vi.mock('../server/google-oidc', () => ({
-  createGoogleOidc: () => ({ complete: vi.fn(), evidenceReference: vi.fn() }),
+  createGoogleOidc: () => ({ begin, complete: vi.fn(), evidenceReference: vi.fn() }),
 }));
+
+it('requires the exact HTTPS origin and matching CSRF before starting Google login', async () => {
+  const origin = 'https://crm.example';
+  vi.mocked(query).mockResolvedValue([{ name: '020.sql' }]);
+  const app = express().use(
+    bindingRouter({
+      google: {
+        redirectUri: origin + '/api/auth/google/callback',
+        clientId: 'test',
+        clientSecret: 'test',
+        activeKeyId: 'test',
+        keys: {},
+      },
+      csrfKey: 'ab'.repeat(32),
+      database: 'synthetic',
+      loginEnabled: true,
+      bindingEnabled: false,
+    }),
+  );
+  app.get('/api/auth/session', (_req, res) => res.json(res.locals.googleLogin));
+  const session = await request(app).get('/api/auth/session').expect(200);
+  const csrf = session.body.csrf;
+  const cookie = session.headers['set-cookie'][0].split(';')[0];
+  const post = (source: string) =>
+    request(app)
+      .post('/api/auth/google/login/start')
+      .set('Origin', source)
+      .set('Sec-Fetch-Site', 'same-origin')
+      .set('Cookie', cookie)
+      .type('form');
+  for (const source of ['null', 'https://other.example']) {
+    await post(source).send({ csrf }).expect(403);
+  }
+  await post(origin).send({}).expect(400);
+  await post(origin)
+    .send({ csrf: '0'.repeat(64) })
+    .expect(403);
+  expect(begin).not.toHaveBeenCalled();
+  const authorizationUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  begin.mockResolvedValueOnce({
+    authorizationUrl,
+    attemptId: randomUUID(),
+    browserToken: 'a'.repeat(43),
+  });
+  await post(origin).send({ csrf }).expect(303).expect('Location', authorizationUrl);
+  expect(begin).toHaveBeenCalledWith({ purpose: 'login' });
+});
 
 it.each([true, false])(
   'renders the correct browser response for authorization denial=%s',
