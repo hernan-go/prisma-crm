@@ -22,8 +22,17 @@ export function createApp(
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
-  app.use(helmet({ referrerPolicy: { policy: 'same-origin' } }));
   const binding = bindingOptions === false ? undefined : (bindingOptions ?? bindingEnvironment());
+  app.use(
+    helmet({
+      referrerPolicy: { policy: 'same-origin' },
+      contentSecurityPolicy: {
+        directives: binding?.loginEnabled
+          ? { formAction: ["'self'", 'https://accounts.google.com'] }
+          : {},
+      },
+    }),
+  );
   app.use(bindingRouter(binding));
   // Separate, terminal namespace: service credentials never reach administrative routes.
   // Mount before browser CORS/body parsing/session auth; this router owns safe errors.

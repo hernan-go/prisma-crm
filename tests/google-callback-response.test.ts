@@ -49,7 +49,7 @@ it('requires the exact HTTPS origin and matching CSRF before starting Google log
       .set('Cookie', cookie)
       .type('form');
   for (const source of ['null', 'https://other.example']) {
-    await post(source).send({ csrf }).expect(403);
+    await post(source).send({ csrf }).expect(403).expect('Content-Type', /html/);
   }
   await post(origin).send({}).expect(400);
   await post(origin)
@@ -64,6 +64,26 @@ it('requires the exact HTTPS origin and matching CSRF before starting Google log
   });
   await post(origin).send({ csrf }).expect(303).expect('Location', authorizationUrl);
   expect(begin).toHaveBeenCalledWith({ purpose: 'login' });
+  await post(origin)
+    .set('Cookie', 'prisma_admin=old')
+    .send({ csrf })
+    .expect(409)
+    .expect(/Cerrá la sesión/i);
+  // Six starts above count toward the same ten-attempt peer limit, including rejections.
+  for (let i = 0; i < 4; i++) await post(origin).send({}).expect(400);
+  await post(origin)
+    .send({ csrf })
+    .expect(429)
+    .expect(/Demasiados intentos/)
+    .expect(/href="\/login"/);
+  await request(app)
+    .get('/api/auth/google/callback')
+    .expect(400)
+    .expect(/href="\/login"/);
+  await request(app)
+    .get('/vincular-google')
+    .expect(503)
+    .expect(/Vincular cuenta Google/);
 });
 
 it.each([true, false])(

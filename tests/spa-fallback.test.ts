@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
+import { options } from './oidc-helper';
 import { createApp } from '../server/app';
 import { memorySessions, testCredentials } from './auth-helper';
 
@@ -45,12 +46,19 @@ afterAll(async () => {
   if (temporaryRoot) await rm(temporaryRoot, { recursive: true, force: true });
 });
 
-function fixture(directory: string) {
+function fixture(directory: string, loginEnabled = false) {
   vi.stubEnv('NODE_ENV', 'test');
   vi.stubEnv('PROXY_DIAGNOSTICS', 'false');
   // Keep the test runner's real cwd unchanged; exercise the app's path resolution.
   vi.spyOn(process, 'cwd').mockReturnValue(join(temporaryRoot, directory));
-  return createApp({ ...credentials, store: memorySessions() }, { tokenHash: '' });
+  return createApp(
+    { ...credentials, store: memorySessions() },
+    { tokenHash: '' },
+    {},
+    loginEnabled
+      ? { loginEnabled, google: options, csrfKey: 'ab'.repeat(32), database: 'synthetic' }
+      : false,
+  );
 }
 
 describe.each(['normal', '.nodeapp'])('SPA deployment in %s', (directory) => {
@@ -62,6 +70,15 @@ describe.each(['normal', '.nodeapp'])('SPA deployment in %s', (directory) => {
       .expect('Referrer-Policy', 'same-origin')
       .expect('Content-Security-Policy', /form-action 'self'/)
       .expect('X-Content-Type-Options', 'nosniff');
+  });
+
+  it('permits the Google redirect on every SPA entry when Google login is enabled', async () => {
+    for (const path of ['/', '/login', '/agenda']) {
+      const result = await request(fixture(directory, true)).get(path).expect(200);
+      expect(result.headers['content-security-policy'].split(';')).toContain(
+        "form-action 'self' https://accounts.google.com",
+      );
+    }
   });
 
   it.each(['get', 'head'] as const)('%s serves documents and existing assets', async (method) => {

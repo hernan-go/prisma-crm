@@ -1,5 +1,9 @@
 # PRISMA CRM — Estado actual
 
+## Google Login — diagnóstico de Chrome del 13/11/2026
+
+Base publicada dbe4e97 y Actions #76 aprobada según el propietario. Chrome local reprodujo el bloqueo del 303 por la política de formularios de la SPA. La corrección local permite el origen exacto de Google cuando el login está habilitado. Se corrigieron también los mensajes del flujo y la recuperación de una cookie compartida vencida. APTO para publicación controlada por el propietario. Aceptación de extremo a extremo en Chrome normal con Google real pendiente. [Evidencia, límites y retorno al acceso compartido](iterations/2026-11-google-login.md#diagnóstico-de-chrome-del-13112026).
+
 ## Iteración 12.2 — aceptación funcional local aprobada (10/11/2026)
 
 El propietario confirmó en navegador real sobre prisma_test el ingreso Google de Hernán y Jesica con identidad correcta y Dashboard accesible. Ambos cerraron sesión y el acceso posterior al Dashboard quedó bloqueado. Dos cuentas Google no autorizadas fueron rechazadas. La corrección local devuelve HTTP 303 a /login?google=denied y presenta el mensaje comprensible, sin acceso administrativo. Esta evidencia corresponde a los recorridos informados por el propietario.

@@ -274,3 +274,17 @@ it('rechaza cookies individuales duplicadas sin elegir un valor, incluso junto a
     .expect(409);
   expect(authenticate).not.toHaveBeenCalled();
 });
+
+it('exposes explicit logout for a stale shared cookie before starting Google login', async () => {
+  const agent = request.agent(app());
+  const result = await agent
+    .get('/api/auth/session')
+    .set('Cookie', 'prisma_admin=' + token)
+    .expect(200);
+  expect(result.body.status).toBe('invalid');
+  await agent
+    .post('/api/auth/logout')
+    .set('Cookie', 'prisma_admin=' + token)
+    .expect(200);
+  expect((await agent.get('/api/auth/session')).body.status).toBe('anonymous');
+});

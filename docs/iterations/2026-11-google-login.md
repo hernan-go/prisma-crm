@@ -236,3 +236,28 @@ Casos nuevos: login y replay, Origin/CSRF/propósito adicional, bloqueo de ambas
 Incidencias corregidas en pruebas: cookie jar de Supertest sustituía la cookie manipulada (ahora otro agente); el proveedor sintético fijaba redirect_uri local (ahora argumento confiable de fixture con valor predeterminado anterior). La suite sin MySQL detectó tres comparaciones exactas de la respuesta legacy; se corrigió el transporte para agregar googleLogin únicamente cuando se activa explícitamente.
 
 Navegador real, Google real, SameSite durante navegación externa, logout/cambio de cuenta integrado y CI de este bloque pendientes. Pruebas HTTP no acreditan esos escenarios de navegador. Sin cambios de workflows, migraciones, frontend, CLI ni guard general. Commit/publicación de Bloque 2 requieren autorización posterior.
+
+## Diagnóstico de Chrome del 13/11/2026
+
+Base local limpia al inicio en main, dbe4e97. El propietario confirmó Actions #76, despliegue, cabecera Referrer-Policy same-origin, ingreso en incógnito con ambas identidades y logout de Hernán. Antecedentes productivos comunicados por el propietario. Esta intervención fue local.
+
+| Prueba en Chrome headless 157.0.8103.52, perfil temporal | Política anterior                                                     | Con accounts.google.com permitido               |
+| -------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------- |
+| Contexto privado, sin worker controlador en el fixture   | Un POST y 303. Infracción form-action, cero navegaciones al proveedor | Un POST, 303 y un GET de documento al proveedor |
+| Perfil normal temporal, controlado por public/sw.js      | Mismo bloqueo                                                         | Un POST, 303 y un GET de documento al proveedor |
+
+El destino HTTPS de autorización fue interceptado por el simulador del navegador. La petición adicional observada fue el favicon. La política relevante pertenece al documento que contiene el formulario, incluyendo entradas por rutas profundas de la SPA. El worker reenvía navegaciones POST y GET y ofrece su página offline ante errores de red. Con el worker original y la política corregida se completó la navegación. Sobre la SPA compilada y las cabeceras de createApp se repitió el clic con respuestas locales de sesión e inicio, en perfil normal controlado y contexto privado con bypass. Ambas cargas mostraron el documento del proveedor simulado.
+
+Los rechazos de inicio devolvían JSON y los límites compartidos, errores de parser, indisponibilidad o callback todavía sin propósito identificado podían usar la página de vinculación. Ahora el formulario recibe HTML con retorno al ingreso, con motivos seguros para 403, 409, 429 y 503. El callback de propósito desconocido ofrece un retorno adicional a vinculación solo si está disponible. El callback de vinculación identificado conserva su flujo. Origin y CSRF se siguen validando antes de iniciar OIDC. La cookie CSRF vence a los cinco minutos. Volver al ingreso carga una sesión y un formulario nuevos. La correlación temporal se coteja con el intento persistido antes del canje.
+
+Una cookie compartida sin sesión vigente producía estado anonymous y exponía el botón Google, aunque su presentación bloqueaba el inicio con 409. Ahora la sesión informa invalid y la interfaz existente ofrece cierre explícito. Los conflictos de ambas autoridades siguen devolviendo 409. Logout revoca las credenciales presentadas y limpia las cookies tras éxito. El acceso compartido se conserva.
+
+El límite de inicio Google usa el peer del socket (10 por 15 minutos) y un contador global compartido con vinculación (50 por 15 minutos por instancia del router). El callback admite 30 por peer en esa ventana y dos canjes concurrentes. Clientes que compartan peer podrían compartir cupo. La topología real de SiteGround y el contador que intervino en los intentos históricos no fueron observados. Se conservaron claves, ventanas y umbrales.
+
+Regresión local: cuatro pruebas rojas antes del cambio (CSP en dos disposiciones de la SPA, JSON en rechazo y estado de cookie compartida residual). Después pasaron 98 pruebas focalizadas en siete archivos con el ejecutor sin MySQL. La cobertura combina Supertest, UI sintética, OIDC y Chrome aislado. Las cuentas institucionales, Google real y la integración MySQL quedaron fuera de esta ejecución. La evidencia permite publicar el cambio de forma controlada. Queda pendiente un único recorrido productivo en Chrome normal: clic, selección de cuenta, Dashboard con identidad correcta, cierre, ruta protegida bloqueada y nuevo ingreso. Si falla, anotar ruta sin query, estado HTTP y directiva CSP indicada por el navegador, sin capturar cookies, códigos ni tokens.
+
+### Retorno al acceso compartido
+
+1. El propietario verifica el ingreso compartido con una sesión limpia, una lectura protegida y logout. Si falla, mantiene el método operativo mientras recupera el compartido.
+2. En SiteGround, fija GOOGLE_LOGIN_ENABLED=false, conserva BINDING_ENABLED=false y reinicia la aplicación en todas las instancias. Conserva credenciales compartidas, claves OAuth, esquema y vinculaciones.
+3. En un navegador limpio verifica que solo se ofrece contraseña, que se puede ingresar y cerrar, y que la ruta protegida exige autenticación después. El inicio Google debe devolver 503. Una sesión exclusivamente individual previa debe perder acceso tras el reinicio. Desactivar la flag cierra el guard individual pero no revoca las sesiones persistidas. Antes de reactivar, considerar su vigencia absoluta de ocho horas o la revocación explícita por el procedimiento institucional.

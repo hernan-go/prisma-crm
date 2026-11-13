@@ -182,7 +182,7 @@ export function authentication(options: AuthOptions = {}) {
                 ? 'conflict'
                 : state.status === 503 && (configured || identityCookies(req).length)
                   ? 'unavailable'
-                  : identityCookies(req).length
+                  : identityCookies(req).length || values(req, cookieName()).length
                     ? 'invalid'
                     : 'anonymous',
           }

@@ -74,19 +74,38 @@ export function bindingRouter(options?: BindingHttpOptions) {
   }
   const secure = process.env.NODE_ENV === 'production';
   const loginPrefix = secure ? '__Host-prisma_login' : 'prisma_login';
-  const loginFailure = (res: Response, status = 400) =>
-    res.status(status).json({
-      message:
-        'No se pudo completar el acceso con Google. Cerrá la sesión anterior e iniciá un intento nuevo.',
-    });
-  // A presented authority always requires explicit logout before method switching.
-  const callbackFailure = (res: Response, status = 400) =>
-    res
+  const googleFailure = (res: Response, status = 400, sharedCallback = false) => {
+    const messages: Record<number, string> = {
+      403: 'No se pudo validar la solicitud. Volvé al ingreso para iniciar otro intento.',
+      409: 'Cerrá la sesión anterior antes de cambiar de método o cuenta.',
+      429: 'Demasiados intentos. Esperá antes de volver a intentar.',
+      503: 'El servicio de Google en PRISMA no está disponible en este momento.',
+    };
+    const message = messages[status] ?? 'No se pudo completar la solicitud con Google.';
+    const bindingLink =
+      sharedCallback && options && options.bindingEnabled !== false
+        ? '<p><a href="/vincular-google">Volver a la vinculación</a></p>'
+        : '';
+    return res
       .status(status)
+      .set('Referrer-Policy', 'no-referrer')
       .type('html')
       .send(
-        '<!doctype html><html lang="es"><meta charset="utf-8"><title>Ingreso a PRISMA</title><main><p>No se pudo completar el acceso con Google.</p><a href="/login">Volver al ingreso</a></main></html>',
+        '<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ingreso a PRISMA</title><main><h1>PRISMA</h1><p role="alert">' +
+          message +
+          '</p><a href="/login">Volver al ingreso</a>' +
+          bindingLink +
+          '</main></html>',
       );
+  };
+  const routeFailure = (req: Request, res: Response, status: number) => {
+    if (req.path === loginPath || req.path === callbackPath)
+      return googleFailure(res, status, req.path === callbackPath);
+    return res
+      .status(status)
+      .type('html')
+      .send(html('', status === 503 ? 'disabled' : 'error'));
+  };
   const hasAdministrativeCookie = (req: Request) =>
     (req.headers.cookie || '')
       .split(';')
@@ -201,13 +220,13 @@ export function bindingRouter(options?: BindingHttpOptions) {
       'Content-Security-Policy':
         "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",
     });
-    if (req.path === loginPath && (!core || !options?.loginEnabled)) return loginFailure(res, 503);
+    if (req.path === loginPath && (!core || !options?.loginEnabled)) return googleFailure(res, 503);
     if (req.path !== callbackPath && req.path !== loginPath && options?.bindingEnabled === false)
       return res.status(503).type('html').send(html('', 'disabled'));
-    if (!core) return res.status(503).type('html').send(html('', 'disabled'));
+    if (!core) return routeFailure(req, res, 503);
     initialize().then(
       () => next(),
-      () => res.status(503).type('html').send(html('', 'disabled')),
+      () => routeFailure(req, res, 503),
     );
   });
   const limit = (count: number) =>
@@ -217,7 +236,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
       standardHeaders: 'draft-8',
       legacyHeaders: false,
       keyGenerator: (req) => ipKeyGenerator(req.socket.remoteAddress || 'unattributed-peer'),
-      handler: (_req, res) => res.status(429).type('html').send(html('', 'error')),
+      handler: (req, res) => routeFailure(req, res, 429),
     });
   const perOperation = rateLimit({
     windowMs: 900000,
@@ -225,7 +244,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
     standardHeaders: false,
     legacyHeaders: false,
     keyGenerator: (req) => String(req.body?.operationId || 'invalid').slice(0, 36),
-    handler: (_req, res) => res.status(429).type('html').send(html('', 'error')),
+    handler: (req, res) => routeFailure(req, res, 429),
   });
   router.use(
     [loginPath, startPath, submitPath, cancelPath],
@@ -282,7 +301,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
     keyGenerator: () => 'binding-starts',
     standardHeaders: false,
     legacyHeaders: false,
-    handler: (_req, res) => res.status(429).type('html').send(html('', 'error')),
+    handler: (req, res) => routeFailure(req, res, 429),
   });
   router.post(startPath, limit(10), globalStarts, perOperation, async (req, res) => {
     try {
@@ -314,12 +333,12 @@ export function bindingRouter(options?: BindingHttpOptions) {
   });
   router.post(loginPath, limit(10), globalStarts, async (req, res) => {
     try {
-      if (hasAdministrativeCookie(req)) return loginFailure(res, 409);
+      if (hasAdministrativeCookie(req)) return googleFailure(res, 409);
       if (
         req.get('origin') !== origin ||
         (req.get('sec-fetch-site') && req.get('sec-fetch-site') !== 'same-origin')
       )
-        return loginFailure(res, 403);
+        return googleFailure(res, 403);
       const body = z
         .object({ csrf: z.string().regex(/^[a-f0-9]{64}$/) })
         .strict()
@@ -333,24 +352,20 @@ export function bindingRouter(options?: BindingHttpOptions) {
           Buffer.from(csrfFor(secret, 'login'), 'hex'),
         )
       )
-        return loginFailure(res, 403);
+        return googleFailure(res, 403);
       const started = await core!.begin({ purpose: 'login' });
       res.cookie(loginPrefix, started.attemptId + '.' + started.browserToken, cookieOptions);
       res.redirect(303, started.authorizationUrl);
     } catch {
-      loginFailure(res);
+      googleFailure(res);
     }
   });
   let exchanging = 0;
   router.get(callbackPath, limit(30), async (req, res) => {
     let active = false;
-    let login = false;
+    let login: boolean | undefined;
     try {
-      if (exchanging >= 2)
-        return res
-          .status(429)
-          .type('html')
-          .send(html(token(req, res), 'error'));
+      if (exchanging >= 2) return routeFailure(req, res, 429);
       const separator = req.originalUrl.indexOf('?');
       const query = separator < 0 ? '' : req.originalUrl.slice(separator + 1);
       if (query.length > 8192) throw Error();
@@ -376,7 +391,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
       const ref = refCookie(req, login ? loginPrefix : prefix);
       if (persisted.id !== ref.id || persisted.browser_hash !== digest(ref.browserToken))
         throw Error();
-      if (login && hasAdministrativeCookie(req)) return callbackFailure(res, 409);
+      if (login && hasAdministrativeCookie(req)) return googleFailure(res, 409);
       const attempt = login
         ? { context: { purpose: 'login' as const } }
         : await bindingAttempt(ref.id, ref.browserToken, states[0]);
@@ -411,10 +426,11 @@ export function bindingRouter(options?: BindingHttpOptions) {
       }
       res.redirect(303, pagePath);
     } catch {
+      if (login === undefined) return routeFailure(req, res, 400);
       if (login) {
         res.clearCookie(loginPrefix, cookieOptions);
         res.clearCookie(loginPrefix + '_csrf', cookieOptions);
-        return callbackFailure(res);
+        return googleFailure(res);
       }
       res
         .status(400)
@@ -467,9 +483,9 @@ export function bindingRouter(options?: BindingHttpOptions) {
     }
   });
   router.all(paths, (_req, res) => res.status(405).end());
-  router.use((error: unknown, _req: Request, res: Response, _next: unknown) => {
+  router.use((error: unknown, req: Request, res: Response, _next: unknown) => {
     void error;
-    res.status(400).type('html').send(html('', 'error'));
+    routeFailure(req, res, 400);
   });
   return router;
 }
