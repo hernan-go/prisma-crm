@@ -1,10 +1,10 @@
 # PRISMA CRM — Roadmap
 
-## Resumen vigente — 07/11/2026
+## Resumen vigente — 13/11/2026
 
 Estadísticas v2 mensual y anual publicada y aceptada; P0 aceptado en su alcance empresarial consultivo, con issue #2 cerrada el 06/11/2026 según confirmación del propietario. MCP privado versión 6, Know-How real/propuestas y Eventos operativos. [Estado productivo y límites](PROJECT_STATE.md).
 
-Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Permanecen pendientes Google Login, ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Las PWA para facilitadores y participantes son iniciativas futuras sin autorización de implementación. Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
+Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Google Login fue aceptado en producción el 13/11/2026. Permanecen pendientes ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Las PWA para facilitadores y participantes son iniciativas futuras sin autorización de implementación. Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
 
 
 ## Iteración 10.2 — cierre técnico productivo (06/11/2026)
@@ -76,9 +76,9 @@ Completada, publicada y validada visualmente en producción, según confirmació
 
 Validación local de cierre: typecheck, lint, 169 pruebas, build y diff check aprobados; 157 integraciones DB omitidas. Sin migraciones SQL nuevas. Codex no realizó verificaciones productivas adicionales ni auditorías de datos. [Registro de cierre e historial](iterations/2026-10-maintenance.md). La siguiente iteración funcional no reabre la iteración 7.
 
-## Aceptación local aprobada; producción pendiente — Autenticación con Google
+## Aceptado en producción — Autenticación con Google
 
-Decisión de producto confirmada por el propietario. Al 10/11/2026, fundamentos y backend B1–B3 publicados con CI aprobado según su confirmación; recuperación administrativa B4 e interfaz Google B5 publicadas con Actions #73 aprobada. Ingreso y logout de Hernán y Jesica, bloqueo posterior al logout y rechazo de dos cuentas no autorizadas aceptados por el propietario en navegador local. Corrección de experiencia de rechazo incluida en el cierre local. No equivale a habilitación ni despliegue productivo. [Estado y pasos operativos](iterations/2026-11-google-login.md#bloques-4-y-5--entrega-local-10112026).
+Iteración 12.2 cerrada funcionalmente el 13/11/2026 sobre main afd3cce. Push, CI y despliegue SiteGround completados según el propietario, quien confirmó ingreso de ambos administradores en Chrome normal, identidad/Dashboard, logout, protección posterior y rechazo de cuenta no autorizada. Incidencia resuelta. [Evidencia y límites](iterations/2026-11-google-login.md#cierre-productivo-aceptado--13112026).
 
 Alcance vigente:
 
@@ -90,7 +90,7 @@ Alcance vigente:
 - Evitar servicios pagos de autenticación cuando exista una implementación directa adecuada sin tarifa adicional.
 - Mantener el sistema específico de PRISMA, sin convertirlo en un SaaS multiempresa.
 
-020 aplicada y verificada exclusivamente en prisma_test, con respaldo previo y vínculos intactos. Pendientes: revocación administrativa manual, integración autorizada a main, preparación de migraciones/configuración productivas, despliegue y aceptación productiva. Retirada del acceso compartido por decisión posterior expresa. No se implementa Google para facilitadores en esta entrega ni se decide su mecanismo futuro.
+Permanecen pendientes el ensayo completo de recuperación administrativa/revocación manual en producción y controles de seguridad no acreditados. El acceso compartido sigue habilitado por decisión transitoria del propietario, con revisión aproximada diciembre de 2026–enero de 2027, sin retirada automática. [Decisión vigente](DECISIONS.md#decisiones-operativas--google-login-y-builds-siteground-13112026). Google para facilitadores permanece fuera del alcance entregado.
 
 ## Pendiente — Definición del resultado económico mensual
 
@@ -122,7 +122,7 @@ La evolución anual ya no es pendiente. Análisis histórico completo con rangos
 
 D020 registra la doble finalidad de Estadísticas: herramienta visual de gestión e infraestructura analítica para consultas autorizadas de ChatGPT u otros asistentes, compartiendo cálculos backend. No requiere mostrar en pantalla cada métrica consultable. La arquitectura API segura de lectura → complemento MCP privado → ChatGPT está desplegada y conectada desde el 27/10. D024 sustituye la supresión por acceso empresarial completo con protección de datos personales. Autenticación, permisos y trazabilidad obligatorios; desidentificar no garantiza anonimato.
 
-La interfaz Estadísticas no requiere por sí sola implementar Google. La autenticación con Google sigue pendiente con su alcance y prioridad existentes. La conexión MCP, el conocimiento empresarial real y Eventos están publicados. El asesor conversacional puede elaborar escenarios hipotéticos; el alcance P0 consultivo está aceptado; no se implementó un motor financiero estructurado certificado. PDF/reportes conserva su posición posterior.
+La interfaz Estadísticas no requiere por sí sola implementar Google. La autenticación con Google está aceptada en producción desde el 13/11/2026. La conexión MCP, el conocimiento empresarial real y Eventos están publicados. El asesor conversacional puede elaborar escenarios hipotéticos; el alcance P0 consultivo está aceptado; no se implementó un motor financiero estructurado certificado. PDF/reportes conserva su posición posterior.
 
 ### Completado — Gastos recurrentes e independencia mensual
 

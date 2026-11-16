@@ -1,8 +1,16 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## Decisiones operativas — Google Login y builds SiteGround (13/11/2026)
+
+Google Login está aceptado funcionalmente en producción; la incidencia queda cerrada. [Evidencia y límites](iterations/2026-11-google-login.md#cierre-productivo-aceptado--13112026).
+
+El propietario conserva el acceso compartido habilitado durante al menos uno o dos meses adicionales como contingencia deliberada y transitoria. La coexistencia de métodos es un riesgo residual conocido y aceptado temporalmente. Revisión aproximada entre diciembre de 2026 y enero de 2027, sin caducidad ni retirada automática. No hay autorización para retirarlo ahora. Su retirada exige decisión expresa y evaluación previa del procedimiento de recuperación administrativa, cuyo ensayo productivo completo no está acreditado.
+
+En cada despliegue SiteGround se conservan siempre el build productivo actual y el inmediatamente anterior para controlar inodos. Estado confirmado por el propietario al cierre: actual afd3cce, anterior dbe4e97 y cinco builds más antiguos eliminados. Conservar el anterior no garantiza por sí solo una restauración integral de la aplicación o la base de datos.
+
 ## Aclaración de vigencia — 07/11/2026
 
-Sin nuevas decisiones: los cortes fechados se conservan como antecedentes. D002 mantiene la inmutabilidad; producción tiene `001–016` según cierres documentados de 10.1/10.2, no una próxima numeración permanente. D013/D020 conservan reglas económicas, pero la navegación y pendientes gráficos antiguos fueron sustituidos por Estadísticas v2 mensual/anual publicada. D022–D024 cuentan con Know-How real, propuestas y MCP privado versión 6 operativos. La aceptación P0 consultiva (issue #2 cerrada el 06/11 según el propietario) no acredita rentabilidad certificada, atribución por actividad ni simulaciones deterministas. Google Login sigue pendiente. Fuentes: [estado operativo](PROJECT_STATE.md), [Iteración 11](iterations/2026-11-statistics-monthly-v2.md) y [contrato P0](AI_COMMERCIAL_PLANNING.md).
+Sin nuevas decisiones: los cortes fechados se conservan como antecedentes. D002 mantiene la inmutabilidad; producción tiene `001–016` según cierres documentados de 10.1/10.2, no una próxima numeración permanente. D013/D020 conservan reglas económicas, pero la navegación y pendientes gráficos antiguos fueron sustituidos por Estadísticas v2 mensual/anual publicada. D022–D024 cuentan con Know-How real, propuestas y MCP privado versión 6 operativos. La aceptación P0 consultiva (issue #2 cerrada el 06/11 según el propietario) no acredita rentabilidad certificada, atribución por actividad ni simulaciones deterministas. Google Login fue aceptado funcionalmente en producción el 13/11/2026; este punto supera el corte del 07/11. Fuentes: [estado operativo](PROJECT_STATE.md), [Iteración 11](iterations/2026-11-statistics-monthly-v2.md) y [contrato P0](AI_COMMERCIAL_PLANNING.md).
 
 
 ## Regla vigente — propuestas Know-How (cierre 02/11/2026)

@@ -1,8 +1,18 @@
 # PRISMA CRM — Estado actual
 
-## Google Login — diagnóstico de Chrome del 13/11/2026
+## Iteración 12.2 — cierre productivo aceptado (13/11/2026)
 
-Base publicada dbe4e97 y Actions #76 aprobada según el propietario. Chrome local reprodujo el bloqueo del 303 por la política de formularios de la SPA. La corrección local permite el origen exacto de Google cuando el login está habilitado. Se corrigieron también los mensajes del flujo y la recuperación de una cookie compartida vencida. APTO para publicación controlada por el propietario. Aceptación de extremo a extremo en Chrome normal con Google real pendiente. [Evidencia, límites y retorno al acceso compartido](iterations/2026-11-google-login.md#diagnóstico-de-chrome-del-13112026).
+**IMPLEMENTADO — PROBADO — INTEGRADO — DESPLEGADO — ACEPTADO FUNCIONALMENTE EN PRODUCCIÓN.** Incidencia «Autenticación con Google defectuosa» resuelta y cerrada.
+
+Publicado en main afd3cce3d749fc124deabf00912f819f06c148cd, fix(auth): stabilize Google login navigation and recovery. El propietario confirmó push, GitHub Actions correcto y despliegue SiteGround del 13/11/2026 a las 19:59 (Argentina). Confirmó ingreso de Hernán y Jesica en Chrome normal, identidad/Dashboard correctos, logout de ambos, bloqueo posterior y rechazo comprensible de cuenta no autorizada en /login?google=denied. Identidades institucionales habilitadas/vinculadas y bootstrap cerrado (initialized=1). Evidencia del propietario respaldada por capturas; Codex no ejecutó estas comprobaciones productivas.
+
+Corregidos y aceptados Origin: null, CSP form-action, recuperación de sesiones compartidas anteriores y errores fuera de contexto. La aceptación funcional no acredita auditoría integral de seguridad ni ensayo completo de recuperación administrativa/revocación manual en producción.
+
+Acceso compartido habilitado por al menos uno o dos meses más como contingencia deliberada y transitoria. Revisión aproximada diciembre de 2026–enero de 2027, sin retirada automática ni autorización actual para retirarlo. Requiere decisión expresa y evaluación previa de recuperación. [Decisiones operativas vigentes](DECISIONS.md#decisiones-operativas--google-login-y-builds-siteground-13112026).
+
+SiteGround conserva actual afd3cce y anterior dbe4e97; cinco builds antiguos eliminados por el propietario. Conservar ambos es la política para futuros despliegues. [Cierre, evidencia y límites](iterations/2026-11-google-login.md#cierre-productivo-aceptado--13112026).
+
+Los registros siguientes son antecedentes fechados. Sus pendientes de integración, despliegue, configuración y aceptación funcional Google quedan superados por este cierre. Los límites de recuperación y seguridad expresados arriba permanecen vigentes.
 
 ## Iteración 12.2 — aceptación funcional local aprobada (10/11/2026)
 

@@ -1,5 +1,23 @@
 # Iteración 12.2.B3 — login Google individual
 
+## Cierre productivo aceptado — 13/11/2026
+
+**IMPLEMENTADO — PROBADO — INTEGRADO — DESPLEGADO — ACEPTADO FUNCIONALMENTE EN PRODUCCIÓN.** Incidencia «Autenticación con Google defectuosa» resuelta y cerrada.
+
+Commit publicado en main: afd3cce3d749fc124deabf00912f819f06c148cd, fix(auth): stabilize Google login navigation and recovery. El propietario confirmó push, GitHub Actions correcto y despliegue SiteGround del 13/11/2026 a las 19:59 (Argentina). En este cierre documental se verificó que HEAD local y main remoto coinciden en ese SHA.
+
+El propietario confirmó con capturas el ingreso de Hernán y Jesica en Chrome normal, sin incógnito ni ajustes especiales, identidad administrativa correcta y Dashboard accesible. Ambos cerraron sesión y el acceso directo posterior redirigió a /login. Una cuenta Google no autorizada fue rechazada mediante /login?google=denied con mensaje comprensible. Las dos identidades institucionales continúan habilitadas y vinculadas, el bootstrap está cerrado (initialized=1) y el acceso compartido temporal sigue disponible.
+
+Esta evidencia funcional fue comunicada por el propietario y respaldada por capturas. Codex no ejecutó estos recorridos ni accedió a producción en este cierre. Origin: null por Referrer-Policy (dbe4e97), bloqueo CSP form-action, recuperación de sesiones compartidas anteriores y errores fuera de contexto (afd3cce) fueron corregidos, publicados y aceptados.
+
+La aceptación funcional no acredita una auditoría integral de seguridad. Permanecen sin acreditar el ensayo productivo completo de recuperación administrativa/revocación manual y los controles de seguridad pendientes. Facilitadores fuera del alcance entregado.
+
+El propietario mantiene el acceso compartido durante al menos uno o dos meses adicionales como contingencia deliberada y transitoria. La coexistencia es un riesgo residual conocido y aceptado temporalmente. Revisión aproximada entre diciembre de 2026 y enero de 2027, sin caducidad ni retirada automática; la retirada exige decisión expresa y evaluación previa de recuperación administrativa.
+
+SiteGround conserva el build actual afd3cce y el inmediatamente anterior dbe4e97. El propietario eliminó cinco builds más antiguos para controlar inodos. Se conservarán siempre el actual y el inmediatamente anterior en futuros despliegues. Esa retención por sí sola no garantiza una restauración integral de la aplicación o la DB.
+
+Los registros siguientes son antecedentes fechados. Sus pendientes de integración, despliegue, configuración y aceptación funcional Google quedan superados por este cierre. Los límites de recuperación y seguridad indicados arriba permanecen vigentes.
+
 ## Corrección local de la cabecera de /login (11/11/2026)
 
 El propietario confirmó el despliegue previo, las migraciones 017–020 y las dos vinculaciones productivas. Informó que Chrome enviaba `Origin: null` al iniciar Google Login y recibía 403. Base de la corrección local verificada contra GitHub main: `d79c1becef4ffd93c6696de1c8e6b1f6fc43501a`.
@@ -254,7 +272,7 @@ Una cookie compartida sin sesión vigente producía estado anonymous y exponía 
 
 El límite de inicio Google usa el peer del socket (10 por 15 minutos) y un contador global compartido con vinculación (50 por 15 minutos por instancia del router). El callback admite 30 por peer en esa ventana y dos canjes concurrentes. Clientes que compartan peer podrían compartir cupo. La topología real de SiteGround y el contador que intervino en los intentos históricos no fueron observados. Se conservaron claves, ventanas y umbrales.
 
-Regresión local: cuatro pruebas rojas antes del cambio (CSP en dos disposiciones de la SPA, JSON en rechazo y estado de cookie compartida residual). Después pasaron 98 pruebas focalizadas en siete archivos con el ejecutor sin MySQL. La cobertura combina Supertest, UI sintética, OIDC y Chrome aislado. Las cuentas institucionales, Google real y la integración MySQL quedaron fuera de esta ejecución. La evidencia permite publicar el cambio de forma controlada. Queda pendiente un único recorrido productivo en Chrome normal: clic, selección de cuenta, Dashboard con identidad correcta, cierre, ruta protegida bloqueada y nuevo ingreso. Si falla, anotar ruta sin query, estado HTTP y directiva CSP indicada por el navegador, sin capturar cookies, códigos ni tokens.
+Regresión local: cuatro pruebas rojas antes del cambio (CSP en dos disposiciones de la SPA, JSON en rechazo y estado de cookie compartida residual). Después pasaron 98 pruebas focalizadas en siete archivos con el ejecutor sin MySQL. La cobertura combina Supertest, UI sintética, OIDC y Chrome aislado. Las cuentas institucionales, Google real y la integración MySQL quedaron fuera de esta ejecución. La evidencia permite publicar el cambio de forma controlada. Los escenarios funcionales entonces pendientes quedaron aceptados mediante los recorridos productivos informados por el propietario y detallados en el cierre superior.
 
 ### Retorno al acceso compartido
 
