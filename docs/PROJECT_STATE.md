@@ -1,10 +1,28 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.1-CI — séptima suite configurada localmente (17/11/2026)
+
+Baseline local limpio comprobado: `codex/pwa-1b1-data-security`,
+`8b4ef62883bc4a08d5fea193b44896b929c2ea67`, commit de cierre PWA-1B.1.
+La matriz MySQL incorpora `tests/portal-db.test.ts` como séptima suite sin alterar
+las seis anteriores, sus baselines, el servicio independiente por entrada ni la
+acreditación. El inventario elimina la excepción temporal portal y comprueba las
+siete suites y los límites estructurales del YAML. Detalle operativo en WORKFLOW §6.
+
+Configuración implementada y validada localmente, sin commit de este subhito.
+Typecheck, lint, build y diff-check aprobados; suite sin MySQL: 774 aprobadas,
+cero fallidas y 322 omitidas; cinco pruebas de configuración focalizadas aprobadas.
+YAML analizado y siete suites sin duplicados; el resto del workflow coincide con
+el baseline. Las 17 integraciones MySQL previamente aprobadas no se repiten aquí.
+**Nueva configuración CI aún no ejecutada ni verificada en GitHub Actions**.
+Sin publicación, integración a main, despliegue ni inicio de PWA-1B.2.
+
 ## PWA-1B.1 — modelo y políticas locales (17/11/2026)
 
 **IMPLEMENTADO LOCALMENTE — PROBADO LOCALMENTE — APTO PARA CIERRE DOCUMENTAL**, según
-revisión externa comunicada por el propietario. Sin commit ni integración a main;
-sin despliegue ni activación del portal. Rama `codex/pwa-1b1-data-security`, base
+revisión externa comunicada por el propietario. Consolidado en el commit local
+`8b4ef62883bc4a08d5fea193b44896b929c2ea67`, sin integración a main, despliegue ni
+activación del portal. Rama `codex/pwa-1b1-data-security`, base original
 `86e786e35445b0ae3f41d4552454d6a527698cd9`.
 
 Modelo aditivo 021 y servicios internos de piloto de dos miembros, preparación
@@ -17,8 +35,10 @@ en instancia MySQL 8.4.11/InnoDB nueva, descartable y acreditada. Se comprobaron
 001–021, preflight parcial, restricciones, rollback, idempotencia, concurrencia,
 revocación selectiva/readmisión y emergencia. Las incidencias anteriores de
 preparación fueron ambientales, sin cambios de código; recursos propios eliminados.
-No se conectaron bases conservadas ni producción. La suite portal aún no está en CI;
-la ejecución local no acredita CI remoto ni aplicación de 021 fuera de ese destino.
+No se conectaron bases conservadas ni producción. La incorporación local a la
+configuración CI se registra en PWA-1B.1-CI arriba; esa configuración aún no fue
+ejecutada remotamente. La ejecución local no acredita CI remoto ni aplicación de
+021 fuera de ese destino.
 
 H1 corregido, opción B: revocar sesiones conserva el estado del vínculo y retirar
 acceso exige `setLinkEnabled(false)`. La distinción semántica tiene pruebas unitarias;
