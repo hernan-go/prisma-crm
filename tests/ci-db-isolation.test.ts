@@ -31,7 +31,16 @@ it('runs every previously enabled MySQL suite exactly once, without parallel fil
     )
     .map((name) => `tests/${name}`);
   expect(suites).toHaveLength(6);
-  expect([...suites].sort()).toEqual(enabled.sort());
+  // PWA-1B.1 prepares this suite only. Its CI integration is a later milestone;
+  // keep a named exception rather than silently excluding every new DB suite.
+  const preparedOnly = ['tests/portal-db.test.ts'];
+  for (const suite of preparedOnly) {
+    expect(enabled).toContain(suite);
+    expect(suites).not.toContain(suite);
+  }
+  expect([...suites].sort()).toEqual(
+    enabled.filter((suite) => !preparedOnly.includes(suite)).sort(),
+  );
   expect(new Set(suites).size).toBe(suites.length);
   expect(integrations.match(/run: npx vitest run[^\n]+/g)).toEqual([
     'run: npx vitest run --no-file-parallelism --hookTimeout=30000 "${{ matrix.suite }}"',

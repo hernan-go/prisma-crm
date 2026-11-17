@@ -1,5 +1,37 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.1 — modelo y políticas locales (17/11/2026)
+
+**IMPLEMENTADO LOCALMENTE — PROBADO LOCALMENTE — APTO PARA CIERRE DOCUMENTAL**, según
+revisión externa comunicada por el propietario. Sin commit ni integración a main;
+sin despliegue ni activación del portal. Rama `codex/pwa-1b1-data-security`, base
+`86e786e35445b0ae3f41d4552454d6a527698cd9`.
+
+Modelo aditivo 021 y servicios internos de piloto de dos miembros, preparación
+firmada, auditoría/idempotencia, barreras individuales y emergencia. Validaciones
+anteriores conservadas: 36 focalizadas aprobadas; suite general sin MySQL con
+774 aprobadas, cero fallidas y 322 omitidas. Typecheck, lint y build aprobados.
+
+Validación MySQL local posterior: **17 aprobadas, cero fallidas y cero omitidas**
+en instancia MySQL 8.4.11/InnoDB nueva, descartable y acreditada. Se comprobaron
+001–021, preflight parcial, restricciones, rollback, idempotencia, concurrencia,
+revocación selectiva/readmisión y emergencia. Las incidencias anteriores de
+preparación fueron ambientales, sin cambios de código; recursos propios eliminados.
+No se conectaron bases conservadas ni producción. La suite portal aún no está en CI;
+la ejecución local no acredita CI remoto ni aplicación de 021 fuera de ese destino.
+
+H1 corregido, opción B: revocar sesiones conserva el estado del vínculo y retirar
+acceso exige `setLinkEnabled(false)`. La distinción semántica tiene pruebas unitarias;
+las 17 MySQL ejercitan barreras/revocación/readmisión mediante `setLinkEnabled`, sin
+llamar directamente a `revokePortalSessions`. H2 sigue como dependencia futura de
+concesión supervisada de `facilitator`, preservando `admin`, sin cuentas modificadas.
+
+Portal sin activación: sin rutas, callback, emisión de sesiones, interfaz ni
+cuentas reales modificadas. Google administrativo, sesiones CRM y guards intactos.
+Los hooks institucionales/instructores y el consumidor OIDC quedan para PWA-1B.2;
+esta entrega no habilita el portal. Detalle y validaciones de cierre en
+[PWA-1B.1](iterations/2026-11-pwa-1b1.md).
+
 ## Iteración 12.2 — cierre productivo aceptado (13/11/2026)
 
 **IMPLEMENTADO — PROBADO — INTEGRADO — DESPLEGADO — ACEPTADO FUNCIONALMENTE EN PRODUCCIÓN.** Incidencia «Autenticación con Google defectuosa» resuelta y cerrada.

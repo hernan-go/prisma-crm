@@ -1,5 +1,44 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-1B.1 — contrato aprobado, implementación local (17/11/2026)
+
+Se adopta el preflight PWA-1B.0 y sus cuatro observaciones de cierre, según paquete
+externo de continuidad y autorización expresa del propietario. Una identidad
+institucional por persona; autorización futura portal independiente de admin.
+Piloto de exactamente dos pares identidad/instructor explícitos e inmutables tras
+sellar. Deshabilitar no libera cupos; no hay onboarding ni grants implícitos.
+Identidades/asignaciones reales se comprobarán separadamente en PWA-1C.
+
+Revocación selectiva: `security_seq` ordena, `min_login_seq` invalida intentos del
+vínculo afectado y `emergency_epoch` invalida globalmente en cierre de emergencia.
+No usar timestamps como orden de seguridad ni invalidar A por un cambio de B.
+Reintentos con igual UUID requieren actor, contexto de sesión y solicitud
+normalizada idénticos; cambian parámetros/revisión/tipo/actor/contexto → conflicto.
+El recibo conserva resultado y estados anterior/posterior en la misma transacción
+del efecto. Sin ampliar las dos columnas de auditoría aprobadas.
+
+Corrección H1, opción B aprobada por el propietario: `revokePortalSessions`
+significa cerrar sesiones portal e invalidar inicios anteriores del usuario,
+conservando el estado del vínculo; si sigue habilitado y elegible, permite nuevos inicios.
+`setLinkEnabled(false)` retira el acceso hasta rehabilitación explícita; rehabilitar
+no recupera sesiones ni intentos previos. No usar nombres de revocación de acceso
+para una operación que solo revoca sesiones. Evento: `portal.sessions.revoked`.
+
+H2 es dependencia futura, sin implementación en PWA-1B.1: otorgar de forma
+supervisada `facilitator` a Hernán y Jesica preservando `admin`, con autorización
+separada y comprobación de IDs. Antes de activar se deberá acordar atomicidad
+con el sellado o etapas auditadas con recuperación; contemplar que el mecanismo
+actual de concesión de rol revoca sesiones administrativas del usuario. El sellado
+actual exige el rol previo y no lo concede. No modificar cuentas reales aquí.
+
+PWA-1B.1 no activa autenticación portal, cuentas, recursos ni sesiones operativas.
+Callbacks, cookies, guard y logout portal, conflicto CRM A/portal B y hooks sobre
+mutaciones institucionales/instructores corresponden a PWA-1B.2. No relajar la
+revocación administrativa actual. Esquema/portal ausentes no afectan al CRM.
+La validación MySQL local no acredita aplicación de 021 en bases conservadas,
+integración a main/CI remoto ni despliegue.
+[Contrato y evidencia](iterations/2026-11-pwa-1b1.md).
+
 ## Decisiones operativas — Google Login y builds SiteGround (13/11/2026)
 
 Google Login está aceptado funcionalmente en producción; la incidencia queda cerrada. [Evidencia y límites](iterations/2026-11-google-login.md#cierre-productivo-aceptado--13112026).

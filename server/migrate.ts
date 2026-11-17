@@ -30,6 +30,22 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '021.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='020.sql'",
+        );
+        if (!baseline.length) throw new Error('021.sql requiere 020.sql registrada.');
+        const [tables] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('portal_access_state','identity_instructor_links','identity_portal_oidc_attempts')",
+        );
+        const [columns] = await c.query<RowDataPacket[]>(
+          "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='identity_audit_events' AND COLUMN_NAME IN ('details_json','operation_id')",
+        );
+        if (tables.length || columns.length)
+          throw new Error(
+            '021.sql detenida: esquema portal parcial o sin registro. Inspeccionar antes de recuperar.',
+          );
+      }
       if (name === '020.sql') {
         const [baseline] = await c.execute<RowDataPacket[]>(
           "SELECT name FROM schema_migrations WHERE name='019.sql'",
