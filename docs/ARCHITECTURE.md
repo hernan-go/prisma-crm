@@ -1,5 +1,61 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-1B.1 — modelo y políticas internas locales (17/11/2026)
+
+021 agrega `identity_instructor_links`, `portal_access_state` e
+`identity_portal_oidc_attempts`, y `details_json`/`operation_id` en auditoría
+existente. Piloto inicialmente sin sellar, portal apagado y admisiones siempre
+cerradas. Dos cupos únicos persistentes (1/2) limitan la capacidad incluso con un
+miembro deshabilitado. Las FK restrictivas conservan referencias; el servicio no
+elimina ni reasigna miembros sellados.
+
+`portal-access.ts` es un factory interno sin instancia predeterminada. Prepara
+planes HMAC ligados a actor/sesión/pares explícitos/revisión y cinco minutos;
+confirma bajo bloqueo y revalida elegibilidad. `portal-policy.ts` implementa la
+unidad transaccional MySQL optativa. No es importada por el servidor operativo:
+CRM funciona sin instalar 021. Preparación y mutaciones exigen sesión individual
+CRM vigente, admin Google habilitado e integrante institucional; legacy no sirve.
+
+Locks: institución → política → grupo de recursos → sesiones/recibos/intentos.
+Dentro del grupo: vínculos por UUID, usuarios y roles/bindings por UUID,
+instructores por ID numérico; se bloquean previamente actor, miembros propuestos
+y miembros persistentes. No se adquiere el lock de personas: estas operaciones
+no lo necesitan. Un futuro consumidor que ya lo requiera debe tomarlo primero.
+Cada unidad usa una conexión; `portalTransaction` permite futura composición en
+una transacción ya coordinada, nunca una transacción anidada. No hay reintentos
+automáticos de deadlocks/timeouts: rollback y reintento explícito con igual UUID.
+
+`security_seq` ordena; cada mutación individual efectiva actualiza únicamente su
+`min_login_seq` y revoca sesiones `portal` del usuario. El cierre global efectivo
+incrementa `emergency_epoch` y revoca todas las sesiones portal. Reabrir no restaura
+sesiones ni intentos antiguos. Validación de contexto exige secuencia inicial no
+anterior a la barrera, no futura y misma generación de emergencia; no compara
+contra igualdad de la secuencia global. BIGINT viaja como texto decimal exacto.
+
+Contrato H1, opción B aprobada: `revokePortalSessions` conserva el estado del
+vínculo, revoca sus sesiones portal e invalida intentos anteriores mediante la
+barrera individual. Si sigue habilitado y elegible, permite un inicio nuevo.
+Su evento es `portal.sessions.revoked`. Retirar acceso requiere
+`setLinkEnabled(false)`: nuevos intentos también se deniegan hasta rehabilitar.
+Rehabilitar avanza otra vez la barrera y no restaura sesiones o intentos anteriores.
+
+El esquema OIDC está aislado de 019–020. CHECK exige retirar nonce/PKCE al salir
+de pending, retirar subject/tiempos al consumir o invalidar y asociar cada consumo
+a una sesión única. La FK conserva asociación; no prueba aplicación/propietario:
+eso corresponde al consumidor futuro dentro de la transacción de emisión.
+No se implementan store OIDC operativo, canje, limpieza programada ni emisión en
+este hito. El futuro mantenimiento deberá conservar asociaciones mientras puedan
+necesitarse para revocar sesiones y no presentar expiración como borrado físico.
+
+`details_json` JSON nullable almacena recibos versionados con actor, huella de
+sesión, parámetros normalizados, revisión esperada, instantáneas anterior/posterior
+y resultado; límite DDL de 16 KiB y límite previo del servicio de 12 KiB. UUID
+ASCII binario nullable/único identifica reintentos sin afectar eventos anteriores.
+No requiere índice JSON: la consulta es por UUID único o usuario/id existente.
+Auditoría, barreras y revocaciones confirman o revierten juntas. Sin tokens, claves,
+subject, nombres o contactos en estos recibos. No es un registro inalterable frente
+al administrador de DB. [Estado y límites](iterations/2026-11-pwa-1b1.md).
+
 ## Vinculación supervisada — 12.2.B2 local
 
 Router terminal B2 y página HTML independiente, sin login Google administrativo. Evidencia OIDC se consume en la misma PoolConnection que candidatura/auditoría; autoridad inicial y reemplazos por CLI TTY con confirmación de destino y huella revalidada bajo bloqueo. Bootstrap de dos UUID atómico y cierre persistente. Configuración opcional fail-closed sin afectar auth heredada. Mantenimiento temporal sin eliminar operaciones institucionales ni auditoría. 017–019 intactas; sin migración nueva. Pruebas sintéticas y QA visual locales; Google real y viabilidad operativa SiteGround pendientes. [Contratos y procedimiento](iterations/2026-11-supervised-google-binding.md).

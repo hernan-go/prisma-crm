@@ -1,5 +1,87 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.1 — cierre de migración productiva (18/11/2026)
+
+**021.sql APLICADA, REGISTRADA Y VERIFICADA EN PRODUCCIÓN**, según ejecución
+manual del propietario mediante phpMyAdmin. Cinco sentencias originales correctas,
+sin errores reportados; tres tablas InnoDB y dos columnas de auditoría incorporadas,
+restricciones e índices comprobados por metadatos. Registro único de 021 y 21
+migraciones totales. Portal deshabilitado, estado inicial correcto y cero vínculos,
+intentos OIDC y sesiones portal. Codex no realizó una conexión productiva independiente.
+Detalle, respaldo y límites de recuperación en
+[Migraciones productivas, anexo 021](PRODUCTION_MIGRATIONS.md#anexo--021--pwa-1b1).
+
+Implementación y pruebas locales completadas. CI remoto #80 aprobado sobre
+`3d740218e4ed99156daa06438547223062c09eba`: ocho jobs exitosos (verify y siete
+suites MySQL), consultados nuevamente el 18/11 sin relanzarlos. Los recuentos
+previamente documentados son 774 unitarias y 268 integraciones, incluidas 17 portal.
+El commit posterior `a161b85` es exclusivamente documental; no se le atribuye esa CI.
+
+Diagnóstico Git del 18/11, tras `git fetch origin`: `origin/main` permanece en
+`86e786e35445b0ae3f41d4552454d6a527698cd9`; rama remota PWA en `3d740218`, HEAD
+local en `a161b85`, un commit documental pendiente de publicación. Main es ancestro
+de HEAD, sin divergencia; cuatro commits de la rama todavía no integrados.
+**Código PWA-1B.1 sin integración a main ni despliegue en SiteGround; portal sin
+habilitar.** La migración aplicada no cambia estos estados ni inicia PWA-1B.2.
+La configuración efectiva de SiteGround y el smoke posterior se confirmarán antes
+y después de una publicación autorizada, respectivamente.
+
+Los cortes del 17/11 siguientes conservan su evidencia histórica; sus pendientes
+de CI y aplicación productiva de 021 quedan superados por este cierre. H2 y los
+consumidores/hooks futuros siguen pendientes para la activación, fuera de este hito.
+
+## PWA-1B.1-CI — séptima suite configurada localmente (17/11/2026)
+
+Baseline local limpio comprobado: `codex/pwa-1b1-data-security`,
+`8b4ef62883bc4a08d5fea193b44896b929c2ea67`, commit de cierre PWA-1B.1.
+La matriz MySQL incorpora `tests/portal-db.test.ts` como séptima suite sin alterar
+las seis anteriores, sus baselines, el servicio independiente por entrada ni la
+acreditación. El inventario elimina la excepción temporal portal y comprueba las
+siete suites y los límites estructurales del YAML. Detalle operativo en WORKFLOW §6.
+
+Configuración implementada y validada localmente, sin commit de este subhito.
+Typecheck, lint, build y diff-check aprobados; suite sin MySQL: 774 aprobadas,
+cero fallidas y 322 omitidas; cinco pruebas de configuración focalizadas aprobadas.
+YAML analizado y siete suites sin duplicados; el resto del workflow coincide con
+el baseline. Las 17 integraciones MySQL previamente aprobadas no se repiten aquí.
+**Nueva configuración CI aún no ejecutada ni verificada en GitHub Actions**.
+Sin publicación, integración a main, despliegue ni inicio de PWA-1B.2.
+
+## PWA-1B.1 — modelo y políticas locales (17/11/2026)
+
+**IMPLEMENTADO LOCALMENTE — PROBADO LOCALMENTE — APTO PARA CIERRE DOCUMENTAL**, según
+revisión externa comunicada por el propietario. Consolidado en el commit local
+`8b4ef62883bc4a08d5fea193b44896b929c2ea67`, sin integración a main, despliegue ni
+activación del portal. Rama `codex/pwa-1b1-data-security`, base original
+`86e786e35445b0ae3f41d4552454d6a527698cd9`.
+
+Modelo aditivo 021 y servicios internos de piloto de dos miembros, preparación
+firmada, auditoría/idempotencia, barreras individuales y emergencia. Validaciones
+anteriores conservadas: 36 focalizadas aprobadas; suite general sin MySQL con
+774 aprobadas, cero fallidas y 322 omitidas. Typecheck, lint y build aprobados.
+
+Validación MySQL local posterior: **17 aprobadas, cero fallidas y cero omitidas**
+en instancia MySQL 8.4.11/InnoDB nueva, descartable y acreditada. Se comprobaron
+001–021, preflight parcial, restricciones, rollback, idempotencia, concurrencia,
+revocación selectiva/readmisión y emergencia. Las incidencias anteriores de
+preparación fueron ambientales, sin cambios de código; recursos propios eliminados.
+No se conectaron bases conservadas ni producción. La incorporación local a la
+configuración CI se registra en PWA-1B.1-CI arriba; esa configuración aún no fue
+ejecutada remotamente. La ejecución local no acredita CI remoto ni aplicación de
+021 fuera de ese destino.
+
+H1 corregido, opción B: revocar sesiones conserva el estado del vínculo y retirar
+acceso exige `setLinkEnabled(false)`. La distinción semántica tiene pruebas unitarias;
+las 17 MySQL ejercitan barreras/revocación/readmisión mediante `setLinkEnabled`, sin
+llamar directamente a `revokePortalSessions`. H2 sigue como dependencia futura de
+concesión supervisada de `facilitator`, preservando `admin`, sin cuentas modificadas.
+
+Portal sin activación: sin rutas, callback, emisión de sesiones, interfaz ni
+cuentas reales modificadas. Google administrativo, sesiones CRM y guards intactos.
+Los hooks institucionales/instructores y el consumidor OIDC quedan para PWA-1B.2;
+esta entrega no habilita el portal. Detalle y validaciones de cierre en
+[PWA-1B.1](iterations/2026-11-pwa-1b1.md).
+
 ## Iteración 12.2 — cierre productivo aceptado (13/11/2026)
 
 **IMPLEMENTADO — PROBADO — INTEGRADO — DESPLEGADO — ACEPTADO FUNCIONALMENTE EN PRODUCCIÓN.** Incidencia «Autenticación con Google defectuosa» resuelta y cerrada.

@@ -52,6 +52,8 @@ Node.js 22.12+ o 24 LTS, npm, MySQL 8.0.16+ (entorno local vigente: Community Se
 
 ## Instalación local
 
+Los comandos de esta sección son locales. Para bases productivas es obligatoria la guía [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md); no reutilizar estos comandos sin verificar el destino y contar con autorización específica.
+
 ```sh
 npm ci
 ```
@@ -150,6 +152,8 @@ No se migran pagos históricos desde las casillas TRANS/EFECTIVO: no permiten re
 
 ## Preparación de despliegue en SiteGround GrowBig
 
+Antes de preparar cambios de esquema, seguir [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md), fuente operativa única. Los parámetros históricos siguientes no autorizan operaciones; el anexo 021 conserva el procedimiento y registra su cierre productivo informado del 18/11/2026, sin integración ni despliegue del código PWA-1B.1.
+
 **No se desplegó ni se accedió al panel.** La documentación oficial consultada el 26/09/2026 confirma hasta 5 proyectos Node.js en GrowBig y gestión de MySQL, SSL y variables: [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto](https://es.siteground.com/kb/gestionar-proyecto-node-js).
 
 Parámetros preparados:
@@ -163,7 +167,7 @@ Parámetros preparados:
 - Crear MySQL UTF-8 y usuario exclusivo desde Site Tools; cargar DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD. Configurar DB_SSL según el servidor, sin desactivar validación TLS.
 - Configurar NODE_ENV=production, APP_URL con el origen HTTPS exacto, ADMIN_PASSWORD_HASH y SESSION_SECRET. TRUST_PROXY debe reflejar la cantidad real de proxies confiables.
 - Generar secretos localmente con `npm run auth:configure -- --export`; copiar **solo hash y secreto** desde `private/auth.env` al panel privado. No copiar `.env` de desarrollo ni la base QA.
-- Migrar con `node dist/server/migrate.js`, luego `node dist/server/seed.js` (o scripts npm si están las herramientas de desarrollo). La seed no carga personas.
+- Seleccionar y autorizar el mecanismo de migración según [el procedimiento productivo](docs/PRODUCTION_MIGRATIONS.md#d-herramientas-admitidas). La presencia de `dist/server/migrate.js` no acredita destino, acceso ni seguridad de ejecución; no ejecutar seeds como parte implícita de una migración.
 
 **Limitación pendiente de verificación en la cuenta:** el preset debe ejecutar Express como proceso persistente. La documentación enumera build/output/framework, pero no un campo universal de startup. Confirmar el mecanismo para `npm start`, empaquetado, consola/SSH para migraciones y topología proxy antes de publicar. Si el panel no lo permite, consultar soporte; no cambiar a PHP ni reescribir la app.
 

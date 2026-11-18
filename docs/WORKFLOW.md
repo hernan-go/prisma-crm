@@ -117,7 +117,7 @@ La preparación externa a los tests debe:
 
 La guarda rechaza nombres protegidos (también mayúsculas) y nombres fuera del prefijo descartable; exige autorización y acreditación completas. Cada adquisición comprueba DATABASE(), @@server_uuid y el marcador en esa misma conexión antes de entregarla al código que escribe. No cachea autorizaciones entre adquisiciones. Tabla ausente, permisos insuficientes o falta de coincidencia exacta abortan; nunca crea el marcador ni repara la acreditación. Un error destruye esa conexión. Previene errores operativos; no es una barrera frente a código malicioso con credenciales MySQL privilegiadas.
 
-La ejecución de CI tiene dos fases: primero `verify` ejecuta lint, build y `npm run test:unit` sin MySQL. Solo después de su éxito, `integrations` ejecuta una matriz de seis suites con `max-parallel: 1` y `fail-fast: false`. Cada entrada recibe un **servicio MySQL nuevo**, con su propio esquema, usuario, UUID y marcador. No se comparte el estado de una entrada con otra. GitHub no garantiza el orden entre entradas de la matriz y el procedimiento no depende de él.
+La configuración de CI tiene dos fases: primero `verify` ejecuta lint, build y `npm run test:unit` sin MySQL. Solo después de su éxito, `integrations` ejecuta una matriz de siete suites con `max-parallel: 1` y `fail-fast: false`. Cada entrada recibe un **servicio MySQL nuevo**, con su propio esquema, usuario, UUID y marcador. No se comparte el estado de una entrada con otra. GitHub no garantiza el orden entre entradas de la matriz y el procedimiento no depende de él.
 
 | Suite                        | Baseline propio sobre el esquema nuevo acreditado                                                                                                                                   |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -127,6 +127,7 @@ La ejecución de CI tiene dos fases: primero `verify` ejecuta lint, build y `npm
 | identity-bindings-db.test.ts | Su beforeAll prepara 001–018; exige institución vacía                                                                                                                               |
 | oidc-db.test.ts              | Su beforeAll prepara 001–018 y luego prueba 019                                                                                                                                     |
 | binding-b2-db.test.ts        | Su beforeAll prepara 001–019; exige institución vacía                                                                                                                               |
+| portal-db.test.ts            | Exige solo marcador; prepara 001–020, prueba DDL parcial de 021, aplica 021 y crea su piloto exclusivamente sintético                                                               |
 
 Cada entrada invoca exactamente un archivo con `npx vitest run --no-file-parallelism --hookTimeout=30000 "${{ matrix.suite }}"`. El hookTimeout admite la preparación desde cero. Para una ejecución manual autorizada, usar ese comando sustituyendo la expresión de GitHub por una única ruta de la tabla y configurar `RUN_DB_TESTS=true` junto a la acreditación. Cada suite requiere un entorno temporal nuevo e independiente preparado según esta sección; no ejecutar la siguiente sobre el estado dejado por la anterior. No usar `npm test` general con RUN_DB_TESTS habilitado sobre un esquema compartido.
 
@@ -134,7 +135,7 @@ Ejecutar bootstrap en procesos secuenciales, solo con institución vacía sinté
 
 ### CI efímero y herramientas manuales
 
-GitHub Actions usa exclusivamente un servicio MySQL 8.4 nuevo por entrada de matriz, esquema prisma_disposable_ci y usuario prisma_ci limitado a ese esquema. El nombre se repite en instancias independientes; no identifica una base compartida entre suites. Un paso docker exec sobre el ID de cada servicio crea el marcador, genera un token nuevo y entrega UUID/token/autorización al job antes de su única suite. CI=true y GITHUB_ACTIONS=true no autorizan nada. Se mantienen las seis suites MySQL antes habilitadas y las pruebas sin DB; las suites optativas mantienen sus flags anteriores. La ejecución real debe comprobarse remotamente después de una publicación autorizada; el análisis local no la acredita.
+GitHub Actions usa exclusivamente un servicio MySQL 8.4 nuevo por entrada de matriz, esquema prisma_disposable_ci y usuario prisma_ci limitado a ese esquema. El nombre se repite en instancias independientes; no identifica una base compartida entre suites. Un paso docker exec sobre el ID de cada servicio crea el marcador, genera un token nuevo y entrega UUID/token/autorización al job antes de su única suite. CI=true y GITHUB_ACTIONS=true no autorizan nada. Se mantienen las seis suites MySQL anteriores y se configura portal-db.test.ts como séptima, además de las pruebas sin DB; las suites optativas mantienen sus flags anteriores. Las 17 integraciones portal pasaron localmente en MySQL 8.4.11 descartable acreditado. La configuración de siete suites fue verificada remotamente en Actions #80 sobre `3d740218e4ed99156daa06438547223062c09eba`, con ocho jobs exitosos, consultados nuevamente el 18/11/2026 sin relanzarlos. Esa CI no se atribuye a commits documentales posteriores ni acredita un despliegue.
 
 `qa:cleanup --apply` y `applyCleanup` exigen la misma acreditación, además de plan revisado, confirmación de DB y huellas previas. Generar planes sigue sin borrar. `setup-local-db.ts` está retirado: aborta antes de conectarse y no rota usuarios ni crea bases. `db:migrate` sigue siendo una herramienta manual de migración controlada, no una autorización para tests ni para reinicializar bases; dentro de Vitest está cubierta por la guarda. `db:seed` no escribe datos. No ejecutar SQL de respaldos ni restauraciones como preparación sobre las bases conservadas.
 
@@ -248,6 +249,8 @@ Nunca declarar una validación visual exitosa si no se ejecutó. Un servidor que
 Distinguir expresamente las validaciones automatizadas aprobadas, las pruebas visuales efectivamente realizadas (entorno, tamaños y escenarios), las pendientes por limitaciones del entorno y los problemas reales detectados en la aplicación. No presentar una hipótesis de conectividad como un defecto confirmado del producto.
 
 ## 8. Cambios de DB
+
+Fuente operativa única y lectura obligatoria antes de preparar o ejecutar migraciones productivas: [PRODUCTION_MIGRATIONS](PRODUCTION_MIGRATIONS.md). Define responsabilidades, selección de herramienta, destino, respaldo, ejecución, registro y recuperación; incluye el procedimiento histórico y cierre productivo de 021 del 18/11/2026. La lista siguiente resume el orden del trabajo, no sustituye ese procedimiento ni otorga autorización.
 
 Para toda iteración que requiera esquema:
 
