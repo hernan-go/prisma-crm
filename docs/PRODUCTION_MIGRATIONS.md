@@ -124,9 +124,51 @@ La investigación documental del 18/11/2026 confirmó estas fuentes, sin repetir
 
 ## Anexo — 021 / PWA-1B.1
 
-**PROCEDIMIENTO PROPUESTO — PENDIENTE DE AUTORIZACIÓN Y EJECUCIÓN.**
+**021.sql APLICADA, REGISTRADA Y VERIFICADA EN PRODUCCIÓN — 18/11/2026**, según
+ejecución manual y evidencia comunicadas por el propietario. Codex no se conectó
+a producción ni ejecutó la migración. El procedimiento original se conserva como
+referencia; no autoriza repetir el DDL ni el registro ya completados.
 
-### Estado informado al 18/11/2026
+### Cierre productivo informado — 18/11/2026
+
+El propietario ejecutó mediante phpMyAdmin las cinco sentencias originales de
+`server/migrations/021.sql`, sin errores reportados. Confirmó tres tablas nuevas
+InnoDB, las dos columnas de auditoría, estado inicial correcto y portal deshabilitado,
+sin vinculaciones, intentos OIDC ni sesiones portal. La base y el servidor MySQL
+8.4.11-11 fueron identificados previamente; sus identificadores internos y
+credenciales permanecen fuera de esta documentación.
+
+Postflight por metadatos comunicado por el propietario:
+
+| Control                                             | Esperado | Obtenido |
+| --------------------------------------------------- | -------: | -------: |
+| CHECK de política portal                            |        5 |        5 |
+| CHECK de vínculos de facilitadores                  |        4 |        4 |
+| CHECK OIDC portal                                   |       10 |       10 |
+| CHECK nuevos de auditoría                           |        2 |        2 |
+| FK con RESTRICT                                     |        4 |        4 |
+| Índices UNIQUE                                      |        6 |        6 |
+| Entradas del índice de limpieza OIDC (dos columnas) |        2 |        2 |
+
+Registro final confirmado: **21 migraciones en total, un único registro de
+`021.sql`**. Portal inactivo confirmado; cero vínculos, intentos y sesiones portal.
+Estos resultados acreditan el cierre informado; no son nuevas consultas de Codex.
+
+Respaldo previo: `PRISMA_PRE_PWA_021_2026-11-18`, creado a las 00:06 (Argentina),
+con creación e inclusión de la base confirmadas en SiteGround. El propietario
+confirmó ausencia de operaciones de usuarios desde el respaldo hasta el inicio
+de la intervención. **Restauración efectiva no ensayada**; no se ejecutó ninguna
+restauración ni se reportó pérdida de datos. No existe rollback transaccional de
+toda la secuencia DDL. No se informó aquí la hora exacta de ejecución ni una
+prueba posterior específica de continuidad administrativa.
+
+El esquema productivo está preparado para PWA-1B.1. El código continúa en la rama
+de trabajo, sin integración a `main`, despliegue ni funcionalidad portal habilitada.
+CI #80 corresponde a `3d740218e4ed99156daa06438547223062c09eba`, no a los cambios
+documentales posteriores. Integración, publicación y activación requieren sus
+decisiones separadas.
+
+### Estado inicial informado al 18/11/2026 — anterior a la ejecución
 
 Fuente: comprobación manual comunicada por el propietario, no una nueva consulta productiva de Codex.
 
@@ -138,7 +180,7 @@ Fuente: comprobación manual comunicada por el propietario, no una nueva consult
 - [GitHub Actions #80](https://github.com/hernan-go/prisma-crm/actions/runs/44222619190) aprobado sobre `3d740218e4ed99156daa06438547223062c09eba`: 8/8 jobs, 774 pruebas unitarias y 268 integraciones, incluidas 17 portal. Verificación remota anterior; no se repite aquí.
 - PWA-1B.1 publicada exclusivamente en la rama `codex/pwa-1b1-data-security`; `main` en `86e786e35445b0ae3f41d4552454d6a527698cd9`, todavía sin PWA-1B.1. Sin despliegue ni activación del portal.
 
-Los documentos anteriores conservan cortes que dicen CI pendiente o producción solo hasta 016. Para este anexo prevalece la evidencia fechada anterior; no se reescriben antecedentes ni se declara 021 aplicada.
+Los documentos anteriores conservan cortes que dicen CI pendiente o producción solo hasta 016. Este inventario describe el preflight histórico; el cierre productivo superior actualiza el estado de 021 sin reescribir esos antecedentes.
 
 ### Fuente y condiciones de ejecución
 
@@ -239,19 +281,21 @@ Esperado: un registro de 021 y 21 registros totales, conservando los veinte ante
 
 Verificar continuidad administrativa y portal inactivo con el alcance autorizado. Conservar el esquema aditivo al recuperar código anterior compatible. Ante parcial aplicar E: inventario, revisión y autorización de acciones específicas; ninguna limpieza automática ni restauración completa indiscriminada. No publicar `main` hasta aceptar la migración y obtener autorización independiente de integración/despliegue.
 
-Completar posteriormente este registro mediante un cierre documental autorizado, sin borrar el estado inicial ni cambiarlo retrospectivamente:
+Registro de cierre actualizado con la comunicación del propietario del 18/11/2026.
+Los datos no aportados se distinguen del resultado confirmado; no se reconstruyen
+autorizaciones ni evidencias privadas por inferencia:
 
-| Campo                                           | Resultado de ejecución                       |
-| ----------------------------------------------- | -------------------------------------------- |
-| Autorización y alcance                          | PENDIENTE                                    |
-| Fecha/hora y ventana                            | PENDIENTE                                    |
-| Operador                                        | PENDIENTE; no publicar datos personales      |
-| Referencia privada de destino y contexto        | PENDIENTE                                    |
-| Archivo, commit y huella cotejados              | PENDIENTE                                    |
-| Respaldo y recuperación disponibles al ejecutar | PENDIENTE                                    |
-| Resultado de cada una de las cinco sentencias   | PENDIENTE                                    |
-| Advertencias, incidencias y recuperación        | PENDIENTE                                    |
-| Evidencias de DDL/estado inactivo               | PENDIENTE; referencias privadas sin secretos |
-| Registro 021 y verificación final               | PENDIENTE                                    |
-| Continuidad administrativa y estado final       | PENDIENTE                                    |
-| Integración y despliegue                        | NO AUTORIZADOS POR ESTE PROCEDIMIENTO        |
+| Campo                                           | Resultado de ejecución                                                                                                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Autorización y alcance                          | Propietario informa ejecución manual siguiendo el procedimiento aprobado; cierre documental autorizado                                                              |
+| Fecha/hora y ventana                            | 18/11/2026; hora exacta y duración no informadas                                                                                                                    |
+| Operador                                        | Propietario, mediante phpMyAdmin                                                                                                                                    |
+| Referencia privada de destino y contexto        | Base y servidor previamente verificados según propietario; sin identificadores públicos                                                                             |
+| Archivo, commit y huella cotejados              | Archivo original 021 según propietario; copia local en a161b85 con SHA-256 coincidente con el documentado; no equivale a cotejo independiente de la copia ejecutada |
+| Respaldo y recuperación disponibles al ejecutar | Copia previa confirmada; sin operaciones de usuarios hasta la intervención; restauración no ensayada                                                                |
+| Resultado de cada una de las cinco sentencias   | Cinco ejecuciones correctas, sin errores reportados                                                                                                                 |
+| Advertencias, incidencias y recuperación        | Sin errores ni pérdida de datos reportados; ninguna restauración                                                                                                    |
+| Evidencias de DDL/estado inactivo               | Metadatos y estado inicial confirmados por propietario; detalle en cierre superior                                                                                  |
+| Registro 021 y verificación final               | Un registro 021; 21 registros totales                                                                                                                               |
+| Continuidad administrativa y estado final       | Portal inactivo, cero vínculos/intentos/sesiones; smoke administrativo específico no informado                                                                      |
+| Integración y despliegue                        | NO AUTORIZADOS POR ESTE PROCEDIMIENTO                                                                                                                               |

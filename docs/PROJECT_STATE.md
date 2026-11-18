@@ -1,5 +1,35 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.1 — cierre de migración productiva (18/11/2026)
+
+**021.sql APLICADA, REGISTRADA Y VERIFICADA EN PRODUCCIÓN**, según ejecución
+manual del propietario mediante phpMyAdmin. Cinco sentencias originales correctas,
+sin errores reportados; tres tablas InnoDB y dos columnas de auditoría incorporadas,
+restricciones e índices comprobados por metadatos. Registro único de 021 y 21
+migraciones totales. Portal deshabilitado, estado inicial correcto y cero vínculos,
+intentos OIDC y sesiones portal. Codex no realizó una conexión productiva independiente.
+Detalle, respaldo y límites de recuperación en
+[Migraciones productivas, anexo 021](PRODUCTION_MIGRATIONS.md#anexo--021--pwa-1b1).
+
+Implementación y pruebas locales completadas. CI remoto #80 aprobado sobre
+`3d740218e4ed99156daa06438547223062c09eba`: ocho jobs exitosos (verify y siete
+suites MySQL), consultados nuevamente el 18/11 sin relanzarlos. Los recuentos
+previamente documentados son 774 unitarias y 268 integraciones, incluidas 17 portal.
+El commit posterior `a161b85` es exclusivamente documental; no se le atribuye esa CI.
+
+Diagnóstico Git del 18/11, tras `git fetch origin`: `origin/main` permanece en
+`86e786e35445b0ae3f41d4552454d6a527698cd9`; rama remota PWA en `3d740218`, HEAD
+local en `a161b85`, un commit documental pendiente de publicación. Main es ancestro
+de HEAD, sin divergencia; cuatro commits de la rama todavía no integrados.
+**Código PWA-1B.1 sin integración a main ni despliegue en SiteGround; portal sin
+habilitar.** La migración aplicada no cambia estos estados ni inicia PWA-1B.2.
+La configuración efectiva de SiteGround y el smoke posterior se confirmarán antes
+y después de una publicación autorizada, respectivamente.
+
+Los cortes del 17/11 siguientes conservan su evidencia histórica; sus pendientes
+de CI y aplicación productiva de 021 quedan superados por este cierre. H2 y los
+consumidores/hooks futuros siguen pendientes para la activación, fuera de este hito.
+
 ## PWA-1B.1-CI — séptima suite configurada localmente (17/11/2026)
 
 Baseline local limpio comprobado: `codex/pwa-1b1-data-security`,

@@ -152,7 +152,7 @@ No se migran pagos históricos desde las casillas TRANS/EFECTIVO: no permiten re
 
 ## Preparación de despliegue en SiteGround GrowBig
 
-Antes de preparar cambios de esquema, seguir [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md), fuente operativa única. Los parámetros históricos siguientes no autorizan operaciones; el anexo 021 distingue el estado informado del procedimiento pendiente.
+Antes de preparar cambios de esquema, seguir [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md), fuente operativa única. Los parámetros históricos siguientes no autorizan operaciones; el anexo 021 conserva el procedimiento y registra su cierre productivo informado del 18/11/2026, sin integración ni despliegue del código PWA-1B.1.
 
 **No se desplegó ni se accedió al panel.** La documentación oficial consultada el 26/09/2026 confirma hasta 5 proyectos Node.js en GrowBig y gestión de MySQL, SSL y variables: [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto](https://es.siteground.com/kb/gestionar-proyecto-node-js).
 
