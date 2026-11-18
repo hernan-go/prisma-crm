@@ -4,7 +4,7 @@
 
 Estadísticas v2 mensual y anual publicada y aceptada; P0 aceptado en su alcance empresarial consultivo, con issue #2 cerrada el 06/11/2026 según confirmación del propietario. MCP privado versión 6, Know-How real/propuestas y Eventos operativos. [Estado productivo y límites](PROJECT_STATE.md).
 
-Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Google Login fue aceptado en producción el 13/11/2026. Permanecen pendientes ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Las PWA para facilitadores y participantes son iniciativas futuras sin autorización de implementación. Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
+Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Google Login fue aceptado en producción el 13/11/2026. Permanecen pendientes ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Actualización PWA del 18/11/2026: fundamentos PWA-1B.1 para facilitadores implementados, probados, integrados y desplegados en `98b0d1f`, con 021 aplicada; portal todavía desactivado, sin interfaz ni autenticación portal operativa. PWA-1B.2 está en propuesta para revisión, sin implementación iniciada; la PWA de participantes continúa como iniciativa futura. [Cierre y propuesta](iterations/2026-11-pwa-1b1.md). Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
 
 
 ## Iteración 10.2 — cierre técnico productivo (06/11/2026)

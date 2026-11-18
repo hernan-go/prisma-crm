@@ -34,7 +34,7 @@ git switch -c feat/<nombre-corto>
 
 Trabajar y validar allí.
 
-No asumir que pushear una feature branch es inocuo respecto de CI/deploy hasta verificar la configuración de SiteGround/GitHub. El único hecho garantizado es que `main` es productiva.
+En la configuración comprobada el 18/11/2026, SiteGround sigue `main`: los pushes de ramas feature y de validación ejecutaron CI sin provocar despliegues productivos. Los commits y merges locales no generaron builds productivos. Estas observaciones no autorizan pushes; ante cambios de hosting o configuración, volver a comprobar qué referencia dispara el despliegue. Ver sección 10.
 
 ## 3. Prompt de Codex
 
@@ -295,14 +295,64 @@ El propietario realiza manualmente el push definitivo. Antes de push a `main`:
 
 Después de push:
 
-- esperar deploy SiteGround;
+- consultar por separado GitHub Actions y el build SiteGround del SHA publicado;
+- acreditar el despliegue por SHA, estado COMPLETADO y código de salida 0;
 - `Ctrl + F5`;
-- smoke test productivo;
+- smoke test productivo proporcional al cambio;
 - verificar datos sensibles de la iteración.
+
+### Comportamiento comprobado — PWA-1B.1, 18/11/2026
+
+Las consultas Git/Actions y las comprobaciones del propietario en SiteGround y
+el CRM acreditaron lo siguiente para la configuración vigente:
+
+- SiteGround está vinculado a `main`; los pushes de otras ramas no provocaron
+  despliegues. Un commit o merge exclusivamente local no inicia builds productivos.
+- GitHub Actions y SiteGround funcionan independientemente. CI aprobada no
+  demuestra un despliegue y no se acreditó que Actions bloquee al hosting.
+- El propietario pausó y reanudó el despliegue automático sin detener el CRM.
+  Reanudar no inició un build en la comprobación realizada; el push posterior
+  a `main` sí inició uno. No asumir que reanudar procesa pushes anteriores ni
+  que pausar cancela builds que ya estén en curso.
+- El build de `98b0d1f66f61e86f1643449ffd4887ca5e079598` se acreditó mediante
+  SHA, estado COMPLETADO y salida 0, según el propietario; la aceptación funcional
+  se comprobó aparte. Evidencia de cierre en [PWA-1B.1](iterations/2026-11-pwa-1b1.md).
+- El proceso observado elimina `package-lock.json` antes de ejecutar
+  `npm install`; CI utiliza `npm ci`. El hosting puede resolver versiones distintas
+  de las validadas, incluidas dependencias transitivas. El riesgo residual fue
+  evaluado y aceptado; no está solucionado. Reconstruir un SHA anterior tampoco
+  garantiza recuperar las dependencias de su build original.
+
+Estos comportamientos describen la configuración comprobada, no una garantía
+permanente del proveedor. Revalidarlos ante cambios de hosting, rama vinculada,
+instalación o configuración de despliegue; no repetir la investigación completa
+en cada publicación sin un cambio o riesgo concreto.
+
+### Procedimiento proporcional al riesgo
+
+Clasificar por el impacto real; un diff pequeño de autenticación o dinero puede
+ser crítico. Conservar evidencia válida y evitar repetir pruebas ya aprobadas
+cuando no cambió el contenido ni apareció un riesgo nuevo.
+
+| Tipo de cambio                                                                | Controles previos y posteriores                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Menor: documentación o presentación acotada sin lógica sensible               | Revisar diff y alcance; comprobar Markdown o presentación según corresponda. Publicar con aprobación por el flujo normal, sin pausa ni rama de validación adicional por defecto. Consultar CI generada automáticamente, SHA/build y una comprobación breve acorde al cambio.                                                                                               |
+| Funcional: comportamiento de aplicación sin impacto crítico identificado      | Validaciones pertinentes de sección 5 y recorrido afectado antes de publicar; revisar CI disponible, compatibilidad y vía de recuperación. Tras el push aprobado, comprobar CI, SHA/build y smoke del recorrido afectado y acceso administrativo.                                                                                                                          |
+| Crítico: autenticación, autorización, dinero, esquema o recuperación compleja | Acordar ventana, responsables, recuperación y evidencia requerida antes de publicar. Justificar si se necesita pausar despliegues o validar el merge exacto en una rama temporal. Ante pausa, definir cómo se iniciará después el build del SHA aprobado. Comprobar CI pertinente antes de activar la publicación y realizar smoke focalizado en los invariantes críticos. |
+
+No establecer pausas, ramas temporales de validación ni verificaciones adicionales
+como requisitos universales. Usarlas solo cuando resuelvan un riesgo identificado,
+con autorización y alcance concretos. La CI automática posterior al push no es
+una barrera preventiva de SiteGround. Ante fallos o resultados ambiguos, detener
+publicaciones adicionales y diagnosticar; no encadenar despliegues por ensayo.
+Para cualquier cambio de esquema, seguir el procedimiento único de
+[migraciones productivas](PRODUCTION_MIGRATIONS.md); esta clasificación no lo sustituye.
 
 ## 11. SiteGround / inodos
 
-Mantener el build estándar de SiteGround.
+Mantener el build estándar de SiteGround teniendo presente la limitación de
+instalación sin el lockfile versionado descrita en la sección 10. No presumir
+reproducibilidad exacta ni capacidad de cambiar el proceso interno sin evidencia.
 
 Política operativa acordada:
 

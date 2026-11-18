@@ -1,5 +1,24 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.1 — cierre productivo (18/11/2026)
+
+**IMPLEMENTADA — PROBADA — INTEGRADA — DESPLEGADA.** Main local y remoto
+verificados en `98b0d1f66f61e86f1643449ffd4887ca5e079598`, merge explícito.
+Actions [#82](https://github.com/hernan-go/prisma-crm/actions/runs/44244273348)
+y [#83](https://github.com/hernan-go/prisma-crm/actions/runs/44247993959):
+8/8 jobs exitosos cada una sobre ese SHA, consultados sin relanzar pruebas.
+El propietario confirmó SiteGround build `98b0d1f` COMPLETADO, salida 0,
+Google Login de Hernán y Jesica, Dashboard, consultas, montos/cobros y bloqueo
+de `/gestion` tras logout. Estas comprobaciones productivas fueron comunicadas
+por el propietario; Codex no las ejecutó ni inspeccionó el panel en este cierre.
+
+021 estaba aplicada y registrada previamente en producción; no se repite.
+**Portal todavía desactivado, sin interfaz ni autenticación portal operativa.**
+PWA-1B.2 queda en propuesta para revisión, sin implementación iniciada ni cambios
+de cuentas o permisos reales. Los pendientes de integración/despliegue de los
+cortes históricos siguientes quedan superados por este cierre; los límites de
+recuperación no ensayada y reproducibilidad de dependencias permanecen vigentes.
+
 ## PWA-1B.1 — cierre de migración productiva (18/11/2026)
 
 **021.sql APLICADA, REGISTRADA Y VERIFICADA EN PRODUCCIÓN**, según ejecución
