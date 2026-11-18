@@ -250,6 +250,8 @@ Distinguir expresamente las validaciones automatizadas aprobadas, las pruebas vi
 
 ## 8. Cambios de DB
 
+Fuente operativa única y lectura obligatoria antes de preparar o ejecutar migraciones productivas: [PRODUCTION_MIGRATIONS](PRODUCTION_MIGRATIONS.md). Define responsabilidades, selección de herramienta, destino, respaldo, ejecución, registro y recuperación; incluye el anexo 021 todavía propuesto. La lista siguiente resume el orden del trabajo, no sustituye ese procedimiento ni otorga autorización.
+
 Para toda iteración que requiera esquema:
 
 1. diseñar primero;
