@@ -4,6 +4,7 @@ import type { PoolConnection } from 'mysql2/promise';
 import { execute, query, transaction, type Connection } from './db.js';
 import { lockInstitution } from './identity-policy.js';
 import { oidcFailure } from './oidc-crypto.js';
+import { AppError } from './errors.js';
 import { portalCounter } from '../shared/portal.js';
 import {
   portalOidcContextSchema,
@@ -96,16 +97,17 @@ async function locked(db: Connection, ref: PortalEvidenceReference, p: Policy) {
     [ref.id],
     db,
   );
-  if (!row) throw oidcFailure();
+  if (!row) throw new AppError(400, 'Intento portal no válido.');
   matches(row, ref);
   globalBarrier(row, p);
-  if (Number(row.expires_at) <= (await now(db))) throw oidcFailure();
+  if (Number(row.expires_at) <= (await now(db))) throw new AppError(400, 'Intento portal no válido.');
   return row;
 }
 async function sanitized<T>(work: () => Promise<T>): Promise<T> {
   try {
     return await work();
-  } catch {
+  } catch (error) {
+    if(error instanceof AppError) throw error;
     throw oidcFailure();
   }
 }
@@ -244,6 +246,35 @@ export function mysqlPortalOidcStore() {
   };
   return {
     ...store,
+    // Recover pending/verified immutable context using browser correlation, never CRM cookies
+    // on the external callback. The core still validates state/configuration.
+    contextForCallback: (id: string, browserHash: string) =>
+      sanitized(async () => {
+        uuid.parse(id);
+        hash.parse(browserHash);
+        return transaction(async (db) => {
+          const p = await policy(db, true);
+          const [row] = await query<Row>(
+            `SELECT ${columns} FROM identity_portal_oidc_attempts WHERE id=? AND browser_hash=? FOR UPDATE`,
+            [id, browserHash],
+            db,
+          );
+          if (
+            !row ||
+            !['pending', 'verified'].includes(row.status) ||
+            row.browser_hash !== browserHash ||
+            row.application !== 'portal' ||
+            row.provider !== 'google' ||
+            Number(row.expires_at) <= (await now(db))
+          )
+            throw new AppError(400, 'Intento portal no válido.');
+          globalBarrier(row, p);
+          return portalOidcContextSchema.parse({
+            purpose: 'portal-login',
+            expectedCrmUserId: row.expected_crm_user_id,
+          });
+        });
+      }),
     // Does not consume or authorize. Block 4 must hold institution -> policy ->
     // ordered resources -> sessions BEFORE calling; this must be the SAME active
     // transaction as eligibility, session insertion, consumed+association and audit.
@@ -253,7 +284,7 @@ export function mysqlPortalOidcStore() {
         const p = await policy(db, true),
           row = await locked(db, ref, p);
         if (row.status !== 'verified' || Number(row.token_expires_at) <= (await now(db)))
-          throw oidcFailure();
+          throw new AppError(400, 'Intento portal no válido.');
         return {
           subject: row.subject,
           issuedAt: Number(row.token_issued_at),

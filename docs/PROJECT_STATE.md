@@ -1,5 +1,44 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.2 — cierre técnico local, Bloque 6 (19/11/2026)
+
+**APTO CON OBSERVACIONES para iniciar integración CI/CD con portal desactivado.**
+Recovery desacoplado de OAuth con origen/CSRF/persistencia obligatorios; 103 pruebas
+focalizadas aprobadas y dos casos H2 sintéticos MySQL acreditados. Tipos/lint/build/
+diff-check aprobados. Navegador sobre fixture cerrado comprobado; Google real,
+herramienta supervisada de grant, operación recurrente de mantenimiento y PWA-1C
+pendientes. Sin commits, CI remoto, integración, despliegue ni activación. HEAD
+`fdf3d680` y cambios anteriores conservados. [Runbooks y límites](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — Bloque 5 local (19/11/2026)
+
+Logout persistente y mantenimiento interno implementados localmente; 14 casos
+MySQL nuevos distintos aprobados en instancias acreditadas, sin repetir los 38
+anteriores. HTTP/CSRF y regresiones: 101 aprobadas, cero fallidas/omitidas;
+typecheck/lint/build/diff-check aprobados. Sin commits, publicación
+ni activación; checkpoint `fdf3d680` y Bloque 4 conservados. H2/Bloque 6 pendientes.
+[Contrato y evidencia](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — integración MySQL acreditada (19/11/2026)
+
+Suite portal real sobre MySQL 8.4.11/InnoDB descartable independiente: **38/38
+aprobadas, cero fallidas/omitidas**, incluidos los 21 casos pendientes de Bloques
+2–4. Correcciones limitadas a fixtures/aserciones; código funcional conservado.
+Rollback real y concurrencia con conexiones independientes comprobados en los
+escenarios de la suite. Destinos propios apagados y descartados; sin bases reales,
+commits o publicación. Este registro supera la falta de acreditación de los cortes
+inferiores. Bloque 5 y OAuth real pendientes; portal desactivado.
+[Destino, evidencias y límites](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — Bloque 4 local (19/11/2026)
+
+Checkpoint `fdf3d680` conservado. Sesiones/guard portal y finish transaccional
+implementados y probados localmente; corte final 97 aprobadas/38 omitidas,
+typecheck/lint/build/diff-check aprobados. Sin commits,
+integración, despliegue ni activación; cuentas reales intactas. Logout completo
+permanece en Bloque 5. Ocho casos MySQL nuevos preparados, sin ejecutar; total
+pendiente Bloques 2–4: 21. [Contratos y evidencia](iterations/2026-11-pwa-1b2.md).
+
 ## PWA-1B.2 — Bloque 3 local (19/11/2026)
 
 Hooks de identidad (incluido Google supervisado), roles, estado y actividad de

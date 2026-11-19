@@ -13,6 +13,7 @@ const routes = [
   ['get', '/auth/google/callback'],
   ['post', '/auth/google/finish'],
   ['post', '/auth/logout'],
+  ['get', '/auth/logout-csrf'],
 ] as const;
 
 it.each(routes)(

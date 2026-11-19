@@ -85,6 +85,26 @@ beforeEach(() =>
   }),
 );
 
+it('recovers immutable callback/finish context only with live unconsumed portal correlation', async () => {
+  const a = prepare();
+  await expect(mysqlPortalOidcStore().contextForCallback(a.id, a.browserHash)).resolves.toEqual({
+    purpose: 'portal-login',
+    expectedCrmUserId: null,
+  });
+  state.row.status = 'verified';
+  await expect(
+    mysqlPortalOidcStore().contextForCallback(a.id, a.browserHash),
+  ).resolves.toMatchObject({ purpose: 'portal-login' });
+  state.row.status = 'consumed';
+  await expect(mysqlPortalOidcStore().contextForCallback(a.id, a.browserHash)).rejects.toThrow();
+});
+it('rejects expired callback context and mismatched browser before Google', async () => {
+  const a = prepare();
+  state.time = 400000;
+  await expect(mysqlPortalOidcStore().contextForCallback(a.id, a.browserHash)).rejects.toThrow();
+  state.time = 1000;
+  await expect(mysqlPortalOidcStore().contextForCallback(a.id, digest('other'))).rejects.toThrow();
+});
 it('creates portal-only rows with DB clock, five minutes and exact counter snapshot', async () => {
   const a = attempt();
   expect(await mysqlPortalOidcStore().create(a)).toBe(301000);

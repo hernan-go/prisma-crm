@@ -21,6 +21,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': 'http://127.0.0.1:3001', '/vincular-google': 'http://127.0.0.1:3001' },
+    proxy: {
+      '/api': 'http://127.0.0.1:3001',
+      '/vincular-google': 'http://127.0.0.1:3001',
+      '/app': 'http://127.0.0.1:3001',
+    },
   },
 });

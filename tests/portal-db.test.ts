@@ -1,12 +1,18 @@
-// PREPARED ONLY. Run this file alone, on a NEW accredited disposable instance,
+// Run this file alone, on a NEW accredited disposable instance,
 // with separate owner authorization. RUN_DB_TESTS alone never grants DB access.
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { disposableDatabase } from '../server/disposable-database';
 import { pool, execute, query, transaction } from '../server/db';
 import { mysqlPortalOidcStore } from '../server/portal-oidc-store';
+import { createPortalSessionService } from '../server/portal-sessions';
 import { setIdentityRole, setIdentityStatus, revokeIdentitySessions } from '../server/identity';
 import { instructorSave } from '../server/offerings';
+import {
+  getIdentity,
+  createIdentitySession,
+  authenticateIdentitySession,
+} from '../server/identity';
 import { createBindingService } from '../server/identity-bindings';
 import { lockInstitution } from '../server/identity-policy';
 import { preparePortalMutation } from '../server/portal-hooks';
@@ -37,7 +43,7 @@ afterAll(async () => {
   await pool.end();
 });
 describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
-  'PWA-1B.1 accredited MySQL only (not executed in implementation)',
+  'PWA portal accredited MySQL/InnoDB only',
   () => {
     beforeAll(async () => {
       expect(process.env.DB_NAME).toBe(disposableDatabase());
@@ -91,7 +97,14 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       await execute('DELETE FROM identity_instructor_links');
       await execute('DELETE FROM identity_audit_events');
       await execute('DELETE FROM identity_sessions');
-      await execute('UPDATE identity_institution SET initialized=1,admin_one=?,admin_two=? WHERE id=1', [actor,otherAdmin]);
+      await execute(
+        "DELETE FROM identity_user_roles WHERE user_id IN (?,?) AND role IN ('facilitator','participant')",
+        [actor, otherAdmin],
+      );
+      await execute(
+        'UPDATE identity_institution SET initialized=1,admin_one=?,admin_two=? WHERE id=1',
+        [actor, otherAdmin],
+      );
       await execute(
         'UPDATE portal_access_state SET enabled=0,pilot_sealed=0,revision=0,security_seq=0,emergency_epoch=0 WHERE id=1',
       );
@@ -110,17 +123,20 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
         "INSERT IGNORE INTO identity_user_roles(user_id,role) VALUES (?,'facilitator'),(?,'facilitator')",
         [a, b],
       );
-      await execute("DELETE FROM identity_user_roles WHERE user_id IN (?,?) AND role='admin'", [
-        a,
-        b,
-      ]);
+      await execute(
+        "DELETE FROM identity_user_roles WHERE user_id IN (?,?) AND role IN ('admin','participant')",
+        [a, b],
+      );
       for (const id of [a, b])
         await execute(
           "INSERT IGNORE INTO identity_external_accounts(provider,subject,user_id) VALUES ('google',?,?)",
           ['synthetic-' + id, id],
         );
-      for (const id of [a,b])
-        await execute("UPDATE identity_external_accounts SET subject=? WHERE user_id=? AND provider='google'", ['synthetic-'+id,id]);
+      for (const id of [a, b])
+        await execute(
+          "UPDATE identity_external_accounts SET subject=? WHERE user_id=? AND provider='google'",
+          ['synthetic-' + id, id],
+        );
       for (const [token, userId, app] of [
         [actorHash, actor, 'crm'],
         [adminSession, b, 'crm'],
@@ -143,6 +159,57 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
         enabled: true,
       });
     }
+    it('Block6 H2 supervised stages preserve admin/other roles, revoke old sessions and require reauthentication', async () => {
+      const pairs = [
+        { userId: actor, instructorId: members[0].instructorId },
+        { userId: otherAdmin, instructorId: members[1].instructorId },
+      ];
+      await expect(service.preparePilot(context, pairs)).rejects.toThrow();
+      await setIdentityRole(actor, 'participant', true, otherAdmin);
+      await setIdentityRole(actor, 'facilitator', true, otherAdmin);
+      expect((await getIdentity(actor))?.roles).toEqual(['admin', 'facilitator', 'participant']);
+      expect(
+        (await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [actorHash]))[0]
+          .revoked_at,
+      ).not.toBeNull();
+      await expect(service.preparePilot(context, pairs)).rejects.toThrow();
+      const fresh = await createIdentitySession(actor, 'crm', 3600000);
+      expect(
+        (await authenticateIdentitySession(fresh.token, 'crm', { requireInstitution: true }))
+          ?.roles,
+      ).toEqual(['admin', 'facilitator', 'participant']);
+      await setIdentityRole(otherAdmin, 'facilitator', true, actor);
+      const newContext = { userId: actor, sessionHash: digest(fresh.token) };
+      const plan = await service.preparePilot(newContext, pairs);
+      await service.sealPilot(newContext, randomUUID(), plan);
+      expect(
+        (await query('SELECT enabled,pilot_sealed FROM portal_access_state WHERE id=1'))[0],
+      ).toMatchObject({ enabled: 0, pilot_sealed: 1 });
+      expect((await getIdentity(otherAdmin))?.roles).toContain('admin');
+    });
+    it('Block6 H2 failed grant and contradictory pairing leave consistent state', async () => {
+      // Every fixture identity and instructor in this suite is synthetic.
+      await expect(setIdentityRole(actor, 'facilitator', true, randomUUID())).rejects.toThrow();
+      expect((await getIdentity(actor))?.roles).not.toContain('facilitator');
+      await setIdentityRole(actor, 'facilitator', true, otherAdmin);
+      await setIdentityRole(otherAdmin, 'facilitator', true, actor);
+      const fresh = await createIdentitySession(actor, 'crm', 3600000),
+        newContext = { userId: actor, sessionHash: digest(fresh.token) };
+      await expect(
+        service.preparePilot(newContext, [
+          { userId: actor, instructorId: members[0].instructorId },
+          { userId: otherAdmin, instructorId: members[0].instructorId },
+        ]),
+      ).rejects.toThrow();
+      expect(await query('SELECT user_id FROM identity_instructor_links')).toHaveLength(0);
+      const plan = await service.preparePilot(newContext, [
+        { userId: actor, instructorId: members[0].instructorId },
+        { userId: otherAdmin, instructorId: members[1].instructorId },
+      ]);
+      await setIdentityRole(actor, 'participant', true, otherAdmin);
+      await expect(service.sealPilot(newContext, randomUUID(), plan)).rejects.toThrow();
+      expect(await query('SELECT user_id FROM identity_instructor_links')).toHaveLength(0);
+    });
     async function linkBarrier(userId = a) {
       return (
         await query(
@@ -205,11 +272,26 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
     });
     it('Block3 concurrent identity changes serialize and explicit revocation blocks old evidence', async () => {
       await open();
-      const initial = await linkBarrier();
-      await Promise.all([
-        setIdentityRole(a, 'admin', true, actor),
-        setIdentityRole(a, 'participant', true, actor),
-      ]);
+      const initial = (
+        await query('SELECT CAST(security_seq AS CHAR) seq FROM portal_access_state WHERE id=1')
+      )[0].seq;
+      const acquire = pool.getConnection.bind(pool),
+        connectionIds = new Set<number>();
+      const spy = vi.spyOn(pool, 'getConnection').mockImplementation(async () => {
+        const connection = await acquire();
+        connectionIds.add(connection.threadId);
+        return connection;
+      });
+      try {
+        await Promise.all([
+          setIdentityRole(a, 'admin', true, actor),
+          setIdentityRole(a, 'participant', true, actor),
+        ]);
+      } finally {
+        spy.mockRestore();
+      }
+      expect(connectionIds.size).toBeGreaterThanOrEqual(2);
+      console.info('Concurrent identity transaction connection IDs:', [...connectionIds]);
       expect(BigInt(await linkBarrier())).toBe(BigInt(initial) + 2n);
       const before = await linkBarrier();
       await revokeIdentitySessions(a, actor);
@@ -263,7 +345,9 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       await oidcStore.create(attempt);
       await oidcStore.claim(attempt.stateHash, attempt);
       const [row] = await query('SELECT * FROM instructors WHERE id=?', [members[0].instructorId]);
-      const before = await linkBarrier();
+      const before = (
+        await query('SELECT CAST(security_seq AS CHAR) seq FROM portal_access_state WHERE id=1')
+      )[0].seq;
       await Promise.all([
         instructorSave({ ...row, active: false }, members[0].instructorId),
         setIdentityRole(a, 'participant', true, actor),
@@ -287,6 +371,455 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
       };
     }
     const oidcStore = mysqlPortalOidcStore();
+    const sessions4 = createPortalSessionService();
+    it('Block5 logout invalidates pending and claimed callbacks without eligibility', async () => {
+      await open();
+      const attempt = oidcAttempt();
+      await oidcStore.create(attempt);
+      const c = {
+        portalTokens: [],
+        correlation: { id: attempt.id, browserHash: attempt.browserHash },
+      };
+      await sessions4.logout(c);
+      await expect(oidcStore.claim(attempt.stateHash, attempt)).rejects.toThrow();
+      const another = oidcAttempt();
+      await oidcStore.create(another);
+      await oidcStore.claim(another.stateHash, another);
+      await sessions4.logout({
+        portalTokens: [],
+        correlation: { id: another.id, browserHash: another.browserHash },
+      });
+      await expect(oidcStore.verify(another, proof())).rejects.toThrow();
+    });
+    it('Block5 logout races verification using independent connections', async () => {
+      await open();
+      const attempt = oidcAttempt();
+      await oidcStore.create(attempt);
+      await oidcStore.claim(attempt.stateHash, attempt);
+      await Promise.allSettled([
+        oidcStore.verify(attempt, proof()),
+        sessions4.logout({
+          portalTokens: [],
+          correlation: { id: attempt.id, browserHash: attempt.browserHash },
+        }),
+      ]);
+      expect(
+        (
+          await query('SELECT status,subject FROM identity_portal_oidc_attempts WHERE id=?', [
+            attempt.id,
+          ])
+        )[0],
+      ).toEqual({ status: 'invalidated', subject: null });
+    });
+    it('Block5 logout races finish and makes a late cookie unusable', async () => {
+      const attempt = await verified4();
+      const c = {
+        portalTokens: [],
+        correlation: { id: attempt.id, browserHash: attempt.browserHash },
+      };
+      const acquire = pool.getConnection.bind(pool),
+        ids = new Set<number>();
+      const spy = vi.spyOn(pool, 'getConnection').mockImplementation(async () => {
+        const connection = await acquire();
+        ids.add(connection.threadId);
+        return connection;
+      });
+      let results: [
+        PromiseSettledResult<Awaited<ReturnType<typeof sessions4.finish>>>,
+        PromiseSettledResult<void>,
+      ];
+      try {
+        results = await Promise.allSettled([
+          sessions4.finish(attempt, noCredentials),
+          sessions4.logout(c),
+        ] as const);
+      } finally {
+        spy.mockRestore();
+      }
+      expect(ids.size).toBeGreaterThanOrEqual(2);
+      expect(results[1].status).toBe('fulfilled');
+      if (results[0].status === 'fulfilled') {
+        const token = results[0].value.token;
+        await expect(
+          sessions4.authenticate(token, { ...noCredentials, portalTokens: [token] }),
+        ).rejects.toThrow();
+      }
+    });
+    it('Block5 logout after finish before Set-Cookie revokes by correlation', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      await sessions4.logout({
+        portalTokens: [],
+        correlation: { id: attempt.id, browserHash: attempt.browserHash },
+      });
+      await expect(
+        sessions4.authenticate(issued.token, { ...noCredentials, portalTokens: [issued.token] }),
+      ).rejects.toThrow();
+      expect(
+        (
+          await query('SELECT issued_session_hash FROM identity_portal_oidc_attempts WHERE id=?', [
+            attempt.id,
+          ])
+        )[0].issued_session_hash,
+      ).toBe(digest(issued.token));
+    });
+    it('Block5 double logout is idempotent and preserves CRM and other devices', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      const c = {
+        portalTokens: [issued.token],
+        correlation: { id: attempt.id, browserHash: attempt.browserHash },
+      };
+      await Promise.all([sessions4.logout(c), sessions4.logout(c)]);
+      expect(
+        await query("SELECT id FROM identity_audit_events WHERE event='portal.session.revoked'"),
+      ).toHaveLength(1);
+      expect(
+        (
+          await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [adminSession])
+        )[0].revoked_at,
+      ).toBeNull();
+      expect(
+        (await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [portalA]))[0]
+          .revoked_at,
+      ).toBeNull();
+    });
+    it.each(['global', 'H1', 'suspend'])(
+      'Block5 logout coexists with %s revocation',
+      async (kind) => {
+        const attempt = await verified4(),
+          issued = await sessions4.finish(attempt, noCredentials);
+        const mutation =
+          kind === 'global'
+            ? service.setPortalEnabled(context, {
+                operationId: randomUUID(),
+                expectedRevision: '2',
+                enabled: false,
+              })
+            : kind === 'H1'
+              ? service.revokePortalSessions(context, {
+                  operationId: randomUUID(),
+                  expectedRevision: '2',
+                  userId: a,
+                  expectedLinkRevision: '1',
+                })
+              : setIdentityStatus(a, 'disabled', actor);
+        await Promise.all([mutation, sessions4.logout({ portalTokens: [issued.token] })]);
+        expect(
+          (
+            await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [
+              digest(issued.token),
+            ])
+          )[0].revoked_at,
+        ).not.toBeNull();
+      },
+    );
+    it('Block5 logout works with disabled policy and expired session', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      await service.setPortalEnabled(context, {
+        operationId: randomUUID(),
+        expectedRevision: '2',
+        enabled: false,
+      });
+      await execute('UPDATE identity_sessions SET created_at=0,expires_at=1 WHERE token_hash=?', [
+        digest(issued.token),
+      ]);
+      await expect(sessions4.logout({ portalTokens: [issued.token] })).resolves.toBeUndefined();
+    });
+    it('Block5 audit failure rolls back logout and cancellation', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      const pending = oidcAttempt();
+      await oidcStore.create(pending);
+      await execute(
+        "ALTER TABLE identity_audit_events ADD CONSTRAINT synthetic_logout_fail CHECK (event <> 'portal.session.revoked')",
+      );
+      try {
+        await expect(
+          sessions4.logout({
+            portalTokens: [issued.token],
+            correlation: { id: pending.id, browserHash: pending.browserHash },
+          }),
+        ).rejects.toMatchObject({ code: 'ER_CHECK_CONSTRAINT_VIOLATED' });
+      } finally {
+        await execute('ALTER TABLE identity_audit_events DROP CHECK synthetic_logout_fail');
+      }
+      expect(
+        (
+          await query('SELECT status FROM identity_portal_oidc_attempts WHERE id=?', [pending.id])
+        )[0].status,
+      ).toBe('pending');
+      expect(
+        (
+          await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [
+            digest(issued.token),
+          ])
+        )[0].revoked_at,
+      ).toBeNull();
+    });
+    it('Block5 maintenance and logout serialize without losing live associations', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      await Promise.all([
+        sessions4.maintain(1),
+        sessions4.logout({
+          portalTokens: [],
+          correlation: { id: attempt.id, browserHash: attempt.browserHash },
+        }),
+      ]);
+      expect(
+        (
+          await query('SELECT issued_session_hash FROM identity_portal_oidc_attempts WHERE id=?', [
+            attempt.id,
+          ])
+        )[0].issued_session_hash,
+      ).toBe(digest(issued.token));
+      await expect(
+        sessions4.authenticate(issued.token, { ...noCredentials, portalTokens: [issued.token] }),
+      ).rejects.toThrow();
+    });
+    it('Block5 maintenance progresses past retained rows with bounded batches', async () => {
+      await open();
+      const retained = oidcAttempt();
+      await oidcStore.create(retained);
+      await execute(
+        'UPDATE identity_portal_oidc_attempts SET created_at=0,expires_at=1 WHERE id=?',
+        [retained.id],
+      );
+      await sessions4.maintain(1);
+      const later = oidcAttempt();
+      await oidcStore.create(later);
+      await execute(
+        'UPDATE identity_portal_oidc_attempts SET created_at=0,expires_at=2 WHERE id=?',
+        [later.id],
+      );
+      const result = await sessions4.maintain(1);
+      expect(result.invalidated).toBe(1);
+      expect(result.scanned).toBeLessThanOrEqual(3);
+      expect(
+        (
+          await query('SELECT nonce,status FROM identity_portal_oidc_attempts WHERE id=?', [
+            later.id,
+          ])
+        )[0],
+      ).toEqual({ nonce: null, status: 'invalidated' });
+    });
+    it('Block5 maintenance persistence failure rolls back invalidation', async () => {
+      await open();
+      const attempt = oidcAttempt();
+      await oidcStore.create(attempt);
+      await execute(
+        'UPDATE identity_portal_oidc_attempts SET created_at=0,expires_at=1 WHERE id=?',
+        [attempt.id],
+      );
+      await execute(
+        "ALTER TABLE identity_portal_oidc_attempts ADD CONSTRAINT synthetic_maint_fail CHECK (status <> 'invalidated')",
+      );
+      try {
+        await expect(sessions4.maintain()).rejects.toMatchObject({
+          code: 'ER_CHECK_CONSTRAINT_VIOLATED',
+        });
+      } finally {
+        await execute('ALTER TABLE identity_portal_oidc_attempts DROP CHECK synthetic_maint_fail');
+      }
+      expect(
+        (
+          await query('SELECT status,nonce FROM identity_portal_oidc_attempts WHERE id=?', [
+            attempt.id,
+          ])
+        )[0],
+      ).toMatchObject({ status: 'pending', nonce: attempt.nonce });
+    });
+    it('Block5 maintenance invalidates expired evidence and preserves live associations/audit', async () => {
+      const attempt = await verified4(),
+        issued = await sessions4.finish(attempt, noCredentials);
+      await execute(
+        'UPDATE identity_portal_oidc_attempts SET created_at=0,expires_at=1 WHERE id=?',
+        [attempt.id],
+      );
+      const pending = oidcAttempt();
+      await oidcStore.create(pending);
+      await execute(
+        'UPDATE identity_portal_oidc_attempts SET created_at=0,expires_at=1 WHERE id=?',
+        [pending.id],
+      );
+      const audit = await query('SELECT id FROM identity_audit_events ORDER BY id');
+      const r = await sessions4.maintain();
+      expect(r.invalidated).toBe(1);
+      await sessions4.maintain();
+      expect(
+        (
+          await query('SELECT issued_session_hash FROM identity_portal_oidc_attempts WHERE id=?', [
+            attempt.id,
+          ])
+        )[0].issued_session_hash,
+      ).toBe(digest(issued.token));
+      expect(await query('SELECT id FROM identity_audit_events ORDER BY id')).toEqual(audit);
+      await execute(
+        'UPDATE identity_sessions SET created_at=0,expires_at=1,revoked_at=1 WHERE token_hash=?',
+        [digest(issued.token)],
+      );
+      const purged = await sessions4.maintain();
+      expect(purged.purgedAttempts).toBe(1);
+      expect(purged.purgedSessions).toBe(1);
+      expect(await sessions4.maintain()).toMatchObject({
+        invalidated: 0,
+        purgedAttempts: 0,
+        purgedSessions: 0,
+      });
+    });
+    const noCredentials = { crmTokens: [], legacyPresent: false, portalTokens: [] };
+    async function verified4() {
+      await open();
+      const attempt = oidcAttempt();
+      await oidcStore.create(attempt);
+      await oidcStore.claim(attempt.stateHash, attempt);
+      await oidcStore.verify(attempt, proof());
+      return attempt;
+    }
+    it('Block4 issues eight-hour hash-only session and consumed association', async () => {
+      const attempt = await verified4();
+      const issued = await sessions4.finish(attempt, noCredentials);
+      const [row] = await query('SELECT * FROM identity_sessions WHERE token_hash=?', [
+        digest(issued.token),
+      ]);
+      expect(row.application).toBe('portal');
+      expect(row.expires_at - row.created_at).toBe(28800000);
+      expect(row.token_hash).not.toBe(issued.token);
+      expect(
+        (
+          await query(
+            'SELECT issued_session_hash,status,subject FROM identity_portal_oidc_attempts WHERE id=?',
+            [attempt.id],
+          )
+        )[0],
+      ).toEqual({ issued_session_hash: digest(issued.token), status: 'consumed', subject: null });
+      expect(
+        await sessions4.authenticate(issued.token, {
+          ...noCredentials,
+          portalTokens: [issued.token],
+        }),
+      ).toMatchObject({
+        userId: a,
+        instructorId: members[0].instructorId,
+        expiresAt: issued.expiresAt,
+      });
+    });
+    it('Block4 concurrent finishes have one committed winner', async () => {
+      const attempt = await verified4();
+      const results = await Promise.allSettled([
+        sessions4.finish(attempt, noCredentials),
+        sessions4.finish(attempt, noCredentials),
+      ]);
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      expect(
+        await query(
+          "SELECT token_hash FROM identity_sessions WHERE application='portal' AND token_hash NOT IN (?,?)",
+          [portalA, portalB],
+        ),
+      ).toHaveLength(1);
+    });
+    it('Block4 audit failure rolls back session and consumed association', async () => {
+      const attempt = await verified4();
+      // Temporary failure injection on the accredited synthetic schema only.
+      // CHECK avoids trigger SUPER requirements when binary logging is enabled.
+      await execute(
+        "ALTER TABLE identity_audit_events ADD CONSTRAINT synthetic_portal_audit_failure CHECK (event <> 'portal.session.created')",
+      );
+      try {
+        await expect(sessions4.finish(attempt, noCredentials)).rejects.toMatchObject({
+          code: 'ER_CHECK_CONSTRAINT_VIOLATED',
+        });
+      } finally {
+        await execute(
+          'ALTER TABLE identity_audit_events DROP CHECK synthetic_portal_audit_failure',
+        );
+      }
+      expect(
+        (
+          await query(
+            'SELECT status,issued_session_hash FROM identity_portal_oidc_attempts WHERE id=?',
+            [attempt.id],
+          )
+        )[0],
+      ).toEqual({ status: 'verified', issued_session_hash: null });
+      expect(
+        await query(
+          "SELECT token_hash FROM identity_sessions WHERE application='portal' AND token_hash NOT IN (?,?)",
+          [portalA, portalB],
+        ),
+      ).toHaveLength(0);
+    });
+    it('Block4 role change after callback permanently invalidates old attempt', async () => {
+      const attempt = await verified4();
+      await setIdentityRole(a, 'facilitator', false, actor);
+      await setIdentityRole(a, 'facilitator', true, actor);
+      await expect(sessions4.finish(attempt, noCredentials)).rejects.toThrow();
+    });
+    it('Block4 finish and revocation race never leaves a usable late cookie', async () => {
+      const attempt = await verified4();
+      const results = await Promise.allSettled([
+        sessions4.finish(attempt, noCredentials),
+        revokeIdentitySessions(a, actor),
+      ]);
+      if (results[0].status === 'fulfilled') {
+        const token = results[0].value.token;
+        await expect(
+          sessions4.authenticate(token, { ...noCredentials, portalTokens: [token] }),
+        ).rejects.toThrow();
+      }
+      expect(results[1].status).toBe('fulfilled');
+    });
+    it('Block4 missing association, expiry and wrong application fail closed', async () => {
+      await open();
+      await expect(
+        sessions4.authenticate(portalA, { ...noCredentials, portalTokens: [portalA] }),
+      ).rejects.toThrow();
+      const attempt = oidcAttempt();
+      await oidcStore.create(attempt);
+      await oidcStore.claim(attempt.stateHash, attempt);
+      await oidcStore.verify(attempt, proof());
+      const issued = await sessions4.finish(attempt, noCredentials);
+      await execute('UPDATE identity_sessions SET created_at=0,expires_at=1 WHERE token_hash=?', [
+        digest(issued.token),
+      ]);
+      await expect(
+        sessions4.authenticate(issued.token, { ...noCredentials, portalTokens: [issued.token] }),
+      ).rejects.toThrow();
+      await expect(
+        sessions4.authenticate(actorHash, { ...noCredentials, portalTokens: [actorHash] }),
+      ).rejects.toThrow();
+    });
+    it('Block4 closed global generation rejects a verified attempt after reopening', async () => {
+      const attempt = await verified4();
+      await service.setPortalEnabled(context, {
+        operationId: randomUUID(),
+        expectedRevision: '2',
+        enabled: false,
+      });
+      await service.setPortalEnabled(context, {
+        operationId: randomUUID(),
+        expectedRevision: '3',
+        enabled: true,
+      });
+      await expect(sessions4.finish(attempt, noCredentials)).rejects.toThrow();
+    });
+    it('Block4 disabled instructor concurrent with finish cannot authorize afterward', async () => {
+      const attempt = await verified4();
+      const [row] = await query('SELECT * FROM instructors WHERE id=?', [members[0].instructorId]);
+      const results = await Promise.allSettled([
+        sessions4.finish(attempt, noCredentials),
+        instructorSave({ ...row, active: false }, members[0].instructorId),
+      ]);
+      if (results[0].status === 'fulfilled') {
+        const token = results[0].value.token;
+        await expect(
+          sessions4.authenticate(token, { ...noCredentials, portalTokens: [token] }),
+        ).rejects.toThrow();
+      }
+      expect(results[1].status).toBe('fulfilled');
+    });
     const proof = () => ({
       subject: 'synthetic-' + a,
       issuedAt: Date.now(),

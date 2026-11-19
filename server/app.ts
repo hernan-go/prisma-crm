@@ -7,7 +7,8 @@ import { resolve } from 'node:path';
 import { api } from './routes.js';
 import { AppError } from './errors.js';
 import { authentication, type AuthOptions } from './auth.js';
-import { portalRouter, portalUnavailable } from './portal-http.js';
+import { createPortalHttp, type PortalHttpOptions } from './portal-http.js';
+import { portalEnvironment, portalRecoveryEnvironment } from './portal-http-runtime.js';
 import { bindingRouter, bindingEnvironment, type BindingHttpOptions } from './binding-http.js';
 import { aiIntegration, type AiIntegrationOptions } from './integrations/ai-router.js';
 import {
@@ -19,6 +20,7 @@ export function createApp(
   aiOptions: AiIntegrationOptions = {},
   proposalOptions: ProposalIntegrationOptions = {},
   bindingOptions: BindingHttpOptions | false | undefined = undefined,
+  portalOptions: PortalHttpOptions | false | undefined = undefined,
 ) {
   const app = express();
   app.disable('x-powered-by');
@@ -35,8 +37,12 @@ export function createApp(
     }),
   );
   // Terminal portal boundary, before administrative parsing, CORS and auth.
-  app.use('/api/portal', portalRouter());
-  app.use('/app', portalUnavailable);
+  const portal = createPortalHttp(
+    portalOptions === false ? undefined : (portalOptions ?? portalEnvironment()),
+    portalOptions === undefined ? portalRecoveryEnvironment() : undefined,
+  );
+  app.use('/api/portal', portal.api);
+  app.use('/app', portal.app);
   app.use(bindingRouter(binding));
   // Separate, terminal namespace: service credentials never reach administrative routes.
   // Mount before browser CORS/body parsing/session auth; this router owns safe errors.

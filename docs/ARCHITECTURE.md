@@ -1,5 +1,38 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-1B.2 — cierre local, Bloque 6 (19/11/2026)
+
+`PortalRecoveryOptions` separa origen confiable/clave CSRF/revocador de la configuración
+Google. `portalRecoveryEnvironment` puede construir recovery con APP_URL y clave
+CSRF aunque OAuth falte/falle; no modifica ni elude política para autenticación.
+Sin material seguro de recuperación continúa cerrado. Mantenimiento disponible
+como llamada interna, no programado productivamente. H2 sintético probado; falta
+wrapper supervisado para concesiones reales, fuera de esta entrega.
+[Condiciones operativas y runbooks](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — ciclo de vida local, Bloque 5 (19/11/2026)
+
+`portal-sessions.logout` cancela intento y revoca únicamente las credenciales
+portal presentadas/asociadas, con auditoría y rollback únicos; omite guard de
+disponibilidad/elegibilidad y conserva CRM. Serialización institucional/política
+común permite current read del intento antes de bloquear hasta dos sesiones,
+sin inversiones concurrentes con guard/finish. `maintain(limit)` separa lotes
+de invalidación y purga elegible, preserva asociaciones vivas y auditoría y evita
+starvation por terminales retenidos. Invocación interna explícita, sin cron nuevo.
+Retención conservadora de 24h y contratos en el [informe](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — sesiones y OAuth HTTP local, Bloque 4 (19/11/2026)
+
+`portal-sessions.ts` usa `withPortalDatabase` para política/recursos actuales,
+sesión de ocho horas absolutas y consumo/asociación/auditoría en una transacción.
+Guard exige asociación consumida y revalida elegibilidad y barreras; CRM resuelto
+por credencial individual actual, con conflictos explícitos. `contextForCallback`
+recupera contexto pendiente/verificado mediante correlación, sin confiar en cookies
+CRM Strict en navegación externa. Adaptador HTTP y retorno técnico separados del
+CRM, configuración optativa y política persistente obligatoria. Logout pendiente
+del Bloque 5. Implementación local, sin activación ni integración InnoDB acreditada.
+[Contratos y limitaciones](iterations/2026-11-pwa-1b2.md).
+
 ## PWA-1B.2 — hooks locales, Bloque 3 (19/11/2026)
 
 `portal-hooks.ts` coordina snapshots internos de elegibilidad antes/después en la

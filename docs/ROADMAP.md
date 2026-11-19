@@ -1,5 +1,33 @@
 # PRISMA CRM — Roadmap
 
+## Cierre técnico PWA-1B.2 — 19/11/2026
+
+Seis bloques implementados/preparados localmente; apto con observaciones para
+iniciar CI/CD con portal apagado. Integración/publicación no realizadas. PWA-1C
+requiere herramienta H2 supervisada, mantenimiento con responsable e invocación
+verificados y pruebas Google/navegador autorizadas. [Criterios](iterations/2026-11-pwa-1b2.md).
+
+## Avance Bloque 5 — 19/11/2026
+
+Logout/mantenimiento implementados y probados localmente: 101 pruebas focalizadas
+aprobadas, controles de calidad correctos.
+Catorce casos nuevos MySQL acreditados. Bloque 6/H2 pendiente, sin activación ni
+publicación. [Evidencia y límites](iterations/2026-11-pwa-1b2.md).
+
+## Validación portal — 19/11/2026
+
+Integración MySQL/InnoDB de Bloques 2–4 acreditada en destino descartable: 38/38,
+incluidos los 21 casos anteriormente pendientes. Próximo trabajo: Bloque 5 mediante
+autorización independiente; portal desactivado, sin integración Git ni despliegue.
+[Evidencia y límites](iterations/2026-11-pwa-1b2.md).
+
+## Avance Bloque 4 — 19/11/2026
+
+Sesiones, guard y finalización OAuth portal implementados y probados localmente. Sin publicación
+ni activación. Total de casos MySQL nuevos pendientes de Bloques 2–4: 21.
+Logout completo/mantenimiento pertenecen al Bloque 5, todavía pendiente.
+[Informe](iterations/2026-11-pwa-1b2.md).
+
 ## Avance PWA-1B.2 — 19/11/2026
 
 Bloque 3 de hooks implementado y probado localmente sin MySQL; integración real

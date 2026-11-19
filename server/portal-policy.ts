@@ -11,6 +11,7 @@ import {
   type PortalState,
   type PortalTransaction,
   type PortalUnitOfWork,
+  type PortalLockScope,
 } from '../shared/portal.js';
 
 const linkColumns =
@@ -163,72 +164,80 @@ export function portalTransaction(
 }
 
 export function createMysqlPortalUnitOfWork(): PortalUnitOfWork {
-  return (work, scope) =>
-    transaction(async (db) => {
-      const institution = await lockInstitution(db);
-      if (!institution) throw new AppError(503, 'Se requiere estado institucional.');
-      const migration = await query(
-        "SELECT name FROM schema_migrations WHERE name='021.sql'",
-        [],
+  return (work, scope) => withPortalDatabase((_db, tx) => work(tx), scope);
+}
+
+// Shared lock coordinator: issuance/guards use the SAME connection as policy.
+export function withPortalDatabase<T>(
+  work: (db: PoolConnection, tx: PortalTransaction) => Promise<T>,
+  scope?: PortalLockScope,
+) {
+  return transaction(async (db) => {
+    const institution = await lockInstitution(db);
+    if (!institution?.initialized)
+      throw new AppError(503, 'Se requiere estado institucional inicializado.');
+    const migration = await query(
+      "SELECT name FROM schema_migrations WHERE name='021.sql'",
+      [],
+      db,
+    );
+    if (!migration.length) throw new AppError(503, 'Se requiere migración portal 021.');
+    const [row] = await query<{
+      enabled: number;
+      pilot_sealed: number;
+      admissions_open: number;
+      revision: string;
+      security_seq: string;
+      emergency_epoch: string;
+    }>(
+      'SELECT enabled,pilot_sealed,admissions_open,CAST(revision AS CHAR) revision,CAST(security_seq AS CHAR) security_seq,CAST(emergency_epoch AS CHAR) emergency_epoch FROM portal_access_state WHERE id=1 FOR UPDATE',
+      [],
+      db,
+    );
+    if (!row || row.admissions_open || (row.enabled && !row.pilot_sealed))
+      throw new AppError(503, 'Estado portal incompleto.');
+    const state: PortalState = {
+      ...row,
+      enabled: Boolean(row.enabled),
+      pilot_sealed: Boolean(row.pilot_sealed),
+      admissions_open: false,
+    };
+    // Within the identity/instructor/link group: all links by UUID, then users
+    // and their roles/bindings by UUID, then instructors by numeric ID. Sessions
+    // are acquired only by work(), after every resource row has been locked.
+    const links = await query<PortalLink>(
+      `SELECT ${linkColumns} FROM identity_instructor_links ORDER BY user_id FOR UPDATE`,
+      [],
+      db,
+    );
+    const userIds = [
+      ...new Set([
+        ...(scope?.userIds ?? []),
+        ...(scope?.members ?? []).map((m) => m.userId),
+        ...links.map((l) => l.user_id),
+      ]),
+    ].sort();
+    for (const id of userIds) {
+      await query('SELECT id FROM identity_users WHERE id=? FOR UPDATE', [id], db);
+      await query(
+        'SELECT role FROM identity_user_roles WHERE user_id=? ORDER BY role FOR UPDATE',
+        [id],
         db,
       );
-      if (!migration.length) throw new AppError(503, 'Se requiere migración portal 021.');
-      const [row] = await query<{
-        enabled: number;
-        pilot_sealed: number;
-        admissions_open: number;
-        revision: string;
-        security_seq: string;
-        emergency_epoch: string;
-      }>(
-        'SELECT enabled,pilot_sealed,admissions_open,CAST(revision AS CHAR) revision,CAST(security_seq AS CHAR) security_seq,CAST(emergency_epoch AS CHAR) emergency_epoch FROM portal_access_state WHERE id=1 FOR UPDATE',
-        [],
+      await query(
+        'SELECT provider FROM identity_external_accounts WHERE user_id=? ORDER BY provider FOR UPDATE',
+        [id],
         db,
       );
-      if (!row || row.admissions_open || (row.enabled && !row.pilot_sealed))
-        throw new AppError(503, 'Estado portal incompleto.');
-      const state: PortalState = {
-        ...row,
-        enabled: Boolean(row.enabled),
-        pilot_sealed: Boolean(row.pilot_sealed),
-        admissions_open: false,
-      };
-      // Within the identity/instructor/link group: all links by UUID, then users
-      // and their roles/bindings by UUID, then instructors by numeric ID. Sessions
-      // are acquired only by work(), after every resource row has been locked.
-      const links = await query<PortalLink>(
-        `SELECT ${linkColumns} FROM identity_instructor_links ORDER BY user_id FOR UPDATE`,
-        [],
-        db,
-      );
-      const userIds = [
-        ...new Set([
-          ...(scope?.userIds ?? []),
-          ...(scope?.members ?? []).map((m) => m.userId),
-          ...links.map((l) => l.user_id),
-        ]),
-      ].sort();
-      for (const id of userIds) {
-        await query('SELECT id FROM identity_users WHERE id=? FOR UPDATE', [id], db);
-        await query(
-          'SELECT role FROM identity_user_roles WHERE user_id=? ORDER BY role FOR UPDATE',
-          [id],
-          db,
-        );
-        await query(
-          'SELECT provider FROM identity_external_accounts WHERE user_id=? ORDER BY provider FOR UPDATE',
-          [id],
-          db,
-        );
-      }
-      const instructorIds = [
-        ...new Set([
-          ...(scope?.members ?? []).map((m) => m.instructorId),
-          ...links.map((l) => l.instructor_id),
-        ]),
-      ].sort((a, b) => a - b);
-      for (const id of instructorIds)
-        await query('SELECT id FROM instructors WHERE id=? FOR UPDATE', [id], db);
-      return work(portalTransaction(db, institution, state));
-    });
+    }
+    const instructorIds = [
+      ...new Set([
+        ...(scope?.members ?? []).map((m) => m.instructorId),
+        ...links.map((l) => l.instructor_id),
+      ]),
+    ].sort((a, b) => a - b);
+    for (const id of instructorIds)
+      await query('SELECT id FROM instructors WHERE id=? FOR UPDATE', [id], db);
+    return work(db, portalTransaction(db, institution, state));
+  });
 }
