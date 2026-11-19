@@ -1,5 +1,41 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-1B.2 — hooks locales, Bloque 3 (19/11/2026)
+
+`portal-hooks.ts` coordina snapshots internos de elegibilidad antes/después en la
+misma conexión de `identityMutation` y `instructorSave`. Orden: personas si aplica,
+institución, política, vínculos/identidades/roles/Google ordenados, instructores,
+sesiones/auditoría. Cambios efectivos avanzan barreras individuales y revocan solo
+portal; suspensión/rehabilitación nunca recupera contextos previos. Sin 021 omite
+tablas portal; con 021 inconsistente aborta. No afecta hooks existentes H1/global
+ni agrega HTTP funcional. Integración InnoDB pendiente.
+[Matriz, semántica de reintentos y contrato para finish](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — núcleo OIDC local, Bloque 2 (18/11/2026)
+
+`google-oidc.ts` comparte un motor privado entre factories fijas CRM/portal;
+callback, contexto y huella incluyen la aplicación correspondiente. Store CRM
+sin cambios de comportamiento; `portal-oidc-store.ts` persiste exclusivamente 021
+y captura barreras exactas bajo locks institución/política. Claim confirma antes
+de Google; verify no consume ni emite sesiones. Cancelación conserva asociaciones
+consumidas; evidencia para finish exige transacción del llamador y no autoriza.
+`portal-oidc-contracts.ts` define contexto esperado CRM y cookie de correlación
+sin emitirla. Configuración explícita, sin instancia ni consumidor HTTP operativo.
+Hooks y finish siguen pendientes; esquema físico/InnoDB nuevo sin validar aquí.
+[Contratos, dependencias y pruebas](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — límite HTTP local, Bloque 1 (18/11/2026)
+
+`portal-http.ts` define los cinco contratos HTTP y un router terminal independiente
+en `/api/portal`, montado antes de parsing/CORS/auth administrativos. Responde JSON
+503 en operaciones pendientes, 405 con Allow en otros métodos y 404 en rutas
+desconocidas; errores internos tienen respuesta local 500 sin detalles. No procesa
+cuerpos, accede a DB, configura OAuth ni emite cookies. `/app` y descendientes están
+reservados con 503 antes del fallback administrativo. Sin flag que habilite acceso.
+No introduce dependencia operativa de 021 en el CRM. POST funcionales, CSRF propio,
+política dinámica, sesiones, logout y hooks quedan pendientes. Solo implementación
+local; [contratos y evidencia](iterations/2026-11-pwa-1b2.md).
+
 ## PWA-1B.1 — modelo y políticas internas locales (17/11/2026)
 
 021 agrega `identity_instructor_links`, `portal_access_state` e

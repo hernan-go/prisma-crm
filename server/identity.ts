@@ -356,11 +356,14 @@ export async function cancelPresentedGoogleLogin(reference: EvidenceReference) {
 }
 export async function revokeIdentitySessions(userId: string, actor: string | null) {
   idSchema.parse(userId);
-  await transaction(async (db) => {
-    await lockedUser(userId, db);
-    await revokeAll(db, userId);
-    await audit(db, userId, actor, 'sessions.revoked');
-  });
+  await identityMutation(
+    async (db) => {
+      await lockedUser(userId, db);
+      await revokeAll(db, userId);
+      await audit(db, userId, actor, 'sessions.revoked');
+    },
+    [userId],
+  );
 }
 export async function revokeIdentitySession(userId: string, token: string, actor: string | null) {
   idSchema.parse(userId);

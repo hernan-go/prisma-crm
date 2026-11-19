@@ -13,7 +13,7 @@ export const contextSchema = z.discriminatedUnion('purpose', [
   z.object({ purpose: z.literal('reauth'), userId: uuid, sessionHash: hash }).strict(),
 ]);
 export type OidcContext = z.infer<typeof contextSchema>;
-export interface Attempt {
+export interface Attempt<C = OidcContext> {
   id: string;
   configurationHash: string;
   stateHash: string;
@@ -21,7 +21,7 @@ export interface Attempt {
   nonce: string;
   keyId: string;
   encrypted: string;
-  context: OidcContext;
+  context: C;
 }
 export interface VerifiedGoogle {
   subject: string;
@@ -29,17 +29,17 @@ export interface VerifiedGoogle {
   expiresAt: number;
   authenticationTime: number | null;
 }
-export interface EvidenceReference {
+export interface EvidenceReference<C = OidcContext> {
   id: string;
   browserHash: string;
   configurationHash: string;
-  context: OidcContext;
+  context: C;
 }
-export interface OidcStore {
-  create(attempt: Attempt): Promise<number>;
-  claim(stateHash: string, reference: Omit<EvidenceReference, 'id'>): Promise<Attempt>;
-  verify(reference: EvidenceReference, proof: VerifiedGoogle): Promise<void>;
-  invalidate(reference: EvidenceReference): Promise<void>;
+export interface OidcStore<C = OidcContext> {
+  create(attempt: Attempt<C>): Promise<number>;
+  claim(stateHash: string, reference: Omit<EvidenceReference<C>, 'id'>): Promise<Attempt<C>>;
+  verify(reference: EvidenceReference<C>, proof: VerifiedGoogle): Promise<void>;
+  invalidate(reference: EvidenceReference<C>): Promise<void>;
 }
 const clock = 'CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED)';
 const wipe = 'nonce=NULL,pkce_key_id=NULL,pkce_encrypted=NULL';

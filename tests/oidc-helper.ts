@@ -1,6 +1,12 @@
 import { generateKeyPairSync, sign } from 'node:crypto';
 import type { CustomFetch } from 'openid-client';
-import type { Attempt, EvidenceReference, OidcStore, VerifiedGoogle } from '../server/oidc-store';
+import type {
+  Attempt,
+  EvidenceReference,
+  OidcStore,
+  OidcContext,
+  VerifiedGoogle,
+} from '../server/oidc-store';
 import { developmentCallback, googleIssuer } from '../server/google-oidc';
 
 // Generated only in tests; no Google credentials or network traffic.
@@ -95,7 +101,7 @@ export function simulatedGoogle(redirectUri = developmentCallback) {
       unknownKey = settings.unknownKey ?? false;
       fail = settings.fail ?? false;
       beforeToken = settings.beforeToken;
-      const callback = new URL(developmentCallback);
+      const callback = new URL(redirectUri);
       callback.searchParams.set('state', auth.searchParams.get('state')!);
       callback.searchParams.set('code', 'synthetic-code');
       return callback.href;
@@ -107,12 +113,12 @@ export function simulatedGoogle(redirectUri = developmentCallback) {
 }
 
 // Explicit test double for crypto tests; database semantics are tested separately in MySQL.
-export function memoryOidcStore() {
+export function memoryOidcStore<C = OidcContext>() {
   const rows = new Map<
     string,
-    Attempt & { status: string; expires: number; proof?: VerifiedGoogle }
+    Attempt<C> & { status: string; expires: number; proof?: VerifiedGoogle }
   >();
-  const match = (row: Attempt, ref: Omit<EvidenceReference, 'id'>) => {
+  const match = (row: Attempt<C>, ref: Omit<EvidenceReference<C>, 'id'>) => {
     if (
       row.browserHash !== ref.browserHash ||
       row.configurationHash !== ref.configurationHash ||
@@ -120,7 +126,7 @@ export function memoryOidcStore() {
     )
       throw Error('Mismatch');
   };
-  const store: OidcStore = {
+  const store: OidcStore<C> = {
     async create(attempt) {
       const expires = Date.now() + 300000;
       rows.set(attempt.id, { ...attempt, status: 'pending', expires });

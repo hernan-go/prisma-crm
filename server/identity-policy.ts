@@ -1,6 +1,7 @@
 import { query, transaction, type Connection } from './db.js';
 import { AppError } from './errors.js';
 import type { PoolConnection } from 'mysql2/promise';
+import { preparePortalMutation } from './portal-hooks.js';
 
 export interface Institution {
   initialized: number;
@@ -35,12 +36,17 @@ export async function activeAdministrators(db: Connection) {
     db,
   );
 }
-export function identityMutation<T>(fn: (db: PoolConnection) => Promise<T>) {
+export function identityMutation<T>(
+  fn: (db: PoolConnection) => Promise<T>,
+  forcePortalUsers: string[] = [],
+) {
   return transaction(async (db) => {
     const institution = await lockInstitution(db);
+    const portal = await preparePortalMutation(db);
     const result = await fn(db);
     if (institution?.initialized && !(await activeAdministrators(db)).length)
       throw new AppError(409, 'Debe conservarse un administrador habilitado y vinculado.');
+    await portal.finish(forcePortalUsers);
     return result;
   });
 }

@@ -1,5 +1,21 @@
 # PRISMA CRM — Roadmap
 
+## Avance PWA-1B.2 — 19/11/2026
+
+Bloque 3 de hooks implementado y probado localmente sin MySQL; integración real
+de Bloques 2–3 pendiente. Bloque 4 (guard/sesión/finish) requiere autorización
+posterior. Bloques 4–6 pendientes; portal cerrado. Sin commits ni despliegue.
+[Estado y límites](iterations/2026-11-pwa-1b2.md).
+
+## Avance PWA-1B.2 — 18/11/2026
+
+Bloque 1 de composición y contratos HTTP implementado y probado localmente.
+Bloque 2 (store/núcleo OIDC) implementado y probado localmente sin MySQL;
+integración MySQL pendiente. Sin commit, integración, despliegue ni activación.
+Supera la referencia inferior a PWA-1B.2 sin iniciar para estos dos bloques.
+Próximo: Bloque 3, hooks transaccionales, sujeto a autorización. Bloques 3–6 pendientes; roles
+reales, sellado y activación en PWA-1C. [Informe](iterations/2026-11-pwa-1b2.md).
+
 ## Resumen vigente — 13/11/2026
 
 Estadísticas v2 mensual y anual publicada y aceptada; P0 aceptado en su alcance empresarial consultivo, con issue #2 cerrada el 06/11/2026 según confirmación del propietario. MCP privado versión 6, Know-How real/propuestas y Eventos operativos. [Estado productivo y límites](PROJECT_STATE.md).

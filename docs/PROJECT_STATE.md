@@ -1,5 +1,38 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1B.2 — Bloque 3 local (19/11/2026)
+
+Hooks de identidad (incluido Google supervisado), roles, estado y actividad de
+facilitadores implementados sobre la transacción original. Barreras selectivas,
+revocación portal y auditoría atómicas; no-ops/renombres sin invalidación. Diez
+pruebas nuevas aprobadas; corte focalizado final 90 aprobadas/30 omitidas.
+Typecheck/lint/build/diff-check aprobados. Siete integraciones MySQL nuevas y seis
+del Bloque 2 pendientes, sin destino acreditado. HTTP cerrado; sin cuentas reales,
+activación, commits, integración ni despliegue. HEAD `55f5e58` y bloques previos
+conservados. Bloques 4–6 pendientes. [Matriz y límites](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — Bloque 2 local (18/11/2026)
+
+Núcleo Google compartido con factories CRM/portal separadas, store de intentos 021
+y contrato de correlación implementados y probados sin MySQL localmente. Typecheck,
+lint, build y diff-check aprobados; 829 pruebas aprobadas y 328 omitidas. Seis casos
+MySQL nuevos preparados, no ejecutados por falta de destino acreditado.
+HTTP del Bloque 1 permanece cerrado: sin login portal, sesiones, hooks, roles reales
+ni activación. Sin commits/integración/despliegue; trabajo previo y HEAD `55f5e58`
+conservados. Bloques 3–6 pendientes. [Informe](iterations/2026-11-pwa-1b2.md).
+
+## PWA-1B.2 — Bloque 1 local (18/11/2026)
+
+Composición HTTP implementada localmente: `/api/portal` terminal antes del CRM,
+cinco contratos de autenticación cerrados (503), métodos incorrectos 405 y rutas
+desconocidas 404. `/app/` reservado sin SPA administrativa. Sin configuración de
+activación, DB, OAuth portal, cookies ni sesiones nuevas. Typecheck/lint/build y
+diff-check aprobados; 793 pruebas sin MySQL aprobadas, 322 omitidas (incluye 19 nuevas).
+Sin commits, integración ni despliegue; `55f5e58` conservado. Solo Bloque 1 autorizado;
+Store/OIDC y bloques 3–6 pendientes, cuentas reales/sellado/activación en PWA-1C.
+[Informe y evidencia](iterations/2026-11-pwa-1b2.md). Supera la condición de propuesta
+sin implementación de los cortes anteriores exclusivamente para este bloque.
+
 ## PWA-1B.1 — cierre productivo (18/11/2026)
 
 **IMPLEMENTADA — PROBADA — INTEGRADA — DESPLEGADA.** Main local y remoto

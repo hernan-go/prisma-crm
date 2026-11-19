@@ -4,16 +4,14 @@ import { randomUUID } from 'node:crypto';
 import * as oidc from 'openid-client';
 import { z } from 'zod';
 import { digest, oidcFailure, opaque, pkceVault, validOpaque } from './oidc-crypto.js';
-import {
-  contextSchema,
-  type EvidenceReference,
-  type OidcContext,
-  type OidcStore,
-} from './oidc-store.js';
+import { contextSchema, type EvidenceReference, type OidcStore } from './oidc-store.js';
+import { portalOidcContextSchema, type PortalOidcStore } from './portal-oidc-contracts.js';
 
 export const googleIssuer = 'https://accounts.google.com';
 export const developmentCallback = 'http://localhost:5173/api/auth/google/callback';
 const callbackPath = '/api/auth/google/callback';
+export const portalDevelopmentCallback = 'http://localhost:5173/api/portal/auth/google/callback';
+const portalCallbackPath = '/api/portal/auth/google/callback';
 // Google's published OIDC metadata. Pinned endpoints prevent discovery metadata or
 // incoming request headers from redirecting client credentials to another server.
 const endpoints = {
@@ -36,15 +34,15 @@ const credentials = z.object({
   clientId: z.string().regex(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/),
   clientSecret: z.string().min(1).max(1024),
 });
-function validatedCallback(value: string) {
+function validatedCallback(value: string, path: string, development: string) {
   const url = new URL(value);
   if (
-    value !== developmentCallback &&
+    value !== development &&
     (url.protocol !== 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
   )
     throw oidcFailure();
   if (
-    url.pathname !== callbackPath ||
+    url.pathname !== path ||
     url.username ||
     url.password ||
     url.search ||
@@ -59,12 +57,49 @@ export function createGoogleOidc(
   store: OidcStore,
   transport?: oidc.CustomFetch,
 ) {
+  return createCore(
+    options,
+    store,
+    contextSchema,
+    'crm',
+    callbackPath,
+    developmentCallback,
+    transport,
+  );
+}
+
+export function createPortalGoogleOidc(
+  options: GoogleOidcOptions,
+  store: PortalOidcStore,
+  transport?: oidc.CustomFetch,
+) {
+  return createCore(
+    options,
+    store,
+    portalOidcContextSchema,
+    'portal',
+    portalCallbackPath,
+    portalDevelopmentCallback,
+    transport,
+  );
+}
+
+// Application/profile is selected only by the two server factories above.
+function createCore<C extends { purpose: string }>(
+  options: GoogleOidcOptions,
+  store: OidcStore<C>,
+  schema: z.ZodType<C>,
+  application: 'crm' | 'portal',
+  path: string,
+  development: string,
+  transport?: oidc.CustomFetch,
+) {
   let redirectUri: string;
   let vault: ReturnType<typeof pkceVault>;
   let config: oidc.Configuration;
   try {
     credentials.parse(options);
-    redirectUri = validatedCallback(options.redirectUri);
+    redirectUri = validatedCallback(options.redirectUri, path, development);
     vault = pkceVault(options.activeKeyId, options.keys);
     config = new oidc.Configuration(
       endpoints,
@@ -82,20 +117,22 @@ export function createGoogleOidc(
     throw oidcFailure();
   }
   const clientId = options.clientId;
-  const configurationHash = digest(JSON.stringify([googleIssuer, clientId, redirectUri, 'crm']));
-  const refFor = (id: string, browserToken: string, context: OidcContext): EvidenceReference => {
+  const configurationHash = digest(
+    JSON.stringify([googleIssuer, clientId, redirectUri, application]),
+  );
+  const refFor = (id: string, browserToken: string, context: C): EvidenceReference<C> => {
     if (!validOpaque(browserToken)) throw oidcFailure();
     return {
       id,
       browserHash: digest(browserToken),
       configurationHash,
-      context: contextSchema.parse(context),
+      context: schema.parse(context),
     };
   };
   return {
-    async begin(context: OidcContext, browserCorrelation?: string) {
+    async begin(context: C, browserCorrelation?: string) {
       try {
-        const checked = contextSchema.parse(context);
+        const checked = schema.parse(context);
         const id = randomUUID(),
           state = opaque(),
           nonce = opaque(),
@@ -114,6 +151,7 @@ export function createGoogleOidc(
           nonce,
           code_challenge: await oidc.calculatePKCECodeChallenge(verifier),
           code_challenge_method: 'S256',
+          ...(application === 'portal' ? { prompt: 'select_account' } : {}),
           ...(checked.purpose === 'reauth'
             ? {
                 max_age: '300',
@@ -137,10 +175,10 @@ export function createGoogleOidc(
         throw oidcFailure();
       }
     },
-    async complete(callbackUrl: string, browserToken: string, context: OidcContext) {
-      let reference: EvidenceReference | undefined;
+    async complete(callbackUrl: string, browserToken: string, context: C) {
+      let reference: EvidenceReference<C> | undefined;
       try {
-        const checked = contextSchema.parse(context);
+        const checked = schema.parse(context);
         if (!validOpaque(browserToken)) throw oidcFailure();
         const url = new URL(callbackUrl);
         if (url.origin + url.pathname !== redirectUri || url.username || url.password || url.hash)
@@ -210,14 +248,14 @@ export function createGoogleOidc(
       }
     },
     // B2 passes this reference to consumeEvidence inside its OWN effect transaction.
-    evidenceReference(id: string, browserToken: string, context: OidcContext) {
+    evidenceReference(id: string, browserToken: string, context: C) {
       try {
         return refFor(z.string().uuid().parse(id), browserToken, context);
       } catch {
         throw oidcFailure();
       }
     },
-    async invalidate(id: string, browserToken: string, context: OidcContext) {
+    async invalidate(id: string, browserToken: string, context: C) {
       try {
         await store.invalidate(refFor(id, browserToken, context));
       } catch {

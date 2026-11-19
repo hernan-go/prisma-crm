@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { query, execute, peopleTransaction, pool, type Connection } from './db.js';
 import { openPeriod } from './scheduling.js';
 import { AppError, requireFound } from './errors.js';
+import { lockInstitution } from './identity-policy.js';
+import { preparePortalMutation } from './portal-hooks.js';
 import {
   offeringSchema,
   scheduleSchema,
@@ -248,6 +250,8 @@ export async function scheduleSave(body: unknown, sid?: number) {
 export async function instructorSave(body: unknown, iid?: number) {
   const p = instructorSchema.parse(body);
   return peopleTransaction(async (db) => {
+    await lockInstitution(db);
+    const portal = await preparePortalMutation(db);
     const fields = ['name', 'surname', 'dni', 'phone', 'email', 'address', 'active'] as const;
     if (iid) {
       requireFound((await query('SELECT id FROM instructors WHERE id=?', [iid], db))[0]);
@@ -264,6 +268,7 @@ export async function instructorSave(body: unknown, iid?: number) {
           db,
         )
       ).insertId;
+    await portal.finish();
     return { id: iid };
   });
 }
