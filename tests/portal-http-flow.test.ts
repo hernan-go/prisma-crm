@@ -32,6 +32,7 @@ function setup() {
     authenticate: vi.fn(async () => ({
       userId: 'private-user',
       instructorId: 1,
+      displayName: 'Persona QA',
       expiresAt: Date.now() + 28800000,
     })),
   };
@@ -51,7 +52,9 @@ function setup() {
     transport: google.transport,
   };
   const app = express();
-  const portal = createPortalHttp(config);
+  const portal = createPortalHttp(config, undefined, (_req, res) => {
+    res.type('html').send('<!doctype html><title>PRISMA</title>');
+  });
   app.use('/api/portal', portal.api);
   app.use('/app', portal.app);
   return { app, sessions, google, ...memory, config };
@@ -576,4 +579,33 @@ it('preserves logout credentials on persistence failure and sanitizes service er
     expect(response.headers['set-cookie']).toBeUndefined();
     expect(response.text).not.toContain('private');
   }
+});
+
+it('serves only the portal home after availability and keeps unknown app paths closed', async () => {
+  const f = setup();
+  const r = await request(f.app).get('/app/');
+  expect(r.status).toBe(200);
+  expect(r.headers['cache-control']).toBe('no-store');
+  expect(r.text).toContain('PRISMA');
+  expect(r.text).not.toContain('/client/main.tsx');
+  f.sessions.available.mockRejectedValueOnce(new AppError(503, 'private'));
+  expect((await request(f.app).get('/app/')).status).toBe(503);
+  expect((await request(f.app).get('/app/unknown')).status).toBe(503);
+});
+it('projects public identity without internal identifiers or CRM permissions', async () => {
+  const f = setup();
+  f.sessions.authenticate.mockResolvedValueOnce({
+    userId: 'private-user',
+    instructorId: 1,
+    expiresAt: Date.now() + 60000,
+    displayName: 'Persona QA',
+  } as any);
+  const r = await request(f.app)
+    .get('/api/portal/auth/session')
+    .set('Cookie', 'prisma_portal=' + 'a'.repeat(64));
+  expect(r.status).toBe(200);
+  expect(r.body.identity).toEqual({ displayName: 'Persona QA', context: 'facilitator' });
+  expect(r.body).not.toHaveProperty('userId');
+  expect(r.body).not.toHaveProperty('instructorId');
+  expect(r.body).not.toHaveProperty('roles');
 });

@@ -12,6 +12,8 @@ import { createPortalGoogleOidc, type GoogleOidcOptions } from './google-oidc.js
 import { digest, opaque, validOpaque } from './oidc-crypto.js';
 import { AppError } from './errors.js';
 import { z } from 'zod';
+import { resolve } from 'node:path';
+import { portalReturnPage, portalRecoveryPage } from './portal-pages.js';
 import {
   portalCorrelationCookie,
   type PortalEvidenceReference,
@@ -34,7 +36,7 @@ export interface PortalHttpSessions {
   authenticate(
     token: string,
     credentials: PortalBrowserCredentials,
-  ): Promise<{ userId: string; instructorId: number; expiresAt: number }>;
+  ): Promise<{ userId: string; instructorId: number; expiresAt: number; displayName?: string }>;
 }
 export interface PortalHttpOptions {
   google: GoogleOidcOptions;
@@ -117,6 +119,9 @@ function safeError(error: unknown, res: Response) {
 export function createPortalHttp(
   options?: PortalHttpOptions,
   recoveryOptions?: PortalRecoveryOptions,
+  home: RequestHandler = (_req, res) => {
+    res.sendFile(resolve('dist/client/portal.html'));
+  },
 ) {
   const router = Router();
   const app = Router();
@@ -327,7 +332,12 @@ export function createPortalHttp(
             credentials.portalTokens[0],
             credentials,
           );
-          return res.json({ authenticated: true, ...session });
+          if (!session.displayName?.trim()) throw new AppError(503, '');
+          return res.json({
+            authenticated: true,
+            expiresAt: session.expiresAt,
+            identity: { displayName: session.displayName, context: 'facilitator' },
+          });
         }
         if (route.path === '/auth/google/start') {
           verifyCsrf(req, 'start');
@@ -379,8 +389,6 @@ export function createPortalHttp(
         });
         return res.json({
           authenticated: true,
-          userId: session.userId,
-          instructorId: session.instructorId,
           expiresAt: session.expiresAt,
         });
       } catch (error) {
@@ -408,6 +416,26 @@ export function createPortalHttp(
     res.set('Cache-Control', 'no-store');
     next();
   });
+  app.get('/', async (req, res, next) => {
+    if (!core) return portalUnavailable(req, res, next);
+    try {
+      await options!.sessions.available();
+      return home(req, res, next);
+    } catch (error) {
+      return safeError(error, res);
+    }
+  });
+  app.get('/auth/recovery', (_req, res) => {
+    const nonce = opaque();
+    res
+      .set(
+        'Content-Security-Policy',
+        `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'`,
+      )
+      .set('Referrer-Policy', 'no-referrer')
+      .type('html')
+      .send(portalRecoveryPage(nonce));
+  });
   app.all('/auth/return', async (req, res, next) => {
     if (req.method !== 'GET')
       return res.set('Allow', 'GET').status(405).json({ code: 'portal_method_not_allowed' });
@@ -421,14 +449,10 @@ export function createPortalHttp(
       res
         .set(
           'Content-Security-Policy',
-          `default-src 'none'; script-src 'nonce-${nonce}'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
+          `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
         )
         .set('Referrer-Policy', 'no-referrer');
-      return res
-        .type('html')
-        .send(
-          `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ingreso al portal — PRISMA</title><main><h1>Ingreso al portal</h1><p id="status" role="status">Completando el ingreso…</p><form id="finish" method="post" action="/api/portal/auth/google/finish"><input type="hidden" name="csrf" value="${csrf}"><button>Completar ingreso</button></form></main><script nonce="${nonce}">const form=document.getElementById('finish');let busy=false;async function finish(event){if(event)event.preventDefault();if(busy)return;busy=true;try{const response=await fetch(form.action,{method:'POST',credentials:'same-origin',headers:{'X-Portal-CSRF':form.elements.csrf.value}});document.getElementById('status').textContent=response.ok?'Sesión iniciada.':'No se pudo completar el ingreso. Volvé a iniciar el proceso.';if(response.ok)form.hidden=true;}catch{document.getElementById('status').textContent='No se pudo completar el ingreso.';}finally{busy=false;}}form.addEventListener('submit',finish);finish();</script></html>`,
-        );
+      return res.type('html').send(portalReturnPage(csrf, nonce));
     } catch (error) {
       return safeError(error, res);
     }

@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import { ZodError } from 'zod';
-import { resolve } from 'node:path';
+import { resolve, posix } from 'node:path';
 import { api } from './routes.js';
 import { AppError } from './errors.js';
 import { authentication, type AuthOptions } from './auth.js';
@@ -81,6 +81,24 @@ export function createApp(
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ message: 'Ruta no encontrada.' }));
   const clientRoot = resolve('dist/client');
+  // Match the decoded/normalized pathname used by static serving, including
+  // encoded aliases and Windows' case-insensitive filesystem.
+  app.use((req, res, next) => {
+    let path: string;
+    try {
+      path = posix.normalize(decodeURIComponent(req.path)).toLowerCase();
+    } catch {
+      return res.sendStatus(400);
+    }
+    if (
+      path === '/portal.html' ||
+      path.startsWith('/portal.html/') ||
+      path === '/tests/browser' ||
+      path.startsWith('/tests/browser/')
+    )
+      return res.set('Cache-Control', 'no-store').sendStatus(404);
+    next();
+  });
   app.use(express.static(clientRoot));
   app.get('/{*path}', (_req, res) => res.sendFile('index.html', { root: clientRoot }));
   app.use(

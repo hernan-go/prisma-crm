@@ -7,6 +7,19 @@ import { memorySessions, testCredentials } from './auth-helper.js';
 const credentials = await testCredentials();
 const app = createApp({ ...credentials, store: memorySessions() }, {}, {}, false);
 afterAll(() => pool.end());
+it.each([
+  '/tests/browser/portal.html',
+  '/tests/browser/portal.tsx',
+  '/portal.html',
+  '/%70ortal.html',
+  '/portal%2ehtml',
+  '/PORTAL.HTML',
+  '/assets/../portal.html',
+])('does not serve the development preview or an alternate portal entry at %s', async (path) => {
+  const response = await request(app).get(path);
+  expect(response.status).toBe(404);
+  expect(response.text).not.toContain('Previsualización sintética');
+});
 const routes = [
   ['get', '/auth/session'],
   ['post', '/auth/google/start'],

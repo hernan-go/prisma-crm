@@ -9,6 +9,7 @@ export default defineConfig({
   build: {
     outDir: 'dist/client',
     rollupOptions: {
+      input: { crm: 'index.html', portal: 'portal.html' },
       output: {
         manualChunks: {
           react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
@@ -24,7 +25,14 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:3001',
       '/vincular-google': 'http://127.0.0.1:3001',
-      '/app': 'http://127.0.0.1:3001',
+      '/app': {
+        target: 'http://127.0.0.1:3001',
+        // Local visual shell only. All authorization remains in the API.
+        bypass(req) {
+          const path = req.url?.split('?')[0];
+          if (req.method === 'GET' && (path === '/app' || path === '/app/')) return '/portal.html';
+        },
+      },
     },
   },
 });

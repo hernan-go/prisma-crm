@@ -1,6 +1,25 @@
 import { createPortalSessionService } from './portal-sessions.js';
 import { mysqlPortalOidcStore } from './portal-oidc-store.js';
 import type { PortalHttpOptions, PortalRecoveryOptions } from './portal-http.js';
+import { getIdentity } from './identity.js';
+import { AppError } from './errors.js';
+
+// Presentation only, after the existing transactional guard has authorized access.
+export function portalPresentationSessions(
+  service = createPortalSessionService(),
+  readIdentity = getIdentity,
+) {
+  return {
+    ...service,
+    async authenticate(...args: Parameters<typeof service.authenticate>) {
+      const session = await service.authenticate(...args);
+      const identity = await readIdentity(session.userId);
+      if (!identity || identity.status !== 'enabled' || !identity.display_name.trim())
+        throw new AppError(401, '');
+      return { ...session, displayName: identity.display_name };
+    },
+  };
+}
 
 export function portalRecoveryEnvironment(): PortalRecoveryOptions | undefined {
   if (!process.env.APP_URL || !process.env.PORTAL_CSRF_KEY) return undefined;
@@ -24,7 +43,7 @@ export function portalEnvironment(): PortalHttpOptions | undefined {
         keys: JSON.parse(process.env.OIDC_KEYS_JSON || 'null'),
       },
       csrfKey: process.env.PORTAL_CSRF_KEY,
-      sessions: createPortalSessionService(),
+      sessions: portalPresentationSessions(),
       store: mysqlPortalOidcStore(),
     };
   } catch {
