@@ -1,5 +1,99 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1C — cierre técnico local previo a integración (20/11/2026)
+
+**IMPLEMENTADA Y VALIDADA LOCALMENTE — APTO CON OBSERVACIONES para preparar
+integración, manteniendo el portal productivo apagado.** Sin commits de PWA-1C,
+integración ni despliegue; base `main` en `dfebe3df74883d39ea8c58fa774794bc66dd4886`.
+PWA-1B.2 conserva su cierre integrado y desplegado previo.
+
+En MySQL descartable `prisma_disposable_oauth_live_e4c4ff4c22e9`, puerto 33319:
+vinculación Google CRM de A/B y concesiones H2 auditadas, ambas habilitadas con
+`admin` + `facilitator`; pares A→1/B→2 sellados en revisión 1. Mantenimiento
+correcto, una pasada sin registros procesados ni purgados. Activación local
+auditada en revisión 2, admisiones cerradas. Login administrativo Google nuevo de
+A y login Google PWA de A comprobados; sesión portal persistida, inicialmente
+vigente, con TTL absoluto de ocho horas y facilitador 1. Tras logout y F5 informado
+por el propietario, lectura DB confirmó cuatro sesiones portal históricas de A
+revocadas, cuatro eventos de revocación y cero sesiones portal vigentes de A.
+
+Backend actualizado tras recuperación del mismo datadir, sin repetir migraciones.
+Corrección CSRF probada; causa exacta del 403 original no demostrada. Producción,
+portal productivo e identidades institucionales reales sin cambios de PWA-1C.
+Pendientes: PWA de B, determinados conflictos/cancelaciones, expiración efectiva
+a las ocho horas y CI del futuro SHA. Activación productiva requiere autorización
+independiente. [Evidencia, validaciones y límites](iterations/2026-11-pwa-1c.md#cierre-técnico-local-y-preparación-de-integración-20112026).
+
+Los cortes fechados siguientes conservan el historial. Sus bloqueos OAuth, backend
+anterior y estados del ensayo describen cada corte, no el estado vigente superior.
+
+## PWA-1C — corrección focalizada CSRF local (19/11/2026)
+
+Diagnóstico seguro de rechazos Origin/CSRF y recuperación explícita del formulario
+de vinculación implementados localmente, con plazo de cinco minutos conservado.
+La causa exacta del 403 histórico sigue no demostrada. Autorización expuesta A
+vencida, rechazada por el backend y código retirado del archivo privado; sin nueva
+autorización ni OAuth. MySQL descartable y cambios previos conservados. Backend
+vivo pendiente de recarga controlada antes de futuros ensayos; no se reinició.
+Sin commits, publicación ni cambios productivos. [Detalle y verificación](iterations/2026-11-pwa-1c.md#corrección-focalizada-de-origincsrf-y-recuperación-19112026).
+
+## PWA-1C — preflight OAuth local, bloqueo externo (19/11/2026)
+
+Ensayo local con MySQL descartable expresamente autorizado. Instancia nueva
+8.4.11/InnoDB acreditada; tres casos focalizados de TTL/vencimiento/logout aprobados,
+fixture manual con 001–021 y dos identidades ficticias sin cuentas ni sesiones
+preparado. Recursos apagados con SHUTDOWN exit 0. Google real rechazó el callback
+portal local con `redirect_uri_mismatch` para el cliente de pruebas existente.
+Pendientes: registro manual del callback por el propietario e identificación de
+dos cuentas dedicadas. Sin login Google ni nuevo recorrido de navegador acreditados;
+no se configuró un piloto elegible para suplirlos. Cambios locales conservados,
+sin commits/publicación, producción intacta y portal apagado. [Evidencia y pasos para retomar](iterations/2026-11-pwa-1c.md#ensayo-oauth-real-local--preflight-y-bloqueo-externo-19112026).
+
+## PWA-1C — Bloque 2 visual local (19/11/2026)
+
+Primera interfaz React responsive de acceso portal implementada localmente:
+bienvenida/Google, identidad autorizada mínima, vencimiento, errores y logout.
+Preview sintético exclusivo de desarrollo visible sin DB ni cuentas habilitadas.
+Retorno técnico único y recuperación persistente conservan controles backend.
+Navegador Chrome comprobado en escritorio/tablet/móvil; OAuth Google real y ensayo
+de ocho horas pendientes de destino/cuentas expresamente autorizados. Portal
+productivo desactivado, identidades intactas; sin ramas, commits ni publicaciones.
+Bloque 1 y documentación previa conservados. [Entrega, pruebas y límites](iterations/2026-11-pwa-1c.md#entrega-local-del-bloque-2--19112026).
+
+## PWA-1C — Bloque 1 local (19/11/2026)
+
+Herramientas H2, operación supervisada del piloto y runner de mantenimiento
+implementados sobre los servicios existentes. Validación sintética: 61 pruebas
+de servicios, 74 de autenticación/HTTP y 12 casos MySQL/InnoDB focalizados
+aprobados. Las cuentas y el portal productivos conservan el estado del cierre
+de PWA-1B.2. Rama local `main` en `dfebe3df`, cambios pendientes de revisión.
+Bloque 2 pendiente de entorno OAuth autorizado con cuentas de prueba.
+[Procedimiento, evidencia y autorizaciones pendientes](iterations/2026-11-pwa-1c.md).
+
+## PWA-1B.2 — cierre productivo (19/11/2026)
+
+**IMPLEMENTADA — PROBADA — INTEGRADA — DESPLEGADA en su alcance de infraestructura
+de autenticación.** Commit productivo `dfebe3df74883d39ea8c58fa774794bc66dd4886`;
+main local/remoto confirmados en ese SHA al publicar, conservando los tres commits
+originales. CI de validación [#84](https://github.com/hernan-go/prisma-crm/actions/runs/44559952188):
+8/8 jobs, incluida la suite portal MySQL/InnoDB completa, 54/54 sin omisiones.
+Según comprobación comunicada por el propietario: Actions **#85 SUCCESS, 8/8**,
+SiteGround completado para ese SHA, build exit code 0; Google administrativo de
+Hernán y Jesica, Dashboard, economía, consultas, logout y protección de `/gestion`
+correctos. `/app/` responde `portal_unavailable`, como corresponde.
+Codex registra esa evidencia; no supervisó Actions #85 ni SiteGround en este cierre.
+
+021 ya aplicada y verificada anteriormente; no se repitió ni hay migraciones nuevas
+en esta entrega. **Portal desactivado; sin activación de identidades reales.**
+No se entregaron funcionalidades de participantes, facilitadores, asistencia,
+notificaciones ni materiales. Los cortes locales siguientes son antecedentes y
+sus pendientes de integración/despliegue quedan superados por este cierre.
+
+En aquel cierre se propuso [PWA-1C — plan técnico](iterations/2026-11-pwa-1c.md),
+entonces sin implementar: herramientas supervisadas H2/piloto y mantenimiento,
+acceso mínimo con OAuth real y posterior operación productiva autorizada por etapas.
+Roles reales, configuración, sellado y activación requieren autorizaciones separadas.
+
 ## PWA-1B.2 — cierre técnico local, Bloque 6 (19/11/2026)
 
 **APTO CON OBSERVACIONES para iniciar integración CI/CD con portal desactivado.**

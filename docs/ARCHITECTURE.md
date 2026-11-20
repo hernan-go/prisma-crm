@@ -1,13 +1,58 @@
 # PRISMA CRM — Arquitectura
 
-## PWA-1B.2 — cierre local, Bloque 6 (19/11/2026)
+## PWA-1C — estado técnico local y límites de publicación (20/11/2026)
+
+Bloques 1–2 y corrección CSRF implementados y validados localmente; PWA-1C sin
+commits, integración ni despliegue. La operación existente H2 conserva `admin`,
+agrega `facilitator` y audita/revoca sesiones. En el entorno descartable se sellaron
+exactamente A→1/B→2; mantenimiento ejecutado y portal local habilitado en revisión 2,
+con admisiones cerradas. Login Google PWA de A, asociación al facilitador 1 y
+logout persistente comprobados. No se modifican los contratos de ocho horas
+absolutas ni de independencia de sesiones CRM/portal.
+
+El backend de ensayo ya fue actualizado; el contexto CSRF firmado y su recuperación
+explícita están probados. La causa exacta del 403 histórico no quedó demostrada.
+PWA-1B.2 permanece desplegada en producción, con portal apagado e identidades
+reales sin cambios de PWA-1C. La operación local no habilita producción.
+Pendientes: login PWA de B, determinados conflictos/cancelaciones, ocho horas
+efectivas y CI del futuro SHA. [Evidencia y límites](iterations/2026-11-pwa-1c.md#cierre-técnico-local-y-preparación-de-integración-20112026).
+Los apartados siguientes conservan los cortes arquitectónicos anteriores.
+
+## PWA-1C — interfaz de acceso local, Bloque 2 (19/11/2026)
+
+Entrada React/Vite independiente `portal.html` para `/app/`, servida en producción
+solo tras disponibilidad persistente. Sin configuración/política, `/app/` conserva
+503; assets públicos no autorizan acceso. Cliente portal separado de AuthGate/CRM,
+CSRF y cookies same-origin, estado solo en memoria y vencimiento absoluto.
+La respuesta session proyecta únicamente nombre institucional, contexto facilitator
+y vencimiento, después del authenticate existente; no roles CRM ni IDs internos.
+El retorno técnico existente es el único consumidor finish, con navegación fija;
+`/app/auth/recovery` permite logout persistente aunque OAuth/portal no estén disponibles.
+Preview de componentes sintéticos en `tests/browser/portal.html`, solo Vite DEV,
+fuera del build y con rechazo explícito de rutas alternativas en Express.
+Sin cambios transaccionales, DB, activación ni publicación. [Contratos y evidencia](iterations/2026-11-pwa-1c.md#entrega-local-del-bloque-2--19112026).
+
+## PWA-1B.2 — infraestructura desplegada, portal desactivado (19/11/2026)
+
+Estado productivo: infraestructura de autenticación integrada/desplegada en `dfebe3df`,
+CI #85 y comprobaciones productivas acreditadas por el propietario. No hay nuevas
+migraciones sobre 021. La composición HTTP existe; configuración OAuth y política
+persistente siguen siendo necesarias y no activan el portal automáticamente.
+`/app/` continúa cerrado; solo existe el retorno técnico `/app/auth/return`, sin
+página inicial de uso ni funciones de negocio PWA. [Cierre](iterations/2026-11-pwa-1b2.md).
+Los apartados por bloques siguientes son antecedentes de construcción, no pendientes
+actuales de integración. [PWA-1C](iterations/2026-11-pwa-1c.md) prepara operación,
+acceso mínimo y activación supervisada; no cambia estos contratos aprobados.
+
+### Recuperación y operación pendiente
 
 `PortalRecoveryOptions` separa origen confiable/clave CSRF/revocador de la configuración
 Google. `portalRecoveryEnvironment` puede construir recovery con APP_URL y clave
 CSRF aunque OAuth falte/falle; no modifica ni elude política para autenticación.
-Sin material seguro de recuperación continúa cerrado. Mantenimiento disponible
-como llamada interna, no programado productivamente. H2 sintético probado; falta
-wrapper supervisado para concesiones reales, fuera de esta entrega.
+Sin material seguro de recuperación continúa cerrado. El corte PWA-1B.2 entregó
+mantenimiento interno y H2 sintético. PWA-1C agrega el wrapper supervisado y el
+runner de mantenimiento, probados localmente; no están publicados ni programados
+productivamente. Concesiones y operación sobre identidades reales siguen pendientes.
 [Condiciones operativas y runbooks](iterations/2026-11-pwa-1b2.md).
 
 ## PWA-1B.2 — ciclo de vida local, Bloque 5 (19/11/2026)

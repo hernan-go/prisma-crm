@@ -1,11 +1,25 @@
 # PRISMA CRM — Roadmap
 
-## Cierre técnico PWA-1B.2 — 19/11/2026
+## Prioridad vigente — preparación de integración PWA-1C (20/11/2026)
 
-Seis bloques implementados/preparados localmente; apto con observaciones para
-iniciar CI/CD con portal apagado. Integración/publicación no realizadas. PWA-1C
-requiere herramienta H2 supervisada, mantenimiento con responsable e invocación
-verificados y pruebas Google/navegador autorizadas. [Criterios](iterations/2026-11-pwa-1b2.md).
+PWA-1B.2 integrada y desplegada en `dfebe3df`, con CI #85 8/8, build productivo 0
+y comprobaciones CRM/portal cerrado comunicadas por el propietario.
+[Cierre y alcance](iterations/2026-11-pwa-1b2.md). Autenticación preparada;
+portal productivo desactivado, sin funciones de negocio PWA ni identidades reales activadas.
+
+PWA-1C implementada y validada localmente: vinculación Google CRM A/B, H2 con
+conservación de admin, dos pares sellados, mantenimiento y activación exclusivamente
+descartable en revisión 2. Primer login PWA de A y logout persistente comprobados.
+**Sin commits de PWA-1C, integración ni despliegue.** Siguiente: revisar el cierre
+documental y autorizar por separado la preparación de rama/commits y la integración
+CI/CD. CI del futuro SHA pendiente; la CI previa de PWA-1B.2 no la sustituye.
+
+Pendientes reales de aceptación completa: login PWA de B, determinados conflictos
+y cancelaciones y expiración efectiva a las ocho horas. La activación productiva,
+operaciones sobre identidades reales y mantenimiento del hosting requieren
+autorizaciones independientes. Sin funciones nuevas de asistencia, materiales ni
+notificaciones. [Evidencia y límites](iterations/2026-11-pwa-1c.md#cierre-técnico-local-y-preparación-de-integración-20112026).
+Los avances fechados siguientes son antecedentes; no describen el estado vigente.
 
 ## Avance Bloque 5 — 19/11/2026
 
@@ -44,12 +58,11 @@ Supera la referencia inferior a PWA-1B.2 sin iniciar para estos dos bloques.
 Próximo: Bloque 3, hooks transaccionales, sujeto a autorización. Bloques 3–6 pendientes; roles
 reales, sellado y activación en PWA-1C. [Informe](iterations/2026-11-pwa-1b2.md).
 
-## Resumen vigente — 13/11/2026
+## Resumen histórico — 13/11/2026
 
 Estadísticas v2 mensual y anual publicada y aceptada; P0 aceptado en su alcance empresarial consultivo, con issue #2 cerrada el 06/11/2026 según confirmación del propietario. MCP privado versión 6, Know-How real/propuestas y Eventos operativos. [Estado productivo y límites](PROJECT_STATE.md).
 
-Se conserva el orden aprobado de las iniciativas, sin asignar fechas ni iteraciones nuevas. Google Login fue aceptado en producción el 13/11/2026. Permanecen pendientes ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Actualización PWA del 18/11/2026: fundamentos PWA-1B.1 para facilitadores implementados, probados, integrados y desplegados en `98b0d1f`, con 021 aplicada; portal todavía desactivado, sin interfaz ni autenticación portal operativa. PWA-1B.2 está en propuesta para revisión, sin implementación iniciada; la PWA de participantes continúa como iniciativa futura. [Cierre y propuesta](iterations/2026-11-pwa-1b1.md). Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
-
+Se conserva el orden aprobado de las iniciativas generales. Google Login fue aceptado en producción el 13/11/2026. Permanecen pendientes ayuda contextual y recorridos guiados, informes PDF y los controles de seguridad, recuperación y resiliencia aún no verificados. Actualización PWA del 19/11/2026: PWA-1B.1 y PWA-1B.2 desplegadas, 021 aplicada; portal desactivado y PWA-1C planificada para preparar el piloto supervisado. La PWA de participantes continúa como iniciativa futura. [Estado vigente](PROJECT_STATE.md). Historial completo/rangos, flujo de caja, IPC histórico y modelos financieros avanzados se distinguen de Estadísticas v2 entregada.
 
 ## Iteración 10.2 — cierre técnico productivo (06/11/2026)
 
