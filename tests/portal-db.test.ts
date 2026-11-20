@@ -20,6 +20,8 @@ import { opaque, digest } from '../server/oidc-crypto';
 import type { PortalOidcAttempt } from '../server/portal-oidc-contracts';
 import { migrate } from '../server/migrate';
 import { createMysqlPortalUnitOfWork } from '../server/portal-policy';
+import { parseTarget, pilotOperator, previewGrant } from '../server/portal-operations';
+import { runMaintenance } from '../server/portal-maintenance';
 import { createPortalAccessService } from '../server/portal-access';
 import type { PortalContext, PortalMember, PortalUnitOfWork } from '../shared/portal';
 
@@ -147,6 +149,175 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
           'INSERT INTO identity_sessions(token_hash,user_id,application,created_at,expires_at) VALUES (?,?,?,0,?)',
           [token, userId, app, Date.now() + 3600000],
         );
+    });
+
+    function blockTarget() {
+      return parseTarget([
+        process.env.DB_HOST!,
+        process.env.DB_PORT!,
+        process.env.DB_NAME!,
+        process.env.TEST_DB_SERVER_UUID!,
+      ]);
+    }
+    function institutionalPairs() {
+      return [actor, otherAdmin].map((userId, index) => ({
+        userId,
+        instructorId: members[index].instructorId,
+        subject: 'synthetic-' + userId,
+      }));
+    }
+    it('PWA1C H2 rejects wrong destination, missing, disabled, noninstitutional, wrong Google and inactive instructor', async () => {
+      const t = blockTarget(),
+        [m] = institutionalPairs();
+      for (const bad of [
+        { ...m, userId: randomUUID() },
+        { ...m, userId: a },
+        { ...m, subject: 'wrong' },
+        { ...m, instructorId: 4294967295 },
+      ])
+        await expect(previewGrant(t, bad)).rejects.toThrow();
+      await expect(previewGrant({ ...t, uuid: randomUUID() }, m)).rejects.toThrow();
+      await setIdentityStatus(actor, 'disabled', otherAdmin);
+      await expect(previewGrant(t, m)).rejects.toThrow();
+      await setIdentityStatus(actor, 'enabled', otherAdmin);
+      await instructorSave({ name: 'Synthetic portal A', active: false }, m.instructorId);
+      await expect(previewGrant(t, m)).rejects.toThrow();
+    });
+    it('PWA1C H2 competing confirmations commit once and preserve roles, audit and new sessions on retry', async () => {
+      const t = blockTarget(),
+        [m] = institutionalPairs();
+      await setIdentityRole(actor, 'participant', true, otherAdmin);
+      const old = await createIdentitySession(actor, 'crm', 3600000);
+      const previews = await Promise.all([previewGrant(t, m), previewGrant(t, m)]);
+      await expect(previews[0].apply('cancel')).rejects.toThrow();
+      expect(await authenticateIdentitySession(old.token, 'crm')).toBeTruthy();
+      const results = await Promise.allSettled(previews.map((p) => p.apply(p.phrase)));
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      expect((await getIdentity(actor))?.roles).toEqual(['admin', 'facilitator', 'participant']);
+      expect(await authenticateIdentitySession(old.token, 'crm')).toBeFalsy();
+      const fresh = await createIdentitySession(actor, 'crm', 3600000),
+        retry = await previewGrant(t, m);
+      expect(await retry.apply(retry.phrase)).toEqual({ changed: false });
+      expect(await authenticateIdentitySession(fresh.token, 'crm')).toBeTruthy();
+      expect(
+        await query(
+          "SELECT actor_id FROM identity_audit_events WHERE event='role.granted.facilitator'",
+        ),
+      ).toEqual([{ actor_id: null }]);
+    });
+    it('PWA1C H2 rejects a changed role, instructor or sub between inspection and apply', async () => {
+      const [m] = institutionalPairs(),
+        p = await previewGrant(blockTarget(), m);
+      await setIdentityRole(actor, 'participant', true, otherAdmin);
+      await expect(p.apply(p.phrase)).rejects.toThrow();
+      const next = await previewGrant(blockTarget(), m);
+      await execute('UPDATE instructors SET active=0 WHERE id=?', [m.instructorId]);
+      await expect(next.apply(next.phrase)).rejects.toThrow();
+      await execute('UPDATE instructors SET active=1 WHERE id=?', [m.instructorId]);
+      await execute(
+        "UPDATE identity_external_accounts SET subject=? WHERE user_id=? AND provider='google'",
+        ['changed-' + actor, actor],
+      );
+      try {
+        await expect(next.apply(next.phrase)).rejects.toThrow();
+      } finally {
+        await execute(
+          "UPDATE identity_external_accounts SET subject=? WHERE user_id=? AND provider='google'",
+          [m.subject, actor],
+        );
+      }
+      expect((await getIdentity(actor))?.roles).not.toContain('facilitator');
+    });
+    it('PWA1C H2 audit failure rolls back role and session revocation', async () => {
+      const [m] = institutionalPairs(),
+        p = await previewGrant(blockTarget(), m);
+      await execute(
+        "ALTER TABLE identity_audit_events ADD CONSTRAINT pwa1c_fixture CHECK(event <> 'role.granted.facilitator')",
+      );
+      try {
+        await expect(p.apply(p.phrase)).rejects.toThrow();
+      } finally {
+        await execute('ALTER TABLE identity_audit_events DROP CHECK pwa1c_fixture');
+      }
+      expect((await getIdentity(actor))?.roles).not.toContain('facilitator');
+      expect(
+        await query('SELECT revoked_at FROM identity_sessions WHERE token_hash=?', [actorHash]),
+      ).toEqual([{ revoked_at: null }]);
+    });
+    it('PWA1C pilot grants then reauthenticates, seals only two institutional pairs, enables and closes explicitly', async () => {
+      const t = blockTarget(),
+        expected = institutionalPairs(),
+        pairs = expected.map(({ userId, instructorId }) => ({ userId, instructorId }));
+      const op = pilotOperator(t, randomBytes(32), expected);
+      await expect(op.preparePilot(context, pairs)).rejects.toThrow();
+      for (const m of expected) {
+        const p = await previewGrant(t, m);
+        await p.apply(p.phrase);
+      }
+      await expect(op.preparePilot(context, pairs)).rejects.toThrow();
+      const fresh = await createIdentitySession(actor, 'crm', 3600000),
+        ctx = { userId: actor, sessionHash: digest(fresh.token) };
+      await expect(op.preparePilot(ctx, [pairs[0], pairs[0]])).rejects.toThrow();
+      await expect(op.preparePilot(ctx, members)).rejects.toThrow();
+      const plan = await op.preparePilot(ctx, pairs),
+        id = randomUUID();
+      const sealed = await op.sealPilot(ctx, id, plan);
+      expect(await op.sealPilot(ctx, id, plan)).toEqual(sealed);
+      expect((await op.status(ctx)).state).toMatchObject({
+        enabled: false,
+        admissions_open: false,
+        pilot_sealed: true,
+      });
+      const enabled = await op.setPortalEnabled(ctx, {
+        operationId: randomUUID(),
+        expectedRevision: sealed.revision,
+        enabled: true,
+      });
+      const revoked = await op.revokePortalSessions(ctx, {
+        operationId: randomUUID(),
+        expectedRevision: enabled.revision,
+        userId: actor,
+        expectedLinkRevision: '1',
+      });
+      const disabled = await op.setLinkEnabled(ctx, {
+        operationId: randomUUID(),
+        expectedRevision: revoked.revision,
+        userId: actor,
+        expectedLinkRevision: revoked.linkRevision!,
+        enabled: false,
+      });
+      await expect(op.preparePilot(ctx, members)).rejects.toThrow();
+      const closed = await op.setPortalEnabled(ctx, {
+        operationId: randomUUID(),
+        expectedRevision: disabled.revision,
+        enabled: false,
+      });
+      const wrong = pilotOperator(t, randomBytes(32), [expected[1], expected[1]]);
+      await expect(
+        wrong.setPortalEnabled(ctx, {
+          operationId: randomUUID(),
+          expectedRevision: closed.revision,
+          enabled: true,
+        }),
+      ).rejects.toThrow('Cupo sellado incorrecto');
+      expect((await op.status(ctx)).state.enabled).toBe(false);
+      expect((await op.status(ctx)).links).toHaveLength(2);
+    });
+    it('PWA1C maintenance excludes concurrent connections and can retry after release', async () => {
+      const t = blockTarget(),
+        name = createHash('sha256')
+          .update('prisma:portal:maintenance:' + t.database)
+          .digest('hex');
+      const guard = await pool.getConnection();
+      try {
+        await query('SELECT GET_LOCK(?,0)', [name], guard);
+        await expect(runMaintenance(t)).rejects.toThrow('maintenance_busy');
+      } finally {
+        await query('SELECT RELEASE_LOCK(?)', [name], guard);
+        guard.release();
+      }
+      for (let i = 0; i < 2; i++)
+        expect(await runMaintenance(t)).toMatchObject({ backlog: false, passes: 1, scanned: 0 });
     });
     async function seal() {
       await service.sealPilot(context, randomUUID(), await service.preparePilot(context, members));

@@ -164,39 +164,39 @@ export async function setIdentityRole(
   idSchema.parse(userId);
   roleSchema.parse(role);
   z.boolean().parse(granted);
-  await identityMutation(async (db) => {
-    const institution = await lockInstitution(db);
-    if (
-      granted &&
-      role === 'admin' &&
-      institution &&
-      [institution.admin_one, institution.admin_two].includes(userId)
-    ) {
-      const bound = await query(
-        "SELECT user_id FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
-        [userId],
-        db,
-      );
-      if (!bound.length) throw new AppError(409, 'Aprobación de vinculación pendiente.');
-    }
-    const user = await lockedUser(userId, db);
-    if (user.roles.includes(role) === granted) return;
-    if (granted)
-      await execute(
-        'INSERT INTO identity_user_roles(user_id,role) VALUES (?,?)',
-        [userId, role],
-        db,
-      );
-    else
-      await execute(
-        'DELETE FROM identity_user_roles WHERE user_id=? AND role=?',
-        [userId, role],
-        db,
-      );
-    // Neither removed nor newly granted privileges are inherited by old sessions.
-    await revokeAll(db, userId);
-    await audit(db, userId, actor, (granted ? 'role.granted.' : 'role.revoked.') + role);
-  });
+  await identityMutation((db) => setIdentityRoleInTransaction(db, userId, role, granted, actor));
+}
+// Caller owns identityMutation and its locks and hooks.
+export async function setIdentityRoleInTransaction(
+  db: Connection,
+  userId: string,
+  role: IdentityRole,
+  granted: boolean,
+  actor: string | null,
+) {
+  const institution = await lockInstitution(db);
+  if (
+    granted &&
+    role === 'admin' &&
+    institution &&
+    [institution.admin_one, institution.admin_two].includes(userId)
+  ) {
+    const bound = await query(
+      "SELECT user_id FROM identity_external_accounts WHERE user_id=? AND provider='google' FOR UPDATE",
+      [userId],
+      db,
+    );
+    if (!bound.length) throw new AppError(409, 'Aprobación de vinculación pendiente.');
+  }
+  const user = await lockedUser(userId, db);
+  if (user.roles.includes(role) === granted) return;
+  if (granted)
+    await execute('INSERT INTO identity_user_roles(user_id,role) VALUES (?,?)', [userId, role], db);
+  else
+    await execute('DELETE FROM identity_user_roles WHERE user_id=? AND role=?', [userId, role], db);
+  // Neither removed nor newly granted privileges are inherited by old sessions.
+  await revokeAll(db, userId);
+  await audit(db, userId, actor, (granted ? 'role.granted.' : 'role.revoked.') + role);
 }
 async function insertSession(db: Connection, userId: string, application: string, ttlMs: number) {
   const token = randomBytes(32).toString('hex');

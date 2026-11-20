@@ -214,6 +214,45 @@ export function createPortalAccessService(
     );
   }
   return {
+    async recoverSeal(
+      context: PortalContext,
+      operationId: string,
+      expectedRevision: string,
+      expected: PortalMember[],
+    ) {
+      const c = portalContext.parse(context),
+        id = uuid.parse(operationId),
+        members = normalizeMembers(expected);
+      portalCounter.parse(expectedRevision);
+      return run(
+        async (tx) => {
+          const actor = await tx.authorize(c);
+          const receipt = await tx.receipt(id);
+          const request = receipt?.details.request;
+          if (
+            !receipt ||
+            !request ||
+            receipt.event !== 'portal.pilot.sealed' ||
+            request.action !== receipt.event ||
+            receipt.actorId !== actor.userId ||
+            request.actorId !== actor.userId ||
+            request.sessionBinding !== digest(actor.sessionHash) ||
+            request.expectedRevision !== expectedRevision
+          )
+            throw fail('Recibo no coincide.');
+          const { plan } = z.object({ plan: planSchema }).parse(request.params);
+          if (
+            plan.revision !== expectedRevision ||
+            plan.actorId !== actor.userId ||
+            plan.sessionBinding !== request.sessionBinding ||
+            canonical(plan.members) !== canonical(members)
+          )
+            throw fail('Recibo no coincide.');
+          return receipt.details.result;
+        },
+        { userIds: [c.userId] },
+      );
+    },
     async preparePilot(context: PortalContext, input: PortalMember[]): Promise<PreparedPilot> {
       const c = portalContext.parse(context),
         members = normalizeMembers(input);

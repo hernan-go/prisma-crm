@@ -143,59 +143,63 @@ export function createPortalSessionService() {
         }
       });
     },
-    async maintain(limit = 100) {
+    async maintain(limit = 100, runTransaction?: typeof import('./db.js').transaction) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 200)
         throw new AppError(400, 'Lote no válido.');
-      return withPortalDatabase(async (db) => {
-        const attempts = await query<{ id: string }>(
-          `SELECT id FROM identity_portal_oidc_attempts WHERE status IN ('pending','claimed','verified') AND expires_at<=${clock} ORDER BY expires_at,id LIMIT ${limit} FOR UPDATE`,
-          [],
-          db,
-        );
-        let invalidated = 0,
-          purgedAttempts = 0,
-          purgedSessions = 0;
-        for (const a of attempts) {
-          await execute(
-            `UPDATE identity_portal_oidc_attempts SET status='invalidated',invalidated_at=${clock},nonce=NULL,pkce_key_id=NULL,pkce_encrypted=NULL,subject=NULL,token_issued_at=NULL,token_expires_at=NULL,authentication_time=NULL WHERE id=? AND status IN ('pending','claimed','verified')`,
-            [a.id],
+      return withPortalDatabase(
+        async (db) => {
+          const attempts = await query<{ id: string }>(
+            `SELECT id FROM identity_portal_oidc_attempts WHERE status IN ('pending','claimed','verified') AND expires_at<=${clock} ORDER BY expires_at,id LIMIT ${limit} FOR UPDATE`,
+            [],
             db,
           );
-          invalidated++;
-        }
-        const terminal = await query<{ id: string }>(
-          `SELECT a.id FROM identity_portal_oidc_attempts a LEFT JOIN identity_sessions s ON s.token_hash=a.issued_session_hash
+          let invalidated = 0,
+            purgedAttempts = 0,
+            purgedSessions = 0;
+          for (const a of attempts) {
+            await execute(
+              `UPDATE identity_portal_oidc_attempts SET status='invalidated',invalidated_at=${clock},nonce=NULL,pkce_key_id=NULL,pkce_encrypted=NULL,subject=NULL,token_issued_at=NULL,token_expires_at=NULL,authentication_time=NULL WHERE id=? AND status IN ('pending','claimed','verified')`,
+              [a.id],
+              db,
+            );
+            invalidated++;
+          }
+          const terminal = await query<{ id: string }>(
+            `SELECT a.id FROM identity_portal_oidc_attempts a LEFT JOIN identity_sessions s ON s.token_hash=a.issued_session_hash
           WHERE a.status IN ('consumed','invalidated') AND a.expires_at<${clock}-86400000
           AND (a.invalidated_at IS NULL OR a.invalidated_at<${clock}-86400000)
           AND (a.issued_session_hash IS NULL OR (s.application='portal' AND s.expires_at<${clock}-86400000 AND (s.revoked_at IS NULL OR s.revoked_at<${clock}-86400000)))
           ORDER BY a.expires_at,a.id LIMIT ${limit} FOR UPDATE`,
-          [],
-          db,
-        );
-        for (const a of terminal) {
-          await execute('DELETE FROM identity_portal_oidc_attempts WHERE id=?', [a.id], db);
-          purgedAttempts++;
-        }
-        const sessions = await query<{ token_hash: string }>(
-          `SELECT s.token_hash FROM identity_sessions s WHERE s.application='portal' AND s.expires_at<${clock}-86400000 AND (s.revoked_at IS NULL OR s.revoked_at<${clock}-86400000) AND NOT EXISTS (SELECT 1 FROM identity_portal_oidc_attempts a WHERE a.issued_session_hash=s.token_hash) ORDER BY s.expires_at,s.token_hash LIMIT ${limit} FOR UPDATE`,
-          [],
-          db,
-        );
-        for (const s of sessions) {
-          const result = await execute(
-            "DELETE FROM identity_sessions WHERE token_hash=? AND application='portal' AND NOT EXISTS (SELECT 1 FROM identity_portal_oidc_attempts WHERE issued_session_hash=?)",
-            [s.token_hash, s.token_hash],
+            [],
             db,
           );
-          purgedSessions += result.affectedRows;
-        }
-        return {
-          scanned: attempts.length + terminal.length + sessions.length,
-          invalidated,
-          purgedAttempts,
-          purgedSessions,
-        };
-      });
+          for (const a of terminal) {
+            await execute('DELETE FROM identity_portal_oidc_attempts WHERE id=?', [a.id], db);
+            purgedAttempts++;
+          }
+          const sessions = await query<{ token_hash: string }>(
+            `SELECT s.token_hash FROM identity_sessions s WHERE s.application='portal' AND s.expires_at<${clock}-86400000 AND (s.revoked_at IS NULL OR s.revoked_at<${clock}-86400000) AND NOT EXISTS (SELECT 1 FROM identity_portal_oidc_attempts a WHERE a.issued_session_hash=s.token_hash) ORDER BY s.expires_at,s.token_hash LIMIT ${limit} FOR UPDATE`,
+            [],
+            db,
+          );
+          for (const s of sessions) {
+            const result = await execute(
+              "DELETE FROM identity_sessions WHERE token_hash=? AND application='portal' AND NOT EXISTS (SELECT 1 FROM identity_portal_oidc_attempts WHERE issued_session_hash=?)",
+              [s.token_hash, s.token_hash],
+              db,
+            );
+            purgedSessions += result.affectedRows;
+          }
+          return {
+            scanned: attempts.length + terminal.length + sessions.length,
+            invalidated,
+            purgedAttempts,
+            purgedSessions,
+          };
+        },
+        undefined,
+        runTransaction,
+      );
     },
     available: () =>
       withPortalDatabase(async (_db, tx) => {

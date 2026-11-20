@@ -32,6 +32,13 @@ export async function execute(sql: string, values: any[] = [], db: Connection = 
 export async function transaction<T>(fn: (db: PoolConnection) => Promise<T>) {
   const db = await pool.getConnection();
   try {
+    return await onConnection(db, fn);
+  } finally {
+    db.release();
+  }
+}
+export async function onConnection<T>(db: PoolConnection, fn: (db: PoolConnection) => Promise<T>) {
+  try {
     await db.beginTransaction();
     const result = await fn(db);
     await db.commit();
@@ -39,8 +46,6 @@ export async function transaction<T>(fn: (db: PoolConnection) => Promise<T>) {
   } catch (e) {
     await db.rollback();
     throw e;
-  } finally {
-    db.release();
   }
 }
 // Serialize person writes across processes so duplicate checks cannot race imports.

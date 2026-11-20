@@ -171,8 +171,9 @@ export function createMysqlPortalUnitOfWork(): PortalUnitOfWork {
 export function withPortalDatabase<T>(
   work: (db: PoolConnection, tx: PortalTransaction) => Promise<T>,
   scope?: PortalLockScope,
+  runTransaction = transaction,
 ) {
-  return transaction(async (db) => {
+  return runTransaction(async (db) => {
     const institution = await lockInstitution(db);
     if (!institution?.initialized)
       throw new AppError(503, 'Se requiere estado institucional inicializado.');

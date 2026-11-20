@@ -39,6 +39,23 @@ const change = (revision: string, linkRevision: string, enabled: boolean, userId
 });
 
 describe('PWA-1B.1 internal access policy', () => {
+  it('recovers a committed seal after process loss only for its authorized session and original pairs/revision', async () => {
+    const f = fixture(),
+      plan = await f.service.preparePilot(context, members),
+      id = randomUUID();
+    const result = await f.service.sealPilot(context, id, plan);
+    f.tick();
+    const restarted = createPortalAccessService(f.run, Buffer.alloc(32, 7));
+    expect(await restarted.recoverSeal(context, id, '0', members)).toEqual(result);
+    await expect(restarted.recoverSeal(context, id, '1', members)).rejects.toThrow();
+    await expect(
+      restarted.recoverSeal(context, id, '0', [members[0], { userId: userC, instructorId: 3 }]),
+    ).rejects.toThrow();
+    await expect(
+      restarted.recoverSeal({ ...context, sessionHash: '0'.repeat(64) }, id, '0', members),
+    ).rejects.toThrow();
+    expect(f.snapshot().receipts).toHaveLength(1);
+  });
   it('seals exactly two explicit links, remains disabled and never opens admissions', async () => {
     const f = await sealed();
     const s = f.snapshot();
