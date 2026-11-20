@@ -20,7 +20,7 @@ import { memorySessions, testCredentials } from './auth-helper';
 const operator = operatorBindings(process.env.DB_NAME || '');
 let ids: [string, string];
 let owned = false;
-const csrf = (html: string) => html.match(/name="csrf" value="([a-f0-9]{64})"/)![1];
+const csrf = (html: string) => html.match(/name="csrf" value="([^"]+)"/)![1];
 const origin = 'http://localhost:5173';
 async function direct(
   user = ids[0],

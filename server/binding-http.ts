@@ -7,6 +7,7 @@ import { createGoogleOidc, type GoogleOidcOptions } from './google-oidc.js';
 import type { CustomFetch } from 'openid-client';
 import { mysqlOidcStore } from './oidc-store.js';
 import { digest, opaque, validOpaque } from './oidc-crypto.js';
+import { createBindingCsrf, bindingCsrfLifetime } from './binding-csrf.js';
 import { query as databaseQuery } from './db.js';
 import { completeGoogleLogin, cancelPresentedGoogleLogin } from './identity.js';
 import {
@@ -41,7 +42,7 @@ const escape = (s: string) =>
   );
 export function bindingPage(
   csrf: string,
-  stage: 'start' | 'confirm' | 'pending' | 'error' | 'disabled',
+  stage: 'start' | 'confirm' | 'pending' | 'error' | 'disabled' | 'request-rejected',
   receipt?: string,
 ) {
   const code = `<label>Código privado<input name="code" type="password" required autocomplete="off" pattern="[a-f0-9]{64}" maxlength="64"></label>`;
@@ -54,9 +55,11 @@ export function bindingPage(
         ? `<p>Google verificó la cuenta. Volvé a ingresar el código privado para presentar tu candidatura.</p><form method="post" action="${submitPath}">${hidden}${code}<button>Presentar candidatura</button></form>${cancel}`
         : stage === 'pending'
           ? `<p role="status">Candidatura pendiente de aprobación. Todavía no habilita acceso al CRM.</p>${receipt ? `<p>Compará esta huella con el operador por el canal acordado:</p><code>${escape(receipt)}</code>` : ''}<p><a href="${pagePath}">Volver al inicio</a></p>`
-          : stage === 'disabled'
-            ? '<p role="alert">La vinculación no está disponible en este entorno.</p>'
-            : `<p role="alert">${generic}</p>${cancel}<p><a href="${pagePath}">Volver a intentar</a></p>`;
+          : stage === 'request-rejected'
+            ? '<p role="alert">No pudimos validar este formulario. Puede haber vencido o pertenecer a otra ventana. Reiniciá el formulario en este mismo perfil de Chrome para continuar.</p><p>Esta acción no inicia Google ni renueva tu autorización privada.</p><p><a href="/vincular-google?form=restart">Reiniciar formulario</a></p>'
+            : stage === 'disabled'
+              ? '<p role="alert">La vinculación no está disponible en este entorno.</p>'
+              : `<p role="alert">${generic}</p>${cancel}<p><a href="${pagePath}">Volver a intentar</a></p>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vinculación Google — PRISMA</title><style> :root{color-scheme:light;font-family:system-ui,sans-serif;color:#243746;background:#eef2f5}*{box-sizing:border-box}body{margin:0;padding:32px 16px}main{max-width:540px;margin:5vh auto;background:white;padding:32px;border-radius:16px;box-shadow:0 6px 24px #24374616}h1{font-size:1.6rem;line-height:1.2}p{line-height:1.6}label{display:grid;gap:8px;font-weight:600;margin:24px 0}input{width:100%;font:inherit;padding:12px;border:1px solid #758595;border-radius:8px;min-height:48px}button{font:inherit;font-weight:600;min-height:48px;padding:12px 16px;background:#254d64;color:white;border:0;border-radius:8px;width:100%;cursor:pointer}.secondary{background:#e5ebef;color:#243746;margin-top:12px}a{color:#234e70}input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #b45f17;outline-offset:3px}code{display:block;overflow-wrap:anywhere;background:#eef2f5;padding:12px;border-radius:8px}small{color:#52616e}@media(max-width:480px){body{padding:16px 12px}main{padding:24px 20px;margin:2vh auto}}</style></head><body><main><small>PRISMA · Identidad institucional</small><h1>Vincular cuenta Google</h1>${content}</main></body></html>`;
 }
 const html = bindingPage;
@@ -116,7 +119,7 @@ export function bindingRouter(options?: BindingHttpOptions) {
     sameSite: 'lax' as const,
     secure,
     path: '/',
-    maxAge: 300000,
+    maxAge: bindingCsrfLifetime,
   };
   const cookieValues = (req: Request, name: string) =>
     (req.headers.cookie || '')
@@ -132,13 +135,11 @@ export function bindingRouter(options?: BindingHttpOptions) {
     createHmac('sha256', Buffer.from(options!.csrfKey, 'hex'))
       .update(purpose + '-csrf-v1:' + secret)
       .digest('hex');
-  const token = (req: Request, res: Response) => {
-    let secret = cookie(req, prefix + '_csrf');
-    if (!secret || !validOpaque(secret)) {
-      secret = opaque();
-      res.cookie(prefix + '_csrf', secret, cookieOptions);
-    }
-    return csrfFor(secret);
+  const bindingCsrf = createBindingCsrf(options?.csrfKey ?? '');
+  const token = (req: Request, res: Response, restart = false) => {
+    const minted = bindingCsrf.issue(restart ? undefined : cookie(req, prefix + '_csrf'));
+    if (minted.replaceCookie) res.cookie(prefix + '_csrf', minted.cookie, cookieOptions);
+    return minted.token;
   };
   const refCookie = (req: Request, name = prefix) => {
     const raw = cookie(req, name);
@@ -251,34 +252,38 @@ export function bindingRouter(options?: BindingHttpOptions) {
     urlencoded({ extended: false, limit: '4kb', inflate: false, parameterLimit: 4 }),
   );
   router.use([startPath, submitPath, cancelPath], (req, res, next) => {
-    try {
-      if (req.method !== 'POST') return res.status(405).end();
-      if (
-        req.get('origin') !== origin ||
-        (req.get('sec-fetch-site') && req.get('sec-fetch-site') !== 'same-origin')
-      )
-        throw Error();
-      const secret = cookie(req, prefix + '_csrf'),
-        actual = req.body?.csrf;
-      if (
-        !secret ||
-        !validOpaque(secret) ||
-        typeof actual !== 'string' ||
-        !/^[a-f0-9]{64}$/.test(actual) ||
-        !timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(csrfFor(secret), 'hex'))
-      )
-        throw Error();
-      next();
-    } catch {
-      res
-        .status(403)
-        .type('html')
-        .send(html(token(req, res), 'error'));
+    if (req.method !== 'POST') return res.status(405).end();
+    const actualOrigin = req.get('origin');
+    const reason =
+      actualOrigin !== origin
+        ? !actualOrigin
+          ? 'origin_missing'
+          : actualOrigin === 'null'
+            ? 'origin_null'
+            : 'origin_mismatch'
+        : req.get('sec-fetch-site') && req.get('sec-fetch-site') !== 'same-origin'
+          ? 'fetch_site_invalid'
+          : bindingCsrf.reject(cookieValues(req, prefix + '_csrf'), req.body?.csrf);
+    if (reason) {
+      // Fixed enums only: never include request bodies, headers, URLs or identifiers.
+      const action = req.baseUrl.endsWith(startPath)
+        ? 'start'
+        : req.baseUrl.endsWith(submitPath)
+          ? 'submit'
+          : 'cancel';
+      console.warn('binding.request_rejected', { action, reason });
+      return res.status(403).type('html').send(html('', 'request-rejected'));
     }
+    next();
   });
   router.get(pagePath, async (req, res) => {
     try {
-      const csrf = token(req, res);
+      const restart = req.query.form === 'restart';
+      const csrf = token(req, res, restart);
+      if (restart) {
+        res.clearCookie(prefix, cookieOptions);
+        return res.type('html').send(html(csrf, 'start'));
+      }
       if (cookie(req, prefix)) {
         const ref = refCookie(req),
           attempt = await bindingAttempt(ref.id, ref.browserToken);
@@ -319,7 +324,10 @@ export function bindingRouter(options?: BindingHttpOptions) {
           attempt = await bindingAttempt(old.id, old.browserToken);
         await core!.invalidate(old.id, old.browserToken, attempt.context);
       }
-      const started = await core!.begin(context, cookie(req, prefix + '_csrf')!);
+      const started = await core!.begin(
+        context,
+        bindingCsrf.browserToken(cookie(req, prefix + '_csrf')!)!,
+      );
       res.cookie(prefix, started.attemptId + '.' + started.browserToken, cookieOptions);
       // Rotate CSRF independently; it is not administrative authentication.
       // Correlation remains stable within this temporary browser flow; reset on completion/cancel.
