@@ -12,12 +12,16 @@ ambos volvieron a ingresar al CRM con Google correctamente.
 Última lectura productiva: portal apagado, admisiones cerradas, piloto sin sellar,
 cero vínculos con instructores y revisión `0`. Ambos pares institucionales con
 instructores activos verificados privadamente. Próximo hito: preparar y sellar
-ambos pares, **sujeto a nueva autorización**; `prepare`, `seal` y `enable` no se
-ejecutaron en PWA-1D. La continuidad entre equipos tiene prioridad hasta publicar
-esta documentación en su rama y recuperarla desde Beelink.
+ambos pares, **sujeto a nueva autorización**. Hubo un plan productivo válido y un
+intento de sellado con salida 1; la lectura posterior confirmó revisión `0`, sin
+vínculos ni recibo de sellado. La excepción se perdió en el puente anterior, por
+lo que no se atribuye una causa específica al rechazo. No se ejecutó `enable`.
 
-Rama documental `codex/pwa-1d-continuity`, creada desde `origin/main` acreditado;
-publicación pendiente de aprobación. **La sincronización Git no constituye un
+Rama `codex/pwa-1d-continuity`, publicada en `b5f8c522` para continuidad entre
+equipos. Corrección del supervisor validada localmente con CLI oficial y MySQL
+descartable: rechazo sin escrituras, sellado en revisión `1` y recuperación del
+recibo en proceso nuevo, sin repetir la mutación. Este checkpoint queda pendiente
+de auditoría final de seguridad y aprobación productiva. **La sincronización Git no constituye un
 respaldo de la base MySQL productiva.**
 [Estado, evidencia y recuperación](iterations/2026-11-pwa-1d.md).
 Los cortes siguientes son antecedentes y no sustituyen este estado vigente.

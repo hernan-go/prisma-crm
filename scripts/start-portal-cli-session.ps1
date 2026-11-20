@@ -1,0 +1,65 @@
+param(
+  [Parameter(Mandatory)][string]$SshDestination,
+  [Parameter(Mandatory)][int]$SshPort,
+  [Parameter(Mandatory)][string]$IdentityPublicFile,
+  [Parameter(Mandatory)][string]$RemoteDirectory,
+  [Parameter(Mandatory)][string]$ExpectedMysqlUuid,
+  [string]$RecoveryFile
+)
+
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required.' }
+$PSNativeCommandArgumentPassing = 'Windows'
+if ($SshDestination -notmatch '^[a-zA-Z0-9_.-]+@[a-zA-Z0-9.-]+$' -or
+    $SshPort -lt 1 -or $SshPort -gt 65535 -or
+    $RemoteDirectory -notmatch '^~/[a-zA-Z0-9_./-]+$' -or
+    $ExpectedMysqlUuid -notmatch '^[a-f0-9-]{36}$') { throw 'Invalid explicit target.' }
+
+# Persist only recovery metadata, encrypted for this Windows user. No session,
+# Google subject, member ID, password, preparation key or environment is stored.
+Add-Type -AssemblyName System.Security.Cryptography.ProtectedData
+$operationId = [guid]::NewGuid().ToString()
+$command = 'prepare'
+$privateDir = Join-Path $env:LOCALAPPDATA 'PRISMA\PortalRecovery'
+New-Item -ItemType Directory -Path $privateDir -Force | Out-Null
+$receiptPath = Join-Path $privateDir (([guid]::NewGuid().ToString()) + '.dpapi')
+$metadata = @{ operationId=$operationId; expectedRevision='0'; mysqlUuid=$ExpectedMysqlUuid;
+  sshDestination=$SshDestination; sshPort=$SshPort; remoteDirectory=$RemoteDirectory } | ConvertTo-Json -Compress
+$cipher = [Security.Cryptography.ProtectedData]::Protect(
+  [Text.Encoding]::UTF8.GetBytes($metadata), $null,
+  [Security.Cryptography.DataProtectionScope]::CurrentUser)
+if ($RecoveryFile) {
+  $old = [Text.Encoding]::UTF8.GetString([Security.Cryptography.ProtectedData]::Unprotect(
+    [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $RecoveryFile).Path), $null,
+    [Security.Cryptography.DataProtectionScope]::CurrentUser)) | ConvertFrom-Json
+  if ($old.sshDestination -cne $SshDestination -or $old.sshPort -ne $SshPort -or
+      $old.remoteDirectory -cne $RemoteDirectory -or $old.mysqlUuid -cne $ExpectedMysqlUuid -or
+      $old.expectedRevision -cne '0') { throw 'Recovery destination mismatch.' }
+  $operationId = $old.operationId
+  $receiptPath = (Resolve-Path -LiteralPath $RecoveryFile).Path
+  $command = 'seal-receipt'
+} else {
+  [IO.File]::WriteAllBytes($receiptPath, $cipher)
+}
+Write-Host "Private encrypted recovery metadata: $receiptPath"
+
+# Transpile the supervisor only; no application build or remote file writes.
+$supervisorPath = Join-Path $PSScriptRoot 'portal-cli-session.ts'
+$source = & node --input-type=module -e 'import ts from "typescript";import fs from "node:fs";console.log(ts.transpileModule(fs.readFileSync(process.argv[1],"utf8"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText)' $supervisorPath
+if ($LASTEXITCODE -ne 0) { throw 'Supervisor preparation failed.' }
+$source64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($source -join "`n")))
+$bootstrap = @"
+import dotenv from 'dotenv';
+dotenv.config({path:'../../.env-local',quiet:true});
+process.env.PORTAL_RECOVERY_OPERATION_ID='$operationId';
+const {privateSession,safeDiagnostic}=await import('data:text/javascript;base64,$source64');
+try { await privateSession([process.env.DB_HOST,process.env.DB_PORT,process.env.DB_NAME,'$ExpectedMysqlUuid'],'$command'); }
+catch(e) { console.error(JSON.stringify(safeDiagnostic(e,'launcher')));process.exitCode=2; }
+"@
+$bootstrap64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($bootstrap))
+$remote = "cd $RemoteDirectory && node --input-type=module -e `"import('data:text/javascript;base64,$bootstrap64')`""
+& ssh -tt -p $SshPort -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o BatchMode=yes -o IdentitiesOnly=yes -i $IdentityPublicFile $SshDestination $remote
+$sshExit = $LASTEXITCODE
+Write-Host "SSH_EXIT_CODE=$sshExit"
+Write-Host 'Do not retry mutations. Keep the recovery metadata until the result is verified.'
+exit $sshExit
