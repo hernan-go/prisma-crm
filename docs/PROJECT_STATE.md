@@ -1,5 +1,27 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1D — continuidad Lenovo → Beelink (20/11/2026)
+
+**PWA-1C integrada y desplegada en producción** en
+`94cf81771b7f6203f434edad6b90a74e6c923764`. SSH desde Lenovo mediante agente y
+CLI productiva verificados. H2 de Hernán y Jesica aplicado con éxito mediante la
+CLI oficial: ambos conservan Google y `admin`, recibieron `facilitator`, con
+auditoría correcta y sesiones anteriores revocadas. El propietario confirmó que
+ambos volvieron a ingresar al CRM con Google correctamente.
+
+Última lectura productiva: portal apagado, admisiones cerradas, piloto sin sellar,
+cero vínculos con instructores y revisión `0`. Ambos pares institucionales con
+instructores activos verificados privadamente. Próximo hito: preparar y sellar
+ambos pares, **sujeto a nueva autorización**; `prepare`, `seal` y `enable` no se
+ejecutaron en PWA-1D. La continuidad entre equipos tiene prioridad hasta publicar
+esta documentación en su rama y recuperarla desde Beelink.
+
+Rama documental `codex/pwa-1d-continuity`, creada desde `origin/main` acreditado;
+publicación pendiente de aprobación. **La sincronización Git no constituye un
+respaldo de la base MySQL productiva.**
+[Estado, evidencia y recuperación](iterations/2026-11-pwa-1d.md).
+Los cortes siguientes son antecedentes y no sustituyen este estado vigente.
+
 ## PWA-1C — cierre técnico local previo a integración (20/11/2026)
 
 **IMPLEMENTADA Y VALIDADA LOCALMENTE — APTO CON OBSERVACIONES para preparar
