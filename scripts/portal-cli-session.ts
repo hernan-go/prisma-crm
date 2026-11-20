@@ -1,5 +1,5 @@
 // Private terminal supervisor. Does not change CLI decisions or retry mutations.
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -13,42 +13,62 @@ export function safeDiagnostic(error: unknown, stage: string) {
   const name = typeof e?.name === 'string' ? e.name : '';
   const code = typeof e?.code === 'string' ? e.code : '';
   const sqlState = typeof e?.sqlState === 'string' ? e.sqlState : '';
+  const mysqlCode = /^ER_[A-Z0-9_]{1,64}$/.test(code);
+  const transportCode = [
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'ECONNABORTED',
+    'ETIMEDOUT',
+    'EPIPE',
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'PROTOCOL_CONNECTION_LOST',
+  ].includes(code);
   return {
     stage,
-    category: /^[A-Z0-9]{5}$/.test(sqlState)
-      ? 'mysql'
-      : ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EPIPE'].includes(code)
-        ? 'transport'
-        : name === 'ZodError'
-          ? 'validation'
-          : 'cli',
+    category:
+      /^[A-Z0-9]{5}$/.test(sqlState) || mysqlCode
+        ? 'mysql'
+        : transportCode
+          ? 'transport'
+          : name === 'ZodError' || name === 'AppError'
+            ? 'validation'
+            : 'cli',
     class: ['Error', 'AppError', 'ZodError', 'TypeError', 'RangeError'].includes(name)
       ? name
       : 'UnknownError',
     reason: e?.message === 'Cancelado.' ? 'confirmation_rejected' : undefined,
     // No message, stack, SQL, parameters, values, cause or arbitrary properties.
-    code: /^(ER_[A-Z0-9_]{1,64}|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE)$/.test(code)
-      ? code
-      : undefined,
+    code: mysqlCode || transportCode ? code : undefined,
     sqlState: /^[A-Z0-9]{5}$/.test(sqlState) ? sqlState : undefined,
   };
+}
+
+export function requireSessionOperation(command: string, operationId: string | undefined) {
+  if (command !== 'prepare' && command !== 'seal-receipt')
+    throw Error('Unsupported private session command');
+  if (
+    !operationId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(operationId)
+  )
+    throw Error('Persisted operation ID required');
+  return operationId;
 }
 
 export async function privateSession(
   args: string[],
   command: 'prepare' | 'seal-receipt' = 'prepare',
 ) {
+  const operationId = requireSessionOperation(command, process.env.PORTAL_RECOVERY_OPERATION_ID);
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw Error('TTY required');
   if (args.length !== 4) throw Error('Explicit target required');
   let stage = 'load';
-  const operationId = process.env.PORTAL_RECOVERY_OPERATION_ID || randomUUID();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(operationId))
-    throw Error('Invalid operation ID');
   const preparationKey = randomBytes(32).toString('hex');
   const originalWrite = process.stdout.write.bind(process.stdout);
   let tail = '';
   let injecting = false;
   let recovering = false;
+  let cliCompleted = false;
   process.stdout.write = ((chunk: any, ...rest: any[]) => {
     const text = String(chunk);
     tail = (tail + text).slice(-512);
@@ -62,6 +82,8 @@ export async function privateSession(
       ['Acción posterior (seal o salir) > ', 'plan_review'],
       ['UUID operación seal > ', 'operation'],
       ['Escriba SELLAR ', 'confirmation_or_seal'],
+      ['UUID original del sellado > ', 'receipt_operation'],
+      ['Revisión original del plan > ', 'receipt_revision'],
     ];
     for (const [prompt, next] of prompts) if (tail.includes(prompt)) stage = next;
     let answer: string | undefined;
@@ -116,7 +138,7 @@ export async function privateSession(
       try {
         recovering = command === 'seal-receipt';
         await runPortalCli([command, ...args]);
-        originalWrite('CLI_EXIT_CODE=0\n');
+        cliCompleted = true;
       } catch (error) {
         originalWrite(JSON.stringify(safeDiagnostic(error, stage)) + '\nCLI_EXIT_CODE=1\n');
         process.exitCode = 1;
@@ -128,6 +150,7 @@ export async function privateSession(
     } finally {
       await pool.end();
     }
+    if (cliCompleted) originalWrite('CLI_EXIT_CODE=0\n');
   } finally {
     process.stdout.write = originalWrite;
     process.stdin.pause();

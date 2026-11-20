@@ -39,7 +39,14 @@ if ($RecoveryFile) {
   $receiptPath = (Resolve-Path -LiteralPath $RecoveryFile).Path
   $command = 'seal-receipt'
 } else {
-  [IO.File]::WriteAllBytes($receiptPath, $cipher)
+  $file = [IO.File]::Open($receiptPath, [IO.FileMode]::CreateNew,
+    [IO.FileAccess]::Write, [IO.FileShare]::None)
+  try {
+    $file.Write($cipher, 0, $cipher.Length)
+    $file.Flush($true)
+  } finally {
+    $file.Dispose()
+  }
 }
 Write-Host "Private encrypted recovery metadata: $receiptPath"
 
@@ -49,15 +56,26 @@ $source = & node --input-type=module -e 'import ts from "typescript";import fs f
 if ($LASTEXITCODE -ne 0) { throw 'Supervisor preparation failed.' }
 $source64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($source -join "`n")))
 $bootstrap = @"
-import dotenv from 'dotenv';
-dotenv.config({path:'../../.env-local',quiet:true});
-process.env.PORTAL_RECOVERY_OPERATION_ID='$operationId';
-const {privateSession,safeDiagnostic}=await import('data:text/javascript;base64,$source64');
-try { await privateSession([process.env.DB_HOST,process.env.DB_PORT,process.env.DB_NAME,'$ExpectedMysqlUuid'],'$command'); }
-catch(e) { console.error(JSON.stringify(safeDiagnostic(e,'launcher')));process.exitCode=2; }
+let privateSession, safeDiagnostic;
+const report = (error,stage) => console.error(JSON.stringify(safeDiagnostic
+  ? safeDiagnostic(error,stage)
+  : {stage,category:'launcher',
+     class:['Error','TypeError','SyntaxError'].includes(error?.name) ? error.name : 'UnknownError',
+     code:['MODULE_NOT_FOUND','ERR_MODULE_NOT_FOUND','ERR_UNSUPPORTED_RESOLVE_REQUEST']
+       .includes(error?.code) ? error.code : undefined}));
+process.on('uncaughtException',error => { report(error,'unhandled');process.exit(2); });
+process.on('unhandledRejection',error => { report(error,'unhandled');process.exit(2); });
+try {
+  const require = (await import('node:module')).createRequire(process.cwd()+'/package.json');
+  const dotenv = require('dotenv');
+  dotenv.config({path:'../../.env-local',quiet:true});
+  process.env.PORTAL_RECOVERY_OPERATION_ID='$operationId';
+  ({privateSession,safeDiagnostic}=await import('data:text/javascript;base64,$source64'));
+  await privateSession([process.env.DB_HOST,process.env.DB_PORT,process.env.DB_NAME,'$ExpectedMysqlUuid'],'$command');
+} catch(error) { report(error,'launcher');process.exitCode=2; }
 "@
 $bootstrap64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($bootstrap))
-$remote = "cd $RemoteDirectory && node --input-type=module -e `"import('data:text/javascript;base64,$bootstrap64')`""
+$remote = "cd $RemoteDirectory && node --input-type=module -e `"await import('data:text/javascript;base64,$bootstrap64')`""
 & ssh -tt -p $SshPort -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o BatchMode=yes -o IdentitiesOnly=yes -i $IdentityPublicFile $SshDestination $remote
 $sshExit = $LASTEXITCODE
 Write-Host "SSH_EXIT_CODE=$sshExit"
