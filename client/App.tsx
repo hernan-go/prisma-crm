@@ -14,7 +14,8 @@ import {
   Coins,
   Receipt,
   Settings,
-  PanelLeftClose,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   BarChart3,
   Menu,
@@ -60,6 +61,14 @@ const nav = [
   ['/know-how', 'Know-How IA', BrainCircuit],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
+
+function sectionTitle(pathname: string) {
+  if (pathname.startsWith('/personas/')) return 'BBDD Personas';
+  if (pathname.startsWith('/eventos/')) return 'Eventos Especiales';
+  if (pathname === '/importar') return 'Importar personas';
+  if (pathname === '/importar-forms') return 'Importar inscripciones';
+  return nav.find(([path]) => path === pathname)?.[1] ?? 'Página no encontrada';
+}
 
 const sectionDescriptions: Record<string, string> = {
   '/eventos': 'Eventos, participantes y cobros del período seleccionado.',
@@ -142,15 +151,7 @@ function MobileHeader({
     : pathname.startsWith('/eventos/')
       ? '/eventos'
       : pathname;
-  const title =
-    (sectionPath === '/know-how'
-      ? 'Centro de Conocimiento Empresarial'
-      : nav.find(([path]) => path === sectionPath)?.[1]) ||
-    (pathname === '/importar'
-      ? 'Importar personas'
-      : pathname === '/importar-forms'
-        ? 'Importar inscripciones desde Google Forms PRISMA'
-        : 'Página no encontrada');
+  const title = sectionTitle(pathname);
   const description =
     sectionPath === '/'
       ? `Una mirada a ${periodName(periods.find((p) => p.id === period)) || 'tu espacio'}.`
@@ -181,7 +182,7 @@ function MobileHeader({
           {open ? <X size={23} /> : <Menu size={23} />}
         </button>
       </div>
-      {sectionPath !== '/estadisticas' && <PageTitle title={title} description={description} />}
+      <PageTitle title={title} description={description} />
       <div
         className="period-control mobile-period"
         hidden={open || sectionPath === '/know-how' || sectionPath === '/estadisticas'}
@@ -199,7 +200,7 @@ function MobileHeader({
             ))}
           </nav>
           <div className="mobile-session">
-            <Logout />
+            <Logout sidebar />
           </div>
         </div>
       )}
@@ -274,15 +275,16 @@ export default function App() {
             <img className="brand-logo" src="/branding/logo_prisma.svg" alt="PRISMA" />
             <div>
               <b>PRISMA</b>
-              <small>Gestión del espacio</small>
+              <small>Sistema de Gestión</small>
             </div>
           </div>
           <button
             className="sidebar-toggle"
             onClick={() => setCollapsed(!collapsed)}
-            aria-label="Colapsar o expandir menú"
+            aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            aria-expanded={!collapsed}
           >
-            <PanelLeftClose size={18} />
+            {collapsed ? <ChevronRight size={19} /> : <ChevronLeft size={19} />}
           </button>
           <nav>
             {nav.map(([path, label, Icon]) => (
@@ -293,7 +295,7 @@ export default function App() {
             ))}
           </nav>
           <div className="sidebar-foot">
-            <span className="dot" /> Espacio de administración<small>Jesica y Hernán</small>
+            <Logout sidebar />
           </div>
         </aside>
         <div className="workspace">
@@ -314,11 +316,10 @@ export default function App() {
             }
           />
           <header className="desktop-header">
-            <div className="breadcrumb">
-              PRISMA <span>/</span> Administración
+            <div className="header-title">
+              <h1>{sectionTitle(location.pathname)}</h1>
             </div>
             <div className="period-control">
-              <Logout />
               {location.pathname !== '/know-how' && location.pathname !== '/estadisticas' && (
                 <PeriodSelector
                   period={period}
@@ -332,6 +333,11 @@ export default function App() {
               )}
             </div>
           </header>
+          <div className="shell-breadcrumb" aria-label="Ubicación">
+            <span>PRISMA</span>
+            <span aria-hidden="true">/</span>
+            <span>Administración</span>
+          </div>
           <main
             className={
               [

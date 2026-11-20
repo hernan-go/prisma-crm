@@ -2,10 +2,10 @@ import { personName } from './person-presentation';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Wallet, Clock3, CalendarDays } from 'lucide-react';
+import { Wallet, Clock3, CalendarDays } from 'lucide-react';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
-import { Empty, PageHeading, useDisclosure } from './components';
+import { Empty, useDisclosure } from './components';
 import { QueryFeedback } from './LoadingViews';
 import { DashboardAgendaSkeleton, DashboardFinanceSkeleton } from './DashboardSkeleton';
 import { formatMoney, recipientLabel, type PeriodWallets } from '../shared/domain';
@@ -278,15 +278,6 @@ export function Dashboard() {
   const schedules = dailySchedules(agenda.data || [], period, day);
   return (
     <div className="dashboard">
-      <PageHeading
-        eyebrow="RESUMEN DEL ESPACIO"
-        title="Dashboard"
-        description={`Una mirada a ${periodName(selected) || 'tu espacio'}.`}
-      >
-        <Link className="button primary" to="/gestion">
-          <Plus size={17} /> Nueva inscripción
-        </Link>
-      </PageHeading>
       <div className="dashboard-layout">
         <section className="dashboard-operation" aria-label="Programación diaria">
           <div className="dashboard-day-header">

@@ -173,7 +173,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     </main>
   );
 }
-export function Logout() {
+export function Logout({ sidebar = false }: { sidebar?: boolean } = {}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const session = useQuery(authQuery);
@@ -184,15 +184,27 @@ export function Logout() {
       navigate('/login', { replace: true });
     },
   });
+  const name = session.data?.method === 'identity' ? session.data.identity?.displayName : undefined;
   return (
-    <div className="auth-session">
-      {session.data?.authenticated &&
-        session.data.method === 'identity' &&
-        session.data.identity?.displayName && (
-          <p className="session-name">{session.data.identity.displayName}</p>
-        )}
-      <button className="subtle" disabled={m.isPending} onClick={() => m.mutate()}>
-        Cerrar sesión
+    <div className={`auth-session ${sidebar ? 'sidebar-session' : ''}`}>
+      {sidebar ? (
+        <div className="session-person">
+          <span className="session-avatar" aria-hidden="true">
+            {name?.trim().charAt(0).toLocaleUpperCase('es') || 'A'}
+          </span>
+          <span className="session-name">{name || 'Administración'}</span>
+        </div>
+      ) : name ? (
+        <p className="session-name">{name}</p>
+      ) : null}
+      <button
+        className="subtle"
+        disabled={m.isPending}
+        onClick={() => m.mutate()}
+        aria-label="Cerrar sesión"
+        title={sidebar ? 'Cerrar sesión' : undefined}
+      >
+        <span>{sidebar ? 'CERRAR SESIÓN' : 'Cerrar sesión'}</span>
       </button>
       {m.error && (
         <p role="alert">

@@ -2066,3 +2066,223 @@ summary .chip {
     justify-content: flex-start;
   }
 }
+
+/* UX-01: one section title in the shared shell, with page actions left in place. */
+@media (min-width: 701px) {
+  .app {
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+  .app.collapsed {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+  .app > aside {
+    padding: 24px 15px;
+  }
+  .app > aside .brand-logo {
+    height: 44px;
+  }
+  .app > aside .brand b {
+    font-size: 23px;
+  }
+  .app > aside .brand small {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+  .app > aside nav {
+    gap: 2px;
+  }
+  .app > aside nav a {
+    padding: 8px 10px;
+    line-height: 1.15;
+    min-height: 36px;
+  }
+  .sidebar-toggle {
+    color: var(--color-on-accent);
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    border-radius: 8px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 3px;
+    margin: 8px 0 10px;
+  }
+  .sidebar-toggle:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+  .desktop-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    min-height: 76px;
+    padding: 5px 38px;
+  }
+  .header-title {
+    grid-column: 2;
+    text-align: center;
+    min-width: 0;
+  }
+  .header-title h1 {
+    font-size: clamp(28px, 2.6vw, 42px);
+    line-height: 1.1;
+    margin: 0;
+  }
+  .header-title > span {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.5px;
+  }
+  .desktop-header .period-control {
+    grid-column: 3;
+    justify-self: end;
+  }
+  .desktop-header .period-control label {
+    color: var(--color-accent);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: none;
+  }
+  .desktop-header .period-control select {
+    border: 1px solid color-mix(in srgb, var(--color-accent) 78%, var(--color-border));
+    color: var(--color-text);
+    accent-color: var(--color-accent);
+    padding-right: 32px;
+  }
+  .desktop-header .period-control > button {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+  .shell-breadcrumb {
+    display: flex;
+    gap: 14px;
+    padding: 14px 38px 0;
+    color: var(--color-muted);
+    font-size: 13px;
+  }
+  .app main {
+    padding-top: 16px;
+  }
+  .app main .page-heading-copy,
+  .app main .page-heading-no-actions,
+  .app main .page-title,
+  .app main .page-description {
+    display: none;
+  }
+  .app main .page-heading {
+    margin-bottom: 16px;
+  }
+  .sidebar-foot {
+    padding: 10px 0 0;
+  }
+  .sidebar-session .session-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 0 5px 10px;
+  }
+  .session-avatar {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    color: var(--color-accent);
+    font-size: 18px;
+    font-weight: 650;
+  }
+  .sidebar-session .session-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .sidebar-session button {
+    width: 100%;
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+    text-align: center;
+  }
+  .sidebar-session button:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+  .collapsed .sidebar-foot {
+    display: block;
+  }
+  .collapsed .sidebar-session .session-name,
+  .collapsed .sidebar-session button span {
+    display: none;
+  }
+  .collapsed .sidebar-session .session-person {
+    padding-inline: 0;
+    justify-content: center;
+  }
+  .collapsed .sidebar-session button {
+    padding-inline: 0;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .app:not(.collapsed) {
+    grid-template-columns: 215px minmax(0, 1fr);
+  }
+  .app > aside .brand b {
+    font-size: 19px;
+  }
+  .desktop-header {
+    padding-inline: 22px;
+  }
+  .shell-breadcrumb {
+    padding-inline: 22px;
+  }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .desktop-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .header-title {
+    grid-column: 1;
+    text-align: left;
+  }
+  .desktop-header .period-control {
+    grid-column: 2;
+  }
+}
+@media (max-width: 700px) {
+  .shell-breadcrumb {
+    display: flex;
+    gap: 10px;
+    padding: 10px 15px 0;
+    color: var(--color-muted);
+    font-size: 12px;
+  }
+  .mobile-session .session-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .mobile-session .session-avatar {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    color: var(--color-accent);
+    font-weight: 650;
+  }
+  .mobile-session .session-name {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+  .mobile-menu-open .shell-breadcrumb {
+    display: none;
+  }
+}
