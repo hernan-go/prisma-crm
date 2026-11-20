@@ -1,5 +1,15 @@
 # PRISMA CRM — Estado actual
 
+### PWA-1D — captura UTF-8 del supervisor (20/11/2026)
+
+Sesión detenida antes de `preparePilot` por HMAC no entregada; cancelación con
+Ctrl+C y códigos CLI/SSH/lanzador `1`. Lectura posterior: destino acreditado,
+revisión `0`, sin sellar, cero vínculos y auditorías de sellado; portal y admisiones
+cerrados. Causa reproducida en terminal Windows con código 850: corrupción de
+acentos al capturar la salida UTF-8 de Node. Corrección local limitada al lanzador;
+regresión focalizada y entrada humana sintética acreditadas. Pendiente publicación
+del checkpoint y nueva autorización productiva. [Evidencia](iterations/2026-11-pwa-1d.md#captura-utf-8-y-cancelación-controlada-20112026).
+
 ## PWA-1D — continuidad Lenovo → Beelink (20/11/2026)
 
 **PWA-1C integrada y desplegada en producción** en

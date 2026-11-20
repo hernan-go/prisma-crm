@@ -52,8 +52,15 @@ Write-Host "Private encrypted recovery metadata: $receiptPath"
 
 # Transpile the supervisor only; no application build or remote file writes.
 $supervisorPath = Join-Path $PSScriptRoot 'portal-cli-session.ts'
-$source = & node --input-type=module -e 'import ts from "typescript";import fs from "node:fs";console.log(ts.transpileModule(fs.readFileSync(process.argv[1],"utf8"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText)' $supervisorPath
-if ($LASTEXITCODE -ne 0) { throw 'Supervisor preparation failed.' }
+$previousOutputEncoding = [Console]::OutputEncoding
+try {
+  # Node writes UTF-8 even when the visible Windows console uses OEM code page 850.
+  [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+  $source = & node --input-type=module -e 'import ts from "typescript";import fs from "node:fs";console.log(ts.transpileModule(fs.readFileSync(process.argv[1],"utf8"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText)' $supervisorPath
+  if ($LASTEXITCODE -ne 0) { throw 'Supervisor preparation failed.' }
+} finally {
+  [Console]::OutputEncoding = $previousOutputEncoding
+}
 $source64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($source -join "`n")))
 $bootstrap = @"
 let privateSession, safeDiagnostic;
