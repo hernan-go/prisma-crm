@@ -305,6 +305,15 @@ autorizaciones ni evidencias privadas por inferencia:
 **APLICADA en producción según confirmación del propietario del 21/11/2026.**
 Codex registra la evidencia informada; no ejecutó ni volvió a consultar producción.
 
+Actualización posterior: integración fast-forward y publicación de main en
+20777b258b2305d26f4a14807bf91911897fc66c comprobadas directamente por Codex.
+El propietario confirmó posteriormente SiteGround COMPLETADO, build exit 0 y
+smoke autenticado satisfactorio para el SHA aprobado; Codex registra esa evidencia.
+Recuperación aceptada por el propietario: git revert y nuevo despliegue, previa
+revisión de compatibilidad y autorización específica, conservando 022 y los datos.
+No hay reactivación directa de builds antiguos en SiteGround; los procedimientos
+inferiores describen cortes anteriores. No repetir migración ni registro.
+
 - Respaldo manual `PRISMA_PRE_PWA_022_2026-11-21`, creado con la DB productiva
   incluida. Restauración disponible, no ensayada.
 - UUID del servidor cotejado privadamente; único ALTER ejecutado correctamente.

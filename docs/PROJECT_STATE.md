@@ -1,5 +1,25 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1DA — desplegada; sellado autorizado pendiente de TTY privada (21/11/2026)
+
+Con autorización expresa, Codex integró por fast-forward y publicó main en
+`20777b258b2305d26f4a14807bf91911897fc66c`; SHA confirmado directamente en GitHub.
+CI de rama 44935496225 aprobado sobre ese SHA; CI nuevo de main 44939115058
+en curso en la última consulta directa. 022 conserva su cierre productivo informado.
+Lecturas HTTP nuevas: /gestion responde 200 con HTML del CRM; /app/ responde
+503 portal_unavailable; /api/people devuelve 401 sin sesión.
+No acreditan por sí solas SHA activo ni smoke autenticado.
+El propietario confirmó SiteGround COMPLETADO, build exit 0 para el SHA aprobado
+y smoke CRM autenticado satisfactorio. Codex no inspeccionó el panel ni esa sesión.
+Sellado institucional autorizado para Hernán → instructor 3 y Jesica → instructor 2,
+manteniendo portal y admisiones apagados. No ejecutado: la CLI exige TTY privada,
+sesión individual CRM y referencias privadas inaccesibles al agente. Procedimiento
+preparado; ningún grant, cambio de rol, SQL de escritura, sellado ni enable ejecutados.
+Cierre preparado sin commit en rama local codex/pwa-1da-deployment-closure.
+[Evidencia y recuperación](iterations/2026-11-pwa-1da.md#integración-y-publicación--21112026).
+
+Los cortes inferiores conservan la cronología previa a esta publicación.
+
 ## PWA-2 — 022 aplicada; integración preparada (21/11/2026)
 
 El propietario confirmó aplicación productiva satisfactoria de 022, respaldo
