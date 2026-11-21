@@ -1,5 +1,23 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2 — 022 aplicada; integración preparada (21/11/2026)
+
+El propietario confirmó aplicación productiva satisfactoria de 022, respaldo
+`PRISMA_PRE_PWA_022_2026-11-21` con DB incluida y recuperación disponible, no
+ensayada; UUID cotejado privadamente, ALTER único correcto, CHECK estándar
+ENFORCED, estructura/índices/relaciones conservados, 61 auditorías y cero
+incompatibles. Historial 001–022 con 22 registros. Smoke administrativo aprobado
+por el propietario; portal/admisiones apagados, piloto sin sellar y cero vínculos.
+Codex registra esa evidencia sin nueva consulta productiva ni repetición de pruebas.
+
+Codex comprobó directamente Git local y remoto: rama de corrección `57cccae`,
+main `ed57d1c`, árbol inicialmente limpio y ascendencia apta para fast-forward.
+Solo se actualiza documentación local; sin commits, integración ni despliegue.
+Los dos CI anteriores 8/8 se conservan como evidencia; el futuro SHA documental
+requerirá su CI antes de publicar main. [Preparación y límites](iterations/2026-11-pwa-1da.md#preparación-de-integración-y-despliegue--21112026).
+
+El corte siguiente describe el estado anterior a la aplicación productiva de 022.
+
 ## PWA-1DA — corrección 022 publicada y CI aprobado (21/11/2026)
 
 Rama aislada `codex/pwa-1da-audit-check-022`, base `ed57d1c`. Corrección del CHECK

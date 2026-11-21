@@ -302,15 +302,30 @@ autorizaciones ni evidencias privadas por inferencia:
 
 ## Anexo — 022 / PWA-1DA
 
-**Propuesta operativa; NO APLICADA en producción.** Implementación exclusivamente
-local autorizada el 21/11/2026; commit/publicación de la rama autorizados después,
-sin autorización de integración ni intervención productiva.
+**APLICADA en producción según confirmación del propietario del 21/11/2026.**
+Codex registra la evidencia informada; no ejecutó ni volvió a consultar producción.
+
+- Respaldo manual `PRISMA_PRE_PWA_022_2026-11-21`, creado con la DB productiva
+  incluida. Restauración disponible, no ensayada.
+- UUID del servidor cotejado privadamente; único ALTER ejecutado correctamente.
+- CHECK UUID estándar `8-4-4-4-12`, ENFORCED=YES; estructura, índices y relaciones
+  conservados. Postflight: 61 auditorías, cero registros incompatibles.
+- Historial: 22 registros de 001.sql a 022.sql. Portal y admisiones apagados,
+  piloto sin sellar y cero vínculos. Smoke administrativo satisfactorio por el propietario.
+- Hora exacta, duración y cotejo de huella de la copia ejecutada no aportados;
+  no se infieren de la preparación local. No repetir DDL ni registro.
+- Integración y despliegue pendientes; preparación documental local autorizada.
+  Sellado y enable requieren decisiones independientes.
+
+El procedimiento inferior se conserva como antecedente y referencia de recuperación,
+no como tarea pendiente de ejecución. Implementación local autorizada el 21/11/2026;
+commit/publicación de la rama autorizados posteriormente.
 [Diagnóstico, evidencia y pruebas](iterations/2026-11-pwa-1da.md).
 El archivo 021 y su registro permanecen inmutables. El inventario productivo
 001–021 y la discrepancia del CHECK fueron informados por el propietario mediante
 lecturas supervisadas; no se consideran una nueva ejecución de 021.
 
-### Aplicación futura, sujeta a autorización separada
+### Procedimiento de aplicación conservado — ejecución cerrada
 
 Aplicar primero las secciones C–E de este manual: artefacto revisado/huella,
 destino acreditado en la conexión ejecutora, respaldo y recuperación aceptados,
@@ -366,7 +381,7 @@ No restaurar el CHECK defectuoso como rollback rutinario: volvería a bloquear
 operaciones legítimas. Cualquier reversión de esquema o restauración es una
 operación separada que debe preservar datos posteriores y contar con aprobación.
 
-### Intervención consolidada propuesta
+### Intervención consolidada propuesta — antecedente previo a la ejecución
 
 Revisión del repositorio: build ejecuta typecheck/Vite/TypeScript; start ejecuta
 dist/server/index.js. Ninguno invoca migrate; no hay hook npm de instalación que
