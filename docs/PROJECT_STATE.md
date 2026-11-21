@@ -1,5 +1,29 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2A — reconciliación y diseño para revisión (21/11/2026)
+
+**Estado productivo confirmado por el propietario:** 022 aplicada/verificada y
+registrada una vez; `main` desplegada en
+`20777b258b2305d26f4a14807bf91911897fc66c`, SiteGround COMPLETADO/exit 0 y smoke
+administrativo aprobado. Sellado institucional completado: Hernán → instructor 3;
+Jesica → instructor 2. `status` posterior confirmó `pilot_sealed=true`,
+`enabled=false`, `admissions_open=false`, `revision=1`, `security_seq=1`,
+`emergency_epoch=0` y exactamente dos vínculos correctos. `seal-receipt` recuperó
+el resultado original `{changed:true, revision:'1', securitySeq:'1', emergencyEpoch:'0'}`.
+Estas operaciones privadas son evidencia del propietario, no verificaciones nuevas
+de Codex. No repetir migración, sellado ni sus preflights.
+
+PWA-2A entrega únicamente reconciliación documental, procedimiento de futura
+activación y propuesta educativa. `/app/` sigue DESHABILITADO; admisiones CERRADAS.
+Activación y smoke real de ambas personas requieren autorización independiente.
+PWA-008 (clases/materiales, inicialmente Inclusión Digital +50) tiene prioridad
+funcional aprobada; arquitectura y rutas PWA-009 siguen propuestas, sin implementar.
+[Informe, procedimiento y decisiones pendientes](iterations/2026-11-pwa-2a.md).
+
+Los cortes inferiores son históricos: los pendientes de integración, despliegue y
+sellado quedaron superados por este cierre; no se atribuye un resultado nuevo al
+CI de main ni a ensayos OAuth que no fueron informados.
+
 ## PWA-1DA — desplegada; sellado autorizado pendiente de TTY privada (21/11/2026)
 
 Con autorización expresa, Codex integró por fast-forward y publicó main en

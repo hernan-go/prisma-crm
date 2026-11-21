@@ -320,11 +320,14 @@ inferiores describen cortes anteriores. No repetir migración ni registro.
 - CHECK UUID estándar `8-4-4-4-12`, ENFORCED=YES; estructura, índices y relaciones
   conservados. Postflight: 61 auditorías, cero registros incompatibles.
 - Historial: 22 registros de 001.sql a 022.sql. Portal y admisiones apagados,
-  piloto sin sellar y cero vínculos. Smoke administrativo satisfactorio por el propietario.
+  piloto sin sellar y cero vínculos **en el postflight histórico de 022**.
+  Smoke administrativo satisfactorio por el propietario.
 - Hora exacta, duración y cotejo de huella de la copia ejecutada no aportados;
   no se infieren de la preparación local. No repetir DDL ni registro.
-- Integración y despliegue pendientes; preparación documental local autorizada.
-  Sellado y enable requieren decisiones independientes.
+- Integración, despliegue y posterior sellado institucional completados según el
+  propietario. Persistencia y recibo original acreditados; portal apagado y admisiones
+  cerradas. [Estado vigente](PROJECT_STATE.md). No repetir 022 ni sellado.
+  Solo la activación continúa pendiente de autorización independiente.
 
 El procedimiento inferior se conserva como antecedente y referencia de recuperación,
 no como tarea pendiente de ejecución. Implementación local autorizada el 21/11/2026;

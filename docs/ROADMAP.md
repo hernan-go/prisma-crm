@@ -1,6 +1,23 @@
 # PRISMA CRM — Roadmap
 
-## Prioridad vigente — preparación de integración PWA-1C (20/11/2026)
+## Prioridad vigente — PWA-2A y preparación de PWA-2B (21/11/2026)
+
+022, despliegue y sellado institucional completados según el propietario;
+portal deshabilitado y admisiones cerradas. [Estado acreditado](PROJECT_STATE.md).
+Integración PWA-1C y sellado ya no son tareas pendientes.
+
+PWA-2A deja [activación controlada y arquitectura educativa](iterations/2026-11-pwa-2a.md)
+listas para revisión documental. PWA-008 es la prioridad funcional aprobada:
+clases/materiales para participantes, inicialmente Inclusión Digital +50.
+PWA-009 (modelo técnico y rutas) requiere aprobación; no consta implementada.
+
+Próximo bloque propuesto PWA-2B: contratos de acceso de participantes y vínculo
+identidad/persona, con pruebas sintéticas y regresión del piloto; después contenido,
+archivos privados y navegación. Requiere aprobar las decisiones del informe y
+autorizar implementación. Activar el piloto existente es una operación separada,
+manual y aún no autorizada; no habilita participantes. No repetir baterías históricas.
+
+## Antecedente — preparación de integración PWA-1C (20/11/2026)
 
 PWA-1B.2 integrada y desplegada en `dfebe3df`, con CI #85 8/8, build productivo 0
 y comprobaciones CRM/portal cerrado comunicadas por el propietario.

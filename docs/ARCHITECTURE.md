@@ -1,5 +1,18 @@
 # PRISMA CRM — Arquitectura
 
+## Vigencia PWA-2A (21/11/2026)
+
+PWA-1C y corrección 022 integradas/desplegadas; sellado real completado según el
+propietario, con portal apagado y admisiones cerradas. Los estados locales y
+pendientes de publicación de los cortes inferiores son históricos.
+[Estado productivo acreditado](PROJECT_STATE.md).
+
+La [arquitectura educativa propuesta](iterations/2026-11-pwa-2a.md#c--arquitectura-propuesta-del-mvp-educativo)
+no modifica todavía el modelo vigente. El guard actual exige un vínculo de
+instructor del piloto; el rol `participant` por sí solo no habilita acceso ni
+vincula una identidad a `people`. No extender los dos cupos ni abrir admisiones
+como atajo. PWA-009 y sus rutas requieren aprobación antes de implementar.
+
 ## PWA-1C — estado técnico local y límites de publicación (20/11/2026)
 
 Bloques 1–2 y corrección CSRF implementados y validados localmente; PWA-1C sin
