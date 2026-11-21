@@ -1,5 +1,20 @@
 # PRISMA CRM — Estado actual
 
+## PWA-1DA — corrección 022 validada localmente (21/11/2026)
+
+Rama aislada `codex/pwa-1da-audit-check-022`, base `ed57d1c`. Corrección del CHECK
+de auditoría mediante nueva 022 y preflight acotado: 12 casos focalizados aprobados
+en MySQL 8.4.8 descartable, 967 pruebas sin DB aprobadas y checks estándar correctos.
+021 y lógica de sellado conservadas; instancia propia apagada al finalizar.
+Commit y publicación de la rama autorizados para revisión y CI; integración y
+operaciones productivas pendientes de autorización independiente.
+El propietario acreditó por lectura producción en revisión/secuencia 0, cero
+vínculos y recibos tras el rechazo del sellado; CHECK efectivo con un grupo UUID
+extra, distinto del archivo 021. Portal y admisiones cerrados. La procedencia de
+esa diferencia es desconocida. [Evidencia, alcance y validación](iterations/2026-11-pwa-1da.md).
+
+Los cortes siguientes conservan sus estados históricos; no describen la nueva 022.
+
 ## PWA-1C — cierre técnico local previo a integración (20/11/2026)
 
 **IMPLEMENTADA Y VALIDADA LOCALMENTE — APTO CON OBSERVACIONES para preparar

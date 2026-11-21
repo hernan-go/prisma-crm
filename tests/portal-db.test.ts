@@ -24,6 +24,7 @@ import { parseTarget, pilotOperator, previewGrant } from '../server/portal-opera
 import { runMaintenance } from '../server/portal-maintenance';
 import { createPortalAccessService } from '../server/portal-access';
 import type { PortalContext, PortalMember, PortalUnitOfWork } from '../shared/portal';
+import { migration022Tests } from './migration-022-cases';
 
 const actor = randomUUID(),
   otherAdmin = randomUUID(),
@@ -166,6 +167,8 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')(
         subject: 'synthetic-' + userId,
       }));
     }
+    migration022Tests(context, () => members);
+
     it('PWA1C H2 rejects wrong destination, missing, disabled, noninstitutional, wrong Google and inactive instructor', async () => {
       const t = blockTarget(),
         [m] = institutionalPairs();

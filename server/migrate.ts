@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pool } from './db.js';
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
+import { preflight022 } from './migration-022.js';
 
 async function requireHistoricalExpensePeriods(c: PoolConnection) {
   const [orphans] = await c.query<RowDataPacket[]>(
@@ -19,6 +20,7 @@ async function requireHistoricalExpensePeriods(c: PoolConnection) {
 
 export async function migrate(through?: string) {
   const c = await pool.getConnection();
+  let unconfirmed022Registration = false;
   try {
     const [lock] = await c.query("SELECT GET_LOCK('prisma_migrate',30) acquired");
     if (!(lock as any)[0].acquired) throw new Error('No se obtuvo el bloqueo de migración.');
@@ -30,6 +32,7 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '022.sql') await preflight022(c);
       if (name === '021.sql') {
         const [baseline] = await c.execute<RowDataPacket[]>(
           "SELECT name FROM schema_migrations WHERE name='020.sql'",
@@ -164,14 +167,28 @@ export async function migrate(through?: string) {
           await requireHistoricalExpensePeriods(c);
         await c.query(statement);
       }
-      await c.execute('INSERT INTO schema_migrations(name) VALUES (?)', [name]);
+      try {
+        await c.execute('INSERT INTO schema_migrations(name) VALUES (?)', [name]);
+      } catch (error) {
+        if (name === '022.sql') {
+          unconfirmed022Registration = true;
+          throw new Error(
+            '022.sql: DDL completado pero registro no confirmado. Detenerse; NO reejecutar. ' +
+              'Reconciliar esquema e historial manualmente según docs/PRODUCTION_MIGRATIONS.md.',
+          );
+        }
+        throw error;
+      }
       console.log('Migración aplicada:', name);
     }
   } catch (error) {
-    await c.rollback();
+    if (unconfirmed022Registration) await c.rollback().catch(() => {});
+    else await c.rollback();
     throw error;
   } finally {
-    await c.query("SELECT RELEASE_LOCK('prisma_migrate')");
+    if (unconfirmed022Registration)
+      await c.query("SELECT RELEASE_LOCK('prisma_migrate')").catch(() => {});
+    else await c.query("SELECT RELEASE_LOCK('prisma_migrate')");
     c.release();
   }
 }

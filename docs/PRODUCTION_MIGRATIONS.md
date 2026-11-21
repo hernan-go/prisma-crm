@@ -299,3 +299,97 @@ autorizaciones ni evidencias privadas por inferencia:
 | Registro 021 y verificación final               | Un registro 021; 21 registros totales                                                                                                                               |
 | Continuidad administrativa y estado final       | Portal inactivo, cero vínculos/intentos/sesiones; smoke administrativo específico no informado                                                                      |
 | Integración y despliegue                        | NO AUTORIZADOS POR ESTE PROCEDIMIENTO                                                                                                                               |
+
+## Anexo — 022 / PWA-1DA
+
+**Propuesta operativa; NO APLICADA en producción.** Implementación exclusivamente
+local autorizada el 21/11/2026; commit/publicación de la rama autorizados después,
+sin autorización de integración ni intervención productiva.
+[Diagnóstico, evidencia y pruebas](iterations/2026-11-pwa-1da.md).
+El archivo 021 y su registro permanecen inmutables. El inventario productivo
+001–021 y la discrepancia del CHECK fueron informados por el propietario mediante
+lecturas supervisadas; no se consideran una nueva ejecución de 021.
+
+### Aplicación futura, sujeta a autorización separada
+
+Aplicar primero las secciones C–E de este manual: artefacto revisado/huella,
+destino acreditado en la conexión ejecutora, respaldo y recuperación aceptados,
+ventana y responsable único. La auditoría administrativa puede escribir mientras
+se opera: acordar la coordinación y los límites de espera del ALTER; no cancelar
+sesiones ajenas ni desactivar restricciones para forzar el cambio.
+
+1. Identificar el archivo 022 revisado, su huella y el mecanismo autorizado. Para
+   una ejecución manual, usar exactamente el único ALTER de ese archivo, sin
+   adaptar 021 ni copiar el runner viejo del hosting como supuesto preflight 022.
+   No requiere desplegar código de negocio para ser compatible con el sellado actual.
+2. Verificar destino/UUID y esquema explícito según E. Releer solo la evidencia
+   que debe seguir vigente al escribir: 021 registrada, 022 ausente, inventario sin
+   migraciones inesperadas y estructura compatible. Contrastar el CHECK completo
+   con la variante correcta o defectuosa conocida, presente y ENFORCED, columnas
+   operation_id CHAR(36) NULL/details_json JSON NULL y tabla InnoDB. Comprobar que
+   todas las filas satisfacen el CHECK nuevo. El preflight del runner implementa
+   esos controles; en ejecución manual deben realizarse por lecturas equivalentes
+   sobre el esquema explícitamente autorizado. Cualquier otra variante detiene.
+3. Guardar evidencia privada del DDL anterior y recuentos de auditorías para el
+   postflight. Ejecutar una sola vez el ALTER original 022, con identidad de destino
+   vigente en la misma conexión/contexto. No usar DROP y ADD en solicitudes separadas.
+4. Comprobar definición final estándar y ENFORCED; mismo resto de columnas,
+   restricciones e índices; conservación de filas. Verificar portal/piloto cerrados
+   y estado anterior conservado. No insertar recibos sintéticos ni sellar como smoke.
+5. En modo manual, registrar `022.sql` una única vez después del postflight aceptado,
+   mediante INSERT ordinario, sin IGNORE ni REPLACE. El runner actualizado registra
+   automáticamente: no añadir un segundo registro. Confirmar nombre único,
+   fecha, inventario final 001–022 y continuidad administrativa proporcional.
+6. Registrar resultado y límites. Migración aplicada no significa código publicado,
+   piloto sellado ni portal habilitado. Futuras publicaciones y sellado requieren
+   autorización independiente y un nuevo plan vigente; conservar el UUID histórico
+   privado y no interpretar su ausencia de recibo como permiso de reintento.
+
+### DDL completado con registro no confirmado
+
+El ALTER puede quedar confirmado aunque falle después el INSERT de historial.
+`rollback()` no revierte DDL. El runner 022 se detiene sin reintento y conserva un
+diagnóstico específico incluso si falla la limpieza de la conexión.
+
+Ante error, timeout o desconexión, **no volver a ejecutar el runner ni el ALTER**.
+Identificar otra vez el destino y leer esquema e historial; no inferir persistencia
+o ausencia del registro del mensaje recibido.
+
+| Estado observado                                              | Acción propuesta, siempre con aprobación expresa                                          |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| CHECK final correcto, 022 ausente, DDL/postflight acreditados | Reconciliar solamente el registro con INSERT ordinario; no repetir DDL.                   |
+| CHECK final correcto, 022 registrada una vez                  | No escribir; verificar y documentar el resultado ya persistido.                           |
+| CHECK defectuoso o inesperado, registro ausente               | Detenerse, preservar evidencia y revisar plan/recuperación; sin reintento automático.     |
+| CHECK incorrecto con 022 registrada, o historial incoherente  | Detenerse; no borrar registros ni marcar como éxito. Preparar recuperación independiente. |
+
+No restaurar el CHECK defectuoso como rollback rutinario: volvería a bloquear
+operaciones legítimas. Cualquier reversión de esquema o restauración es una
+operación separada que debe preservar datos posteriores y contar con aprobación.
+
+### Intervención consolidada propuesta
+
+Revisión del repositorio: build ejecuta typecheck/Vite/TypeScript; start ejecuta
+dist/server/index.js. Ninguno invoca migrate; no hay hook npm de instalación que
+aplique SQL. CI usa MySQL efímero, no producción. Con la configuración de hosting
+previamente acreditada (main y npm run build), publicar 022 en main despliega su
+archivo y el runner, pero NO aplica 022 automáticamente. Las opciones actuales del
+panel no fueron reinspeccionadas: antes de intervenir confirmar en una sola revisión
+de Deployment Options/log que no se agregó un comando externo de migración.
+SiteGround permite configurar el build y ejecutar migraciones por SSH;
+[referencia oficial](https://www.siteground.com/blog/hosting-node-js-projects-with-siteground).
+
+Propuesta única para autorización: ventana con respaldo vigente y acceso SSH
+privado; aplicar 022 desde el artefacto revisado antes del push a main, utilizando
+el preflight nuevo y el único ALTER (sin desplegar aplicación para transportar SQL).
+Consolidar destino, preflight, confirmación de migración, postflight y registro en
+una ejecución supervisada del propietario. Ante error, detenerse según el cuadro
+anterior. Una vez aceptada la migración, el propietario integra/publica main y
+verifica SHA/build COMPLETADO/salida 0 y acceso administrativo. Luego, en una segunda
+ejecución privada, usar sesión CRM vigente, pares institucionales ya acreditados y
+UUID de operación conservado; consultar primero su recibo, generar plan nuevo y
+exigir confirmación de sellado. Resultado: revisión 1, dos vínculos, una auditoría,
+portal y admisiones cerrados. No ejecutar enable. No se requiere repetir consultas
+históricas: solo los controles de destino, concurrencia y sesión vigentes al escribir.
+
+Los bloques ejecutables definitivos se fijarán al SHA aprobado y al destino privado
+en la intervención autorizada; este procedimiento no es un permiso para ejecutarlos.
