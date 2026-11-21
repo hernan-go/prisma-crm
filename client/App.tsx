@@ -138,10 +138,12 @@ function PeriodSelector({
 function MobileHeader({
   pathname,
   selector,
+  showPeriod,
   disclosure,
 }: {
   pathname: string;
   selector: React.ReactNode;
+  showPeriod: boolean;
   disclosure: ReturnType<typeof useDisclosure>;
 }) {
   const { open, setOpen, root, trigger, id } = disclosure;
@@ -183,10 +185,7 @@ function MobileHeader({
         </button>
       </div>
       <PageTitle title={title} description={description} />
-      <div
-        className="period-control mobile-period"
-        hidden={open || sectionPath === '/know-how' || sectionPath === '/estadisticas'}
-      >
+      <div className="period-control mobile-period" hidden={open || !showPeriod}>
         {selector}
       </div>
       {open && (
@@ -212,9 +211,16 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [period, setPeriod] = useState(0);
   const [create, setCreate] = useState(false);
+  const [statisticsView, setStatisticsView] = useState<'monthly' | 'annual'>('monthly');
   const [toast, setToast] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
+  const showPeriod =
+    location.pathname !== '/know-how' &&
+    (location.pathname !== '/estadisticas' || statisticsView === 'monthly');
+  useEffect(() => {
+    setStatisticsView('monthly');
+  }, [location.pathname]);
   const [knowledgeUnsaved, setKnowledgeUnsaved] = useState(false);
   const [heldLocation, setHeldLocation] = useState(location);
   const holdKnowledge =
@@ -301,6 +307,7 @@ export default function App() {
         <div className="workspace">
           <MobileHeader
             pathname={location.pathname}
+            showPeriod={showPeriod}
             disclosure={mobileMenu}
             selector={
               <PeriodSelector
@@ -320,7 +327,7 @@ export default function App() {
               <h1>{sectionTitle(location.pathname)}</h1>
             </div>
             <div className="period-control">
-              {location.pathname !== '/know-how' && location.pathname !== '/estadisticas' && (
+              {showPeriod && (
                 <PeriodSelector
                   period={period}
                   periods={q.data || []}
@@ -372,7 +379,10 @@ export default function App() {
               <Route path="/publicidad" element={<Expenses />} />
               <Route path="/eventos" element={<SpecialEvents />} />
               <Route path="/eventos/:id" element={<SpecialEventPage />} />
-              <Route path="/estadisticas" element={<Statistics />} />
+              <Route
+                path="/estadisticas"
+                element={<Statistics view={statisticsView} setView={setStatisticsView} />}
+              />
               <Route path="/know-how" element={<Knowledge />} />
               <Route path="/configuracion" element={<Configuration />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />

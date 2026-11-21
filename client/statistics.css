@@ -1114,22 +1114,12 @@
   --chart-panel: var(--statistics-panel);
   box-shadow: none;
 }
-.statistics-page .statistics-module-heading {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.statistics-module-heading h1 {
-  font-size: 1.7rem;
-  letter-spacing: -0.025em;
-}
 .statistics-context-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  margin-bottom: 12px;
 }
 .statistics-context-controls label {
   display: flex;

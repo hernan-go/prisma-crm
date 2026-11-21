@@ -1,19 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  Wallet,
-  Receipt,
-  Coins,
-  CircleDollarSign,
-  Clock3,
-  TrendingUp,
-  Info,
-  Plus,
-} from 'lucide-react';
+import { Wallet, Receipt, Coins, CircleDollarSign, Clock3, TrendingUp, Info } from 'lucide-react';
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
 import { StatisticsEvents } from './StatisticsEvents';
 import { usePeriod, periodName } from './App';
-import { PageHeading, Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
+import { Loading, ErrorBox, Empty, Modal, useDisclosure } from './components';
 import {
   statisticsMoney,
   type StatisticMetric,
@@ -555,9 +546,14 @@ function ActivityEnrollments({ period }: { period: number }) {
     </section>
   );
 }
-export function Statistics() {
-  const { period, periods, selectPeriod, createPeriod } = usePeriod();
-  const [view, setView] = useState<'monthly' | 'annual'>('monthly');
+export function Statistics({
+  view,
+  setView,
+}: {
+  view: 'monthly' | 'annual';
+  setView: (view: 'monthly' | 'annual') => void;
+}) {
+  const { period, periods } = usePeriod();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [collectionsOpen, setCollectionsOpen] = useState(true);
   const [expensesOpen, setExpensesOpen] = useState(false);
@@ -589,63 +585,24 @@ export function Statistics() {
           : `Estadísticas de ${periodName(data?.period ?? selected)}`
       }
     >
-      <PageHeading title="Estadísticas" description={null} className="statistics-module-heading">
+      {view === 'annual' && (
         <div className="statistics-context-controls">
-          {view === 'monthly' ? (
-            <label>
-              Período
-              <select
-                aria-label="Período activo"
-                value={period}
-                onChange={(event) => selectPeriod?.(Number(event.target.value))}
-              >
-                <option value={0} disabled>
-                  Seleccionar período
-                </option>
-                {periods.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {periodName(p)}
-                    {p.status === 'closed' ? ' · Cerrado' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <label>
-              Año
-              <select
-                aria-label="Año de estadísticas"
-                value={year}
-                onChange={(event) => setSelectedYear(Number(event.target.value))}
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {view === 'monthly' && createPeriod && (
-            <button
-              type="button"
-              className="icon"
-              title="Crear nuevo período"
-              aria-label="Crear nuevo período"
-              onClick={createPeriod}
+          <label>
+            Año
+            <select
+              aria-label="Año de estadísticas"
+              value={year}
+              onChange={(event) => setSelectedYear(Number(event.target.value))}
             >
-              <Plus size={18} />
-            </button>
-          )}
-          {view === 'monthly' && period > 0 && (
-            <span className="statistics-status">
-              {(data?.period.status ?? selected?.status) === 'closed'
-                ? 'Período cerrado · consulta histórica'
-                : 'Período abierto · datos sujetos a cambios'}
-            </span>
-          )}
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      </PageHeading>
+      )}
       <div className="statistics-view-controls" role="group" aria-label="Vista de estadísticas">
         <button type="button" aria-pressed={view === 'monthly'} onClick={() => setView('monthly')}>
           Resumen mensual

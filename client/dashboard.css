@@ -543,10 +543,6 @@
   padding: 9px 6px;
   font-size: 0.75rem;
 }
-.dashboard-days button[aria-pressed='true'] {
-  background: var(--surface-accent);
-  border-color: var(--color-primary);
-}
 .dashboard-event-finance > .section-heading {
   display: flex;
   align-items: center;
@@ -602,7 +598,12 @@
 .dashboard-clock time {
   font-size: 32px;
 }
-.dashboard-days button[aria-pressed='true'] {
+.dashboard-days button[aria-pressed='false']:hover:not(:disabled) {
+  background: var(--color-hover);
+  border-color: var(--color-accent);
+}
+.dashboard-days button[aria-pressed='true'],
+.dashboard-days button[aria-pressed='true']:hover:not(:disabled) {
   background: #71e1e8;
   color: #000000;
   border-color: #71e1e8;
