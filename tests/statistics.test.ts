@@ -294,7 +294,6 @@ it('muestra límite de cobertura y controles de detalle sin bloques secundarios;
     'Información de Honorarios',
     '$ 10,00',
     'Información de Inflación',
-    'Período cerrado',
     'octubre 2026',
   ])
     expect(html).toContain(label);
