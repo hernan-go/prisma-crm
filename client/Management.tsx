@@ -1,4 +1,5 @@
 import { personName, comparePeople } from './person-presentation';
+import { EducationPresential } from './EducationPresential';
 export { comparePeople as comparePeriodPeople } from './person-presentation';
 export { Configuration } from './Configuration';
 import { useState } from 'react';
@@ -167,21 +168,24 @@ export function PersonMonth({ person }: { person: any }) {
     return <QueryFeedback query={membership} label="pertenencia al período" />;
   if (!membership.data?.length)
     return (
-      <section className="panel">
-        <QueryFeedback query={membership} label="pertenencia al período" />
-        <p>Esta persona no está incorporada al período seleccionado.</p>
-        <button
-          disabled={
-            !person.activo ||
-            periods.find((p) => p.id === period)?.status === 'closed' ||
-            add.isPending
-          }
-          onClick={() => add.mutate({ person_id: person.id })}
-        >
-          Agregar al período
-        </button>
-        <ErrorBox error={add.error} />
-      </section>
+      <>
+        <section className="panel">
+          <QueryFeedback query={membership} label="pertenencia al período" />
+          <p>Esta persona no está incorporada al período seleccionado.</p>
+          <button
+            disabled={
+              !person.activo ||
+              periods.find((p) => p.id === period)?.status === 'closed' ||
+              add.isPending
+            }
+            onClick={() => add.mutate({ person_id: person.id })}
+          >
+            Agregar al período
+          </button>
+          <ErrorBox error={add.error} />
+        </section>
+        <EducationPresential personId={person.id} enrollments={[]} />
+      </>
     );
   return (
     <>
@@ -289,6 +293,7 @@ function PersonMonthMember({ person }: { person: any }) {
                 disabled={closed}
                 path={`/enrollments/${e.id}?period_id=${period}`}
                 label="Cancelar inscripción"
+                description="Cancela únicamente esta inscripción mensual. Conserva la habilitación educativa presencial y los derechos digitales. Para retirar la fuente educativa, usá la acción explícita de Habilitación educativa presencial."
               />
             </div>
           </article>
@@ -297,6 +302,7 @@ function PersonMonthMember({ person }: { person: any }) {
       {q.isSuccess && q.data?.length === 0 && (
         <Empty>Sin actividades en este período. Agregá la primera inscripción.</Empty>
       )}
+      {q.isSuccess && <EducationPresential personId={person.id} enrollments={q.data} />}
       <section className="panel">
         <div className="section-heading">
           <h2 className="finance-title">Cuenta del mes</h2>

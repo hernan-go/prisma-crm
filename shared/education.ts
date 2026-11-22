@@ -18,6 +18,12 @@ export interface DigitalRight {
   status: 'scheduled' | 'active' | 'expired' | 'revoked';
 }
 export interface EducationSnapshot {
+  participantLink?: {
+    userId: string;
+    displayName: string;
+    status: 'enabled' | 'disabled';
+    enabled: number;
+  } | null;
   revision: number;
   now: number;
   person: EducationPerson;
@@ -27,6 +33,7 @@ export interface EducationSnapshot {
   rights: DigitalRight[];
 }
 export interface EducationReceipt {
+  userId?: string;
   operationId: string;
   actorId: string;
   actorName: string;
@@ -43,7 +50,7 @@ export interface EducationReceipt {
     rightId?: string;
     startsAt?: number;
     endsAt?: number;
-    action?: 'grant' | 'renewal' | 'revoke';
+    action?: 'grant' | 'renewal' | 'revoke' | 'link' | 'presential';
     previousEnd?: number | null;
     revokedAt?: number;
   };

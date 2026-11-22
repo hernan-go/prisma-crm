@@ -18,6 +18,7 @@ export const educationCommand = z.discriminatedUnion('kind', [
       userId: z.string().uuid(),
       personId: id,
       enabled: z.boolean(),
+      associationConfirmed: z.literal(true).optional(),
     })
     .strict(),
   z
@@ -27,6 +28,7 @@ export const educationCommand = z.discriminatedUnion('kind', [
       personId: id,
       activityId: id,
       enabled: z.boolean(),
+      enrollmentId: id.optional(),
     })
     .strict(),
   z
@@ -129,7 +131,13 @@ export async function mutateEducation(adminToken: string, raw: unknown) {
         [input.personId],
         db,
       );
-      if (!p) throw new AppError(409, 'Persona no habilitada.');
+      if (!p && !((input.kind === 'link' || input.kind === 'presential') && !input.enabled))
+        throw new AppError(409, 'Persona no habilitada.');
+      if (
+        !p &&
+        !(await query('SELECT id FROM people WHERE id=? FOR UPDATE', [input.personId], db))[0]
+      )
+        throw new AppError(404, 'Persona inexistente.');
     }
     if ('activityId' in input) {
       const [a] = await query(
@@ -148,23 +156,84 @@ export async function mutateEducation(adminToken: string, raw: unknown) {
       );
       if (!u) throw new AppError(409, 'Identidad inexistente.');
       const links = await query(
-        'SELECT user_id,person_id FROM education_person_links WHERE user_id=? OR person_id=? FOR UPDATE',
+        'SELECT user_id,person_id,enabled FROM education_person_links WHERE user_id=? OR person_id=? FOR UPDATE',
         [input.userId, input.personId],
         db,
       );
       if (links.some((l) => l.user_id !== input.userId || l.person_id !== input.personId))
         throw new AppError(409, 'Vinculación incompatible.');
+      if (input.enabled || !links.length) {
+        const eligible = await query(
+          `SELECT u.id FROM identity_users u
+          JOIN identity_user_roles r ON r.user_id=u.id AND r.role='participant'
+          WHERE u.id=? AND NOT EXISTS (SELECT 1 FROM identity_user_roles x WHERE x.user_id=u.id AND x.role IN ('admin','facilitator'))
+          AND NOT EXISTS (SELECT 1 FROM identity_instructor_links p WHERE p.user_id=u.id)
+          AND NOT EXISTS (SELECT 1 FROM identity_institution i WHERE i.admin_one=u.id OR i.admin_two=u.id) FOR UPDATE`,
+          [input.userId],
+          db,
+        );
+        if (eligible.length !== 1)
+          throw new AppError(
+            409,
+            'Se requiere una identidad participante existente, fuera del piloto y de los roles administrativos/docentes.',
+          );
+      }
       await execute(
         'INSERT INTO education_person_links(user_id,person_id,enabled) VALUES (?,?,?) ON DUPLICATE KEY UPDATE enabled=?',
         [input.userId, input.personId, input.enabled, input.enabled],
         db,
       );
+      result = {
+        ...result,
+        action: 'link',
+        userId: input.userId,
+        personId: input.personId,
+        enabled: input.enabled,
+        previousEnabled: links.length ? Boolean(links[0].enabled) : null,
+        administrativeOnly: true,
+      };
     } else if (input.kind === 'presential') {
+      if (input.enabled || input.enrollmentId) {
+        if (!input.enrollmentId)
+          throw new AppError(
+            422,
+            'Seleccioná una inscripción real para habilitar la fuente presencial.',
+          );
+        const enrolled = await query(
+          `SELECT e.id FROM enrollments e
+          JOIN period_activities o ON o.period_id=e.period_id AND o.activity_id=e.activity_id
+          JOIN enrollment_slots es ON es.enrollment_id=e.id
+          JOIN activity_schedules s ON s.id=es.schedule_id AND s.offering_id=o.id
+          WHERE e.id=? AND e.person_id=? AND e.activity_id=? FOR UPDATE`,
+          [input.enrollmentId, input.personId, input.activityId],
+          db,
+        );
+        if (!enrolled.length)
+          throw new AppError(
+            409,
+            'La inscripción no corresponde a esta persona y actividad o no conserva un turno válido.',
+          );
+      }
+      const [before] = await query(
+        'SELECT enabled FROM education_presential WHERE person_id=? AND activity_id=? FOR UPDATE',
+        [input.personId, input.activityId],
+        db,
+      );
+      if (!input.enabled && !before) throw new AppError(404, 'Fuente presencial inexistente.');
       await execute(
         'INSERT INTO education_presential(person_id,activity_id,enabled) VALUES (?,?,?) ON DUPLICATE KEY UPDATE enabled=?',
         [input.personId, input.activityId, input.enabled, input.enabled],
         db,
       );
+      result = {
+        ...result,
+        action: 'presential',
+        personId: input.personId,
+        activityId: input.activityId,
+        enrollmentId: input.enrollmentId,
+        previousEnabled: before ? Boolean(before.enabled) : null,
+        enabled: input.enabled,
+      };
     } else if (input.kind === 'digital') {
       const duplicate = await query(
         'SELECT id FROM education_digital_rights WHERE verification_reference=? FOR UPDATE',
@@ -244,6 +313,7 @@ export async function educationalEntitlement(userId: string, activityId: number)
       `SELECT l.person_id FROM education_person_links l
       JOIN identity_users u ON u.id=l.user_id AND u.status='enabled'
       JOIN people p ON p.id=l.person_id AND p.activo=1
+      JOIN identity_user_roles r ON r.user_id=u.id AND r.role='participant'
       WHERE l.user_id=? AND l.enabled=1 FOR UPDATE`,
       [userId],
       db,

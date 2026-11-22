@@ -64,7 +64,13 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 afterAll(() => vi.restoreAllMocks());
-const paths = ['/people?q=QA', '/people/1', '/people/1/history', '/operations/' + op];
+const paths = [
+  '/identities?q=QA',
+  '/people?q=QA',
+  '/people/1',
+  '/people/1/history',
+  '/operations/' + op,
+];
 it.each(paths)('authorizes administrative read %s', async (path) => {
   const response = await request(app())
     .get('/api/education-access' + path)
@@ -188,7 +194,7 @@ it('projects a safe receipt without private session digest or original command',
   expect(JSON.stringify(result)).not.toContain('PRIVATE_DIGEST');
   expect(result).toMatchObject({ actorId: actor, paymentDeclared: true, accountedPayment: false });
 });
-it('validates IDs and disallows link/presential writes through this module', async () => {
+it('validates IDs and requires a real enrollment before enabling presential access', async () => {
   expect(
     (
       await request(app())
@@ -289,4 +295,94 @@ it('rejects a changed commercial date before granting', async () => {
     .send(body);
   expect(response.status).toBe(409);
   expect(db.execute).not.toHaveBeenCalled();
+});
+
+it('requires explicit association acknowledgement and checks participant eligibility', async () => {
+  const command = {
+    kind: 'link',
+    userId: op,
+    personId: 1,
+    enabled: true,
+    operationId: op,
+    expectedRevision: 4,
+    reason: 'Administrative preparation',
+  };
+  const post = (body: unknown) =>
+    request(app())
+      .post('/api/education-access/operations')
+      .set('Cookie', `prisma_identity=${token}`)
+      .send(body as object);
+  expect((await post(command)).status).toBe(422);
+  const query = db.query.getMockImplementation()!;
+  db.query.mockImplementation((sql: string, ...args: any[]) =>
+    sql.includes('SELECT id FROM identity_users') ? [{ id: op }] : query(sql, ...args),
+  );
+  expect((await post({ ...command, associationConfirmed: true })).status).toBe(409);
+  expect(db.execute).not.toHaveBeenCalled();
+});
+it('audits an explicitly selected participant binding without credentials or a claimed ownership proof', async () => {
+  const query = db.query.getMockImplementation()!;
+  db.query.mockImplementation((sql: string, ...args: any[]) =>
+    sql.includes('SELECT id FROM identity_users') || sql.includes('SELECT u.id FROM identity_users')
+      ? [{ id: op }]
+      : query(sql, ...args),
+  );
+  const result = await request(app())
+    .post('/api/education-access/operations')
+    .set('Cookie', `prisma_identity=${token}`)
+    .send({
+      kind: 'link',
+      userId: op,
+      personId: 1,
+      enabled: true,
+      associationConfirmed: true,
+      operationId: op,
+      expectedRevision: 4,
+      reason: 'Explicit administrative association',
+    });
+  expect(result.status).toBe(200);
+  expect(result.body).toMatchObject({
+    action: 'link',
+    administrativeOnly: true,
+    userId: op,
+    personId: 1,
+    previousEnabled: null,
+  });
+  expect(db.execute.mock.calls.some((c) => String(c[0]).includes('identity_sessions'))).toBe(false);
+  expect(
+    db.execute.mock.calls.some((c) => String(c[0]).includes('INSERT INTO education_operations')),
+  ).toBe(true);
+});
+it('validates real registration and audits the independent presential change', async () => {
+  const query = db.query.getMockImplementation()!;
+  db.query.mockImplementation((sql: string, ...args: any[]) =>
+    sql.includes('SELECT e.id FROM enrollments')
+      ? [{ id: 7 }]
+      : sql.includes('SELECT enabled FROM education_presential')
+        ? [{ enabled: 0 }]
+        : query(sql, ...args),
+  );
+  const result = await request(app())
+    .post('/api/education-access/operations')
+    .set('Cookie', `prisma_identity=${token}`)
+    .send({
+      kind: 'presential',
+      personId: 1,
+      activityId: 2,
+      enabled: true,
+      enrollmentId: 7,
+      operationId: op,
+      expectedRevision: 4,
+      reason: 'Real registration reviewed',
+    });
+  expect(result.status).toBe(200);
+  expect(result.body).toMatchObject({
+    action: 'presential',
+    enrollmentId: 7,
+    previousEnabled: false,
+    enabled: true,
+  });
+  expect(
+    db.execute.mock.calls.some((c) => /enrollments|payments|monthly_accounts/.test(String(c[0]))),
+  ).toBe(false);
 });

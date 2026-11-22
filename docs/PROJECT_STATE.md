@@ -1,5 +1,14 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2B.3 — vinculación y presencial local (22/11/2026)
+
+Implementadas asociación administrativa 1:1 de participantes existentes y gestión
+explícita de la fuente presencial desde inscripciones reales. No autentican al
+participante ni verifican titularidad. Continuidad confirmada por el propietario:
+sin baja automática por mes, deuda o cancelación mensual. Esquema 023 reutilizado.
+[Informe y evidencia](iterations/2026-11-pwa-2b3.md). Sin integración, despliegue ni
+operaciones sobre datos reales. PWA-2B.4 no iniciada. Cortes siguientes históricos.
+
 ## PWA-2B.2 — administración digital local (22/11/2026)
 
 Autorizada e implementada localmente: Configuración → Accesos digitales,

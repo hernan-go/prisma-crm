@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { EducationAccess } from '../../client/EducationAccess';
+import { EducationPresential } from '../../client/EducationPresential';
 import {
   commercialDate,
   type EducationSnapshot,
@@ -11,6 +12,7 @@ import {
 import '../../client/styles.css';
 const now = Date.parse('2026-11-22T12:00:00-03:00');
 const data: EducationSnapshot = {
+  participantLink: null,
   revision: 1,
   now,
   person: {
@@ -49,10 +51,30 @@ const data: EducationSnapshot = {
 };
 const history: EducationReceipt[] = [];
 const receipts = new Map<string, EducationReceipt>();
+const candidates = [1, 2].map((n) => ({
+  userId: `00000000-0000-4000-8000-00000000008${n}`,
+  displayName: 'Participante sintético homónimo',
+  status: 'disabled',
+  personId: null,
+  enabled: null,
+}));
 let mode = 'normal',
   lost = false;
 window.fetch = async (input, init) => {
   const path = String(input);
+  if (path === '/api/auth/session')
+    return new Response(
+      JSON.stringify({
+        authenticated: true,
+        configured: true,
+        method: 'identity',
+        identity: {
+          userId: '00000000-0000-4000-8000-000000000099',
+          displayName: 'Administración sintética',
+          roles: ['admin'],
+        },
+      }),
+    );
   if (!path.startsWith('/api/education-access/')) throw Error('QA: network forbidden');
   const body = init?.body ? JSON.parse(String(init.body)) : undefined;
   let result: unknown,
@@ -105,6 +127,27 @@ window.fetch = async (input, init) => {
           revokedAt: null,
           status: last > now ? 'scheduled' : 'active',
         });
+      } else if (body.kind === 'link') {
+        const candidate = candidates.find((c) => c.userId === body.userId)!;
+        data.participantLink = {
+          userId: body.userId,
+          displayName: candidate.displayName,
+          status: 'disabled',
+          enabled: body.enabled ? 1 : 0,
+        };
+        result = { revision: data.revision, action: 'link', administrativeOnly: true };
+      } else if (body.kind === 'presential') {
+        let source = data.presential.find((p) => p.activityId === body.activityId);
+        if (!source) {
+          source = {
+            activityId: body.activityId,
+            activity: data.activities.find((a) => a.id === body.activityId)!.name,
+            enabled: 0,
+          };
+          data.presential.push(source);
+        }
+        source.enabled = body.enabled ? 1 : 0;
+        result = { revision: data.revision, action: 'presential', enabled: body.enabled };
       } else {
         if (right) {
           right.revokedAt = now;
@@ -126,6 +169,7 @@ window.fetch = async (input, init) => {
         reason: body.reason,
         activityId: body.activityId,
         rightId: body.rightId,
+        userId: body.userId,
         verificationReference: body.verificationReference,
         paymentDeclared: body.kind === 'digital',
         accountedPayment: false as const,
@@ -157,6 +201,7 @@ window.fetch = async (input, init) => {
       expectedWindow: { startDate: commercialDate(startsAt), endDate: commercialDate(endsAt) },
     };
   } else if (path.includes('/history')) result = { rows: history, page: 1, hasMore: false };
+  else if (path.includes('/identities?q=')) result = mode === 'empty' ? [] : candidates;
   else if (path.includes('/people?q=')) result = mode === 'empty' ? [] : [data.person];
   else result = data;
   return new Response(JSON.stringify(result), {
@@ -187,6 +232,11 @@ createRoot(document.getElementById('root')!).render(
           </select>
         </label>
         <EducationAccess />
+        <h2>QA del control integrado en Inscriptos Período</h2>
+        <EducationPresential
+          personId={1}
+          enrollments={[{ id: 7, activity_id: 1, activity: 'Yoga' }]}
+        />
       </main>
     </MemoryRouter>
   </QueryClientProvider>,

@@ -30,6 +30,7 @@ function receipt(row: any): EducationReceipt {
     activityId: input.activityId,
     rightId: input.rightId,
     verificationReference: input.verificationReference,
+    userId: input.userId,
     paymentDeclared: input.paymentVerified === true,
     accountedPayment: false,
     result: json(row.result_json),
@@ -45,11 +46,28 @@ export async function readEducation(
     | { kind: 'search'; search: string }
     | { kind: 'person'; personId: number }
     | { kind: 'history'; personId: number; page: number }
-    | { kind: 'receipt'; operationId: string },
+    | { kind: 'receipt'; operationId: string }
+    | { kind: 'identities'; search: string },
 ) {
   return peopleTransaction(async (db) => {
     const revision = await lockEducation(db);
     await authorizeEducation(db, adminToken);
+    if (request.kind === 'identities') {
+      const search = z.string().trim().min(2).max(100).parse(request.search);
+      const like = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+      return query(
+        `SELECT u.id userId,u.display_name displayName,u.status,l.person_id personId,l.enabled
+        FROM identity_users u JOIN identity_user_roles r ON r.user_id=u.id AND r.role='participant'
+        LEFT JOIN education_person_links l ON l.user_id=u.id
+        WHERE (u.id LIKE ? OR u.display_name LIKE ?)
+        AND NOT EXISTS (SELECT 1 FROM identity_user_roles x WHERE x.user_id=u.id AND x.role IN ('admin','facilitator'))
+        AND NOT EXISTS (SELECT 1 FROM identity_instructor_links p WHERE p.user_id=u.id)
+        AND NOT EXISTS (SELECT 1 FROM identity_institution i WHERE i.admin_one=u.id OR i.admin_two=u.id)
+        ORDER BY u.display_name,u.id LIMIT 40`,
+        [like, like],
+        db,
+      );
+    }
     if (request.kind === 'search') {
       const search = z.string().trim().min(2).max(100).parse(request.search);
       const like = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
@@ -118,6 +136,12 @@ export async function readEducation(
       [pid],
       db,
     );
+    const [participantLink] = await query(
+      `SELECT l.user_id userId,l.enabled,u.display_name displayName,u.status
+      FROM education_person_links l JOIN identity_users u ON u.id=l.user_id WHERE l.person_id=?`,
+      [pid],
+      db,
+    );
     return {
       revision,
       now,
@@ -125,6 +149,7 @@ export async function readEducation(
       activities,
       presential,
       enrollments,
+      participantLink: participantLink ?? null,
       rights: rights.map((r) => ({
         id: r.id,
         activityId: r.activity_id,
@@ -192,6 +217,14 @@ educationAdmin.get('/people', async (req, res) =>
     }),
   ),
 );
+educationAdmin.get('/identities', async (req, res) =>
+  res.json(
+    await readEducation(res.locals.educationToken, {
+      kind: 'identities',
+      search: z.string().parse(req.query.q),
+    }),
+  ),
+);
 educationAdmin.get('/people/:id', async (req, res) =>
   res.json(
     await readEducation(res.locals.educationToken, {
@@ -222,8 +255,11 @@ educationAdmin.post('/preview', async (req, res) =>
 );
 educationAdmin.post('/operations', async (req, res) => {
   const input = educationCommand.parse(req.body);
-  if (input.kind !== 'digital' && input.kind !== 'revoke')
-    throw new AppError(422, 'Operación fuera de este módulo.');
+  if (input.kind === 'link' && !input.associationConfirmed)
+    throw new AppError(
+      422,
+      'Confirmá expresamente la asociación administrativa; no acredita titularidad.',
+    );
   if (input.kind === 'digital' && !input.expectedWindow)
     throw new AppError(422, 'Revisá las fechas antes de confirmar.');
   res.json(await mutateEducation(res.locals.educationToken, input));

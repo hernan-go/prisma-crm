@@ -1,5 +1,13 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-2B.3 — continuidad confirmada (22/11/2026)
+
+El propietario confirmó conservar continuidad educativa explícita y habilitar/retirar
+desde la inscripción real. No derivar baja por calendario, deuda ni cancelación
+mensual. Alta de fuente exige matrícula/slot reales; retiro separado conserva digital.
+Asociación administrativa de identidad existente no acredita titularidad ni autentica.
+[Resolución e implementación local](iterations/2026-11-pwa-2b3.md). Historial previo conservado.
+
 ## PWA-2B.2 — confirmación administrativa local (22/11/2026)
 
 La confirmación manual auditada del pago habilita el derecho digital; no constituye

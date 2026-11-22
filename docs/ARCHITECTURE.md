@@ -1,5 +1,14 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-2B.3 — asociación administrativa y fuente presencial (22/11/2026)
+
+El vínculo 1:1 reutiliza 023, con selección de participante existente y sin prueba
+de titularidad ni sesión nueva. Habilitar fuente presencial exige inscripción/slot
+reales de la persona/actividad; education_presential conserva continuidad explícita
+como única habilitación educativa CRM. Cancelación mensual no equivale a retiro.
+Consultas y comandos comparten locks/autorización/auditoría 2B.1/2B.2.
+[Contrato, UI y límites](iterations/2026-11-pwa-2b3.md). Implementación local; sin despliegue.
+
 ## PWA-2B.2 — consumidor administrativo local (22/11/2026)
 
 Router `/api/education-access` después del guard CRM, con revalidación individual

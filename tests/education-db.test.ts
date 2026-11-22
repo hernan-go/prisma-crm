@@ -7,7 +7,7 @@ import { sessionDigest } from '../server/identity';
 import { mutateEducation, educationalEntitlement } from '../server/education-access';
 import request from 'supertest';
 import { createApp } from '../server/app';
-import { periodCreate } from '../server/scheduling';
+import { periodCreate, deleteMovement } from '../server/scheduling';
 import { offeringSave, scheduleSave } from '../server/offerings';
 import { membershipAdd } from '../server/memberships';
 import { enrollmentSave } from '../server/services';
@@ -16,12 +16,18 @@ const admin = randomUUID(),
   token = randomBytes(32).toString('hex');
 let rev = 0;
 let pilot: unknown;
+let yogaEnrollment: number;
+const operationalBaseline = new Map<string, unknown>();
+let yogaPeriod: number;
 async function change(fields: Record<string, unknown>) {
   const result = await mutateEducation(token, {
     operationId: randomUUID(),
     expectedRevision: rev,
     reason: 'Synthetic QA',
     ...fields,
+    ...(fields.kind === 'presential' && fields.enabled
+      ? { enrollmentId: fields.enrollmentId ?? yogaEnrollment }
+      : {}),
   });
   rev = result.revision;
   return result;
@@ -43,6 +49,9 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
         [u],
       );
     await execute("INSERT INTO identity_user_roles(user_id,role) VALUES (?,'admin')", [admin]);
+    await execute("INSERT INTO identity_user_roles(user_id,role) VALUES (?,'participant')", [
+      learner,
+    ]);
     await execute(
       "INSERT INTO identity_external_accounts(provider,subject,user_id) VALUES ('google','synthetic-admin',?)",
       [admin],
@@ -59,6 +68,32 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
       "INSERT INTO activities(id,name,mode) VALUES (1,'Yoga QA','group'),(2,'Digital QA','group'),(3,'Other QA','group')",
     );
     pilot = await query('SELECT * FROM portal_access_state');
+    const period = await periodCreate({ year: 2030, month: 11 });
+    yogaPeriod = period.id;
+    const offer = await offeringSave({
+      period_id: period.id,
+      activity_id: 1,
+      mode: 'group',
+      days: [1],
+    });
+    const slot = await scheduleSave({
+      offering_id: offer.id,
+      day: 1,
+      start: '10:00',
+      end: '11:00',
+      instructor_ids: [],
+    });
+    await membershipAdd(1, period.id);
+    yogaEnrollment = (
+      await enrollmentSave({
+        person_id: 1,
+        period_id: period.id,
+        activity_id: 1,
+        schedule_ids: [slot.id],
+      })
+    ).id!;
+    for (const table of ['enrollments', 'periods', 'monthly_accounts', 'identity_instructor_links'])
+      operationalBaseline.set(table, await query('SELECT * FROM ' + table));
   });
   afterAll(async () => {
     await pool.end();
@@ -198,7 +233,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
     await pool.query('ALTER TABLE education_operations DROP CHECK qa_audit_reject');
     expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
     for (const table of ['enrollments', 'periods', 'monthly_accounts', 'identity_instructor_links'])
-      expect((await query('SELECT * FROM ' + table)).length).toBe(0);
+      expect(await query('SELECT * FROM ' + table)).toEqual(operationalBaseline.get(table));
   });
   it('administrative HTTP: preview, grant, replay, renewal, receipts and selective revocation', async () => {
     const secondAdmin = randomUUID();
@@ -306,7 +341,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
     rev++;
     const state = (await get('/people/1')).body;
     expect(state.rights.find((r: any) => r.id === revoke.rightId).status).toBe('revoked');
-    expect(state.enrollments).toEqual([{ activity: 'Yoga QA', year: 2031, month: 2 }]);
+    expect(state.enrollments).toContainEqual({ activity: 'Yoga QA', year: 2031, month: 2 });
     expect(await educationalEntitlement(learner, 1)).toBe(true);
     const sameDiscipline = (await post('/preview', { personId: 1, activityId: 1 })).body;
     const same = await post('/operations', {
@@ -343,5 +378,150 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
       sessionDigest(token),
     ]);
     expect((await get('/people/1')).status).toBe(401);
+  });
+  it('supervises participant associations without issuing sessions; rejects ambiguity, reassignment and audit failure', async () => {
+    await execute('UPDATE identity_sessions SET revoked_at=NULL WHERE token_hash=?', [
+      sessionDigest(token),
+    ]);
+    const app = createApp({ identityEnabled: true, hash: '', secret: '' }, {}, {}, false, false);
+    const post = (body: Record<string, unknown>) =>
+      request(app)
+        .post('/api/education-access/operations')
+        .set('Cookie', `prisma_identity=${token}`)
+        .send(body);
+    const ids = [randomUUID(), randomUUID()];
+    for (const user of ids) {
+      await execute(
+        "INSERT INTO identity_users(id,display_name,status) VALUES (?,'Ambiguous synthetic name','disabled')",
+        [user],
+      );
+      await execute("INSERT INTO identity_user_roles(user_id,role) VALUES (?,'participant')", [
+        user,
+      ]);
+    }
+    for (const id of [2, 3])
+      await execute(
+        "INSERT INTO people(id,nombre,apellido,telefono,phone_normalized,direccion,observaciones,emergency_name,emergency_relationship,emergency_phone,emergency_notes) VALUES (?,'Other','Synthetic','','','','','','','','')",
+        [id],
+      );
+    const sessions = await query('SELECT * FROM identity_sessions');
+    const candidates = await request(app)
+      .get('/api/education-access/identities?q=Ambiguous')
+      .set('Cookie', `prisma_identity=${token}`);
+    expect(candidates.status).toBe(200);
+    expect(candidates.body).toHaveLength(2);
+    expect(new Set(candidates.body.map((c: any) => c.userId)).size).toBe(2);
+    const command = {
+      kind: 'link',
+      userId: ids[0],
+      personId: 2,
+      enabled: true,
+      associationConfirmed: true,
+      operationId: randomUUID(),
+      expectedRevision: rev,
+      reason: 'Administrative preparation, not ownership proof',
+    };
+    const results = await Promise.all([post(command), post(command)]);
+    expect(results.map((r) => r.status)).toEqual([200, 200]);
+    expect(results[0].body).toEqual(results[1].body);
+    rev++;
+    expect(await educationalEntitlement(ids[0], 1)).toBe(false);
+    for (const fields of [{ userId: ids[1] }, { personId: 3 }])
+      expect(
+        (await post({ ...command, ...fields, operationId: randomUUID(), expectedRevision: rev }))
+          .status,
+      ).toBe(409);
+    const disabled = await post({
+      ...command,
+      enabled: false,
+      operationId: randomUUID(),
+      expectedRevision: rev,
+    });
+    expect(disabled.status).toBe(200);
+    expect(disabled.body.previousEnabled).toBe(true);
+    rev++;
+    expect(
+      (await post({ ...command, personId: 3, operationId: randomUUID(), expectedRevision: rev }))
+        .status,
+    ).toBe(409);
+    const rejected = randomUUID();
+    await pool.query(
+      `ALTER TABLE education_operations ADD CONSTRAINT qa_link_audit CHECK (operation_id <> '${rejected}')`,
+    );
+    expect(
+      (
+        await post({
+          ...command,
+          userId: ids[1],
+          personId: 3,
+          operationId: rejected,
+          expectedRevision: rev,
+        })
+      ).status,
+    ).toBe(500);
+    expect(await query('SELECT * FROM education_person_links WHERE person_id=3')).toHaveLength(0);
+    expect((await query('SELECT revision FROM education_state'))[0].revision).toBe(rev);
+    await pool.query('ALTER TABLE education_operations DROP CHECK qa_link_audit');
+    expect(await query('SELECT * FROM identity_sessions')).toEqual(sessions);
+    expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
+  });
+  it('ties explicit presential enablement to real enrollment; monthly cancellation preserves continuity and digital survives withdrawal', async () => {
+    const app = createApp({ identityEnabled: true, hash: '', secret: '' }, {}, {}, false, false);
+    const post = (body: Record<string, unknown>) =>
+      request(app)
+        .post('/api/education-access/operations')
+        .set('Cookie', `prisma_identity=${token}`)
+        .send(body);
+    const command = {
+      kind: 'presential',
+      personId: 1,
+      activityId: 1,
+      enabled: true,
+      enrollmentId: yogaEnrollment,
+      operationId: randomUUID(),
+      expectedRevision: rev,
+      reason: 'Explicit CRM enrollment confirmation',
+    };
+    for (const fields of [{ personId: 2 }, { activityId: 2 }, { enrollmentId: 999999 }])
+      expect((await post({ ...command, ...fields })).status).toBe(409);
+    const digital = await change({
+      kind: 'digital',
+      personId: 1,
+      activityId: 1,
+      paymentVerified: true,
+      verificationReference: 'binding-digital-yoga',
+    });
+    await deleteMovement('enrollments', yogaEnrollment, yogaPeriod);
+    expect(
+      (
+        await query('SELECT enabled FROM education_presential WHERE person_id=1 AND activity_id=1')
+      )[0].enabled,
+    ).toBe(1);
+    expect(
+      (await post({ ...command, operationId: randomUUID(), expectedRevision: rev })).status,
+    ).toBe(409);
+    const withdrawn = await post({
+      ...command,
+      operationId: randomUUID(),
+      expectedRevision: rev,
+      enabled: false,
+      enrollmentId: undefined,
+    });
+    expect(withdrawn.status).toBe(200);
+    rev++;
+    expect(await educationalEntitlement(learner, 1)).toBe(true);
+    await change({ kind: 'revoke', rightId: digital.rightId });
+    expect(await educationalEntitlement(learner, 1)).toBe(false);
+    await change({ kind: 'link', userId: learner, personId: 1, enabled: false });
+    expect(await educationalEntitlement(learner, 2)).toBe(false);
+    await change({ kind: 'link', userId: learner, personId: 1, enabled: true });
+    await execute("DELETE FROM identity_user_roles WHERE user_id=? AND role='participant'", [
+      learner,
+    ]);
+    expect(await educationalEntitlement(learner, 2)).toBe(false);
+    await execute("INSERT INTO identity_user_roles(user_id,role) VALUES (?,'participant')", [
+      learner,
+    ]);
+    expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
   });
 });

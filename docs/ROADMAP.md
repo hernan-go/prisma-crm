@@ -1,5 +1,13 @@
 # PRISMA CRM — Roadmap
 
+## PWA-2B.3 — administración local y próximo contrato (22/11/2026)
+
+Vínculo participante/persona y habilitación presencial desde inscripción real
+implementados localmente. [Evidencia y pendientes](iterations/2026-11-pwa-2b3.md).
+Acordar titularidad, activación y principal educativo autenticado antes de acceso
+real de participantes. Sin integración/despliegue ni nueva migración.
+PWA-2B.4 no iniciada; requiere autorización posterior. Cortes siguientes históricos.
+
 ## PWA-2B.2 — administración local; siguiente propuesta (22/11/2026)
 
 Administración digital implementada localmente y documentada en
