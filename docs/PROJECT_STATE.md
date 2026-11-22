@@ -1,5 +1,17 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2B.2 — administración digital local (22/11/2026)
+
+Autorizada e implementada localmente: Configuración → Accesos digitales,
+consultas e historial con sesión Google individual institucional; concesión,
+renovación y revocación mediante servicios 2B.1, confirmación manual auditada,
+preview de fechas y recuperación idempotente. Sin cobros mensuales ficticios.
+023 reutilizada; sin nueva migración ni aplicación a bases conservadas.
+[Informe, endpoints, evidencia y límites](iterations/2026-11-pwa-2b2.md).
+Sin integración, push, PR, merge, despliegue ni activación; main y piloto intactos.
+PWA-2B.3 queda propuesta y requiere autorización posterior.
+Los cortes siguientes conservan su estado histórico.
+
 ## PWA-2B.1 — fundamento local (22/11/2026)
 
 Implementados servicios internos de vinculación identidad/persona, habilitación

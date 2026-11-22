@@ -1,5 +1,14 @@
 # PRISMA CRM — Roadmap
 
+## PWA-2B.2 — administración local; siguiente propuesta (22/11/2026)
+
+Administración digital implementada localmente y documentada en
+[el informe 2B.2](iterations/2026-11-pwa-2b2.md); sin integrar ni desplegar.
+Proponer PWA-2B.3 para vínculo supervisado del futuro principal educativo y
+mantenimiento explícito de fuentes presenciales. Contenido por actividad,
+autenticación diferenciada y contrato contable siguen como bloques posteriores.
+No iniciar PWA-2B.3 sin autorización nueva. Los cortes siguientes son históricos.
+
 ## PWA-2B.1 — fundamento local (22/11/2026)
 
 Implementados servicios internos de vinculación identidad/persona, habilitación

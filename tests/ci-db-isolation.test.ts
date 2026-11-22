@@ -24,7 +24,7 @@ it('keeps DB-free validation separate from isolated, sequential matrix services'
   expect(integrations).not.toContain('continue-on-error');
 });
 
-it('runs exactly seven enabled MySQL suites once each, without parallel files', () => {
+it('runs exactly eight enabled MySQL suites once each, without parallel files', () => {
   const enabled = readdirSync('tests')
     .filter((name) => name.endsWith('.test.ts'))
     .filter((name) =>
@@ -33,9 +33,10 @@ it('runs exactly seven enabled MySQL suites once each, without parallel files', 
       ),
     )
     .map((name) => `tests/${name}`);
-  expect(suites).toHaveLength(7);
+  expect(suites).toHaveLength(8);
   expect([...suites].sort()).toEqual([
     'tests/binding-b2-db.test.ts',
+    'tests/education-db.test.ts',
     'tests/identity-bindings-db.test.ts',
     'tests/identity-db.test.ts',
     'tests/integration.test.ts',
@@ -105,6 +106,7 @@ it('keeps each migration baseline in its owning suite, with an explicit annual f
     'tests/binding-b2-db.test.ts': "await migrate('019.sql')",
     'tests/statistics-annual-db.test.ts': 'await prepareAnnualFixture()',
     'tests/portal-db.test.ts': "await migrate('020.sql')",
+    'tests/education-db.test.ts': "await migrate('022.sql')",
   };
   for (const [file, baseline] of Object.entries(baselines))
     expect(readFileSync(file, 'utf8')).toContain(baseline);
@@ -115,7 +117,7 @@ it('keeps each migration baseline in its owning suite, with an explicit annual f
   expect(annual).toContain('toHaveLength(2)');
 });
 
-it('documents the implemented isolation, command and all seven baselines', () => {
+it('documents the implemented isolation, command and all eight baselines', () => {
   const documentation = readFileSync('docs/WORKFLOW.md', 'utf8');
   for (const suite of suites) expect(documentation).toContain(suite.replace('tests/', ''));
   expect(documentation).toContain('max-parallel: 1');

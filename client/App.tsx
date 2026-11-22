@@ -1,4 +1,5 @@
 import { Logout } from './Auth';
+import { EducationAccess } from './EducationAccess';
 import { FacilitatorPayments } from './FacilitatorPayments';
 import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
@@ -385,6 +386,7 @@ export default function App() {
               />
               <Route path="/know-how" element={<Knowledge />} />
               <Route path="/configuracion" element={<Configuration />} />
+              <Route path="/configuracion/accesos-digitales" element={<EducationAccess />} />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />
             </Routes>
           </main>

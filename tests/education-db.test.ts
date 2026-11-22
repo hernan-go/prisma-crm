@@ -5,6 +5,12 @@ import { migrate } from '../server/migrate';
 import { disposableDatabase } from '../server/disposable-database';
 import { sessionDigest } from '../server/identity';
 import { mutateEducation, educationalEntitlement } from '../server/education-access';
+import request from 'supertest';
+import { createApp } from '../server/app';
+import { periodCreate } from '../server/scheduling';
+import { offeringSave, scheduleSave } from '../server/offerings';
+import { membershipAdd } from '../server/memberships';
+import { enrollmentSave } from '../server/services';
 const admin = randomUUID(),
   learner = randomUUID(),
   token = randomBytes(32).toString('hex');
@@ -166,8 +172,10 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
     rev++;
   });
   it('rolls back state/grant when audit fails; preserves pilot and operational tables', async () => {
+    const rejectedOperation = randomUUID();
+    // Schema-local CHECK needs no global trigger/binlog privilege in the CI service.
     await pool.query(
-      "CREATE TRIGGER qa_audit_reject BEFORE INSERT ON education_operations FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic audit rejection'",
+      `ALTER TABLE education_operations ADD CONSTRAINT qa_audit_reject CHECK (operation_id <> '${rejectedOperation}')`,
     );
     await expect(
       change({
@@ -176,6 +184,7 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
         activityId: 3,
         paymentVerified: true,
         verificationReference: 'rollback',
+        operationId: rejectedOperation,
       }),
     ).rejects.toThrow();
     expect((await query('SELECT revision FROM education_state'))[0].revision).toBe(rev);
@@ -186,9 +195,153 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
         )
       ).length,
     ).toBe(0);
-    await pool.query('DROP TRIGGER qa_audit_reject');
+    await pool.query('ALTER TABLE education_operations DROP CHECK qa_audit_reject');
     expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
     for (const table of ['enrollments', 'periods', 'monthly_accounts', 'identity_instructor_links'])
       expect((await query('SELECT * FROM ' + table)).length).toBe(0);
+  });
+  it('administrative HTTP: preview, grant, replay, renewal, receipts and selective revocation', async () => {
+    const secondAdmin = randomUUID();
+    await execute(
+      "INSERT INTO identity_users(id,display_name,status) VALUES (?,'Second synthetic admin','enabled')",
+      [secondAdmin],
+    );
+    await execute('UPDATE identity_institution SET admin_two=? WHERE id=1', [secondAdmin]);
+    const app = createApp({ identityEnabled: true, hash: '', secret: '' }, {}, {}, false, false);
+    const get = (path: string) =>
+      request(app)
+        .get('/api/education-access' + path)
+        .set('Cookie', `prisma_identity=${token}`);
+    const post = (path: string, body: Record<string, unknown>) =>
+      request(app)
+        .post('/api/education-access' + path)
+        .set('Cookie', `prisma_identity=${token}`)
+        .send(body);
+    expect((await get('/people?q=Synthetic')).status).toBe(200);
+    expect((await get('/people/999999')).status).toBe(404);
+    // A genuine synthetic CRM registration, created explicitly through its services.
+    // Digital operations must preserve it, its slot and its monthly account byte for byte.
+    const period = await periodCreate({ year: 2031, month: 2, mode: 'empty' });
+    const offering = await offeringSave({
+      period_id: period.id,
+      activity_id: 1,
+      mode: 'group',
+      days: [1],
+    });
+    const schedule = await scheduleSave({
+      offering_id: offering.id,
+      day: 1,
+      start: '10:00',
+      end: '11:00',
+      instructor_ids: [],
+    });
+    await membershipAdd(1, period.id);
+    await enrollmentSave({
+      person_id: 1,
+      period_id: period.id,
+      activity_id: 1,
+      schedule_ids: [schedule.id],
+    });
+    const operationalTables = [
+      'periods',
+      'period_memberships',
+      'enrollments',
+      'enrollment_slots',
+      'monthly_accounts',
+      'payments',
+    ];
+    const operationalBefore = new Map<string, unknown>();
+    for (const table of operationalTables)
+      operationalBefore.set(table, await query('SELECT * FROM ' + table));
+    await change({ kind: 'presential', personId: 1, activityId: 1, enabled: true });
+    const preview = await post('/preview', { personId: 1, activityId: 2 });
+    expect(preview.status).toBe(200);
+    const body = {
+      kind: 'digital',
+      operationId: randomUUID(),
+      expectedRevision: preview.body.revision,
+      personId: 1,
+      activityId: 2,
+      paymentVerified: true,
+      verificationReference: 'http-grant',
+      reason: 'Manual synthetic payment',
+      expectedWindow: preview.body.expectedWindow,
+    };
+    const grants = await Promise.all([post('/operations', body), post('/operations', body)]);
+    expect(grants.map((r) => r.status)).toEqual([200, 200]);
+    expect(grants[0].body).toEqual(grants[1].body);
+    rev = grants[0].body.revision;
+    expect((await get('/operations/' + body.operationId)).body).toMatchObject({
+      actorId: admin,
+      paymentDeclared: true,
+      accountedPayment: false,
+      result: grants[0].body,
+    });
+    expect(JSON.stringify((await get('/operations/' + body.operationId)).body)).not.toContain(
+      sessionDigest(token),
+    );
+    const next = (await post('/preview', { personId: 1, activityId: 2 })).body;
+    expect(next.startsAt).toBe(grants[0].body.endsAt);
+    const competing = await Promise.all(
+      ['http-renew-a', 'http-renew-b'].map((reference) =>
+        post('/operations', {
+          ...body,
+          operationId: randomUUID(),
+          expectedRevision: rev,
+          verificationReference: reference,
+          expectedWindow: next.expectedWindow,
+        }),
+      ),
+    );
+    expect(competing.map((r) => r.status).sort()).toEqual([200, 409]);
+    rev++;
+    const revoke = {
+      kind: 'revoke',
+      operationId: randomUUID(),
+      expectedRevision: rev,
+      rightId: grants[0].body.rightId,
+      reason: 'Selective digital revocation',
+    };
+    expect((await post('/operations', revoke)).status).toBe(200);
+    rev++;
+    const state = (await get('/people/1')).body;
+    expect(state.rights.find((r: any) => r.id === revoke.rightId).status).toBe('revoked');
+    expect(state.enrollments).toEqual([{ activity: 'Yoga QA', year: 2031, month: 2 }]);
+    expect(await educationalEntitlement(learner, 1)).toBe(true);
+    const sameDiscipline = (await post('/preview', { personId: 1, activityId: 1 })).body;
+    const same = await post('/operations', {
+      ...body,
+      operationId: randomUUID(),
+      expectedRevision: rev,
+      activityId: 1,
+      verificationReference: 'http-same-discipline',
+      expectedWindow: sameDiscipline.expectedWindow,
+    });
+    expect(same.status).toBe(200);
+    rev++;
+    expect(
+      (
+        await post('/operations', {
+          ...revoke,
+          operationId: randomUUID(),
+          expectedRevision: rev,
+          rightId: same.body.rightId,
+        })
+      ).status,
+    ).toBe(200);
+    rev++;
+    expect(await educationalEntitlement(learner, 1)).toBe(true);
+    expect(
+      (await get('/people/1/history')).body.rows.some(
+        (r: any) => r.operationId === revoke.operationId && r.actorId === admin,
+      ),
+    ).toBe(true);
+    expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
+    for (const table of operationalTables)
+      expect(await query('SELECT * FROM ' + table)).toEqual(operationalBefore.get(table));
+    await execute('UPDATE identity_sessions SET revoked_at=1 WHERE token_hash=?', [
+      sessionDigest(token),
+    ]);
+    expect((await get('/people/1')).status).toBe(401);
   });
 });

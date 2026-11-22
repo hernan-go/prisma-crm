@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 import { Configuration } from '../client/Configuration';
+import { MemoryRouter } from 'react-router-dom';
 import { PeriodContext } from '../client/App';
 
 const schedule = (id: number, active: boolean | number, ever_used = 0) => ({
@@ -47,7 +48,7 @@ function render(schedules: ReturnType<typeof schedule>[], closed = false) {
             periods: [{ id: 7, year: 2026, month: 10, status: closed ? 'closed' : 'open' }],
           },
         },
-        createElement(Configuration),
+        createElement(MemoryRouter, null, createElement(Configuration)),
       ),
     ),
   );

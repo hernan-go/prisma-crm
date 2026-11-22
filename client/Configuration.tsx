@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import { usePeriod, periodName } from './App';
@@ -64,6 +65,14 @@ export function Configuration() {
         description="Catálogo global, facilitadores y oferta mensual independiente."
       />
       <ErrorBox error={catalog.error || teachers.error || offers.error} />
+      <section className="panel configuration-section">
+        <h2>Accesos digitales</h2>
+        <p>
+          Derechos educativos trimestrales e historial. Requiere sesión Google administrativa
+          individual.
+        </p>
+        <Link to="/configuracion/accesos-digitales">Administrar accesos digitales</Link>
+      </section>
       <section className="panel configuration-section period-offerings">
         <div className="section-heading">
           <h2>Actividades del período · {periodName(periods.find((p) => p.id === period))}</h2>

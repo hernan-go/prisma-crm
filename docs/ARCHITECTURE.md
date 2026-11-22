@@ -1,5 +1,14 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-2B.2 — consumidor administrativo local (22/11/2026)
+
+Router `/api/education-access` después del guard CRM, con revalidación individual
+institucional bajo los locks educativos de 2B.1. Lecturas sanitizadas, preview sin
+escrituras y comandos digitales/revocación idempotentes; UI en Configuración.
+Contrato temporal y esquema 023 conservados; recibos nuevos amplían su resultado
+sin cambiar los anteriores. [Diseño y límites](iterations/2026-11-pwa-2b2.md).
+Sin integración ni despliegue; los cortes siguientes son antecedentes.
+
 ## PWA-2B.1 — fundamento local (22/11/2026)
 
 Implementados servicios internos de vinculación identidad/persona, habilitación

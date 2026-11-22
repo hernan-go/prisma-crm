@@ -28,6 +28,7 @@ jobs:
           - tests/oidc-db.test.ts
           - tests/binding-b2-db.test.ts
           - tests/portal-db.test.ts
+          - tests/education-db.test.ts
     # Each matrix job gets a NEW service, schema, user, UUID and marker.
     # Matrix scheduling order is irrelevant: no suite consumes another's state.
     services:

@@ -1,5 +1,14 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-2B.2 — confirmación administrativa local (22/11/2026)
+
+La confirmación manual auditada del pago habilita el derecho digital; no constituye
+conciliación bancaria ni cobro contabilizado. El modelo mensual actual no se fuerza
+para representar compras digitales. Preview por día comercial y revisión esperada
+protegen la confirmación sin alterar el reloj DB ni la vigencia de 2B.1.
+[Implementación y límites aprobados](iterations/2026-11-pwa-2b2.md).
+Sin cambios productivos; los cortes siguientes conservan su historial.
+
 ## PWA-2B.1 — fundamento local (22/11/2026)
 
 Implementados servicios internos de vinculación identidad/persona, habilitación

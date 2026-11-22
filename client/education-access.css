@@ -1,0 +1,34 @@
+.education-access {
+  max-width: 1000px;
+}
+.education-access .panel {
+  margin-top: 1rem;
+}
+.education-access .education-person {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-top: 0.5rem;
+  white-space: normal;
+}
+.education-right {
+  border-top: 1px solid var(--border, #ddd);
+  padding: 1rem 0;
+  overflow-wrap: anywhere;
+}
+.education-right small,
+.education-right pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.education-access .actions {
+  flex-wrap: wrap;
+}
+.education-access dialog {
+  overflow-wrap: anywhere;
+}
+.education-access select,
+.education-access input,
+.education-access textarea {
+  max-width: 100%;
+}

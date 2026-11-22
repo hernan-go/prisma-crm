@@ -1,4 +1,5 @@
 import { eventSchemaReady } from './event-schema.js';
+import { educationAdmin } from './education-admin.js';
 import { createWeatherRouter } from './weather.js';
 import { specialEvents } from './special-events.js';
 import { readIncomeSources, readEventEconomy } from './event-economy.js';
@@ -32,6 +33,7 @@ import {
 } from './memberships.js';
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
+api.use('/education-access', educationAdmin);
 api.use('/special-events', specialEvents);
 api.use('/knowledge', knowledge);
 api.use('/knowledge/proposals', knowledgeProposals);

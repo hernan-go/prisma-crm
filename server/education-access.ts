@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { peopleTransaction, query, execute, type Connection } from './db.js';
 import { sessionDigest } from './identity.js';
 import { AppError } from './errors.js';
+import { commercialDate } from '../shared/education.js';
 
 const id = z.number().int().positive();
 const base = {
@@ -36,6 +37,10 @@ export const educationCommand = z.discriminatedUnion('kind', [
       activityId: id,
       verificationReference: z.string().trim().min(1).max(150),
       paymentVerified: z.literal(true),
+      expectedWindow: z
+        .object({ startDate: z.iso.date(), endDate: z.iso.date() })
+        .strict()
+        .optional(),
     })
     .strict(),
   z.object({ ...base, kind: z.literal('revoke'), rightId: z.string().uuid() }).strict(),
@@ -64,13 +69,13 @@ export function hasEducationalAccess(
   );
 }
 const clock = 'CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3))*1000 AS UNSIGNED)';
-async function lock(db: Connection) {
+export async function lockEducation(db: Connection) {
   await query('SELECT id FROM identity_institution WHERE id=1 FOR UPDATE', [], db);
   const [state] = await query('SELECT revision FROM education_state WHERE id=1 FOR UPDATE', [], db);
   if (!state) throw new AppError(503, 'Fundamento educativo no disponible.');
   return Number(state.revision);
 }
-async function authorize(db: Connection, token: string) {
+export async function authorizeEducation(db: Connection, token: string) {
   const hash = sessionDigest(token);
   if (!hash) throw new AppError(403, 'Requiere sesión administrativa individual.');
   const rows = await query(
@@ -90,8 +95,8 @@ async function authorize(db: Connection, token: string) {
 export async function mutateEducation(adminToken: string, raw: unknown) {
   const input = educationCommand.parse(raw);
   return peopleTransaction(async (db) => {
-    const revision = await lock(db);
-    const actor = await authorize(db, adminToken);
+    const revision = await lockEducation(db);
+    const actor = await authorizeEducation(db, adminToken);
     const request = JSON.stringify({ ...actor, input });
     const [previous] = await query(
       'SELECT request_json,result_json FROM education_operations WHERE operation_id=? FOR UPDATE',
@@ -168,12 +173,18 @@ export async function mutateEducation(adminToken: string, raw: unknown) {
       );
       if (duplicate.length) throw new AppError(409, 'Confirmación ya utilizada.');
       const [last] = await query(
-        'SELECT MAX(ends_at) last_end FROM education_digital_rights WHERE person_id=? AND activity_id=? AND revoked_at IS NULL',
+        'SELECT MAX(ends_at) last_end,COUNT(*) previous_count FROM education_digital_rights WHERE person_id=? AND activity_id=? AND revoked_at IS NULL',
         [input.personId, input.activityId],
         db,
       );
       const startsAt = Math.max(now, Number(last?.last_end ?? 0));
       const endsAt = quarterEnd(startsAt);
+      if (
+        input.expectedWindow &&
+        (commercialDate(startsAt) !== input.expectedWindow.startDate ||
+          commercialDate(endsAt) !== input.expectedWindow.endDate)
+      )
+        throw new AppError(409, 'Las fechas cambiaron. Revisá la vigencia antes de confirmar.');
       await execute(
         'INSERT INTO education_digital_rights(id,person_id,activity_id,starts_at,ends_at,verification_reference) VALUES (?,?,?,?,?,?)',
         [
@@ -186,10 +197,17 @@ export async function mutateEducation(adminToken: string, raw: unknown) {
         ],
         db,
       );
-      result = { ...result, rightId: input.operationId, startsAt, endsAt };
+      result = {
+        ...result,
+        action: Number(last?.previous_count ?? (last?.last_end ? 1 : 0)) > 0 ? 'renewal' : 'grant',
+        previousEnd: last?.last_end == null ? null : Number(last.last_end),
+        rightId: input.operationId,
+        startsAt,
+        endsAt,
+      };
     } else {
       const [right] = await query(
-        'SELECT id FROM education_digital_rights WHERE id=? FOR UPDATE',
+        'SELECT id,revoked_at FROM education_digital_rights WHERE id=? FOR UPDATE',
         [input.rightId],
         db,
       );
@@ -199,6 +217,12 @@ export async function mutateEducation(adminToken: string, raw: unknown) {
         [now, input.rightId],
         db,
       );
+      result = {
+        ...result,
+        action: 'revoke',
+        rightId: input.rightId,
+        revokedAt: right.revoked_at == null ? now : Number(right.revoked_at),
+      };
     }
     await execute('UPDATE education_state SET revision=? WHERE id=1', [revision + 1], db);
     await execute(
@@ -215,7 +239,7 @@ export async function educationalEntitlement(userId: string, activityId: number)
   z.string().uuid().parse(userId);
   id.parse(activityId);
   return peopleTransaction(async (db) => {
-    await lock(db);
+    await lockEducation(db);
     const links = await query(
       `SELECT l.person_id FROM education_person_links l
       JOIN identity_users u ON u.id=l.user_id AND u.status='enabled'
