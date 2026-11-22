@@ -1,6 +1,6 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
-## PWA-010–017 — requisitos aprobados, no implementados (22/11/2026)
+## PWA-010–019 — requisitos aprobados, no implementados (22/11/2026)
 
 El propietario aprobó recursos externos en Drive; acceso operativo de facilitadores
 con contraseña temporal y cambio obligatorio; publicación autónoma por actividad
@@ -13,6 +13,18 @@ implementación ni activación en esta revisión.
 [Matriz normativa PWA-2A.1 y cuestiones técnicas abiertas](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
 Las alternativas incompatibles de PWA-2A quedan como historial, no como decisiones
 pendientes. Este acuerdo no altera retrospectivamente los contratos de PWA-1B/1C.
+
+PWA-018: bienvenida e institucional animadas omitibles, sonido opcional sujeto a
+compatibilidad/accesibilidad, HOME de todas las disciplinas comerciales. Sin
+autorización, presentación y muestras expresamente habilitadas con opción de
+solicitar/comprar digital sin asistir ni ocupar cupo; catálogo sin recursos protegidos.
+PWA-019: dos fuentes independientes, presencial habilitada en CRM con renovación
+mensual O derecho digital comprado/habilitado durante tres meses. Pago no equivale
+a autorización; backend verifica fechas. Vencimiento selectivo conserva identidad
+y otras fuentes. Sin pago único indefinido ni renovación automática inicial.
+Promesa aprobada: «Tres meses de acceso al contenido educativo disponible y a las
+incorporaciones que se realicen durante ese período», sin cantidad mínima de materiales.
+[Reconciliación comercial y procedimiento propuesto](iterations/2026-11-pwa-2a.md#complemento-final-pwa-018019--home-y-fuentes-de-autorización).
 
 ## PWA-1B.1 — contrato aprobado, implementación local (17/11/2026)
 

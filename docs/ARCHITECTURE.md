@@ -2,16 +2,26 @@
 
 ## Diseño vigente PWA-2A.1 (22/11/2026)
 
-PWA-010–017 son requisitos funcionales aprobados, todavía no implementados.
+PWA-010–019 son requisitos funcionales aprobados, todavía no implementados.
 [Matriz, modelo, seguridad y bloques propuestos](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026)
 sustituyen el diseño educativo inicial de PWA-2A.
 
 - Contenido persistente: `activities → learning_lessons → learning_lesson_resources
 → learning_resources`. Clases independientes de ofertas mensuales, turnos y alumnos;
   las tablas learning son propuestas. Se reutiliza el catálogo de actividades.
-- CRM mantiene personas e inscripciones mensuales. Falta una vinculación vigente
-  persona/actividad que sobreviva al mes y admita baja explícita: proponerla como
-  relación canónica del CRM, sin otro padrón de alumnos ni copia de enrollments.
+- CRM mantiene personas e inscripciones mensuales. La fuente presencial habilitada
+  y renovada mensualmente se representa en el vínculo CRM persona/actividad;
+  coexiste con derechos digitales comprados/habilitados, de tres meses y fechas
+  propias. Autorizar por al menos una fuente vigente, sin duplicar inscripciones.
+  La baja/vencimiento de una fuente no afecta otra ni elimina identidad.
+- HOME comercial muestra todas las disciplinas disponibles, con bienvenida e
+  institucional animadas omitibles. Sin permiso: presentación y muestras explícitas;
+  con permiso: todas las clases publicadas. Catálogo público y datos protegidos
+  tienen proyecciones distintas; published no significa muestra pública.
+- Compra digital sin cupo/asistencia ni matrícula mensual ficticia. Proponer orden,
+  confirmación de pago y derecho temporal separados: pago no habilita por sí solo.
+  El guard verifica fechas en backend sin depender de cron. No hay renovación
+  automática ni acceso indefinido. [Complemento PWA-018/019](iterations/2026-11-pwa-2a.md#complemento-final-pwa-018019--home-y-fuentes-de-autorización).
 - Facilitadores: asignación educativa explícita a actividades y permisos propios,
   sin privilegios CRM ni derivación desde `schedule_instructors` o el campo legado.
   Pueden publicar; administración puede bloquear sin que el facilitador lo revierta.

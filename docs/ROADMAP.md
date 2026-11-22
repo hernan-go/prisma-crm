@@ -2,10 +2,18 @@
 
 ## Prioridad vigente — PWA-2A.1 y propuesta PWA-2B (22/11/2026)
 
-PWA-010–017 aprobadas; [reconciliación documental vigente](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
+PWA-010–019 aprobadas; [reconciliación documental vigente](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
 Contenido persistente por actividad, Drive externo, publicación docente autónoma,
 gestión centralizada de vínculos y credenciales diferenciadas. No se reabren estas
 decisiones. PWA-009 conserva detalles técnicos/rutas propuestos, sin implementar.
+
+[Complemento HOME y comercialización](iterations/2026-11-pwa-2a.md#complemento-final-pwa-018019--home-y-fuentes-de-autorización):
+B2 evalúa fuente presencial O digital vigente; B3 incorpora confirmación segura de
+compra/habilitación trimestral sin matrículas ficticias; B4 separa muestras públicas
+de contenido protegido; B6 muestra todas las disciplinas con ramas de acceso o
+presentación comercial y animaciones omitibles. Sin renovación automática ni
+promesa de volumen de publicaciones. La integración contable requiere contrato
+propio: payments/cuentas mensuales actuales no representan un derecho digital.
 
 Orden propuesto para PWA-2B: (1) fundamentos de identidad y aislamiento del piloto;
 (2) vinculación vigente y autorización educativa; (3) administración CRM y acceso

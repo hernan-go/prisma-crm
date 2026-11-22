@@ -2,12 +2,20 @@
 
 ## PWA-2A.1 — reconciliación funcional y arquitectónica (22/11/2026)
 
-PWA-010 a PWA-017 aprobadas por el propietario: contenido persistente por actividad,
+PWA-010 a PWA-019 aprobadas por el propietario: contenido persistente por actividad,
 recursos externos en Drive, publicación autónoma de facilitadores con supervisión,
 vinculación vigente administrada en CRM y acceso a todas las clases publicadas.
 Facilitadores operativos: correo/contraseña temporal con cambio obligatorio;
 participantes: activación de un uso y passkeys, condicionadas a seguridad,
 compatibilidad, recuperación y alternativa accesible. Google administrativo intacto.
+
+Complemento aprobado: HOME de todas las disciplinas comercialmente disponibles,
+animaciones omitibles y muestras comerciales explícitas. Clases autorizadas por
+vinculación presencial CRM habilitada O derecho digital trimestral comprado y
+habilitado administrativamente, con verificación de fechas backend. Fuentes
+independientes: vencimiento digital no elimina identidad ni otros accesos. Sin
+matrícula ficticia, cupo presencial, acceso indefinido o renovación automática.
+[Modelo comercial y ajustes de PWA-2B](iterations/2026-11-pwa-2a.md#complemento-final-pwa-018019--home-y-fuentes-de-autorización).
 
 **Reconciliación exclusivamente documental; ninguna de esas extensiones está
 implementada.** [Diseño vigente, matriz y plan PWA-2B](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
