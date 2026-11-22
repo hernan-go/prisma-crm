@@ -1,5 +1,17 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-2B.1 — fundamento local (22/11/2026)
+
+Implementados servicios internos de vinculación identidad/persona, habilitación
+presencial explícita y derechos digitales trimestrales independientes, con
+autorización administrativa individual, recibos idempotentes y evaluación OR.
+Nueva 023 probada exclusivamente en MySQL descartable; sin integración, despliegue
+ni aplicación en bases conservadas. Portal deshabilitado y piloto intacto.
+Semántica temporal: UTC-03:00 fijo, tres meses calendario ajustados a fin de mes,
+intervalo [inicio,fin); renovación desde max(ahora, fin no revocado).
+[Implementación, evidencia y límites](iterations/2026-11-pwa-2b1.md).
+PWA-2B.2 requiere autorización nueva; los cortes siguientes conservan su historial.
+
 ## PWA-010–019 — requisitos aprobados, no implementados (22/11/2026)
 
 El propietario aprobó recursos externos en Drive; acceso operativo de facilitadores

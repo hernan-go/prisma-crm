@@ -1,5 +1,17 @@
 # PRISMA CRM — Roadmap
 
+## PWA-2B.1 — fundamento local (22/11/2026)
+
+Implementados servicios internos de vinculación identidad/persona, habilitación
+presencial explícita y derechos digitales trimestrales independientes, con
+autorización administrativa individual, recibos idempotentes y evaluación OR.
+Nueva 023 probada exclusivamente en MySQL descartable; sin integración, despliegue
+ni aplicación en bases conservadas. Portal deshabilitado y piloto intacto.
+Semántica temporal: UTC-03:00 fijo, tres meses calendario ajustados a fin de mes,
+intervalo [inicio,fin); renovación desde max(ahora, fin no revocado).
+[Implementación, evidencia y límites](iterations/2026-11-pwa-2b1.md).
+PWA-2B.2 requiere autorización nueva; los cortes siguientes conservan su historial.
+
 ## Prioridad vigente — PWA-2A.1 y propuesta PWA-2B (22/11/2026)
 
 PWA-010–019 aprobadas; [reconciliación documental vigente](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).

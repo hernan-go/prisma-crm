@@ -32,6 +32,19 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '023.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='022.sql'",
+        );
+        if (!baseline.length) throw new Error('023.sql requiere 022.sql registrada.');
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('education_state','education_person_links','education_presential','education_digital_rights','education_operations')",
+        );
+        if (partial.length)
+          throw new Error(
+            '023.sql detenida: esquema educativo parcial; inspeccionar antes de recuperar.',
+          );
+      }
       if (name === '022.sql') await preflight022(c);
       if (name === '021.sql') {
         const [baseline] = await c.execute<RowDataPacket[]>(
