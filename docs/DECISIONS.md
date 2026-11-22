@@ -1,5 +1,19 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-010–017 — requisitos aprobados, no implementados (22/11/2026)
+
+El propietario aprobó recursos externos en Drive; acceso operativo de facilitadores
+con contraseña temporal y cambio obligatorio; publicación autónoma por actividad
+asignada con bloqueo administrativo; clases persistentes por actividad; acceso a
+todas las publicadas mientras exista vinculación vigente; baja selectiva inmediata;
+gestión de participantes exclusivamente por Hernán y Jesica en CRM; activación de
+un uso y passkeys para participantes, con recuperación y alternativa accesible.
+Google administrativo y piloto sellado no se modifican. No hay autorización de
+implementación ni activación en esta revisión.
+[Matriz normativa PWA-2A.1 y cuestiones técnicas abiertas](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
+Las alternativas incompatibles de PWA-2A quedan como historial, no como decisiones
+pendientes. Este acuerdo no altera retrospectivamente los contratos de PWA-1B/1C.
+
 ## PWA-1B.1 — contrato aprobado, implementación local (17/11/2026)
 
 Se adopta el preflight PWA-1B.0 y sus cuatro observaciones de cierre, según paquete

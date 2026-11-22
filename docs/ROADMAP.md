@@ -1,6 +1,26 @@
 # PRISMA CRM — Roadmap
 
-## Prioridad vigente — PWA-2A y preparación de PWA-2B (21/11/2026)
+## Prioridad vigente — PWA-2A.1 y propuesta PWA-2B (22/11/2026)
+
+PWA-010–017 aprobadas; [reconciliación documental vigente](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
+Contenido persistente por actividad, Drive externo, publicación docente autónoma,
+gestión centralizada de vínculos y credenciales diferenciadas. No se reabren estas
+decisiones. PWA-009 conserva detalles técnicos/rutas propuestos, sin implementar.
+
+Orden propuesto para PWA-2B: (1) fundamentos de identidad y aislamiento del piloto;
+(2) vinculación vigente y autorización educativa; (3) administración CRM y acceso
+de facilitadores; (4) clases, recursos y moderación; (5) activación/passkeys y
+recuperación de participantes; (6) experiencia responsive y aceptación real +50.
+Probar compatibilidad WebAuthn en un corte temprano aislado antes de comprometer
+la entrega, sin depender de la publicación de contenido. Cada bloque tiene
+dependencias y criterios en el informe. **No iniciar sin autorización posterior.**
+
+022 y sellado siguen completados; portal deshabilitado, admisiones cerradas.
+Activar el piloto institucional es una operación separada; no habilita terceros.
+No quedan como requisitos del MVP almacenamiento binario en SiteGround, Google
+obligatorio para participantes ni edición exclusivamente administrativa.
+
+## Antecedente — PWA-2A y preparación de PWA-2B (21/11/2026)
 
 022, despliegue y sellado institucional completados según el propietario;
 portal deshabilitado y admisiones cerradas. [Estado acreditado](PROJECT_STATE.md).

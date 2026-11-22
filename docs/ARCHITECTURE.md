@@ -1,13 +1,45 @@
 # PRISMA CRM — Arquitectura
 
-## Vigencia PWA-2A (21/11/2026)
+## Diseño vigente PWA-2A.1 (22/11/2026)
+
+PWA-010–017 son requisitos funcionales aprobados, todavía no implementados.
+[Matriz, modelo, seguridad y bloques propuestos](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026)
+sustituyen el diseño educativo inicial de PWA-2A.
+
+- Contenido persistente: `activities → learning_lessons → learning_lesson_resources
+→ learning_resources`. Clases independientes de ofertas mensuales, turnos y alumnos;
+  las tablas learning son propuestas. Se reutiliza el catálogo de actividades.
+- CRM mantiene personas e inscripciones mensuales. Falta una vinculación vigente
+  persona/actividad que sobreviva al mes y admita baja explícita: proponerla como
+  relación canónica del CRM, sin otro padrón de alumnos ni copia de enrollments.
+- Facilitadores: asignación educativa explícita a actividades y permisos propios,
+  sin privilegios CRM ni derivación desde `schedule_instructors` o el campo legado.
+  Pueden publicar; administración puede bloquear sin que el facilitador lo revierta.
+- Credenciales separadas por propósito: Google administrativo existente;
+  contraseña individual para facilitadores operativos; passkeys para participantes.
+  Reutilizar identidades, diseñar sesiones educativas diferenciadas. El guard
+  actual Google/instructor no admite estas autenticaciones ni terceros.
+- Preservar `identity_instructor_links` y 021: exactamente dos cupos sellados.
+  Nueva política educativa inicialmente apagada y extensiones aditivas futuras;
+  nunca abrir `admissions_open` ni agregar terceros al piloto.
+- Binarios educativos en Drive de facilitadores; PRISMA almacena URL/metadatos.
+  La revocación retira acceso desde PRISMA, no invalida URLs externas conocidas.
+  Juegos del propietario: recomendar módulos revisados en este repositorio,
+  sin ejecutar código cargado por facilitadores ni aprobar un repositorio nuevo.
+
+Los cierres de períodos siguen bloqueando escrituras de datos mensuales. Las
+clases globales no pertenecen a un período; su edición no reescribe inscripciones
+ni datos históricos mensuales. No reutilizar reglas de período como bloqueo educativo.
+La propuesta necesita implementación y pruebas autorizadas; no cambia contratos vigentes.
+
+## Antecedente de vigencia PWA-2A (21/11/2026)
 
 PWA-1C y corrección 022 integradas/desplegadas; sellado real completado según el
 propietario, con portal apagado y admisiones cerradas. Los estados locales y
 pendientes de publicación de los cortes inferiores son históricos.
 [Estado productivo acreditado](PROJECT_STATE.md).
 
-La [arquitectura educativa propuesta](iterations/2026-11-pwa-2a.md#c--arquitectura-propuesta-del-mvp-educativo)
+La [arquitectura educativa inicial, ahora superada](iterations/2026-11-pwa-2a.md#c--arquitectura-propuesta-del-mvp-educativo)
 no modifica todavía el modelo vigente. El guard actual exige un vínculo de
 instructor del piloto; el rol `participant` por sí solo no habilita acceso ni
 vincula una identidad a `people`. No extender los dos cupos ni abrir admisiones

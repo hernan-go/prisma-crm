@@ -1,5 +1,25 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2A.1 — reconciliación funcional y arquitectónica (22/11/2026)
+
+PWA-010 a PWA-017 aprobadas por el propietario: contenido persistente por actividad,
+recursos externos en Drive, publicación autónoma de facilitadores con supervisión,
+vinculación vigente administrada en CRM y acceso a todas las clases publicadas.
+Facilitadores operativos: correo/contraseña temporal con cambio obligatorio;
+participantes: activación de un uso y passkeys, condicionadas a seguridad,
+compatibilidad, recuperación y alternativa accesible. Google administrativo intacto.
+
+**Reconciliación exclusivamente documental; ninguna de esas extensiones está
+implementada.** [Diseño vigente, matriz y plan PWA-2B](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
+Quedan superadas las propuestas educativas anteriores de clases por oferta/turno,
+acceso por inscripción histórica, Google para participantes, edición solo
+administrativa y archivos privados en SiteGround. El contenido no se duplica por
+mes, persona ni facilitador. La implementación PWA-2B requiere autorización posterior.
+
+Producción conserva el estado acreditado del corte siguiente: 022 y sellado
+completados, portal deshabilitado y admisiones cerradas. No hubo nueva consulta
+ni operación productiva. El piloto de dos vínculos permanece inmutable.
+
 ## PWA-2A — reconciliación y diseño para revisión (21/11/2026)
 
 **Estado productivo confirmado por el propietario:** 022 aplicada/verificada y
