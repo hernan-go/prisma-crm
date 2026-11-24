@@ -1,5 +1,16 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-3A.5 — arquitectura recreativa acordada (24/11/2026)
+
+El [Multiple Choice recreativo](RECREATIONAL_QUIZ.md) se especifica con banco
+Markdown transformado y validado en build, carga estática diferida y selección,
+mezcla/corrección en navegador. Respuestas técnicamente inspeccionables aceptadas
+expresamente; sin MySQL por respuesta ni persistencia individual de resultados.
+Esta decisión acota las brechas de cuestionarios del corte 3A.4 para el juego
+recreativo, sin exigir tablas ni endpoints de evaluación para él. Mantiene
+autenticación, autorización por actividad y separación de recursos privados.
+Arquitectura aprobada, no implementada; [decisión y límites](DECISIONS.md).
+
 ## PWA-3A.4 — contraste estructural del MVP educativo (24/11/2026)
 
 Auditoría de solo lectura del candidato `746f1ce`; [estado y prioridades](PROJECT_STATE.md) ·

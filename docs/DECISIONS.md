@@ -1,5 +1,23 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-3A.5 — Multiple Choice recreativo aprobado (24/11/2026)
+
+Se aprueba selección, mezcla y corrección íntegramente en navegador, con banco
+Markdown validado y transformado en build, distribuido como recurso estático
+preferentemente separado del bundle inicial. Se acepta deliberadamente que el
+banco y las respuestas correctas sean inspeccionables: el juego recreativo no
+otorga premios, certificados ni beneficios dependientes de resultados verificables.
+Se priorizan respuesta inmediata, menor carga HTTP/MySQL y mantenimiento sencillo.
+Sin persistencia individual de puntajes, intentos o resultados en el MVP inicial.
+Esto resuelve para este juego la alternativa abierta de 3A.4; futuras evaluaciones
+formales requieren revisar corrección, seguridad y persistencia.
+
+Autenticación, autorización por actividad, datos personales y materiales privados
+conservan sus requisitos. [Especificación funcional y técnica](RECREATIONAL_QUIZ.md)
+como fuente de detalle. Decisiones aprobadas, todavía no implementadas; no se
+crea banco ni se modifica 023. La planificación de clases y publicación docente
+permanece vigente.
+
 ## PWA-3A.4 — prioridad educativa y decisiones abiertas (24/11/2026)
 
 El propietario prioriza la primera entrega educativa utilizable por participantes:
