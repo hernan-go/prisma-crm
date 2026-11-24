@@ -5,6 +5,88 @@ escritura administrativa, migración, instancia MySQL nueva, integración o desp
 Fuente operativa para ejecutar una migración: [PRODUCTION_MIGRATIONS](../PRODUCTION_MIGRATIONS.md).
 Este informe fija condiciones específicas de 023, sin sustituir ese procedimiento.
 
+## PWA-3A.3 — cierre productivo informado de 023 (24/11/2026)
+
+**023.sql APLICADA, VERIFICADA Y REGISTRADA EN PRODUCCIÓN**, según ejecución
+manual y postflight reportados por el operador mediante phpMyAdmin de SiteGround.
+Fuente: sesión supervisada y capturas aportadas por el operador. Codex documenta
+esa evidencia; no se conectó a producción, ejecutó SQL ni realizó una verificación
+productiva independiente para este cierre.
+
+| Control              | Resultado informado por el operador                                                                                                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Destino e identidad  | Base y servidor productivos identificados privadamente; MySQL 8.4, identidad corroborada previamente mediante `server_uuid`. Identificadores internos conservados fuera del repositorio conforme al manual operativo.                                                    |
+| Respaldo previo      | Manual `PRISMA_PRE_PWA_023_2026-11-24`, creado a las 12:57 según panel. Restauración no ensayada; riesgo residual aceptado expresamente por el responsable. No equivale a prueba de recuperabilidad ni cubre operaciones posteriores.                                    |
+| Artefacto            | Seis sentencias originales de `server/migrations/023.sql`, ejecutadas individualmente y sin errores. SHA-256 local verificado: `be94c2ddfec2991b9a52698ecf9a0674b9ebaecc6ee7819f9404ec9e1502c502`. No se infiere un cotejo independiente de Codex de la copia ejecutada. |
+| Estructura           | Cinco tablas nuevas verificadas mediante SHOW CREATE TABLE; 5 PRIMARY KEY, 2 UNIQUE, 7 FOREIGN KEY y 7 CHECK, todos los CHECK ENFORCED.                                                                                                                                  |
+| Datos iniciales      | `education_state` contiene únicamente `(id=1, revision=0)`; `education_person_links`, `education_presential`, `education_digital_rights` y `education_operations` contienen cero filas.                                                                                  |
+| Política portal      | `portal_access_state`: `id=1`, `enabled=0`, `pilot_sealed=1`, `admissions_open=0`, `revision=1`, `security_seq=1`, `emergency_epoch=0`. Portal cerrado y sin admisiones nuevas.                                                                                          |
+| Registro e historial | Registro manual de `023.sql` exitoso; historial final verificado de 23 registros, 001.sql–023.sql. `applied_at` de 023: `2026-11-24 20:31:32`, timestamp presentado por MySQL/phpMyAdmin, sin asumir zona horaria ni convertirlo a hora local.                           |
+
+### Alcance del cierre y pendientes conservados
+
+La migración queda cerrada documentalmente; no repetir DDL ni registro. Las
+secciones inferiores, incluido el checklist, sus autorizaciones y el estado final
+de 3A.2, conservan el corte anterior a esta ejecución como **antecedente histórico**,
+no como operaciones pendientes de 023. La introducción describe la preparación
+original; este apartado actualiza exclusivamente el cierre productivo informado.
+No se deduce de él el estado de 023 en ninguna base local conservada.
+
+Se preservan la aceptación sintética con observaciones, la mejora de reintento
+pendiente de evaluación UX, la accesibilidad integral y la aceptación autenticada
+real pendientes de 3A.2. La evidencia de migración no resuelve esos límites.
+El riesgo de restauración no ensayada permanece explícito aun después de su
+aceptación; cualquier restauración requiere plan y autorización propios.
+
+Esta operación no integra ni despliega el código PWA. Siguen pendientes la revisión
+del SHA exacto y su validación pertinente, autorización de integración y push manual
+del propietario, despliegue y smoke posterior. La CI #102 conserva su alcance
+histórico y no acredita los cambios documentales sin commit. Activación de la PWA,
+apertura de admisiones y mutaciones reales requieren decisiones independientes;
+no quedan autorizadas por la aplicación de 023.
+
+Baseline local de este cierre: `codex/pwa-2b3-participant-binding`, HEAD
+`fad690dfeecc42e5dd80d76aa38d0077de959ff4`, con modificaciones previas sin commit
+en PROJECT_STATE, WORKFLOW y este informe. Se preservan; 3A.3 añade únicamente
+documentación a PROJECT_STATE y este informe. Sin cambios de código, SQL,
+infraestructura, ramas, commits, integración o despliegue realizados por Codex.
+
+## PWA-3A.2 — inspección local y cierre PWA-3A.1 (24/11/2026)
+
+Trabajo exclusivamente documental: no se repiten pruebas ni auditorías cerradas.
+Rama local `codex/pwa-2b3-participant-binding`, HEAD inicial
+`fad690dfeecc42e5dd80d76aa38d0077de959ff4`, árbol e índice limpios.
+Main local `20777b258b2305d26f4a14807bf91911897fc66c`: candidata diez commits
+por delante y cero por detrás. El único commit posterior a `5a47432` modifica
+documentación (incluido README), sin código funcional ni SQL.
+Las referencias locales de seguimiento apuntan a main `20777b2` y candidata
+`5a47432`; no se hizo fetch ni consulta nueva a GitHub. No acreditan el estado
+remoto actual ni el SHA desplegado. El baseline inferior conserva su fecha original.
+
+### Aceptación visual sintética y procedencia
+
+Fixture `tests/browser/education-access.html`, datos en memoria, sin Express ni
+MySQL. Procedimiento de navegador: [WORKFLOW §7, protocolo C](../WORKFLOW.md#c-iniciar-y-verificar-el-servidor).
+
+| Comprobación                                                  | Resultado y fuente                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Navegador integrado de Codex                                  | Operativo: Codex seleccionó escenarios, escribió consultas y pulsó botones reales en `http://127.0.0.1:5173/tests/browser/education-access.html`.                                                                                                                                                                                                               |
+| 403                                                           | Aprobado en revisión visual manual, informado por el propietario para este cierre; no repetido por Codex.                                                                                                                                                                                                                                                       |
+| Vinculación, renovación, revocación y habilitación presencial | Aceptación visual sintética favorable informada por el propietario; no repetida en 3A.2.                                                                                                                                                                                                                                                                        |
+| Zoom 200 %                                                    | Inspección visual manual favorable informada por el propietario, limitada al área observada; no acredita toda la interfaz.                                                                                                                                                                                                                                      |
+| 409 educativo                                                 | Aprobado según QA interactiva de Codex en 3A.1: retiro presencial de Yoga rechazado con «Revisión educativa obsoleta» e instrucción de cerrar, actualizar y revisar. Confirmación bloqueada, revisión 1, fuente habilitada e historial vacío; sin mutación indebida ni éxito falso.                                                                             |
+| Recuperación del 409                                          | Aprobada por Codex: cerrar, volver a Normal, actualizar y revisar una nueva operación tras el rechazo definitivo. Revisión 2, fuente deshabilitada y único recibo `ce97215d-9289-424f-87dc-8072208da490`, resultado `presential`, `enabled:false`. No es reemisión de una operación incierta.                                                                   |
+| 503                                                           | Aprobado con observación por Codex: consulta `PA`, mensaje «Servicio temporalmente no disponible», interfaz estable. Nueva consulta bajo escenario disponible recuperó resultados; también se comprobó borrar y reescribir `PA2`.                                                                                                                               |
+| Cambio de escenario                                           | Observación reproducible del fixture: el mensaje 503 persiste al seleccionar Normal/409 hasta una nueva consulta; el selector solo cambia respuestas futuras, no limpia consultas. El error desaparece después de la consulta exitosa. Datos/persona seleccionada conservados intencionalmente en memoria. El error 409 no reapareció en la nueva confirmación. |
+| Reintento explícito en búsqueda                               | No existe botón específico en lo observado; mejora UX pendiente de evaluación, sin corrección autorizada.                                                                                                                                                                                                                                                       |
+| Evidencias de Codex                                           | Capturas de 503, rechazo 409, recibo y búsqueda recuperada incluidas en la conversación 3A.1, sin copia añadida al repositorio. Consola capturada sin errores ni advertencias.                                                                                                                                                                                  |
+| Límites                                                       | Accesibilidad integral y autenticación real no verificadas. No acredita Google, MySQL, administración real, eliminación de actividad referenciada ni validación productiva.                                                                                                                                                                                     |
+
+**Cierre PWA-3A.1:** aceptación sintética favorable con las observaciones del
+fixture y de UX anteriores. La evidencia manual informada y la interacción de
+Codex son distintas de los resultados automatizados históricos de #102 descritos
+abajo; no se ejecutaron tests nuevos ni se atribuye esa CI a `fad690d`.
+
 ## Baseline y evidencia
 
 - Rama local y GitHub: `codex/pwa-2b3-participant-binding`,
@@ -42,13 +124,11 @@ atribuir #102 al commit posterior.
 | Eliminación de actividad referenciada                         | Nueve tests sin DB en verify y seis casos MySQL nuevos en `education-db` aprobaron; FK RESTRICT y rollback conservan filas.                          | Confirmar en UI el 409 claro y la opción de archivar, además de eliminación legítima, sin usar datos reales para provocar el conflicto.                                                                       |
 | CRM existente y piloto                                        | Siete suites MySQL históricas de la matriz aprobaron con el nuevo SHA; no hay cambio de política del piloto.                                         | Smoke posterior al despliegue de login Google administrativo, personas, actividades, inscripciones, pagos y portal cerrado; no inferirlo de CI.                                                               |
 
-**Sintético sin DB ahora:** reutilizar el fixture versionado
-`tests/browser/education-access.html` para búsqueda, homónimos, estados,
-confirmaciones, errores 403/409/503, recibos y pantallas responsive. Revisar
-teclado completo, orden y retorno de foco en modal, lector de pantalla, zoom
-200 %, contraste, nombres y mensajes accesibles, y movimiento reducido.
-Los informes 2B.2/2B.3 ya acreditan inspección visual básica; no repetirla por
-rutina ni presentarla como accesibilidad completa. El fixture no prueba
+**Sintético sin DB:** los recorridos y errores cerrados en 3A.1 están registrados
+arriba y no deben repetirse por rutina. Quedan sin acreditar accesibilidad
+integral (teclado completo, foco/modal, lector de pantalla, contraste, mensajes
+accesibles y movimiento reducido) y cobertura completa de zoom/responsive.
+La inspección favorable a 200 % no resuelve esos pendientes. El fixture no prueba
 autenticación Google, MySQL ni la pantalla integrada real de Inscriptos Período.
 
 **Entorno aislado nuevo, solo con autorización propia:** recorrido HTTP/UI
@@ -95,35 +175,110 @@ No usar `npm run db:migrate` de forma automática: recorre _todas_ las migracion
 pendientes, no ofrece `--through` de CLI y no confirma el destino. Si el
 inventario muestra otra migración pendiente, detener el plan de 023 aislada.
 
-1. Acreditar privadamente la base y el servidor de producción. En la misma
-   conexión/contexto que luego escribiría, cotejar `@@hostname`, `@@port`,
-   `@@server_uuid`, `DATABASE()` y el esquema autorizado como exige
-   PRODUCTION_MIGRATIONS §E. Confirmar UUID por canal confiable independiente;
-   no publicar identificadores ni credenciales. Repetir antes de **cada**
-   sentencia de escritura y después de toda reconexión o cambio de contexto.
-2. Inventariar `schema_migrations` con nombre/fecha: exactamente una secuencia
-   001–022 coherente y ninguna 023 ni posterior, duplicidad lógica o nombre
-   extraño. Verificar DDL efectivo de padres `identity_users`, `people` y
-   `activities` (`SHOW CREATE TABLE` cualificado), tipos y motor compatibles con
-   las FK de 023; el registro 022 por sí solo no acredita DDL. Confirmar también
-   continuidad de `portal_access_state` e `identity_instructor_links` por
-   metadatos y comprobaciones mínimas privadas, sin exportar filas sensibles.
-3. En `information_schema.TABLES`, filtrando `TABLE_SCHEMA` por el esquema
-   **autorizado**, confirmar ausencia de las cinco tablas educativas. Si aparece
-   alguna tabla con 023 sin registrar, 023 registrada sin cinco tablas íntegras,
-   historial incoherente o resultado vacío inexplicable, detener. No ejecutar
-   el runner ni usar `IF NOT EXISTS` para disimular un parcial.
-4. Cotejar el SQL/huella y revisar en la copia exacta tipos, colaciones,
-   CHECK, UNIQUE, FK y orden. Confirmar versión, permisos DDL/INSERT/registro,
-   capacidad de phpMyAdmin para ejecutar cada sentencia y conservar resultado.
-   No pegar un archivo entero a ciegas ni usar una copia de otro commit.
-5. Preparar un respaldo **nuevo pre-023** de DB completa y componentes
-   necesarios para recuperar el servicio; verificar inclusión, hora, integridad,
-   retención, acceso y restauración viable. El respaldo pre-022 no representa el
-   estado actual. Registrar si hubo ensayo de restauración: si no, declarar y
-   aceptar expresamente el riesgo o detener antes de autorizar escritura.
-   Acordar control de escrituras concurrentes y actividad posterior al respaldo,
-   ventana, responsable, escalamiento y criterio de recuperación.
+### Checklist preparado en 3A.2 — NO EJECUTADO
+
+No se abrió ninguna conexión a bases reales, ni siquiera para SELECT. Todas las
+lecturas siguientes requieren autorización posterior específica de preflight,
+destino y operador. Aplicar [PRODUCTION_MIGRATIONS §E](../PRODUCTION_MIGRATIONS.md#e-seguridad-fallos-y-recuperación)
+para reemplazar el marcador en la copia privada y comprobar el contexto; conservar
+allí resultados, fecha y responsable, sin publicar UUID, grants ni datos sensibles.
+
+| Verificar / motivo                                                    | Evidencia esperada                                                                                                                                                                                                                                                                         | Detenerse si                                                                                                                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Archivo/alcance: evitar SQL de otra revisión                          | SHA-256 local de 023 recalculado en 3A.2: `be94c2ddfec2991b9a52698ecf9a0674b9ebaecc6ee7819f9404ec9e1502c502`, coincide con el valor anterior. Último archivo local: 023. Cotejar también la copia exacta del operador.                                                                     | Huella distinta, otra migración pendiente o alcance diferente.                                                                                                                  |
+| Identidad y contexto: evitar otra instancia/base                      | Lectura A coincidente con destino autorizado y UUID acreditado por canal independiente. `DATABASE()` debe coincidir; repetir tras reconexión/cambio y antes de cada escritura futura.                                                                                                      | NULL, marcador, host/puerto/UUID/esquema distinto o referencia independiente ausente.                                                                                           |
+| Historial y parciales: impedir replay o aplicación incompleta         | B: secuencia exacta 001.sql–022.sql, 22 filas sin duplicidades lógicas ni posteriores; tabla de historial y padres visibles; cero tablas educativas.                                                                                                                                       | Historial faltante/incoherente, 023 ya registrada, cualquier tabla educativa presente o vacío inexplicable. Si ya está aplicada, conciliar sin reaplicarla.                     |
+| Dependencias e integridad: siete FK viables                           | C: padres InnoDB, PK `people.id`/`activities.id` INT UNSIGNED e `identity_users.id` CHAR(36) ASCII/ascii_bin; DDL real compatible. Auditoría con CHECK UUID estándar de 022 ENFORCED.                                                                                                      | Tipo, signo, colación, motor, clave o CHECK incompatible; no inferir DDL desde el registro.                                                                                     |
+| Estado del piloto: conservar política existente                       | D: una fila id=1, enabled=0, admissions_open=0, pilot_sealed=1; referencia informada revision=1/security_seq=1/emergency_epoch=0 y dos vínculos. Cotejar privadamente los pares institucionales ya acreditados, sin exportarlos.                                                           | Diferencia no explicada/autorizada frente al cierre; detener y conciliar, sin repetir sellado.                                                                                  |
+| Capacidad, permisos y concurrencia: evitar fallo parcial/bloqueo      | A/C y revisión privada de permisos efectivos: versión compatible, CREATE/REFERENCES/INSERT y lecturas necesarias disponibles; capacidad de almacenamiento confirmada por hosting, ventana, operador único, ausencia de otro migrador y esperas de metadatos relevantes.                    | Permisos/capacidad desconocidos, espera o concurrencia sin control. No probar permisos mediante escrituras ni cancelar sesiones ajenas.                                         |
+| Respaldo y recuperación: conservar servicio y operaciones posteriores | Nuevo pre-023 completo, DB incluida, fecha, integridad, retención, acceso, responsable y tiempos. Evidencia de restauración en destino aislado autorizado o límite explícito con decisión del propietario sobre riesgo residual.                                                           | Sin evidencia de recuperación ni decisión explícita del límite. El checksum, un selector de restauración o el respaldo pre-022 no bastan; no declarar recuperabilidad ensayada. |
+| Orden de publicación: evitar rutas nuevas sin esquema                 | Confirmar SHA/configuración activa mediante revisión posterior autorizada; 023 aceptada antes del push candidato a main. Recuperación de código por revert y nuevo despliegue según cierre 022, previa autorización y compatibilidad; no presumir reactivación directa de builds antiguos. | SHA/configuración inciertos, migración automática externa no prevista, candidato desplegado antes de 023 o recuperación indefinida.                                             |
+
+Las verificaciones de capacidad, backup, permisos y concurrencia necesitan
+evidencia operativa adicional: las consultas de abajo por sí solas no las acreditan.
+No crear un respaldo ni ensayar restauración dentro de este preflight de lectura.
+
+**A. Identidad y versión.** La lectura de identidad es la de §E; versión y defaults
+complementan el cotejo del esquema real, sin cambiar ninguna configuración.
+
+```sql
+SELECT @@hostname AS server_host, @@port AS server_port,
+       @@server_uuid AS server_uuid, DATABASE() AS active_schema,
+       'REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO' AS authorized_schema;
+SELECT VERSION() AS server_version,
+       @@default_storage_engine AS default_engine,
+       @@character_set_database AS database_charset,
+       @@collation_database AS database_collation;
+```
+
+**B. Inventario antes de consultar tablas.** Esperar siete tablas de control/padres
+y ninguna de las cinco educativas. Si faltan tablas conocidas o visibilidad de
+metadatos, detenerse; solo después consultar el historial cualificado.
+
+```sql
+SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_COLLATION
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO'
+  AND TABLE_NAME IN ('schema_migrations', 'identity_users', 'people', 'activities',
+    'identity_audit_events', 'portal_access_state', 'identity_instructor_links',
+    'education_state', 'education_person_links', 'education_presential',
+    'education_digital_rights', 'education_operations')
+ORDER BY TABLE_NAME;
+
+SELECT name, applied_at
+FROM `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`schema_migrations`
+ORDER BY name;
+```
+
+**C. Estructura efectiva.** Comparar con los originales locales 001, 017, 021 y
+022 y sus modificaciones aplicadas, sin reejecutarlos. Los valores por defecto
+del servidor no sustituyen los tipos/colaciones de las columnas referenciadas.
+
+```sql
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`identity_users`;
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`people`;
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`activities`;
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`identity_audit_events`;
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`portal_access_state`;
+SHOW CREATE TABLE `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`identity_instructor_links`;
+
+SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE, ENFORCED
+FROM information_schema.TABLE_CONSTRAINTS
+WHERE CONSTRAINT_SCHEMA = 'REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO'
+  AND TABLE_NAME = 'identity_audit_events'
+  AND CONSTRAINT_TYPE = 'CHECK'
+ORDER BY CONSTRAINT_NAME;
+```
+
+023 incorpora PK/UNIQUE para vínculo 1:1, fuente por persona/actividad,
+referencia manual única y UUID de operación; índice de derechos y CHECK de
+booleanos, fechas y objetos JSON. Sus tablas nacen vacías salvo el singleton.
+No modifica filas existentes ni crea períodos; no corresponde recorrer datos
+personales para buscar huérfanos en tablas educativas todavía inexistentes.
+La integridad de filas nuevas dependerá de las siete FK RESTRICT; no desactivarlas.
+
+**D. Política e invariantes mínimas**, solo si B/C fueron aceptados. Los conteos
+no prueban por sí solos que los dos vínculos sean los correctos: esa comprobación
+privada debe referirse a los pares ya acreditados, sin reprovisionar identidades.
+
+```sql
+SELECT id, enabled, pilot_sealed, admissions_open,
+       revision, security_seq, emergency_epoch
+FROM `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`portal_access_state`;
+SELECT COUNT(*) AS pilot_links
+FROM `REEMPLAZAR_POR_ESQUEMA_PRODUCTIVO_VERIFICADO`.`identity_instructor_links`;
+```
+
+### Autorizaciones pendientes
+
+1. Ejecutar únicamente el preflight de lectura: destino, operador, mecanismo,
+   consultas y evidencia privada. Esta tarea solo los prepara.
+2. Crear respaldo pre-023 y, si corresponde, ensayar restauración en infraestructura
+   aislada autorizada; resolver explícitamente cualquier recuperación no ensayada.
+3. Tras revisar los resultados, autorizar por separado 023: archivo/huella,
+   destino, ventana, exclusividad, mecanismo manual, postflight y registro.
+4. Integración/push manual del propietario y despliegue requieren autorización
+   posterior. Activación PWA, admisiones y mutaciones reales quedan aparte.
 
 ## Ejecución manual supervisada propuesta — no autorizada en 3A
 
@@ -170,7 +325,7 @@ Ante bloqueo de metadatos, no cancelar sesiones ajenas; escalar según ventana.
 
 ## Orden posterior, condicionado a nuevas autorizaciones
 
-1. Completar aceptación sintética/accesibilidad y, si se aprueba infraestructura
+1. Conservar el cierre sintético 3A.1; resolver la aceptación/accesibilidad pendiente y, si se aprueba infraestructura
    aislada, recorrido administrativo integrado con datos sintéticos. Resolver
    hallazgos antes de cambiar el SHA candidato; toda corrección exige nueva CI.
 2. Propietario revisa y autoriza por separado preflight, respaldo y migración
@@ -197,8 +352,10 @@ educativas, identificar SHA/build/esquema y preparar recuperación del código
 anterior verificado o completar 023 solo con nuevas autorizaciones; no activar
 `/app/` ni usar producción para ensayos.
 
-**Estado 3A:** plan preparado, no ejecutado. Bloqueos para la siguiente operación:
-aceptación pendiente; inventario productivo actual, respaldo pre-023 y recuperación
-sin acreditar; autorización específica de la migración y, después, de la
-integración/despliegue. Dictamen limitado: **APTO PARA PREPARAR MIGRACIÓN**;
-ninguna escritura productiva queda autorizada por este informe.
+**Estado 3A.2:** cierre documental 3A.1 favorable con observaciones; checklist de
+preflight de lectura preparado, NO EJECUTADO. Accesibilidad integral y aceptación
+autenticada real pendientes; inventario productivo actual, respaldo pre-023 y
+recuperación sin acreditar. Faltan las autorizaciones independientes enumeradas
+arriba. Dictamen limitado: **PROCEDIMIENTO PREPARADO PARA REVISIÓN**; sin
+conexión DB, migración, CI nueva, commits, ramas, integración, despliegue o activación
+en esta tarea. Detenerse aquí; este informe no autoriza operaciones productivas.

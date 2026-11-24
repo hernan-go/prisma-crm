@@ -178,11 +178,26 @@ Determinar dónde se ejecutan el servidor y el navegador: equipo del propietario
 
 #### C. Iniciar y verificar el servidor
 
+Procedimiento estándar acordado para QA con el navegador integrado:
+
+1. El propietario levanta el servidor local desde VS Code y lo mantiene activo.
+2. Abre la URL de prueba en el navegador integrado de Codex.
+3. Confirma que la página cargó.
+4. Entrega el prompt con el alcance de QA.
+5. Codex controla su propio navegador mediante selección, escritura y clics reales.
+
+Reutilizar el servidor y la pestaña disponibles; no reiniciarlos por rutina.
+No utilizar Chrome personal, Computer Use externo ni mecanismos alternativos
+sin autorización expresa. Si falla la conexión o el control, detenerse e informar
+URL, entorno y bloqueo concreto; no improvisar reintentos ni cambiar de herramienta.
+Las comprobaciones siguientes sirven para preparar el entorno por el propietario
+o para un diagnóstico expresamente autorizado; no habilitan un fallback automático.
+
 Antes de abrir el navegador:
 
 1. Verificar si el servicio requerido ya está activo. Comprobar su proceso, dirección, interfaz de escucha y puerto; reutilizarlo si es válido.
 2. Si el puerto está ocupado, identificar qué proceso lo utiliza. No finalizar procesos ajenos ni cambiar puertos silenciosamente.
-3. Si falta el servicio, iniciar exclusivamente el necesario y mantener el proceso activo durante toda la prueba. Para fixtures aislados basta Vite; no iniciar Express ni MySQL innecesariamente.
+3. Si falta el servicio, el propietario inicia exclusivamente el necesario desde VS Code y mantiene el proceso activo durante toda la prueba. Para fixtures aislados basta Vite; no iniciar Express ni MySQL innecesariamente.
 4. Verificar mediante HTTP que la URL exacta responde correctamente y corresponde a la página esperada; un `200` del fallback de la SPA no demuestra que exista una ruta QA.
 5. Solo después intentar abrir la página en el navegador y comprobar su conectividad desde ese entorno.
 
@@ -194,7 +209,7 @@ $listeners | Select-Object LocalAddress, LocalPort, OwningProcess
 $listeners | ForEach-Object { Get-Process -Id $_.OwningProcess }
 ```
 
-Si no hay un servidor válido, ejecutar desde la raíz del repositorio en una terminal que permanezca activa:
+Si no hay un servidor válido, el propietario puede ejecutar desde la raíz del repositorio en una terminal de VS Code que permanezca activa:
 
 ```powershell
 npx vite --host 127.0.0.1 --port 5173 --strictPort
@@ -219,7 +234,7 @@ $response.Content
 
 #### E. Elegir el navegador de Codex
 
-Priorizar un navegador accesible desde el entorno donde se ejecuta el servidor y verificar conectividad antes de comenzar la prueba visual. Que la terminal acceda no demuestra que el navegador integrado pueda hacerlo: si solo falla este último, investigar primero una posible separación entre entornos.
+Usar el navegador integrado según C y verificar su conectividad antes de comenzar la prueba visual. Que la terminal acceda no demuestra que el navegador integrado pueda hacerlo. Si falla, registrar el bloqueo y detenerse; una posible separación entre entornos es una hipótesis, no un defecto confirmado de la aplicación.
 
 No repetir intentos idénticos sin nueva evidencia o un cambio justificado de las condiciones de conexión. No modificar firewall, CORS, políticas de seguridad, credenciales ni configuraciones globales para forzar acceso. Respetar los bloqueos de las herramientas de navegador; no eludirlos.
 
@@ -235,13 +250,13 @@ Según el alcance de la tarea, comprobar y registrar:
 
 #### G. Manejar bloqueos y reproducir manualmente
 
-Si el navegador no conecta después de un diagnóstico razonable:
+Si el navegador integrado no conecta o no permite control real:
 
 1. Registrar la URL, entorno del servidor/navegador, respuesta HTTP y error observado; separar la causa conocida de las hipótesis.
-2. Detener los intentos repetitivos sin nueva información y completar las validaciones automatizadas disponibles dentro del alcance autorizado.
-3. Enumerar las verificaciones visuales pendientes y proporcionar instrucciones concretas para reproducirlas manualmente en Chrome o Edge.
+2. Detenerse, sin reintentos improvisados, cambios de herramienta ni pruebas adicionales no solicitadas.
+3. Enumerar las verificaciones visuales pendientes. Una reproducción en Chrome/Edge, Computer Use externo o un diagnóstico alternativo requieren autorización expresa; no ejecutarlos como fallback.
 
-La reproducción manual debe indicar el servicio necesario, URL verificada, escenario y acciones con su resultado esperado. Para Estadísticas sintética, por ejemplo: reutilizar Vite válido o iniciarlo según C; abrir la URL QA en Chrome/Edge; usar F12 → barra de dispositivos para escritorio, tablet y móvil (por ejemplo, 1440×900, 768×1024 y 390×844); cambiar el período y probar los controles. Consultar los escenarios existentes en el fixture antes de indicar parámetros; revisar consola y red en DevTools. Para integración real, usar el inicio normal y la ruta real del módulo, sin sustituirla por la página QA.
+Si se autoriza una reproducción manual alternativa, indicar servicio, URL verificada, escenario, acciones y resultado esperado. Consultar los escenarios existentes en el fixture antes de indicar parámetros. Para integración real, usar el inicio normal y la ruta real del módulo, sin sustituirla por la página QA.
 
 Nunca declarar una validación visual exitosa si no se ejecutó. Un servidor que responde HTTP o una suite automatizada aprobada no acreditan una inspección visual.
 

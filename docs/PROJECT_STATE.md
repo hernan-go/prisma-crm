@@ -1,5 +1,38 @@
 # PRISMA CRM — Estado actual
 
+## PWA-3A.3 — migración 023 productiva cerrada (24/11/2026)
+
+**023.sql aplicada, verificada y registrada en producción según el operador**,
+mediante phpMyAdmin de SiteGround: seis sentencias originales sin errores, cinco
+tablas verificadas y 23 registros de migración (001–023). Portal deshabilitado,
+piloto sellado y admisiones cerradas. Codex registra evidencia de la sesión
+supervisada y capturas aportadas; no realizó consultas ni comprobación productiva
+independiente. [Cierre, postflight y límites](iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026).
+
+Respaldo manual `PRISMA_PRE_PWA_023_2026-11-24`, 12:57 según panel;
+restauración no ensayada, riesgo residual aceptado expresamente por el responsable.
+La operación no integró ni desplegó el código PWA. Integración, push manual del
+propietario, despliegue y activación conservan autorizaciones independientes;
+siguen vigentes las observaciones y decisiones pendientes de 3A.2.
+Los cortes inferiores son antecedentes: no repetir 023 ni su registro.
+
+## PWA-3A.2 — cierre sintético y preflight preparado (24/11/2026)
+
+PWA-3A.1 cerrada documentalmente con observaciones: aceptación visual sintética
+favorable; 403 manual aprobado, 409 y recuperación aprobados en navegador integrado
+de Codex, 503 aprobado con recuperación por nueva consulta. Persistencia del error
+al cambiar escenarios: observación del fixture; reintento explícito pendiente de
+evaluación UX. Zoom 200 % favorable solo en el área observada; accesibilidad
+integral y autenticación real no verificadas. [Evidencia, límites y checklist 023
+de solo lectura](iterations/2026-11-pwa-3a-integration-readiness.md).
+
+Inspección local en `codex/pwa-2b3-participant-binding`, HEAD `fad690d`, árbol
+inicial limpio; main local `20777b2`, diez commits de diferencia sin divergencia.
+Sin consulta nueva a GitHub ni producción. Checksum local 023 coincidente.
+Preflight únicamente preparado, no ejecutado; destino, inventario, respaldo nuevo
+y recuperación siguen sin acreditar. Sin DB, CI nueva, commits, integración,
+despliegue ni activación en esta tarea. Cortes inferiores históricos.
+
 ## PWA-3 / Etapa 3A — preparación sin operaciones productivas (24/11/2026)
 
 Rama candidata `codex/pwa-2b3-participant-binding` publicada en `5a47432`;
