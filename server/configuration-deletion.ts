@@ -248,6 +248,20 @@ export async function deleteCatalogInDB(
       await openPeriod(period, db);
     await execute('DELETE FROM schedule_instructors WHERE instructor_id=?', [id], db);
   }
-  await execute(`DELETE FROM ${kind} WHERE id=?`, [id], db);
+  try {
+    await execute(`DELETE FROM ${kind} WHERE id=?`, [id], db);
+  } catch (error) {
+    // Educational FK references (including inactive/history) remain authoritative.
+    // Throw inside the transaction so allowed-day deletion is rolled back too.
+    if (
+      kind === 'activities' &&
+      (error as { code?: string } | null)?.code === 'ER_ROW_IS_REFERENCED_2'
+    )
+      throw new AppError(
+        409,
+        'La actividad conserva referencias que impiden eliminarla. Archivala para conservar su historial.',
+      );
+    throw error;
+  }
   return { ok: true };
 }

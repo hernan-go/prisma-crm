@@ -1,5 +1,16 @@
 # PRISMA CRM — Estado actual
 
+## PWA-3 — corrección puntual previa a CI (24/11/2026)
+
+Corregido localmente el rechazo de eliminación de actividades con referencias:
+la FK conserva los datos y el servicio devuelve 409 con indicación de archivar,
+revirtiendo la transacción completa. Sin cambios SQL ni de autorización educativa.
+[Corrección, pruebas y límites](iterations/2026-11-pwa-3-activity-deletion.md).
+23 pruebas focalizadas sin DB aprobadas; 14 MySQL omitidas, incluidas seis nuevas
+regresiones preparadas para CI aislada. Typecheck y lint aprobados. Sin aplicación
+de 023, integración, push, despliegue o activación; main conservada en `20777b2`.
+CI remota y aceptación integrada siguen pendientes; cortes inferiores históricos.
+
 ## PWA-2 — Etapa 1, reconciliación local (24/11/2026)
 
 Baseline confirmado en `codex/pwa-2b3-participant-binding`, `42012b4`, árbol limpio;

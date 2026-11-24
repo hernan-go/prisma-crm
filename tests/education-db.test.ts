@@ -524,4 +524,80 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('education isolated MySQL',
     ]);
     expect(await query('SELECT * FROM portal_access_state')).toEqual(pilot);
   });
+
+  it.each(['digital', 'expired', 'revoked', 'presential-enabled', 'presential-disabled'])(
+    'rejects activity deletion with %s references and preserves all educational data and allowed days',
+    async (source) => {
+      const activity = (
+        await execute("INSERT INTO activities(name,mode) VALUES (?,'group')", [
+          `Deletion QA ${source}`,
+        ])
+      ).insertId;
+      await execute('INSERT INTO activity_allowed_days(activity_id,day) VALUES (?,1)', [activity]);
+      if (source.startsWith('presential')) {
+        // Persisted FK fixture, independent of the enrollment/entitlement service scenarios.
+        await execute(
+          'INSERT INTO education_presential(person_id,activity_id,enabled) VALUES (1,?,?)',
+          [activity, source === 'presential-enabled' ? 1 : 0],
+        );
+      } else {
+        const right = await change({
+          kind: 'digital',
+          personId: 1,
+          activityId: activity,
+          paymentVerified: true,
+          verificationReference: `deletion-${source}`,
+        });
+        if (source === 'expired')
+          await execute('UPDATE education_digital_rights SET starts_at=1,ends_at=2 WHERE id=?', [
+            right.rightId,
+          ]);
+        if (source === 'revoked') await change({ kind: 'revoke', rightId: right.rightId });
+      }
+      const snapshot = async () => {
+        const result: Record<string, unknown> = {};
+        for (const [table, order] of [
+          ['activities', 'id'],
+          ['activity_allowed_days', 'activity_id,day'],
+          ['education_state', 'id'],
+          ['education_person_links', 'user_id'],
+          ['education_presential', 'person_id,activity_id'],
+          ['education_digital_rights', 'id'],
+          ['education_operations', 'operation_id'],
+        ])
+          result[table] = await query(`SELECT * FROM ${table} ORDER BY ${order}`);
+        return result;
+      };
+      const before = await snapshot();
+      const app = createApp({ identityEnabled: true, hash: '', secret: '' }, {}, {}, false, false);
+      const response = await request(app)
+        .delete(`/api/activities/${activity}`)
+        .set('Cookie', `prisma_identity=${token}`);
+      expect(response.status).toBe(409);
+      expect(response.body.message).toMatch(/archiv/i);
+      expect(JSON.stringify(response.body)).not.toMatch(/SQL|ER_ROW|education_/);
+      expect(await snapshot()).toEqual(before);
+    },
+  );
+
+  it('deletes an activity without dependencies while preserving educational history', async () => {
+    const activity = (
+      await execute("INSERT INTO activities(name,mode) VALUES ('Deletion QA empty','group')")
+    ).insertId;
+    await execute('INSERT INTO activity_allowed_days(activity_id,day) VALUES (?,1)', [activity]);
+    const before = await query('SELECT * FROM education_operations ORDER BY operation_id');
+    const app = createApp({ identityEnabled: true, hash: '', secret: '' }, {}, {}, false, false);
+    expect(
+      (
+        await request(app)
+          .delete(`/api/activities/${activity}`)
+          .set('Cookie', `prisma_identity=${token}`)
+      ).status,
+    ).toBe(200);
+    expect(await query('SELECT id FROM activities WHERE id=?', [activity])).toEqual([]);
+    expect(
+      await query('SELECT * FROM activity_allowed_days WHERE activity_id=?', [activity]),
+    ).toEqual([]);
+    expect(await query('SELECT * FROM education_operations ORDER BY operation_id')).toEqual(before);
+  });
 });
