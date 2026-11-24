@@ -8,7 +8,7 @@ Implementa personas con archivo lógico y contacto de emergencia; períodos vac�
 
 Incluye acceso administrativo individual mediante Google, identidades, roles y sesiones revocables, aceptado funcionalmente en producción el 13/11/2026 según el propietario. La contraseña compartida con hash scrypt se conserva como contingencia transitoria; no otorga acceso al módulo educativo administrativo. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro público, acceso educativo operativo de docentes o participantes, Inglés, inversiones generales ni copia automática de inscripciones.
 
-Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). PWA-2B.1–2B.3 están implementadas localmente, sin integración, despliegue ni activación; requieren 023, cuya aplicación no está acreditada en bases conservadas ni producción. El asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
+Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). PWA-2B.1–2B.3 están implementadas en una rama candidata publicada y validada por CI #102, sin integración, despliegue ni activación; requieren 023, cuya aplicación no está acreditada en bases conservadas ni producción. El asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
 
 Modelo de períodos y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
 

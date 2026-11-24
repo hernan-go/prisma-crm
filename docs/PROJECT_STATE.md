@@ -1,5 +1,17 @@
 # PRISMA CRM — Estado actual
 
+## PWA-3 / Etapa 3A — preparación sin operaciones productivas (24/11/2026)
+
+Rama candidata `codex/pwa-2b3-participant-binding` publicada en `5a47432`;
+[Actions #102](https://github.com/hernan-go/prisma-crm/actions/runs/45332985401)
+aprobó 9/9 jobs para ese SHA, incluidos los 14 casos MySQL educativos. SiteGround
+vinculado a main con despliegue automático activo según comprobación visual del
+propietario del 24/11. Main permanece en `20777b2`; sin integración, despliegue,
+activación ni aplicación de 023. La CI no acredita aceptación administrativa real,
+accesibilidad completa ni esquema productivo. [Plan específico, aceptación y
+recuperación de 023](iterations/2026-11-pwa-3a-integration-readiness.md).
+Las secciones inferiores conservan el estado de sus cortes anteriores.
+
 ## PWA-3 — corrección puntual previa a CI (24/11/2026)
 
 Corregido localmente el rechazo de eliminación de actividades con referencias:

@@ -1,5 +1,15 @@
 # PRISMA CRM — Roadmap
 
+## PWA-3 / Etapa 3A — preparación de integración (24/11/2026)
+
+La rama candidata fue publicada en `5a47432` y [CI #102](https://github.com/hernan-go/prisma-crm/actions/runs/45332985401)
+aprobó verify y ocho integraciones aisladas. La corrección de eliminación de
+actividades pasó sus regresiones. Sigue pendiente aceptación administrativa y de
+accesibilidad, preflight/respaldo/recuperación de 023 y autorizaciones separadas
+para migración productiva e integración de main. No activar `/app/`.
+[Orden y criterios de detención](iterations/2026-11-pwa-3a-integration-readiness.md).
+El corte inferior conserva la decisión anterior a la publicación y corrección.
+
 ## PWA-2 — preparación de candidato (24/11/2026)
 
 Etapa 1 limitada a auditoría y reconciliación documental local.
