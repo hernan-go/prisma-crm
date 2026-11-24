@@ -39,8 +39,10 @@ sustituyen el diseño educativo inicial de PWA-2A.
 - Contenido persistente: `activities → learning_lessons → learning_lesson_resources
 → learning_resources`. Clases independientes de ofertas mensuales, turnos y alumnos;
   las tablas learning son propuestas. Se reutiliza el catálogo de actividades.
-- CRM mantiene personas e inscripciones mensuales. La fuente presencial habilitada
-  y renovada mensualmente se representa en el vínculo CRM persona/actividad;
+- CRM mantiene personas e inscripciones mensuales. Según la resolución posterior
+  de PWA-2B.3, la fuente `education_presential` conserva continuidad explícita:
+  alta desde inscripción/slot reales y retiro separado, sin renovación mensual
+  obligatoria ni baja automática por mes, deuda o cancelación de matrícula;
   coexiste con derechos digitales comprados/habilitados, de tres meses y fechas
   propias. Autorizar por al menos una fuente vigente, sin duplicar inscripciones.
   La baja/vencimiento de una fuente no afecta otra ni elimina identidad.

@@ -1,5 +1,18 @@
 # PRISMA CRM — Estado actual
 
+## PWA-2 — Etapa 1, reconciliación local (24/11/2026)
+
+Baseline confirmado en `codex/pwa-2b3-participant-binding`, `42012b4`, árbol limpio;
+main local/remoto `20777b2`, siete commits locales de diferencia sin divergencia.
+PWA-2B.1–2B.3 implementadas localmente; sin integración, despliegue ni activación.
+Actions [#101](https://github.com/hernan-go/prisma-crm/actions/runs/44939115058)
+verificada completed/success, ocho jobs para `20777b2`; resuelve el «en curso»
+histórico inferior, no valida la octava suite educativa pendiente de publicación.
+023 solo acreditada en ensayos descartables; pendiente de aplicación controlada
+donde no esté acreditada, incluidas bases conservadas y producción según informes.
+[Auditoría del candidato, 385 omisiones, PWA-1D y condiciones de Etapa 2](iterations/2026-11-pwa-2-stage-1.md).
+Esta etapa modifica solo documentación y no ejecuta tests funcionales ni MySQL.
+
 ## PWA-2B.3 — vinculación y presencial local (22/11/2026)
 
 Implementadas asociación administrativa 1:1 de participantes existentes y gestión

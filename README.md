@@ -6,9 +6,9 @@ Administración interna de personas, inscripciones mensuales, talleres, pagos, g
 
 Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; Gastos Período con recurrentes e independencia mensual; Eventos Especiales; Estadísticas mensuales y anuales; Know-How empresarial con propuestas controladas; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
 
-Incluye acceso administrativo mediante contraseña compartida con hash scrypt, sesiones revocables y protección de toda la API. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro, roles, acceso de docentes, Inglés, inversiones generales ni copia automática de inscripciones. Sin `ADMIN_PASSWORD_HASH` y `SESSION_SECRET` válidos, la API administrativa permanece bloqueada.
+Incluye acceso administrativo individual mediante Google, identidades, roles y sesiones revocables, aceptado funcionalmente en producción el 13/11/2026 según el propietario. La contraseña compartida con hash scrypt se conserva como contingencia transitoria; no otorga acceso al módulo educativo administrativo. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro público, acceso educativo operativo de docentes o participantes, Inglés, inversiones generales ni copia automática de inscripciones.
 
-Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). Google Login permanece pendiente; el asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
+Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). PWA-2B.1–2B.3 están implementadas localmente, sin integración, despliegue ni activación; requieren 023, cuya aplicación no está acreditada en bases conservadas ni producción. El asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
 
 Modelo de períodos y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
 
@@ -152,9 +152,9 @@ No se migran pagos históricos desde las casillas TRANS/EFECTIVO: no permiten re
 
 ## Preparación de despliegue en SiteGround GrowBig
 
-Antes de preparar cambios de esquema, seguir [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md), fuente operativa única. Los parámetros históricos siguientes no autorizan operaciones; el anexo 021 conserva el procedimiento y registra su cierre productivo informado del 18/11/2026, sin integración ni despliegue del código PWA-1B.1.
+Antes de preparar cambios de esquema, seguir [Migraciones productivas de PRISMA](docs/PRODUCTION_MIGRATIONS.md), fuente operativa única. Sus anexos registran los cierres productivos hasta 022. PWA-1B.1/1B.2 y PWA-1C ya fueron integradas y desplegadas según el estado operativo; PWA-2B.1–2B.3 siguen locales. Los parámetros siguientes conservan la preparación histórica inicial y no autorizan operaciones ni sustituyen la configuración vigente de [WORKFLOW §10](docs/WORKFLOW.md#10-deploy-productivo).
 
-**No se desplegó ni se accedió al panel.** La documentación oficial consultada el 26/09/2026 confirma hasta 5 proyectos Node.js en GrowBig y gestión de MySQL, SSL y variables: [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto](https://es.siteground.com/kb/gestionar-proyecto-node-js).
+**Corte histórico del 26/09/2026, anterior al despliegue:** no se había desplegado ni accedido al panel. La documentación oficial consultada entonces describía hasta 5 proyectos Node.js en GrowBig y gestión de MySQL, SSL y variables: [crear proyecto](https://www.siteground.com/es/kb/crear-proyecto-node-js), [gestionar proyecto](https://es.siteground.com/kb/gestionar-proyecto-node-js).
 
 Parámetros preparados:
 
@@ -169,11 +169,11 @@ Parámetros preparados:
 - Generar secretos localmente con `npm run auth:configure -- --export`; copiar **solo hash y secreto** desde `private/auth.env` al panel privado. No copiar `.env` de desarrollo ni la base QA.
 - Seleccionar y autorizar el mecanismo de migración según [el procedimiento productivo](docs/PRODUCTION_MIGRATIONS.md#d-herramientas-admitidas). La presencia de `dist/server/migrate.js` no acredita destino, acceso ni seguridad de ejecución; no ejecutar seeds como parte implícita de una migración.
 
-**Limitación pendiente de verificación en la cuenta:** el preset debe ejecutar Express como proceso persistente. La documentación enumera build/output/framework, pero no un campo universal de startup. Confirmar el mecanismo para `npm start`, empaquetado, consola/SSH para migraciones y topología proxy antes de publicar. Si el panel no lo permite, consultar soporte; no cambiar a PHP ni reescribir la app.
+**Limitación de la investigación inicial:** no se había verificado el mecanismo del preset para ejecutar Express como proceso persistente. La aplicación fue desplegada posteriormente; esa duda inicial no es un bloqueo vigente de hosting. Ante cambios operativos, confirmar configuración efectiva, arranque, empaquetado, acceso y topología proxy conforme al workflow.
 
 El login propio protege `/api`, incluidas importaciones, salud y configuración. Protected URLs puede añadirse como segunda barrera, sin reemplazar la autenticación de la aplicación. Probar HTTPS, cookie Secure, rechazo de API sin sesión, logout y backups en hosting antes de datos reales.
 
-Repositorio privado: [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main`. El push a `main` dispara despliegue en SiteGround y corresponde manualmente al propietario, después de su revisión y aprobación.
+Repositorio público: [hernan-go/prisma-crm](https://github.com/hernan-go/prisma-crm), rama `main` (visibilidad comprobada por API el 24/11/2026). El push a `main` dispara despliegue en SiteGround y corresponde manualmente al propietario, después de su revisión y aprobación.
 
 ## Backups y restauración
 

@@ -1,5 +1,15 @@
 # PRISMA CRM — Roadmap
 
+## PWA-2 — preparación de candidato (24/11/2026)
+
+Etapa 1 limitada a auditoría y reconciliación documental local.
+[Hallazgos, clasificación de pruebas y condiciones](iterations/2026-11-pwa-2-stage-1.md).
+Siguiente decisión: autorizar publicación manual de la rama candidata para CI,
+sin integrar main ni activar el portal. Resolver o aceptar expresamente la
+observación de borrado de actividades antes de la integración; completar CI,
+aceptación administrativa y preparación separada de 023 para el destino.
+PWA-1D requiere decisión independiente; PWA-2B.4 no iniciada.
+
 ## PWA-2B.3 — administración local y próximo contrato (22/11/2026)
 
 Vínculo participante/persona y habilitación presencial desde inscripción real

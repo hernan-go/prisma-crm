@@ -47,8 +47,9 @@ PWA-018: bienvenida e institucional animadas omitibles, sonido opcional sujeto a
 compatibilidad/accesibilidad, HOME de todas las disciplinas comerciales. Sin
 autorización, presentación y muestras expresamente habilitadas con opción de
 solicitar/comprar digital sin asistir ni ocupar cupo; catálogo sin recursos protegidos.
-PWA-019: dos fuentes independientes, presencial habilitada en CRM con renovación
-mensual O derecho digital comprado/habilitado durante tres meses. Pago no equivale
+PWA-019: dos fuentes independientes, presencial habilitada en CRM con continuidad
+explícita hasta retiro (resolución posterior PWA-2B.3) O derecho digital
+comprado/habilitado durante tres meses. Pago no equivale
 a autorización; backend verifica fechas. Vencimiento selectivo conserva identidad
 y otras fuentes. Sin pago único indefinido ni renovación automática inicial.
 Promesa aprobada: «Tres meses de acceso al contenido educativo disponible y a las
