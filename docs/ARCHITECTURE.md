@@ -1,5 +1,33 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-3A.4 — contraste estructural del MVP educativo (24/11/2026)
+
+Auditoría de solo lectura del candidato `746f1ce`; [estado y prioridades](PROJECT_STATE.md) ·
+[decisiones abiertas](DECISIONS.md#pwa-3a4--prioridad-educativa-y-decisiones-abiertas-24112026).
+La aplicación productiva de `023.sql` está informada en el [cierre 3A.3](iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026),
+pero este código candidato todavía no está integrado ni desplegado. La auditoría
+no define DDL definitivo ni reserva un número de migración.
+
+| Capa | Contrato existente en la rama candidata | Brecha para el MVP |
+| --- | --- | --- |
+| Datos | `023.sql` crea `education_state`, `education_person_links`, `education_presential`, `education_digital_rights` y `education_operations`; no altera períodos. | Entidades de clase ordenada por `activity_id`, recurso y material del encuentro, cuestionario Multiple Choice, opciones y reglas de corrección/publicación. Las `learning_*` de PWA-2A.1 son propuestas, no tablas existentes. |
+| Servicios y API | `education-access.ts` valida vínculo 1:1 y fuente presencial O digital vigente por actividad; `educationalEntitlement` es función interna, no guard de sesión. `education-admin.ts` expone bajo `/api/education-access` búsqueda, identidad, detalle, historial, recibo, preview y operaciones de vínculo/presencial/digital/revocación, con sesión Google CRM individual de admin. `shared/education.ts` tipa esos datos administrativos. | Endpoints y contratos de autoría, orden, recursos, cuestionarios, publicación y lectura participante; guard que derive la identidad de una sesión educativa y compruebe autorización en cada solicitud protegida. Definir la entrega segura de referencias Drive, cuyas URL externas conocidas no se revocan desde PRISMA. |
+| Permisos | Administradores institucionales gestionan accesos; el candidato no habilita credenciales docentes ni sesión participante. | Asignación educativa explícita de facilitador a actividad, edición/publicación supervisada y bloqueo institucional; autenticación docente individual, activación/autenticación participante, recuperación y separación del piloto sellado. No derivar permisos de `schedule_instructors` ni de `activities.instructor_id`. |
+| Pantallas | `client/App.tsx` registra `/configuracion/accesos-digitales`; `Configuration.tsx` enlaza «Accesos digitales» y los componentes `EducationAccess`, `EducationPresential` y `EducationConfirmation` sirven la administración. | Editor de clases, materiales y Multiple Choice para docentes; catálogo/curso, clase, recurso, cuestionario y devolución para participantes autenticados. Falta la sección principal «Accesos PWA» acordada: la navegación principal solo contiene «Configuración» y el acceso educativo está dentro de ella. Resolver su ubicación en la entrega de interfaz, sin modificarla en 3A.4. |
+
+Las rutas administrativas actuales son `GET /api/education-access/people`,
+`/identities`, `/people/:id`, `/people/:id/history`, `/operations/:id` y
+`POST /api/education-access/preview`, `/operations`. No son API de clases ni
+admiten un principal participante. La autorización de lectura de contenido debe
+comprobarse por actividad en cada ruta protegida, sin tomar `userId` de la petición.
+
+La prioridad aprobada conserva PWA-010–019: clases globales por actividad,
+Drive externo, publicación docente, fuente presencial habilitada O derecho
+digital vigente e independencia de meses y otros cursos. No se presupone
+almacenamiento binario privado, upload al servidor, código arbitrario ni un
+modelo de clases por facilitador. Persistir respuestas, intentos o calificaciones
+requiere decisión posterior; [alternativa recomendada](DECISIONS.md#pwa-3a4--prioridad-educativa-y-decisiones-abiertas-24112026).
+
 ## PWA-2B.3 — asociación administrativa y fuente presencial (22/11/2026)
 
 El vínculo 1:1 reutiliza 023, con selección de participante existente y sin prueba

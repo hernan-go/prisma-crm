@@ -1,6 +1,25 @@
 # PRISMA CRM — Roadmap
 
-## PWA-3 / Etapa 3A — preparación de integración (24/11/2026)
+## Prioridad vigente — PWA-3A.4 y MVP educativo (24/11/2026)
+
+| Entrega | Alcance y dependencia |
+| --- | --- |
+| PWA-3A.4 | Reconciliar documentación y auditar estructura, sin funcionalidad nueva. `023.sql` ya fue aplicada y registrada en producción según el propietario; [cierre y límites](iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026). |
+| PWA-3B | Revisar el SHA exacto del candidato PWA-2B.1–2B.3, resolver o aceptar observaciones de aceptación administrativa y accesibilidad, integrar y desplegar controladamente con el portal y las admisiones cerrados. CI #102 solo acredita `5a47432`; integración, push manual y despliegue requieren sus decisiones propias. |
+| Contenido mínimo | Clases persistentes y ordenadas por `activity_id`, con textos, PDF, guías de actividades, imágenes, audios y videos del encuentro; cuestionarios Multiple Choice sencillos con opciones, corrección y devolución comprensible. Drive conserva los archivos; PRISMA guarda metadatos y referencias. Definir contratos de clase, recurso, orden, evaluación, estado y publicación antes de implementar. |
+| Docencia | Facilitadores autorizados editan y publican clases de actividades asignadas, bajo supervisión y bloqueo institucional. Requiere autenticación docente y permisos por actividad separados del piloto. |
+| Acceso participante | Activación/autenticación educativa, sesión y rutas protegidas; mostrar solo clases publicadas de actividades con fuente presencial habilitada O derecho digital vigente. Una fuente no afecta otros cursos ni períodos mensuales. Requiere resolver titularidad, recuperación y alternativa accesible de passkeys. |
+| Aceptación y activación | Recorrido integral de contenido y cuestionarios, permisos, seguridad, accesibilidad y participante real antes de activar el portal. El MVP **no está terminado** hasta que clases, recursos y cuestionarios sean utilizables por participantes autenticados. |
+| Extensiones posteriores | Juegos específicos de facilitadores, analítica pedagógica avanzada, estadísticas de progreso y ejercicios interactivos complejos. |
+
+La persistencia de respuestas, intentos y calificaciones no está aprobada.
+[Alternativa recomendada y decisiones abiertas](DECISIONS.md#pwa-3a4--prioridad-educativa-y-decisiones-abiertas-24112026).
+[Brechas técnicas](ARCHITECTURE.md#pwa-3a4--contraste-estructural-del-mvp-educativo-24112026).
+El orden de las entregas funcionales podrá detallarse en iteraciones aprobadas;
+no implica migración numerada ni autorización de implementación.
+Los apartados inferiores conservan sus cortes históricos.
+
+## Antecedente — PWA-3 / Etapa 3A — preparación de integración (24/11/2026)
 
 La rama candidata fue publicada en `5a47432` y [CI #102](https://github.com/hernan-go/prisma-crm/actions/runs/45332985401)
 aprobó verify y ocho integraciones aisladas. La corrección de eliminación de
@@ -49,7 +68,7 @@ intervalo [inicio,fin); renovación desde max(ahora, fin no revocado).
 [Implementación, evidencia y límites](iterations/2026-11-pwa-2b1.md).
 PWA-2B.2 requiere autorización nueva; los cortes siguientes conservan su historial.
 
-## Prioridad vigente — PWA-2A.1 y propuesta PWA-2B (22/11/2026)
+## Antecedente — prioridad PWA-2A.1 y propuesta PWA-2B (22/11/2026)
 
 PWA-010–019 aprobadas; [reconciliación documental vigente](iterations/2026-11-pwa-2a.md#pwa-2a1--reconciliación-vigente-22112026).
 Contenido persistente por actividad, Drive externo, publicación docente autónoma,

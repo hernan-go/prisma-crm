@@ -1,5 +1,28 @@
 # PRISMA CRM — Estado actual
 
+## PWA-3A.4 — reconciliación documental y estructural (24/11/2026)
+
+Producción: `023.sql` aplicada y registrada según el propietario; portal
+deshabilitado, piloto sellado y admisiones cerradas. El [cierre 3A.3](iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026)
+conserva evidencia, respaldo y límite de restauración no ensayada. Codex no hizo
+una comprobación productiva independiente. No repetir 023 ni su registro.
+
+Candidato local: `codex/pwa-2b3-participant-binding` en `746f1cea495ebfda07a1df85fc3fc28aba2869c9`,
+árbol inicial limpio y 11 commits por delante de `main` local, sin divergencia
+según Git local. No se consultó GitHub ni el SHA desplegado en esta tarea.
+PWA-2B.1–2B.3 y la administración `Accesos digitales` existen en ese candidato,
+pero no están integradas ni desplegadas. CI #102 solo acredita `5a47432`.
+
+Desarrollo futuro: el [MVP educativo priorizado](ROADMAP.md) incorpora clases
+persistentes por actividad, materiales y Multiple Choice, publicación por
+facilitadores autorizados y acceso por actividad para participantes autenticados.
+El [contraste estructural](ARCHITECTURE.md#pwa-3a4--contraste-estructural-del-mvp-educativo-24112026)
+separa contratos existentes y faltantes. No hay contenido, autenticación
+educativa operativa de docentes/participantes ni pantallas participantes
+implementadas. Persistencia de respuestas,
+intentos o calificaciones sigue abierta; no es requisito cerrado.
+Esta 3A.4 solo edita documentación, sin SQL, código, integración ni activación.
+
 ## PWA-3A.3 — migración 023 productiva cerrada (24/11/2026)
 
 **023.sql aplicada, verificada y registrada en producción según el operador**,

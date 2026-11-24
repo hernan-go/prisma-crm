@@ -2,6 +2,12 @@
 
 Fuente operativa única y obligatoria para preparar y ejecutar migraciones productivas de PRISMA CRM. Fecha de consolidación: 18/11/2026. Este manual no autoriza escrituras ni acredita una ejecución por el hecho de describirla. Las migraciones SQL aplicadas son inmutables.
 
+Estado posterior informado: `023.sql` fue aplicada, verificada y registrada en
+producción el 24/11/2026 por el propietario. Véase el
+[cierre PWA-3A.3](iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026)
+para evidencia y límite de restauración; no repetir DDL ni registro. Los
+procedimientos históricos inferiores no son un preflight pendiente de 023.
+
 ## A. Alcance y responsabilidades
 
 - **Desarrollo:** una migración controlada necesita destino y autorización explícitos. Las bases locales conservadas no son descartables.

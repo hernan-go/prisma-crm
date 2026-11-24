@@ -1,5 +1,34 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-3A.4 — prioridad educativa y decisiones abiertas (24/11/2026)
+
+El propietario prioriza la primera entrega educativa utilizable por participantes:
+clases persistentes y ordenadas por actividad, materiales de cada encuentro
+(textos, PDF, guías de actividades, imágenes, audios y videos), cuestionarios
+Multiple Choice sencillos con opciones, corrección y devolución comprensible,
+edición/publicación por facilitadores autorizados bajo supervisión institucional
+y acceso solo a actividades autorizadas. Cada actividad conserva independencia
+de períodos mensuales y de otros cursos. Esto concreta PWA-010–019, sin
+reemplazar el modelo por `activity_id`, Drive externo, publicación docente ni la
+regla de acceso presencial habilitado O derecho digital vigente.
+
+La persistencia de respuestas, intentos o calificaciones **no está aprobada**.
+Alternativa recomendada para la primera entrega: corregir y devolver cada
+cuestionario durante la sesión, sin guardar desempeño individual; evaluar en
+el diseño si la corrección debe resolverse en el servidor para evitar exponer
+respuestas antes del envío. Quedan por decidir número de intentos, momento en
+que se muestra la solución, accesibilidad de la devolución, tratamiento al
+recargar/cerrar sesión y eventual almacenamiento futuro con finalidad,
+retención, permisos y consentimiento definidos. No presentar progreso ni
+estadísticas personales como existentes si no se persisten datos.
+
+Juegos específicos de facilitadores, analítica pedagógica avanzada,
+estadísticas de progreso y ejercicios interactivos complejos quedan para
+entregas posteriores. La ubicación de «Accesos PWA» como sección principal
+acordada sigue pendiente de reconciliación en la interfaz: el candidato la
+enlaza desde Configuración. [Auditoría estructural](ARCHITECTURE.md#pwa-3a4--contraste-estructural-del-mvp-educativo-24112026)
+y [secuencia de entregas](ROADMAP.md#prioridad-vigente--pwa-3a4-y-mvp-educativo-24112026).
+
 ## PWA-2B.3 — continuidad confirmada (22/11/2026)
 
 El propietario confirmó conservar continuidad educativa explícita y habilitar/retirar
