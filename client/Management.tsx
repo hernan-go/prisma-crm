@@ -1,3 +1,5 @@
+import { WhatsAppLink } from './WhatsAppLink';
+import { membershipPhone } from './whatsapp-phone';
 import { personName, comparePeople } from './person-presentation';
 import { EducationPresential } from './EducationPresential';
 export { comparePeople as comparePeriodPeople } from './person-presentation';
@@ -105,7 +107,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
               <button onClick={() => setPerson(undefined)}>Volver a personas del período</button>
             </div>
           ) : (
-            <section className="panel">
+            <section className="panel period-members-panel">
               <h2>Personas inscriptas</h2>
               <QueryFeedback query={members} label="personas inscriptas" />
               {members.isPending && <ListSkeleton label="Cargando personas inscriptas…" />}
@@ -126,6 +128,7 @@ function MonthlyPeriod({ period, closed }: { period: number | undefined; closed?
                     <div className="actions">
                       <button onClick={() => setPerson(p)}>Gestionar</button>
                       <RemoveMembership person={p} period={period} disabled={closed} />
+                      <WhatsAppLink phone={p.telefono} name={personName(p)} />
                     </div>
                   </div>
                 ))}
@@ -727,6 +730,14 @@ function PaymentsPeriod() {
   const { period, periods } = usePeriod();
   const closed = periods.find((p) => p.id === period)?.status === 'closed';
   const q = useData('accounts', `/accounts?period_id=${period}`, !!period);
+  const contacts = useQuery({
+    queryKey: ['memberships', `/periods/${period}/memberships`],
+    queryFn: () => api(`/periods/${period}/memberships`),
+    enabled: !!period,
+    staleTime: 30000,
+    retry: false,
+    placeholderData: undefined,
+  });
   const payments = useData('payments', `/payments?period_id=${period}`, !!period);
   const [onlyDebtors, setOnlyDebtors] = useState(false);
   const [pick, setPick] = useState(false);
@@ -767,10 +778,15 @@ function PaymentsPeriod() {
         <table className="accounts-table">
           <thead>
             <tr>
-              <th>Persona</th>
-              <th>A cobrar</th>
-              <th className="desktop-only">Pagado</th>
-              <th>
+              <th scope="col">Persona</th>
+              <th className="whatsapp-cell" scope="col">
+                Cel
+              </th>
+              <th scope="col">A cobrar</th>
+              <th className="desktop-only" scope="col">
+                Pagado
+              </th>
+              <th scope="col">
                 <span className="desktop-only">Saldo / deuda</span>
                 <span className="mobile-only">Saldo</span>
               </th>
@@ -783,6 +799,9 @@ function PaymentsPeriod() {
                 <tr className="loading-account-row" aria-hidden="true" key={`loading-${i}`}>
                   <td>
                     <Skeleton width="80%" height={14} />
+                  </td>
+                  <td className="whatsapp-cell">
+                    <Skeleton width={28} height={28} />
                   </td>
                   <td>
                     <Skeleton width="75%" height={14} />
@@ -806,6 +825,16 @@ function PaymentsPeriod() {
                     <span>{personName(a)}</span>
                   </Link>
                 </td>
+                <td className="whatsapp-cell">
+                  <WhatsAppLink
+                    phone={
+                      contacts?.isSuccess && !contacts.isPlaceholderData
+                        ? membershipPhone(contacts.data, a.person_id)
+                        : undefined
+                    }
+                    name={personName(a)}
+                  />
+                </td>
                 <td>{formatMoney(a.amount_due)}</td>
                 <td className="desktop-only">{formatMoney(a.paid)}</td>
                 <td>
@@ -828,7 +857,7 @@ function PaymentsPeriod() {
           <Empty>No hay deudores en este período.</Empty>
         )}
       </section>
-      <section className="panel">
+      <section className="panel period-movements-panel">
         <h2>Movimientos</h2>
         <QueryFeedback query={payments} label="movimientos" />
         {!!period && payments.isPending && <ListSkeleton label="Cargando movimientos…" />}

@@ -42,9 +42,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('carga conserva tabla de seis columnas, filas decorativas y controles sin anunciar cero ni vacío', () => {
+it('carga conserva tabla de siete columnas, filas decorativas y controles sin anunciar cero ni vacío', () => {
   const html = render(client());
-  expect(html.match(/<th\b/g)).toHaveLength(6);
+  expect(html.match(/<th\b/g)).toHaveLength(7);
   expect(html.match(/class="people-skeleton-row" aria-hidden="true"/g)).toHaveLength(6);
   expect(html).toContain('aria-busy="true"');
   expect(html).toContain('Cargando personas…');
@@ -52,8 +52,8 @@ it('carga conserva tabla de seis columnas, filas decorativas y controles sin anu
   expect(html).not.toContain('0 personas');
   expect(html).not.toMatch(/<tbody>\s*<div/);
   const row = html.match(/<tr class="people-skeleton-row"[\s\S]*?<\/tr>/)![0];
-  expect(row.match(/<td\b/g)).toHaveLength(6);
-  expect(row.match(/desktop-only/g)).toHaveLength(3);
+  expect(row.match(/<td\b/g)).toHaveLength(7);
+  expect(row.match(/desktop-only/g)).toHaveLength(4);
   expect(row).not.toMatch(/<button|<a\s|tabindex/);
 });
 

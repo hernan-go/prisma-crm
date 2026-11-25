@@ -198,8 +198,8 @@ function checkLayout() {
   };
   const headers = [...table.querySelectorAll('th')].filter(visible).map((e) => e.textContent);
   const expected = mobile
-    ? ['Persona', 'Teléfono', 'Estado']
-    : ['Persona', 'ID', 'Teléfono', 'Email', 'Contacto de emergencia', 'Estado'];
+    ? ['Persona', 'Estado', 'Cel']
+    : ['Persona', 'ID', 'Teléfono', 'Email', 'Contacto de emergencia', 'Estado', 'Cel'];
   check(JSON.stringify(headers) === JSON.stringify(expected), 'columnas visibles');
   check(document.documentElement.scrollWidth <= innerWidth, 'overflow del documento');
   const status = document.querySelector('.pagination small')?.textContent || '';

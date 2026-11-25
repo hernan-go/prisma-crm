@@ -428,3 +428,96 @@ main.administrative-page .people-table :is(th, td) {
     min-height: 44px;
   }
 }
+
+/* PWA-4: compact baseline tables, with a dedicated contact column. */
+main.administrative-page :is(.people-table-panel, .accounts-table-panel) {
+  min-width: 0;
+  overflow: visible;
+}
+main.administrative-page :is(.people-table, .accounts-table) {
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+main.administrative-page :is(.people-table, .accounts-table) :is(th, td) {
+  width: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+main.administrative-page :is(.people-table, .accounts-table) .whatsapp-cell {
+  width: 52px;
+  padding-inline: 4px;
+  text-align: center;
+}
+main.administrative-page .people-table .chip {
+  max-width: 100%;
+  white-space: normal;
+  box-sizing: border-box;
+}
+main.administrative-page .period-members-panel .actions > .whatsapp-link {
+  margin-left: 58px;
+}
+main.administrative-page :is(.period-members-panel, .period-movements-panel) .payment-row > div {
+  min-width: 0;
+  max-width: 100%;
+}
+main.administrative-page :is(.period-members-panel, .period-movements-panel) .actions > button {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 1100px) {
+  main.administrative-page .period-members-panel .actions > .whatsapp-link {
+    margin-left: 10px;
+  }
+}
+@media (max-width: 700px) {
+  main.administrative-page .people-table :is(th, td):first-child {
+    width: 50%;
+  }
+  main.administrative-page .people-table :is(th, td):nth-child(6) {
+    width: 20%;
+    text-align: center;
+  }
+  main.administrative-page .people-table :is(th, td):last-child {
+    width: 30%;
+    text-align: right;
+  }
+  main.administrative-page .people-table .people-status {
+    white-space: nowrap;
+  }
+  main.administrative-page .accounts-table th:first-child {
+    width: auto;
+  }
+  main.administrative-page .accounts-table :is(th, td) {
+    padding-inline: 3px;
+  }
+  main.administrative-page .accounts-table .whatsapp-cell {
+    width: 48px;
+  }
+  main.administrative-page .accounts-table .account-balance {
+    white-space: normal;
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+  main.administrative-page .period-members-panel .actions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 44px;
+    width: 100%;
+    align-items: center;
+    gap: 6px;
+  }
+  main.administrative-page .period-members-panel .actions > button {
+    justify-self: start;
+  }
+  main.administrative-page .period-members-panel .actions > .whatsapp-link {
+    margin-left: 0;
+    justify-self: end;
+  }
+}
+
+@media (min-width: 375px) and (max-width: 700px) {
+  main.administrative-page .accounts-table .whatsapp-cell {
+    position: relative;
+    left: 12px;
+  }
+}

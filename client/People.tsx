@@ -1,3 +1,4 @@
+import { WhatsAppLink } from './WhatsAppLink';
 import { personName, comparePeople } from './person-presentation';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -280,12 +281,23 @@ export function People() {
           <table className="people-table">
             <thead>
               <tr>
-                <th>Persona</th>
-                <th className="desktop-only">ID</th>
-                <th>Teléfono</th>
-                <th className="desktop-only">Email</th>
-                <th className="desktop-only">Contacto de emergencia</th>
-                <th>Estado</th>
+                <th scope="col">Persona</th>
+                <th className="desktop-only" scope="col">
+                  ID
+                </th>
+                <th className="desktop-only" scope="col">
+                  Teléfono
+                </th>
+                <th className="desktop-only" scope="col">
+                  Email
+                </th>
+                <th className="desktop-only" scope="col">
+                  Contacto de emergencia
+                </th>
+                <th scope="col">Estado</th>
+                <th className="whatsapp-cell" scope="col">
+                  Cel
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -305,7 +317,7 @@ export function People() {
                       </Link>
                     </td>
                     <td className="person-id desktop-only">{p.public_id}</td>
-                    <td>{p.telefono}</td>
+                    <td className="desktop-only">{p.telefono}</td>
                     <td className="desktop-only">{p.email || '—'}</td>
                     <td className="desktop-only">
                       <span className={`chip ${p.emergency_phone ? '' : 'info'}`}>
@@ -321,6 +333,9 @@ export function People() {
                       >
                         <span className="desktop-only">{p.activo ? 'Activa' : 'Archivada'}</span>
                       </span>
+                    </td>
+                    <td className="whatsapp-cell">
+                      <WhatsAppLink phone={p.telefono} name={personName(p)} />
                     </td>
                   </tr>
                 ))}

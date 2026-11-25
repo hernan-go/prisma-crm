@@ -1,5 +1,17 @@
 # PRISMA CRM — Estado actual
 
+## PWA-4 — WhatsApp administrativo, aprobación visual (25/11/2026)
+
+Implementación frontend en `codex/pwa-4-whatsapp-links`, desde `a023abe`.
+Tres accesos con SVG blanco oficial local, normalización independiente y asociación
+por ID mediante membresías existentes. Sin backend, DB, dependencias ni cambios
+financieros. Diseño definitivo aprobado por el propietario en CRM real desktop y
+mobile; tablas originales conservadas y adaptación provisional mediante tarjetas
+retirada. Criterio responsive: sin desplazamiento horizontal en página ni contenedores.
+Commit y push de esta rama autorizados; integración a main y despliegue no autorizados
+ni ejecutados. La rama conserva los commits previos pendientes de integración.
+[Informe, validación final y límites](iterations/2026-11-pwa-4.md).
+
 ## PWA-3B.3 — correcciones administrativas locales (25/11/2026)
 
 PWA-3B.2 cerrada por el propietario como **APTO CON OBSERVACIONES — aceptación
@@ -27,7 +39,8 @@ se presentan en formato administrativo legible; ver evidencia y límites en el i
 023 productiva aplicada según el propietario; sin nueva consulta productiva.
 Portal y admisiones conservan su política cerrada, sin cambios ni activación.
 Integración, despliegue y activación pendientes. Siguiente bloque propuesto:
-PWA de facilitadores, sin iniciarlo. Cambios locales sin stage ni commit.
+PWA de facilitadores, sin iniciarlo. Cambios de PWA-3B.3 incluidos en el commit
+`a023abe9e505386bc1308c6ba38cd8a4ebff843a`; sin nueva verificación remota.
 Los cortes inferiores conservan sus fechas y alcances históricos.
 
 ## PWA-3A.4 — reconciliación documental y estructural (24/11/2026)

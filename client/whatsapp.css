@@ -1,0 +1,29 @@
+.whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  vertical-align: middle;
+  border-radius: 6px;
+}
+.whatsapp-link img {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+.whatsapp-link:focus-visible {
+  outline: 3px solid #72e0e4;
+  outline-offset: 2px;
+}
+.whatsapp-link:hover {
+  background: #ffffff18;
+}
+.whatsapp-unavailable {
+  color: #aeb8be;
+  cursor: default;
+}
+.whatsapp-unavailable:hover {
+  background: transparent;
+}

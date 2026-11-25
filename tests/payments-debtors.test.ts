@@ -6,7 +6,11 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { Payments } from '../client/Management';
 
 const context = vi.hoisted(() => ({ period: 1, status: 'open' }));
-const queries = vi.hoisted(() => ({ accounts: {} as any, payments: {} as any }));
+const queries = vi.hoisted(() => ({
+  accounts: {} as any,
+  payments: {} as any,
+  memberships: {} as any,
+}));
 vi.mock('../client/App', async (original) => ({
   ...(await original<object>()),
   usePeriod: () => ({
@@ -224,4 +228,23 @@ it('conserva el bloqueo de operaciones en períodos cerrados al filtrar', () => 
     find(tree, (e) => e.type === 'button' && e.props.children === 'Editar').props.disabled,
   ).toBe(true);
   expect(find(tree, (e) => e.props.path === '/payments/9?period_id=1').props.disabled).toBe(true);
+});
+
+it('WhatsApp cruza por ID, falla cerrado y no depende de nombres u orden', () => {
+  queries.memberships = { isSuccess: true, data: [{ id: 2, telefono: '3410000000' }] };
+  const html = render();
+  expect(html).toContain('https://wa.me/5493410000000');
+  expect(html.match(/https:\/\/wa.me/g)).toHaveLength(1);
+  queries.memberships = {
+    isSuccess: false,
+    isError: true,
+    data: [{ id: 2, telefono: '3410000000' }],
+  };
+  expect(render()).not.toContain('https://wa.me/');
+  queries.memberships = {
+    isSuccess: true,
+    isPlaceholderData: true,
+    data: [{ id: 2, telefono: '3410000000' }],
+  };
+  expect(render()).not.toContain('https://wa.me/');
 });

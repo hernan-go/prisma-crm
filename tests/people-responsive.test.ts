@@ -43,7 +43,7 @@ const cells = (html: string, tag: 'th' | 'td') => [
 ];
 const text = (html: string) => html.replace(/<[^>]*>/g, '');
 
-it('Personas conserva seis columnas y marca solo ID, email y emergencia como exclusivas de desktop', () => {
+it('Personas conserva siete columnas y oculta teléfono, ID, email y emergencia en móvil', () => {
   const html = render();
   const headers = cells(html, 'th');
   expect(headers.map((h) => text(h[2]))).toEqual([
@@ -53,11 +53,12 @@ it('Personas conserva seis columnas y marca solo ID, email y emergencia como exc
     'Email',
     'Contacto de emergencia',
     'Estado',
+    'Cel',
   ]);
   expect(headers.filter((h) => !h[1].includes('desktop-only')).map((h) => text(h[2]))).toEqual([
     'Persona',
-    'Teléfono',
     'Estado',
+    'Cel',
   ]);
   const rows = html
     .split('<tbody>')[1]
@@ -65,10 +66,10 @@ it('Personas conserva seis columnas y marca solo ID, email y emergencia como exc
     .match(/<tr>[\s\S]*?<\/tr>/g)!;
   for (const row of rows) {
     const columns = cells(row, 'td');
-    expect(columns).toHaveLength(6);
+    expect(columns).toHaveLength(7);
     expect(
       columns.map((c, i) => (c[1].includes('desktop-only') ? i : -1)).filter((i) => i >= 0),
-    ).toEqual([1, 3, 4]);
+    ).toEqual([1, 2, 3, 4]);
     expect(columns[0][2]).not.toContain('P-000');
     expect(columns[0][2]).toContain('participant-name');
   }
