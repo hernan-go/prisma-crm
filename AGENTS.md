@@ -22,7 +22,8 @@ Leer además cuando corresponda:
 - `main` es la rama productiva y su push dispara deploy en SiteGround.
 - Los pushes son manuales del propietario después de su revisión y aprobación. Codex no hace push ni merge a `main`.
 - Nunca hacer `force push`, rebase destructivo, reset destructivo ni cambios de configuración Git.
-- En iteraciones aprobadas, Codex administra autónomamente archivos, ramas Git locales, validaciones y commits dentro del alcance autorizado.
+- Codex ejecuta autónomamente las tareas técnicas aprobadas; los checkpoints son internos. El propietario conserva staging, commits, push, integración y despliegue; cualquier excepción Git exige autorización expresa. Conventional Commits solo en inglés.
+- El propietario levanta la aplicación y Codex reutiliza ese entorno. Procedimientos: `docs/WORKFLOW.md`, secciones 7 y 9.
 - Producción y SiteGround no se modifican desde Codex. Los cambios productivos de DB son manuales y guiados.
 - Nunca mostrar ni registrar secretos reales.
 

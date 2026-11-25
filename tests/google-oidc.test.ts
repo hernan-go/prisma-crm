@@ -9,6 +9,27 @@ function setup() {
     google = simulatedGoogle();
   return { ...memory, google, core: createGoogleOidc(options, memory.store, google.transport) };
 }
+it('requires explicit account selection for administrative binding without changing other CRM purposes', async () => {
+  const { core, google, rows } = setup();
+  const context = { purpose: 'binding' as const, userId: randomUUID(), operationId: randomUUID() };
+  const attempt = await core.begin(context);
+  const url = new URL(attempt.authorizationUrl);
+  expect(url.searchParams.get('prompt')).toBe('select_account');
+  expect(url.searchParams.get('scope')).toBe('openid email');
+  expect(url.searchParams.get('redirect_uri')).toBe(developmentCallback);
+  expect(url.searchParams.get('code_challenge_method')).toBe('S256');
+  expect(url.searchParams.get('state')).not.toBe(url.searchParams.get('nonce'));
+  await core.complete(google.use(attempt.authorizationUrl), attempt.browserToken, context);
+  expect(rows.get(attempt.attemptId)?.proof?.subject).toBe('synthetic-google-sub');
+  for (const other of [
+    { purpose: 'login' as const },
+    { purpose: 'reauth' as const, userId: randomUUID(), sessionHash: 'a'.repeat(64) },
+  ]) {
+    const next = new URL((await core.begin(other)).authorizationUrl);
+    expect(next.searchParams.has('prompt')).toBe(false);
+    if (other.purpose === 'reauth') expect(next.searchParams.get('max_age')).toBe('300');
+  }
+});
 it('uses PKCE S256 and verified Google sub, returns only an opaque reference', async () => {
   const { core, rows, google } = setup();
   const attempt = await core.begin({ purpose: 'login' });

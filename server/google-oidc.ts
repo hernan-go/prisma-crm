@@ -151,7 +151,9 @@ function createCore<C extends { purpose: string }>(
           nonce,
           code_challenge: await oidc.calculatePKCECodeChallenge(verifier),
           code_challenge_method: 'S256',
-          ...(application === 'portal' ? { prompt: 'select_account' } : {}),
+          ...(application === 'portal' || checked.purpose === 'binding'
+            ? { prompt: 'select_account' }
+            : {}),
           ...(checked.purpose === 'reauth'
             ? {
                 max_age: '300',

@@ -1,5 +1,6 @@
+import { EducationReceiptView } from './EducationReceipt';
+import { useEducationFocus } from './education-focus';
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { ErrorBox, Field, PageTitle, useDebounce } from './components';
@@ -38,9 +39,8 @@ export function EducationAccess() {
   });
   return (
     <div className="education-access">
-      <Link to="/configuracion">← Configuración</Link>
       <PageTitle
-        title="Accesos digitales"
+        title="Accesos PWA"
         description="Tres meses de acceso al contenido disponible y a las incorporaciones durante ese período. Sin renovación automática."
       />
       <section className="panel">
@@ -67,6 +67,7 @@ export function EducationAccess() {
   );
 }
 function PersonAccess({ personId }: { personId: number }) {
+  const focus = useEducationFocus();
   const client = useQueryClient();
   const [page, setPage] = useState(1);
   const [activityId, setActivity] = useState(0);
@@ -97,7 +98,7 @@ function PersonAccess({ personId }: { personId: number }) {
   const data = snapshot.error ? undefined : snapshot.data;
   const refresh = () => client.invalidateQueries({ queryKey: [root, personId] });
   return (
-    <>
+    <section ref={focus.root} tabIndex={-1} aria-label="Administración educativa de la persona">
       <ErrorBox error={snapshot.error || history.error} />
       {snapshot.error && <button onClick={() => void refresh()}>Reintentar consulta</button>}
       {snapshot.isFetching && <p role="status">Consultando derechos…</p>}
@@ -142,13 +143,16 @@ function PersonAccess({ personId }: { personId: number }) {
             {data.rights.map((r) => (
               <article className="education-right" key={r.id}>
                 <h4>
-                  {r.activity} · {statusLabel[r.status]}
+                  {r.activity} · {statusLabel[r.status] ?? 'Estado no reconocido'}
                 </h4>
                 <p>
                   Desde {educationDate(r.startsAt)} hasta {educationDate(r.endsAt)} (fin excluido,
                   UTC−03).
                 </p>
-                <small>Derecho: {r.id}</small>
+                <details>
+                  <summary>Identificador del derecho</summary>
+                  <code>{r.id}</code>
+                </details>
                 {r.revokedAt !== null ? (
                   <p>Revocado: {educationDate(r.revokedAt)}</p>
                 ) : (
@@ -167,7 +171,8 @@ function PersonAccess({ personId }: { personId: number }) {
                       Renovar esta disciplina
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(event) => {
+                        focus.capture(event.currentTarget);
                         setError(undefined);
                         setReason('');
                         setRevoke(r);
@@ -190,6 +195,7 @@ function PersonAccess({ personId }: { personId: number }) {
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (preparingRef.current) return;
+                focus.capture(e.nativeEvent.submitter as HTMLElement | null);
                 preparingRef.current = true;
                 setPreparing(true);
                 setError(undefined);
@@ -269,13 +275,19 @@ function PersonAccess({ personId }: { personId: number }) {
             </form>
             <ErrorBox error={error} />
             {result && (
-              <div role="status">
+              <div role="status" data-education-result ref={focus.result}>
                 <p>Operación confirmada · revisión {result.revision}.</p>
                 {result.startsAt !== undefined && (
                   <p>
                     Vigencia registrada: {educationDate(result.startsAt)} →{' '}
-                    {educationDate(result.endsAt)}. Derecho: {result.rightId}
+                    {educationDate(result.endsAt)}.
                   </p>
+                )}
+                {result.rightId && (
+                  <details>
+                    <summary>Identificador del derecho</summary>
+                    <code>{result.rightId}</code>
+                  </details>
                 )}
               </div>
             )}
@@ -301,8 +313,10 @@ function PersonAccess({ personId }: { personId: number }) {
               close={() => {
                 setPreview(undefined);
                 setRevoke(undefined);
+                focus.restore();
               }}
               done={(r) => {
+                focus.restore(true);
                 setResult(r);
                 setPreview(undefined);
                 setRevoke(undefined);
@@ -361,53 +375,12 @@ function PersonAccess({ personId }: { personId: number }) {
         )}
         {!history.error &&
           history.data?.rows.map((o) => (
-            <article className="education-right" key={o.operationId}>
-              <h3>
-                {o.result.action === 'grant'
-                  ? 'Concesión trimestral'
-                  : o.result.action === 'renewal'
-                    ? 'Renovación trimestral'
-                    : ({
-                        digital: 'Concesión / renovación trimestral (recibo anterior)',
-                        revoke: 'Revocación',
-                        presential: 'Habilitación presencial',
-                        link: 'Vinculación de identidad',
-                      }[o.kind] ?? o.kind)}
-              </h3>
-              <p>
-                {educationDate(o.createdAt)} · {o.actorName} · Administrador: {o.actorId}
-              </p>
-              <p>{o.reason}</p>
-              {o.userId && <p>Identidad vinculada: {o.userId}</p>}
-              <small>Operación / recibo: {o.operationId}</small>
-              <p>
-                Disciplina:{' '}
-                {data?.activities.find((a) => a.id === o.activityId)?.name ??
-                  data?.rights.find((r) => r.id === o.rightId)?.activity ??
-                  'Vinculación de persona'}
-              </p>
-              {o.result.startsAt !== undefined && (
-                <p>
-                  Tramo: {educationDate(o.result.startsAt)} → {educationDate(o.result.endsAt)}
-                  <br />
-                  Instantes registrados: {new Date(o.result.startsAt).toISOString()} →{' '}
-                  {new Date(o.result.endsAt!).toISOString()}
-                </p>
-              )}
-              {o.result.previousEnd !== undefined && (
-                <p>Fin anterior: {educationDate(o.result.previousEnd)}</p>
-              )}
-              {o.paymentDeclared && (
-                <p>
-                  Pago verificado manualmente · referencia: {o.verificationReference}. Derecho
-                  habilitado. Sin cobro contabilizado por este módulo.
-                </p>
-              )}
-              <details>
-                <summary>Resultado del recibo administrativo</summary>
-                <pre>{JSON.stringify(o.result, null, 2)}</pre>
-              </details>
-            </article>
+            <EducationReceiptView
+              key={o.operationId}
+              receipt={o}
+              person={data?.person}
+              snapshot={data}
+            />
           ))}
         <div className="actions">
           <button disabled={page === 1 || history.isFetching} onClick={() => setPage((p) => p - 1)}>
@@ -422,6 +395,6 @@ function PersonAccess({ personId }: { personId: number }) {
           </button>
         </div>
       </section>
-    </>
+    </section>
   );
 }

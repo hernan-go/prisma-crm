@@ -21,6 +21,10 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.education-receipt code {
+  overflow-wrap: anywhere;
+  user-select: all;
+}
 .education-access .actions {
   flex-wrap: wrap;
 }

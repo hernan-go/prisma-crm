@@ -1,5 +1,35 @@
 # PRISMA CRM — Estado actual
 
+## PWA-3B.3 — correcciones administrativas locales (25/11/2026)
+
+PWA-3B.2 cerrada por el propietario como **APTO CON OBSERVACIONES — aceptación
+parcial**. Baseline local confirmado: `codex/pwa-2b3-participant-binding`,
+`0f33b1a2a7108ec9737a98f477844761ea51f6a6`, árbol e índice inicialmente limpios.
+CI 9/9 del baseline informada por el propietario; no consultada ni repetida.
+
+Accesos PWA es ahora sección principal en `/accesos-pwa`; la URL anterior
+`/configuracion/accesos-digitales` redirige con reemplazo de historial. Cabecera,
+menú y título reconocen el módulo. Vinculación Google administrativa solicita
+`prompt=select_account`; login ordinario y reautenticación conservan su conducta.
+Diálogos educativos enfocan errores. Corrección posterior a revisión: captura del
+disparador antes de preparar, restauración explícita y destino estable de resultado.
+Ver alcance de evidencia posterior en el informe; no implica aceptación integral.
+
+151 pruebas focalizadas sin DB, typecheck, lint focalizado, build y `git diff --check`
+aprobados. [Informe y evidencia](iterations/2026-11-pwa-3b3.md).
+Laboratorio existente reutilizado desde navegador integrado, sin nuevas operaciones
+educativas. Cobertura integrada parcial aceptada; limitaciones conservadas en registro privado.
+El propietario informó una comprobación manual satisfactoria en Chrome al 200 %
+para búsqueda, formularios, teclado y apertura/cancelación de diálogos; no acredita
+conformidad integral con WCAG. Los recibos históricos de concesión y renovación
+se presentan en formato administrativo legible; ver evidencia y límites en el informe.
+
+023 productiva aplicada según el propietario; sin nueva consulta productiva.
+Portal y admisiones conservan su política cerrada, sin cambios ni activación.
+Integración, despliegue y activación pendientes. Siguiente bloque propuesto:
+PWA de facilitadores, sin iniciarlo. Cambios locales sin stage ni commit.
+Los cortes inferiores conservan sus fechas y alcances históricos.
+
 ## PWA-3A.4 — reconciliación documental y estructural (24/11/2026)
 
 Producción: `023.sql` aplicada y registrada según el propietario; portal

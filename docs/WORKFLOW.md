@@ -187,6 +187,12 @@ Procedimiento estándar acordado para QA con el navegador integrado:
 5. Codex controla su propio navegador mediante selección, escritura y clics reales.
 
 Reutilizar el servidor y la pestaña disponibles; no reiniciarlos por rutina.
+Dentro del alcance aprobado, Codex ejecuta autónomamente las pruebas funcionales
+y visuales desde su navegador; los checkpoints son controles internos.
+El propietario levanta PRISMA desde VS Code con el entorno correspondiente.
+La intervención humana se reserva para autenticación, decisiones funcionales,
+bloqueantes materiales y operaciones fuera del alcance. Si se necesita reiniciar
+un laboratorio preparado, solicitar únicamente ese reinicio con su launcher seguro.
 No utilizar Chrome personal, Computer Use externo ni mecanismos alternativos
 sin autorización expresa. Si falla la conexión o el control, detenerse e informar
 URL, entorno y bloqueo concreto; no improvisar reintentos ni cambiar de herramienta.
@@ -286,9 +292,12 @@ Si la migración no es backward-compatible, definir explícitamente el orden seg
 
 ## 9. Git
 
-Codex puede inspeccionar Git siempre.
-
-En iteraciones aprobadas, Codex puede administrar autónomamente Git local, archivos, ramas, validaciones y commits dentro del alcance. No necesita aprobación por archivo, test o commit local. Ante cambios inesperados en el working tree, preservarlos y detenerse para informar. Los pushes y la integración a main quedan manuales del propietario, después de revisión y aprobación.
+Codex puede inspeccionar Git siempre. El propietario conserva el control de
+`git add`, stage, commits, push, integración y despliegue. Una autorización expresa
+de la iteración puede habilitar operaciones locales concretas; no se infiere de
+la autonomía para editar archivos o validar. PWA-3B.3 deja todos los cambios sin
+stage ni commit y no crea ramas. Ante cambios inesperados en el working tree,
+preservarlos y detenerse para informar. Conventional Commits exclusivamente en inglés.
 
 Nunca hacer por defecto:
 

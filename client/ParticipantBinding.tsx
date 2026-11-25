@@ -1,3 +1,4 @@
+import { useEducationFocus } from './education-focus';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
@@ -12,6 +13,7 @@ type Candidate = {
   enabled: number | null;
 };
 export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }) {
+  const focus = useEducationFocus();
   const [search, setSearch] = useState('');
   const q = useDebounce(search.trim());
   const [selected, setSelected] = useState<Candidate>();
@@ -28,7 +30,12 @@ export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }
   const current = snapshot.participantLink;
   const name = `${snapshot.person.apellido}, ${snapshot.person.nombre} · ${snapshot.person.public_id} · #${snapshot.person.id}`;
   return (
-    <section className="panel">
+    <section
+      ref={focus.root}
+      tabIndex={-1}
+      aria-label="Vinculación administrativa del participante"
+      className="panel education-access"
+    >
       <h2>Vinculación administrativa del participante</h2>
       <p>
         Asocia una identidad participante existente a esta persona. No verifica titularidad, no crea
@@ -47,7 +54,8 @@ export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }
           </p>
           <button
             disabled={!snapshot.person.activo && !current.enabled}
-            onClick={() => {
+            onClick={(event) => {
+              focus.capture(event.currentTarget);
               setConfirmed(false);
               setOperation({ userId: current.userId, enabled: !current.enabled });
             }}
@@ -115,7 +123,10 @@ export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }
               </p>
               <button
                 disabled={!snapshot.person.activo}
-                onClick={() => setOperation({ userId: selected.userId, enabled: true })}
+                onClick={(event) => {
+                  focus.capture(event.currentTarget);
+                  setOperation({ userId: selected.userId, enabled: true });
+                }}
               >
                 Revisar asociación de identidad
               </button>
@@ -123,7 +134,11 @@ export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }
           )}
         </>
       )}
-      {result && <p role="status">{result}</p>}
+      {result && (
+        <p role="status" data-education-result ref={focus.result}>
+          {result}
+        </p>
+      )}
       {operation && (
         <AccessConfirmation
           title="Confirmar vínculo administrativo"
@@ -135,8 +150,12 @@ export function ParticipantBinding({ snapshot }: { snapshot: EducationSnapshot }
             expectedRevision: snapshot.revision,
             associationConfirmed: true,
           }}
-          close={() => setOperation(undefined)}
+          close={() => {
+            setOperation(undefined);
+            focus.restore();
+          }}
           done={() => {
+            focus.restore(true);
             setOperation(undefined);
             setSelected(undefined);
             setResult(

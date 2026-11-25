@@ -1,5 +1,14 @@
 # PRISMA CRM — Arquitectura
 
+## PWA-3B.3 — ubicación administrativa actual (25/11/2026)
+
+La sección principal «Accesos PWA» usa `/accesos-pwa` y el menú compartido de
+`client/App.tsx` resuelve sus cabeceras desktop/mobile. La antigua
+`/configuracion/accesos-digitales` solo redirige; Configuración ya no contiene
+el módulo. Se reutilizan los componentes y la API educativa con las mismas
+guardas administrativas. Esto resuelve la brecha de ubicación del corte 3A.4
+inferior, sin implementar las pantallas docentes/participantes ni cambiar datos.
+
 ## PWA-3A.5 — arquitectura recreativa acordada (24/11/2026)
 
 El [Multiple Choice recreativo](RECREATIONAL_QUIZ.md) se especifica con banco

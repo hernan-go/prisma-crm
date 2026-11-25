@@ -1,5 +1,12 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-3B.3 — sección administrativa independiente (25/11/2026)
+
+El propietario ratifica «Accesos PWA» como sección principal del CRM,
+independiente de Configuración. Ruta canónica `/accesos-pwa`, con redirección
+compatible desde `/configuracion/accesos-digitales`. La ubicación no amplía
+privilegios ni habilita el portal, admisiones o autenticación educativa.
+
 ## PWA-3A.5 — Multiple Choice recreativo aprobado (24/11/2026)
 
 Se aprueba selección, mezcla y corrección íntegramente en navegador, con banco

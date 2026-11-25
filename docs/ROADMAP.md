@@ -1,5 +1,15 @@
 # PRISMA CRM — Roadmap
 
+## Prioridad vigente — cierre administrativo PWA-3B.3 (25/11/2026)
+
+PWA-3B.2 aceptada parcialmente con observaciones; correcciones locales de
+navegación, selección de cuenta y foco en [PWA-3B.3](iterations/2026-11-pwa-3b3.md).
+Revisión del propietario, integración y despliegue controlado siguen pendientes;
+portal y admisiones permanecen cerrados. Siguiente bloque de desarrollo propuesto:
+**PWA de facilitadores**, con autenticación y autorización por actividad propias,
+sin implementación en esta iteración. Se conservan el MVP educativo y la decisión
+recreativa de 3A.5; los siguientes cortes son antecedentes.
+
 ## Prioridad vigente — PWA-3A.4 y MVP educativo (24/11/2026)
 
 | Entrega | Alcance y dependencia |

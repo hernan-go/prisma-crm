@@ -4,7 +4,7 @@ import { FacilitatorPayments } from './FacilitatorPayments';
 import { FormsImport } from './FormsImport';
 import { PeriodForm } from './Periods';
 import { useEffect, useState, createContext, useContext } from 'react';
-import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard,
@@ -23,6 +23,7 @@ import {
   X,
   BrainCircuit,
   Ticket,
+  KeyRound,
 } from 'lucide-react';
 import { api } from './api';
 import { ErrorBox, Empty, PageTitle, useDisclosure } from './components';
@@ -60,6 +61,7 @@ const nav = [
   ['/eventos', 'Eventos Especiales', Ticket],
   ['/estadisticas', 'Estadísticas', BarChart3],
   ['/know-how', 'Know-How IA', BrainCircuit],
+  ['/accesos-pwa', 'Accesos PWA', KeyRound],
   ['/configuracion', 'Configuración', Settings],
 ] as const;
 
@@ -74,6 +76,7 @@ function sectionTitle(pathname: string) {
 const sectionDescriptions: Record<string, string> = {
   '/eventos': 'Eventos, participantes y cobros del período seleccionado.',
   '/know-how': 'Documentos privados de esta instalación, independientes de los períodos.',
+  '/accesos-pwa': 'Vinculaciones y derechos educativos por persona y actividad.',
   '/personas': 'Un registro por persona, toda su historia en un lugar.',
   '/gestion': 'Personas incorporadas explícitamente al período seleccionado.',
   '/agenda': 'Horarios y asistentes del período seleccionado.',
@@ -218,6 +221,7 @@ export default function App() {
   const navigate = useNavigate();
   const showPeriod =
     location.pathname !== '/know-how' &&
+    location.pathname !== '/accesos-pwa' &&
     (location.pathname !== '/estadisticas' || statisticsView === 'monthly');
   useEffect(() => {
     setStatisticsView('monthly');
@@ -386,7 +390,11 @@ export default function App() {
               />
               <Route path="/know-how" element={<Knowledge />} />
               <Route path="/configuracion" element={<Configuration />} />
-              <Route path="/configuracion/accesos-digitales" element={<EducationAccess />} />
+              <Route path="/accesos-pwa" element={<EducationAccess />} />
+              <Route
+                path="/configuracion/accesos-digitales"
+                element={<Navigate to="/accesos-pwa" replace />}
+              />
               <Route path="*" element={<Empty>Página no encontrada.</Empty>} />
             </Routes>
           </main>

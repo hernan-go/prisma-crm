@@ -1,3 +1,4 @@
+import { useEducationFocus } from './education-focus';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type AuthSession } from './api';
@@ -11,6 +12,7 @@ export function EducationPresential({
   personId: number;
   enrollments: { id: number; activity_id: number; activity: string }[];
 }) {
+  const focus = useEducationFocus();
   const auth = useQuery({
     queryKey: ['auth'],
     queryFn: () => api<AuthSession>('/auth/session'),
@@ -47,7 +49,12 @@ export function EducationPresential({
         enrollmentId: 0,
       });
   return (
-    <section className="panel education-access">
+    <section
+      ref={focus.root}
+      tabIndex={-1}
+      aria-label="Habilitación educativa presencial"
+      className="panel education-access"
+    >
       <h2>Habilitación educativa presencial</h2>
       <p>
         Se administra desde las inscripciones reales. Habilitar o retirar esta fuente requiere una
@@ -80,13 +87,14 @@ export function EducationPresential({
                 </p>
                 <button
                   disabled={!enabled && (!data.person.activo || !a.enrollmentId)}
-                  onClick={() =>
+                  onClick={(event) => {
+                    focus.capture(event.currentTarget);
                     setOperation({
                       ...a,
                       enrollmentId: a.enrollmentId || undefined,
                       enabled: !enabled,
-                    })
-                  }
+                    });
+                  }}
                 >
                   {enabled ? 'Retirar habilitación educativa' : 'Revisar habilitación educativa'}
                 </button>
@@ -99,7 +107,7 @@ export function EducationPresential({
         </>
       )}
       {success && !snapshot.error && !auth.error && (
-        <p role="status">
+        <p role="status" data-education-result ref={focus.result}>
           Última operación educativa confirmada. Inscripción y derechos digitales conservados.
         </p>
       )}
@@ -114,8 +122,12 @@ export function EducationPresential({
             enabled: operation.enabled,
             expectedRevision: data.revision,
           }}
-          close={() => setOperation(undefined)}
+          close={() => {
+            setOperation(undefined);
+            focus.restore();
+          }}
           done={() => {
+            focus.restore(true);
             setOperation(undefined);
             setSuccess(true);
             void client.invalidateQueries({ queryKey: ['/education-access'] });

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from './api';
 import { Field, Modal, ErrorBox } from './components';
 const root = '/education-access';
@@ -24,6 +24,13 @@ export function AccessConfirmation({
   const [error, setError] = useState<Error>();
   const [uncertain, setUncertain] = useState(false);
   const busy = useRef(false);
+  const feedback = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) {
+      feedback.current?.focus({ preventScroll: true });
+      feedback.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [error]);
   async function submit(recover = false) {
     if (busy.current) return;
     busy.current = true;
@@ -75,7 +82,11 @@ export function AccessConfirmation({
         </Field>
       )}
       <p>Operación: {operationId}</p>
-      <ErrorBox error={error} />
+      {error && (
+        <div ref={feedback} tabIndex={-1} aria-label="Resultado de la operación">
+          <ErrorBox error={error} />
+        </div>
+      )}
       {uncertain && (
         <p role="alert">
           Resultado incierto. Conservá esta ventana y consultá el recibo o reintentá la misma
