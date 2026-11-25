@@ -1,16 +1,36 @@
 # PRISMA CRM — Estado actual
 
-## PWA-4 — WhatsApp administrativo, aprobación visual (25/11/2026)
+## PWA-4 — cierre productivo acreditado (25/11/2026)
 
-Implementación frontend en `codex/pwa-4-whatsapp-links`, desde `a023abe`.
-Tres accesos con SVG blanco oficial local, normalización independiente y asociación
-por ID mediante membresías existentes. Sin backend, DB, dependencias ni cambios
-financieros. Diseño definitivo aprobado por el propietario en CRM real desktop y
-mobile; tablas originales conservadas y adaptación provisional mediante tarjetas
-retirada. Criterio responsive: sin desplazamiento horizontal en página ni contenedores.
-Commit y push de esta rama autorizados; integración a main y despliegue no autorizados
-ni ejecutados. La rama conserva los commits previos pendientes de integración.
-[Informe, validación final y límites](iterations/2026-11-pwa-4.md).
+`main` local y remota en `a09ee5ce8caca2098f30a99d1e6956061d22c82f`;
+integración fast-forward de los 15 commits acumulados completada según el propietario.
+Codex confirmó en esta tarea únicamente rama/HEAD locales y árbol inicialmente limpio;
+no volvió a consultar GitHub, SiteGround ni producción.
+
+CI candidata [45589315621](https://github.com/hernan-go/prisma-crm/actions/runs/45589315621):
+9/9 jobs aprobados, verificación independiente de Codex en el cierre técnico previo.
+CI main [45704454259](https://github.com/hernan-go/prisma-crm/actions/runs/45704454259):
+9/9 según el propietario. SiteGround completado el 25/11 a las 18:27 (Argentina),
+build exit 0 y aceptación productiva desktop/mobile confirmados por el propietario.
+WhatsApp operativo en Personas, Inscriptos y Cobros; apertura en escritorio sin envío
+de mensajes, Accesos PWA y búsqueda administrativa operativos según su comprobación.
+Portal `/app/` deshabilitado. Migración 023 ya aplicada y registrada; no repetir.
+
+Respaldo automático del 25/11 a las 12:58 acreditado por captura del propietario;
+respaldo manual anterior conservado, restauración no ensayada. No se incorporan
+capturas, datos personales, firmas ni documentación privada al repositorio.
+Issue [#12](https://github.com/hernan-go/prisma-crm/issues/12) cerrada/completada y
+verificada por GPT según el informe del propietario; no es una verificación nueva
+de Codex. [#13](https://github.com/hernan-go/prisma-crm/issues/13) abierta, diseño V3
+y flujo híbrido aprobados. Ampliación de cuentas administrativas descartada.
+
+Siguiente desarrollo: PWA-5A recibos de cobro → PWA-5B visual V3/Cobros → PWA-5C
+exportación/entrega manual por WhatsApp/aceptación/despliegue → PWA-6 facilitadores
+→ PWA-7 participantes. [Orden y alcance](ROADMAP.md) · [Informe PWA-4 y límites de QA](iterations/2026-11-pwa-4.md).
+La aprobación productiva no certifica accesibilidad integral ni resuelve las
+observaciones históricas de QA; zoom exacto 200 % no acreditado por Codex.
+Los apartados inferiores son antecedentes: sus pendientes de integración y despliegue
+quedan superados por este cierre, sin implicar activación del portal educativo.
 
 ## PWA-3B.3 — correcciones administrativas locales (25/11/2026)
 

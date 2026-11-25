@@ -1,6 +1,26 @@
 # PRISMA CRM — Roadmap
 
-## Prioridad vigente — cierre administrativo PWA-3B.3 (25/11/2026)
+## Prioridad vigente — recibos de cobro, después de PWA-4 (25/11/2026)
+
+PWA-4 integrada y desplegada; [estado productivo y fuentes de evidencia](PROJECT_STATE.md).
+Issue [#12](https://github.com/hernan-go/prisma-crm/issues/12) completada;
+[#13](https://github.com/hernan-go/prisma-crm/issues/13) abierta, diseño V3 y flujo
+híbrido aprobados según el propietario. Ampliación de cuentas administrativas descartada.
+
+| Orden | Entrega | Alcance aprobado                                                   |
+| ----- | ------- | ------------------------------------------------------------------ |
+| 1     | PWA-5A  | Arquitectura de recibos de cobro.                                  |
+| 2     | PWA-5B  | Implementación visual V3 e integración con Cobros Período.         |
+| 3     | PWA-5C  | Exportación, entrega manual por WhatsApp, aceptación y despliegue. |
+| 4     | PWA-6   | Facilitadores.                                                     |
+| 5     | PWA-7   | Participantes.                                                     |
+
+Este cierre solo registra el orden aprobado; no inicia estos bloques ni define
+contratos técnicos aún no documentados. Portal /app/ continúa deshabilitado;
+023 ya aplicada/registrada, sin repetir. Se conservan los requisitos educativos
+anteriores y sus observaciones, subordinando su ejecución al nuevo orden.
+
+## Antecedente — cierre administrativo PWA-3B.3 (25/11/2026)
 
 PWA-3B.2 aceptada parcialmente con observaciones; correcciones locales de
 navegación, selección de cuenta y foco en [PWA-3B.3](iterations/2026-11-pwa-3b3.md).
@@ -10,7 +30,7 @@ portal y admisiones permanecen cerrados. Siguiente bloque de desarrollo propuest
 sin implementación en esta iteración. Se conservan el MVP educativo y la decisión
 recreativa de 3A.5; los siguientes cortes son antecedentes.
 
-## Prioridad vigente — PWA-3A.4 y MVP educativo (24/11/2026)
+## Antecedente — PWA-3A.4 y MVP educativo (24/11/2026)
 
 | Entrega | Alcance y dependencia |
 | --- | --- |

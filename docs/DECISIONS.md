@@ -1,5 +1,14 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-4 — continuidad administrativa y recibos (25/11/2026)
+
+El propietario aprueba diseño V3 y flujo híbrido para recibos de cobro (issue #13,
+abierta), con exportación y entrega manual por WhatsApp en PWA-5C. La ampliación
+de cuentas administrativas queda descartada. La prioridad pasa a recibos antes de
+facilitadores y participantes; [secuencia de desarrollo](ROADMAP.md).
+No se define aquí arquitectura de recibos ni se autoriza su implementación:
+PWA-5A es el bloque de arquitectura. Se conservan las decisiones educativas previas.
+
 ## PWA-3B.3 — sección administrativa independiente (25/11/2026)
 
 El propietario ratifica «Accesos PWA» como sección principal del CRM,
