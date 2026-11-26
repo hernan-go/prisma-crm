@@ -1,3 +1,4 @@
+import { testCredentials, memorySessions } from './auth-helper';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomBytes, randomUUID } from 'node:crypto';
 import request from 'supertest';
@@ -393,7 +394,13 @@ describe.skipIf(process.env.RUN_DB_TESTS !== 'true')('payment receipts isolated 
     } finally {
       await execute('UPDATE identity_institution SET admin_two=? WHERE id=1', [admins[1]]);
     }
-    const app = createApp({ identityEnabled: true }, {}, {}, false, false);
+    const app = createApp(
+      { ...(await testCredentials()), store: memorySessions(), identityEnabled: true },
+      {},
+      {},
+      false,
+      false,
+    );
     const response = await request(app)
       .get('/api/payment-receipts/' + receipt.number)
       .set('Cookie', 'prisma_identity=' + tokens[0]);
