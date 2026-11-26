@@ -1,5 +1,38 @@
 # PRISMA CRM — Arquitectura
 
+## Recibos de cobro — backend local PWA-5B.1
+
+Migración candidata 024 aditiva, sin backfill emisor. payment_receipts conserva
+snapshot JSON con importes como cadenas decimales exactas y IDs históricos sin
+joins obligatorios a filas vivas; FK payment_id/account_id operativas nullable y
+RESTRICT. BIGINT AUTO_INCREMENT global, transportado como string; índice generado
+UNIQUE active_payment_id. Triggers rechazan borrado, cambios de snapshot/identidad
+y reactivación; no son una barrera frente a administradores con permisos DDL.
+
+payment_receipt_operations conserva actor, hash de solicitud, resultado, fecha y
+evidencia de cada operación/corrección. Idempotencia y cambios de negocio se
+confirman juntos. Toda lectura/emisión/corrección comparte peopleTransaction,
+lock :people y conexión; autoridad Google CRM institucional revalidada sin
+education_state. Preview HMAC de cinco minutos, ligado a actor/huella de fuentes
+y versiones; emisión compara nuevamente bajo lock. Reintento autorizado recupera
+resultado antes de exigir un preview todavía vigente. Secret nuevo privado
+RECEIPT_PREVIEW_SECRET; vacío bloquea preview/emisión, no consulta/anulación.
+
+Módulos: payment-receipts, receipt-preview, receipt-authority, receipt-http,
+receipt-financial-guard y receipt-resources; contratos shared/payment-receipts.
+services/scheduling/memberships conservan reglas existentes y delegan correcciones
+con históricos al guard transaccional. Sin 024 se preserva el comportamiento
+anterior; estructura parcial sin registro produce 503 antes de escribir.
+
+El perfil generic-v1 no contiene activos institucionales: descriptor inmutable y
+hash. Consulta devuelve disponibilidad de reproducción; falta/corrupción nunca
+se reemplaza silenciosamente. No existe renderer ni endpoint de exportación.
+Rollback tras emisión exige conservar estas guardas o suspender escrituras
+afectadas; volver a un backend anterior sin protección es inseguro.
+
+[Contratos, pruebas y límites](iterations/2026-11-pwa-5b1.md).
+
+
 ## PWA-3B.3 — ubicación administrativa actual (25/11/2026)
 
 La sección principal «Accesos PWA» usa `/accesos-pwa` y el menú compartido de

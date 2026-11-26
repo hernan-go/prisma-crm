@@ -1,5 +1,19 @@
 # PRISMA CRM — Migraciones productivas
 
+## Candidata 024 — sin aplicación productiva
+
+024.sql agrega recibos administrativos y operaciones auditadas. Ensayos locales
+solo en laboratorios MySQL descartables. No aplicada a bases conservadas ni
+producción. Antes de una operación futura aplicar íntegramente el procedimiento
+inferior: comprobar baseline 023, ausencia de tablas/triggers parciales, privilegio
+TRIGGER y compatibilidad del servidor (incluida política de binary logging),
+respaldo/recuperación y orden esquema/código. CI permite creación de triggers por
+el usuario acotado mediante configuración exclusiva de su servicio efímero; esto
+no acredita permisos de SiteGround. Ante DDL parcial o registro incierto detenerse,
+no repetir ni borrar tablas. Tras emitir, un rollback de código debe conservar
+las guardas financieras o suspender escrituras afectadas.
+
+
 Fuente operativa única y obligatoria para preparar y ejecutar migraciones productivas de PRISMA CRM. Fecha de consolidación: 18/11/2026. Este manual no autoriza escrituras ni acredita una ejecución por el hecho de describirla. Las migraciones SQL aplicadas son inmutables.
 
 Estado posterior informado: `023.sql` fue aplicada, verificada y registrada en

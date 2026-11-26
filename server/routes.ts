@@ -1,3 +1,5 @@
+import { paymentReceiptRouter } from './receipt-http.js';
+import { receiptRequestContext } from './receipt-financial-guard.js';
 import { eventSchemaReady } from './event-schema.js';
 import { educationAdmin } from './education-admin.js';
 import { createWeatherRouter } from './weather.js';
@@ -34,6 +36,7 @@ import {
 import { readImport, guessMapping, mapRow, strongMatch } from './importer.js';
 export const api = Router();
 api.use('/education-access', educationAdmin);
+api.use('/payment-receipts', paymentReceiptRouter);
 api.use('/special-events', specialEvents);
 api.use('/knowledge', knowledge);
 api.use('/knowledge/proposals', knowledgeProposals);
@@ -124,7 +127,9 @@ api.post('/periods/:periodId/memberships', async (req, res) => {
   res.status(201).json(await membershipAdd(p.person_id, id(req.params.periodId)));
 });
 api.delete('/periods/:periodId/memberships/:id', async (req, res) =>
-  res.json(await membershipRemove(id(req.params.id), id(req.params.periodId))),
+  res.json(
+    await membershipRemove(id(req.params.id), id(req.params.periodId), receiptRequestContext(req)),
+  ),
 );
 api.get('/periods', async (_req, res) =>
   res.json(await query('SELECT * FROM periods ORDER BY year DESC,month DESC')),
@@ -217,10 +222,17 @@ api.get('/payments', async (req, res) =>
 );
 api.post('/payments', async (req, res) => res.status(201).json(await paymentSave(req.body)));
 api.put('/payments/:id', async (req, res) =>
-  res.json(await paymentSave(req.body, id(req.params.id))),
+  res.json(await paymentSave(req.body, id(req.params.id), receiptRequestContext(req))),
 );
 api.delete('/payments/:id', async (req, res) =>
-  res.json(await deleteMovement('payments', id(req.params.id), id(req.query.period_id))),
+  res.json(
+    await deleteMovement(
+      'payments',
+      id(req.params.id),
+      id(req.query.period_id),
+      receiptRequestContext(req),
+    ),
+  ),
 );
 api.get('/dashboard', async (req, res) => {
   const period = id(req.query.period_id);

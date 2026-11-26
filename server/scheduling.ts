@@ -1,3 +1,4 @@
+import { receiptFinancialChange, type ReceiptFinancialContext } from './receipt-financial-guard.js';
 import { initializeRecurringPeriod, requireRecurringSchema } from './recurring-periods.js';
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { AppError, requireFound } from './errors.js';
@@ -126,20 +127,35 @@ export async function periodEdit(period: number, body?: unknown) {
     return { ok: true };
   });
 }
-export async function deleteMovement(kind: 'payments' | 'enrollments', id: number, period: number) {
+export async function deleteMovement(
+  kind: 'payments' | 'enrollments',
+  id: number,
+  period: number,
+  context?: ReceiptFinancialContext,
+) {
   return peopleTransaction(async (db) => {
-    const [r] = await query(
-      kind === 'payments'
-        ? 'SELECT m.period_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=?'
-        : 'SELECT period_id FROM enrollments WHERE id=?',
-      [id],
-      db,
-    );
-    requireFound(r);
-    if (r.period_id !== period)
-      throw new AppError(409, 'El registro no corresponde al período seleccionado.');
-    await openPeriod(r.period_id, db);
-    await execute(`DELETE FROM ${kind} WHERE id=?`, [id], db);
-    return { ok: true };
+    const remove = async () => {
+      const [r] = await query(
+        kind === 'payments'
+          ? 'SELECT m.period_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=?'
+          : 'SELECT period_id FROM enrollments WHERE id=?',
+        [id],
+        db,
+      );
+      requireFound(r);
+      if (r.period_id !== period)
+        throw new AppError(409, 'El registro no corresponde al período seleccionado.');
+      await openPeriod(r.period_id, db);
+      await execute(`DELETE FROM ${kind} WHERE id=?`, [id], db);
+      return { ok: true };
+    };
+    return kind === 'payments'
+      ? receiptFinancialChange(
+          db,
+          { kind: 'payment-delete', id, input: { period } },
+          context,
+          remove,
+        )
+      : remove();
   });
 }

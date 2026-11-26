@@ -24,7 +24,7 @@ it('keeps DB-free validation separate from isolated, sequential matrix services'
   expect(integrations).not.toContain('continue-on-error');
 });
 
-it('runs exactly eight enabled MySQL suites once each, without parallel files', () => {
+it('runs exactly nine enabled MySQL suites once each, without parallel files', () => {
   const enabled = readdirSync('tests')
     .filter((name) => name.endsWith('.test.ts'))
     .filter((name) =>
@@ -33,7 +33,7 @@ it('runs exactly eight enabled MySQL suites once each, without parallel files', 
       ),
     )
     .map((name) => `tests/${name}`);
-  expect(suites).toHaveLength(8);
+  expect(suites).toHaveLength(9);
   expect([...suites].sort()).toEqual([
     'tests/binding-b2-db.test.ts',
     'tests/education-db.test.ts',
@@ -41,6 +41,7 @@ it('runs exactly eight enabled MySQL suites once each, without parallel files', 
     'tests/identity-db.test.ts',
     'tests/integration.test.ts',
     'tests/oidc-db.test.ts',
+    'tests/payment-receipts-db.test.ts',
     'tests/portal-db.test.ts',
     'tests/statistics-annual-db.test.ts',
   ]);
@@ -107,6 +108,7 @@ it('keeps each migration baseline in its owning suite, with an explicit annual f
     'tests/statistics-annual-db.test.ts': 'await prepareAnnualFixture()',
     'tests/portal-db.test.ts': "await migrate('020.sql')",
     'tests/education-db.test.ts': "await migrate('022.sql')",
+    'tests/payment-receipts-db.test.ts': "await migrate('023.sql')",
   };
   for (const [file, baseline] of Object.entries(baselines))
     expect(readFileSync(file, 'utf8')).toContain(baseline);
@@ -117,7 +119,7 @@ it('keeps each migration baseline in its owning suite, with an explicit annual f
   expect(annual).toContain('toHaveLength(2)');
 });
 
-it('documents the implemented isolation, command and all eight baselines', () => {
+it('documents the implemented isolation, command and all nine baselines', () => {
   const documentation = readFileSync('docs/WORKFLOW.md', 'utf8');
   for (const suite of suites) expect(documentation).toContain(suite.replace('tests/', ''));
   expect(documentation).toContain('max-parallel: 1');

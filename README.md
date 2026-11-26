@@ -2,13 +2,17 @@
 
 Administración interna de personas, inscripciones mensuales, talleres, pagos, gastos y eventos especiales. Aplicación React y API Express con MySQL. No usa PHP, microservicios ni Docker en producción.
 
+Backend de recibos administrativos implementado **localmente**, candidato 024;
+[contratos, validaciones y límites](docs/iterations/2026-11-pwa-5b1.md). Sin UI ni
+exportaciones, integración o despliegue de esta entrega.
+
 ## Estado y alcance
 
 Implementa personas con archivo lógico y contacto de emergencia; períodos vacíos; actividades con días configurables; múltiples horarios; agenda filtrada; cuentas manuales, pagos divididos, deuda y saldo a favor; dashboard; Gastos Período con recurrentes e independencia mensual; Eventos Especiales; Estadísticas mensuales y anuales; Know-How empresarial con propuestas controladas; importador XLSX/CSV con mapeo, revisión, duplicados y transacciones.
 
 Incluye acceso administrativo individual mediante Google, identidades, roles y sesiones revocables, aceptado funcionalmente en producción el 13/11/2026 según el propietario. La contraseña compartida con hash scrypt se conserva como contingencia transitoria; no otorga acceso al módulo educativo administrativo. Incluye pago a facilitadores por actividad y período, con importe manual y movimientos parciales independientes. No incluye registro público, acceso educativo operativo de docentes o participantes, Inglés, inversiones generales ni copia automática de inscripciones.
 
-Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). Según el [cierre PWA-3A.3](docs/iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026), el propietario aplicó y verificó `023.sql` en producción el 24/11/2026; no corresponde repetirla. PWA-2B.1–2B.3 siguen en la rama candidata, sin integración, despliegue ni activación. CI #102 aprobó el SHA histórico `5a47432`, no el HEAD documental posterior. El próximo MVP educativo requiere clases, recursos y cuestionarios Multiple Choice utilizables por participantes autenticados; [alcance y brechas](docs/ROADMAP.md). El asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
+Documentación vigente: [estado operativo](docs/PROJECT_STATE.md), [arquitectura](docs/ARCHITECTURE.md), [prioridades](docs/ROADMAP.md) y [workflow](docs/WORKFLOW.md). Según el [cierre PWA-3A.3](docs/iterations/2026-11-pwa-3a-integration-readiness.md#pwa-3a3--cierre-productivo-informado-de-023-24112026), el propietario aplicó y verificó `023.sql` en producción el 24/11/2026; no corresponde repetirla. El cierre PWA-4 posterior acredita integración y despliegue administrativos; el portal educativo sigue deshabilitado. Ver estado operativo para los cortes y su procedencia. El próximo MVP educativo requiere clases, recursos y cuestionarios Multiple Choice utilizables por participantes autenticados; [alcance y brechas](docs/ROADMAP.md). El asesor empresarial consultivo utiliza un MCP privado, sin escritura económica autónoma.
 
 Modelo de períodos y migración 005: [docs/MODELO-PERIODOS.md](docs/MODELO-PERIODOS.md).
 

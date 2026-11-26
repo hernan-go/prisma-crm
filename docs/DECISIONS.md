@@ -1,5 +1,72 @@
 # PRISMA CRM — Decisiones de producto y arquitectura
 
+## PWA-6/PWA-7 — confirmaciones y comunicaciones aprobadas, pendientes
+
+La [issue #14](https://github.com/hernan-go/prisma-crm/issues/14) consolida y precisa
+los antecedentes exploratorios #3/#4 y las decisiones 12/13 de PWA-0A. Requisitos
+funcionales aprobados; implementación y distribución técnica entre PWA-6/PWA-7
+pendientes, sin ampliar PWA-5B.1.
+
+- Recordatorio automático 24 h antes de la clase; segundo aviso 2 h antes solo
+  a participantes elegibles sin respuesta. Confirmación sí/no modificable desde
+  la PWA hasta el inicio; después queda cerrada. Confirmación anticipada no
+  acredita asistencia efectiva. Facilitador consulta solo sus grupos: sí/no/sin
+  respuesta con verde/rojo/gris y alternativa textual accesible.
+- Facilitador comunica a uno, varios o todos sus grupos asignados y autorizados,
+  con selección explícita, título, mensaje y preview de alcance. Backend valida
+  identidad y asignación por grupo, resuelve destinatarios elegibles y deduplica
+  participantes; no expone grupos ajenos ni confía en el rol genérico o la UI.
+- Recordatorios idempotentes y reintentos sin duplicados; cancelar pendientes al
+  suspender y recalcular al reprogramar. Un comunicado no cambia el estado de la
+  clase. Bandeja persistente en PWA más Web Push cuando haya permiso/compatibilidad;
+  minimizar contenido sensible en pantalla bloqueada. Push enviado no prueba
+  lectura ni entrega. Auditar remitente, alcance, contenido, fecha y estados
+  observables; definir retención, consentimiento y respaldo antes de implementar.
+
+Aceptación pendiente: límites temporales, cambios de horario, aislamiento entre
+facilitadores/grupos, altas/bajas y revocación de asignaciones, autorización y
+privacidad backend y UX accesible +50. Mantener #14 abierta hasta implementación,
+pruebas y aceptación. No autoriza automatización de WhatsApp ni cambios productivos.
+
+## Recibos administrativos — PWA-5A aprobado (26/11/2026)
+
+Decisiones definitivas del propietario, implementadas localmente en PWA-5B.1;
+no implican integración ni despliegue. Recibo administrativo por pago real, con
+número global persistente sin reinicio ni reutilización (huecos admitidos), como
+máximo uno vigente por pago. Nunca se borra un recibo emitido. Snapshot al emitir:
+identidad histórica, pago/cuenta/período originales, nombre visible, fecha efectiva,
+período imputado, importe/medio/receptor, obligación nullable, acumulado/saldo,
+actividades y horarios inscritos, observación pública y versiones. Sin notas
+privadas, asistencia ni atribuciones económicas inventadas. NULL no es cero;
+saldo negativo a favor sin traslado automático.
+
+Anular requiere motivo/actor/fecha y no devuelve dinero. Sustituir genera un nuevo
+número y una cadena lineal de la misma persona/período; enlace y estados atómicos,
+sin ciclos ni reactivación. Los períodos cerrados admiten operaciones documentales
+sin reapertura ni cambios financieros; las guardas financieras siguen vigentes.
+Pago con recibo vigente no se edita ni borra. Tras anulación, corrección o baja
+requiere período abierto, autoridad individual e historial auditado.
+
+D014 se conserva: quitar membresía exige cero inscripciones/pagos y obligación
+NULL (0.00 bloquea). Los recibos anulados/sustituidos no bloquean una cuenta
+estrictamente vacía: desvincular FK operativas explícitamente en la misma
+transacción auditada antes de borrar pago/cuenta; conservar IDs originales y
+snapshot. FK nullable con RESTRICT, sin cascadas ni SET NULL automático. Cancelar
+inscripción conserva cuenta/pagos. Persona archivada sigue consultable;
+reincorporación no reasocia históricos. Vigente sin pago vivo es inconsistencia.
+
+Backend 5B.1, UI V3/V2 5B.2 y exportación/entrega manual/aceptación 5C. La UI futura
+incluye el aviso de conservación dentro de la confirmación habitual, sin pasos
+adicionales. PDF/PNG/impresión bajo demanda nunca renumeran; archivos entregados
+no son revocables remotamente. Versionar snapshot/renderer/recursos, sin prometer
+identidad binaria. Firmas/logo privados fuera de Git, bundle y HTTP estático,
+raíz persistente fuera de checkout/build, manifiesto con hashes y respaldo;
+perfil genérico explícito sin firmas. Recursos históricos ausentes/corruptos
+bloquean reproducción, conservando consulta. Hosting, permisos y restauración
+requieren verificación antes de activar; no bloquean backend sintético.
+
+Contrato y evidencia: [PWA-5B.1](iterations/2026-11-pwa-5b1.md).
+
 ## PWA-4 — continuidad administrativa y recibos (25/11/2026)
 
 El propietario aprueba diseño V3 y flujo híbrido para recibos de cobro (issue #13,
@@ -169,7 +236,6 @@ En cada despliegue SiteGround se conservan siempre el build productivo actual y 
 ## Aclaración de vigencia — 07/11/2026
 
 Sin nuevas decisiones: los cortes fechados se conservan como antecedentes. D002 mantiene la inmutabilidad; producción tiene `001–016` según cierres documentados de 10.1/10.2, no una próxima numeración permanente. D013/D020 conservan reglas económicas, pero la navegación y pendientes gráficos antiguos fueron sustituidos por Estadísticas v2 mensual/anual publicada. D022–D024 cuentan con Know-How real, propuestas y MCP privado versión 6 operativos. La aceptación P0 consultiva (issue #2 cerrada el 06/11 según el propietario) no acredita rentabilidad certificada, atribución por actividad ni simulaciones deterministas. Google Login fue aceptado funcionalmente en producción el 13/11/2026; este punto supera el corte del 07/11. Fuentes: [estado operativo](PROJECT_STATE.md), [Iteración 11](iterations/2026-11-statistics-monthly-v2.md) y [contrato P0](AI_COMMERCIAL_PLANNING.md).
-
 
 ## Regla vigente — propuestas Know-How (cierre 02/11/2026)
 

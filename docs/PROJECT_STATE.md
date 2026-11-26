@@ -1,5 +1,20 @@
 # PRISMA CRM — Estado actual
 
+## PWA-5B.1 — implementación local (26/11/2026)
+
+Baseline acreditado main 9701c0b7b5cead60429f2a147ef2bae3f26a52ff; CI baseline
+45714581049 9/9 y SiteGround 25/11 19:35 acreditados en el preflight/handoff.
+Los cortes inferiores conservan su historia anterior. PWA-5A aprobado, backend
+5B.1 implementado localmente en codex/pwa-5b1-receipts-backend; validación y
+límites en [informe](iterations/2026-11-pwa-5b1.md). Sin stage, commit, integración,
+despliegue ni aplicación de 024 en bases conservadas o producción.
+
+Incluye recibos inmutables, preview firmado, operaciones idempotentes, guardas
+financieras e históricos desvinculados auditados; candidato 024 y novena suite CI
+MySQL independiente. UI 5B.2 y exportaciones/entrega/aceptación 5C pendientes.
+Portal, piloto y admisiones intactos. Restauración productiva sigue sin ensayo.
+
+
 ## PWA-4 — cierre productivo acreditado (25/11/2026)
 
 `main` local y remota en `a09ee5ce8caca2098f30a99d1e6956061d22c82f`;

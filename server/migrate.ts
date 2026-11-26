@@ -32,6 +32,18 @@ export async function migrate(through?: string) {
       .sort()) {
       const [found] = await c.execute('SELECT name FROM schema_migrations WHERE name=?', [name]);
       if ((found as any[]).length) continue;
+      if (name === '024.sql') {
+        const [baseline] = await c.execute<RowDataPacket[]>(
+          "SELECT name FROM schema_migrations WHERE name='023.sql'",
+        );
+        const [partial] = await c.query<RowDataPacket[]>(
+          "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('payment_receipts','payment_receipt_operations')",
+        );
+        if (!baseline.length || partial.length)
+          throw new Error(
+            '024.sql detenida: baseline 023 ausente o esquema parcial; inspeccionar antes de recuperar.',
+          );
+      }
       if (name === '023.sql') {
         const [baseline] = await c.execute<RowDataPacket[]>(
           "SELECT name FROM schema_migrations WHERE name='022.sql'",

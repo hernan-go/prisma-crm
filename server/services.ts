@@ -1,3 +1,4 @@
+import { receiptFinancialChange, type ReceiptFinancialContext } from './receipt-financial-guard.js';
 import { openPeriod, bookings } from './scheduling.js';
 import { scheduleConflict, type Booking } from '../shared/schedule.js';
 import { z } from 'zod';
@@ -117,50 +118,60 @@ export async function enrollmentInDB(body: unknown, db: Connection, id?: number)
   );
   return { id: eid };
 }
-export async function paymentSave(body: unknown, id?: number) {
+export async function paymentSave(body: unknown, id?: number, context?: ReceiptFinancialContext) {
   const p = paymentSchema.parse(body);
-  return peopleTransaction((db) => paymentInDB(p, db, id));
+  return peopleTransaction((db) => paymentInDB(p, db, id, context));
 }
-export async function paymentInDB(body: unknown, db: Connection, id?: number) {
+export async function paymentInDB(
+  body: unknown,
+  db: Connection,
+  id?: number,
+  context?: ReceiptFinancialContext,
+) {
   const p = paymentSchema.parse(body);
-  await openPeriod(p.period_id, db);
-  await requireMembership(p.person_id, p.period_id, db);
-  if (id) {
-    const [old] = await query(
-      'SELECT m.period_id,m.person_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=? FOR UPDATE',
-      [id],
-      db,
-    );
-    requireFound(old);
-    if (old.period_id !== p.period_id || old.person_id !== p.person_id)
-      throw new AppError(409, 'El pago no corresponde a esta persona y período.');
-    await openPeriod(old.period_id, db);
-  }
-  await execute(
-    'INSERT IGNORE INTO monthly_accounts(person_id,period_id) VALUES (?,?)',
-    [p.person_id, p.period_id],
-    db,
-  );
-  const [account] = await query(
-    'SELECT id FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
-    [p.person_id, p.period_id],
-    db,
-  );
-  if (id)
-    await execute(
-      'UPDATE payments SET account_id=?,date=?,amount=?,method=?,recipient=?,notes=? WHERE id=?',
-      [account.id, p.date, p.amount, p.method, p.recipient, p.notes, id],
-      db,
-    );
-  else
-    id = (
-      await execute(
-        'INSERT INTO payments(account_id,date,amount,method,recipient,notes) VALUES (?,?,?,?,?,?)',
-        [account.id, p.date, p.amount, p.method, p.recipient, p.notes],
+  const save = async () => {
+    await openPeriod(p.period_id, db);
+    await requireMembership(p.person_id, p.period_id, db);
+    if (id) {
+      const [old] = await query(
+        'SELECT m.period_id,m.person_id FROM payments p JOIN monthly_accounts m ON m.id=p.account_id WHERE p.id=? FOR UPDATE',
+        [id],
         db,
-      )
-    ).insertId;
-  return { id };
+      );
+      requireFound(old);
+      if (old.period_id !== p.period_id || old.person_id !== p.person_id)
+        throw new AppError(409, 'El pago no corresponde a esta persona y período.');
+      await openPeriod(old.period_id, db);
+    }
+    await execute(
+      'INSERT IGNORE INTO monthly_accounts(person_id,period_id) VALUES (?,?)',
+      [p.person_id, p.period_id],
+      db,
+    );
+    const [account] = await query(
+      'SELECT id FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
+      [p.person_id, p.period_id],
+      db,
+    );
+    if (id)
+      await execute(
+        'UPDATE payments SET account_id=?,date=?,amount=?,method=?,recipient=?,notes=? WHERE id=?',
+        [account.id, p.date, p.amount, p.method, p.recipient, p.notes, id],
+        db,
+      );
+    else
+      id = (
+        await execute(
+          'INSERT INTO payments(account_id,date,amount,method,recipient,notes) VALUES (?,?,?,?,?,?)',
+          [account.id, p.date, p.amount, p.method, p.recipient, p.notes],
+          db,
+        )
+      ).insertId;
+    return { id };
+  };
+  return id
+    ? receiptFinancialChange(db, { kind: 'payment-update', id, input: p }, context, save)
+    : save();
 }
 export async function activitySave(body: unknown, id?: number) {
   const p = activitySchema.parse(body);

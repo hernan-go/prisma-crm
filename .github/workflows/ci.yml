@@ -29,6 +29,7 @@ jobs:
           - tests/binding-b2-db.test.ts
           - tests/portal-db.test.ts
           - tests/education-db.test.ts
+          - tests/payment-receipts-db.test.ts
     # Each matrix job gets a NEW service, schema, user, UUID and marker.
     # Matrix scheduling order is irrelevant: no suite consumes another's state.
     services:
@@ -66,6 +67,8 @@ jobs:
           service_id='${{ job.services.mysql.id }}'
           server_uuid=$(docker exec "$service_id" mysql -uroot -plocal-ci-only -Nse 'SELECT @@server_uuid')
           token=$(openssl rand -hex 32)
+          # Only this ephemeral service: permit schema-scoped users to create audit triggers.
+          docker exec "$service_id" mysql -uroot -plocal-ci-only -e "SET GLOBAL log_bin_trust_function_creators=1;"
           docker exec "$service_id" mysql -uroot -plocal-ci-only prisma_disposable_ci -e "CREATE TABLE prisma_test_disposable_marker (token CHAR(64) NOT NULL, server_uuid CHAR(36) NOT NULL); INSERT INTO prisma_test_disposable_marker VALUES ('$token', '$server_uuid');"
           echo "TEST_DB_SERVER_UUID=$server_uuid" >> "$GITHUB_ENV"
           echo "TEST_DB_DISPOSABLE_TOKEN=$token" >> "$GITHUB_ENV"

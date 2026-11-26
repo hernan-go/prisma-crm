@@ -1,3 +1,4 @@
+import { receiptFinancialChange, type ReceiptFinancialContext } from './receipt-financial-guard.js';
 import { query, execute, peopleTransaction, type Connection } from './db.js';
 import { openPeriod } from './scheduling.js';
 import { AppError, requireFound } from './errors.js';
@@ -57,42 +58,53 @@ export async function membershipList(period: number, person?: number) {
   );
 }
 
-export async function membershipRemove(membership: number, period: number) {
+export async function membershipRemove(
+  membership: number,
+  period: number,
+  context?: ReceiptFinancialContext,
+) {
   return peopleTransaction(async (db) => {
-    await openPeriod(period, db);
-    const [m] = await query(
-      'SELECT * FROM period_memberships WHERE id=? AND period_id=? FOR UPDATE',
-      [membership, period],
+    return receiptFinancialChange(
       db,
+      { kind: 'membership-delete', id: membership, input: { period } },
+      context,
+      async () => {
+        await openPeriod(period, db);
+        const [m] = await query(
+          'SELECT * FROM period_memberships WHERE id=? AND period_id=? FOR UPDATE',
+          [membership, period],
+          db,
+        );
+        requireFound(m);
+        const blockedMessage =
+          'No se puede quitar del período: tiene inscripciones, pagos o un importe a cobrar definido que deben conservarse.';
+        const [related] = await query(
+          'SELECT COUNT(*) enrollments FROM enrollments WHERE person_id=? AND period_id=?',
+          [m.person_id, period],
+          db,
+        );
+        if (Number(related.enrollments)) throw new AppError(409, blockedMessage);
+        const [account] = await query(
+          'SELECT id,amount_due FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
+          [m.person_id, period],
+          db,
+        );
+        if (account) {
+          const [payment] = await query(
+            'SELECT id FROM payments WHERE account_id=? LIMIT 1 FOR UPDATE',
+            [account.id],
+            db,
+          );
+          if (payment || account.amount_due !== null) throw new AppError(409, blockedMessage);
+          await execute('DELETE FROM monthly_accounts WHERE id=?', [account.id], db);
+        }
+        await execute(
+          'DELETE FROM period_memberships WHERE id=? AND period_id=?',
+          [membership, period],
+          db,
+        );
+        return { ok: true };
+      },
     );
-    requireFound(m);
-    const blockedMessage =
-      'No se puede quitar del período: tiene inscripciones, pagos o un importe a cobrar definido que deben conservarse.';
-    const [related] = await query(
-      'SELECT COUNT(*) enrollments FROM enrollments WHERE person_id=? AND period_id=?',
-      [m.person_id, period],
-      db,
-    );
-    if (Number(related.enrollments)) throw new AppError(409, blockedMessage);
-    const [account] = await query(
-      'SELECT id,amount_due FROM monthly_accounts WHERE person_id=? AND period_id=? FOR UPDATE',
-      [m.person_id, period],
-      db,
-    );
-    if (account) {
-      const [payment] = await query(
-        'SELECT id FROM payments WHERE account_id=? LIMIT 1 FOR UPDATE',
-        [account.id],
-        db,
-      );
-      if (payment || account.amount_due !== null) throw new AppError(409, blockedMessage);
-      await execute('DELETE FROM monthly_accounts WHERE id=?', [account.id], db);
-    }
-    await execute(
-      'DELETE FROM period_memberships WHERE id=? AND period_id=?',
-      [membership, period],
-      db,
-    );
-    return { ok: true };
   });
 }
